@@ -50,3 +50,8 @@
     font-size: 0.75rem;
     line-height: 1;
 }
+.business-logo {
+    max-width: 150px;
+    height: auto;
+    border-radius: 0.25rem;
+}

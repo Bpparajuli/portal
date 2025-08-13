@@ -1,15 +1,24 @@
 @extends('layout.app')
 
 @section('content')
-<h2>Edit Course for University: {{ $course->university->name ?? '' }}</h2>
+<h2>{{ isset($course) ? 'Edit' : 'Add' }} Course</h2>
 
-<form action="{{ route('courses.update', $course->id) }}" method="POST">
+<form action="{{ isset($course) ? route('courses.update', $course->id) : route('courses.store') }}" method="POST">
     @csrf
+    @if(isset($course))
     @method('PUT')
+    @endif
 
     <div class="mb-3">
         <label>University</label>
-        <input type="text" class="form-control" value="{{ $course->university->name ?? '' }}" disabled>
+        <select name="university_id" class="form-control" required>
+            <option value="">-- Select University --</option>
+            @foreach($universities as $university)
+            <option value="{{ $university->id }}" {{ isset($course) && $course->university_id == $university->id ? 'selected' : '' }}>
+                {{ $university->name }}
+            </option>
+            @endforeach
+        </select>
     </div>
 
     <div class="mb-3">
@@ -25,9 +34,10 @@
     <div class="mb-3">
         <label>Course Type</label>
         <select name="course_type" class="form-control" required>
-            <option value="ug" {{ $course->course_type == 'ug' ? 'selected' : '' }}>Undergraduate</option>
-            <option value="pg" {{ $course->course_type == 'pg' ? 'selected' : '' }}>Postgraduate</option>
-            <option value="diploma" {{ $course->course_type == 'diploma' ? 'selected' : '' }}>Diploma</option>
+            <option value="">-- Select Type --</option>
+            <option value="ug" {{ isset($course) && $course->course_type == 'ug' ? 'selected' : '' }}>Undergraduate</option>
+            <option value="pg" {{ isset($course) && $course->course_type == 'pg' ? 'selected' : '' }}>Postgraduate</option>
+            <option value="diploma" {{ isset($course) && $course->course_type == 'diploma' ? 'selected' : '' }}>Diploma</option>
         </select>
     </div>
 
@@ -53,7 +63,7 @@
 
     <div class="mb-3">
         <label>IELTS/PTE/Other Languages</label>
-        <input type="text" name="ielts_pte_other_languages" value="{{ $course->ielts_pte_other_languages ?? '' }}" class="form-control">
+        <input type="text" name="moi_requirement" value="{{ $course->ielts_pte_other_languages?? '' }}" class="form-control">
     </div>
 
     <div class="mb-3">
@@ -63,10 +73,11 @@
 
     <div class="mb-3">
         <label>Application Fee</label>
-        <input type="number" name="application_fee" value="{{ $course->application_fee ?? '' }}" class="form-control">
+        <input type="number" step="0.01" name="application_fee" value="{{ $course->application_fee ?? '' }}" class="form-control">
     </div>
 
-    <button type="submit" class="btn btn-primary">Update</button>
-    <a href="{{ route('universities.edit', $course->university_id) }}" class="btn btn-secondary">Back to University</a>
+    <button type="submit" class="btn btn-primary">{{ isset($course) ? 'Update' : 'Save' }}</button>
+    <a href="{{ route('universities.edit', $university->id) }}" class="btn btn-secondary">Back to University</a>
+
 </form>
 @endsection

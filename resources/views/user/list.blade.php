@@ -22,16 +22,16 @@
     </thead>
     <tbody>
         @foreach($admins as $admin)
-        <tr onclick="window.location='{{ route('user.profile', $admin->id) }}'" style="cursor:pointer;">
-            <td>
+        <tr>
+            <td onclick="window.location='{{ route('user.profile', $admin->id) }}'" style="cursor:pointer;">
                 @if($admin->business_logo)
                 <img src="{{ asset('images/Agents_logo/' . $admin->business_logo) }}" width="40" alt="Logo">
                 @endif
             </td>
-            <td>{{ $admin->name }}</td>
-            <td>{{ $admin->business_name }}</td>
-            <td>{{ $admin->email }}</td>
-            <td>{{ $admin->contact }}</td>
+            <td onclick="window.location='{{ route('user.profile', $admin->id) }}'" style="cursor:pointer;">{{ $admin->name }}</td>
+            <td onclick="window.location='{{ route('user.profile', $admin->id) }}'" style="cursor:pointer;">{{ $admin->business_name }}</td>
+            <td onclick="window.location='{{ route('user.profile', $admin->id) }}'" style="cursor:pointer;">{{ $admin->email }}</td>
+            <td onclick="window.location='{{ route('user.profile', $admin->id) }}'" style="cursor:pointer;">{{ $admin->contact }}</td>
             <td>
                 @if ($admin->active)
                 <span class="badge bg-success">Active</span>
@@ -40,7 +40,7 @@
                 @endif
             </td>
             <td>
-                <button href="{{ route('user.edit', $admin->id) }}" class="bg-gray-300 p-3 mx-1">Edit</button>
+                <button> <a href="{{ route('user.edit', $admin->id) }}" class="bg-gray-300 p-3 mx-1">Edit</a></button>
                 @if(auth()->id() === 1 && auth()->id() !== $admin->id)
                 <form method="POST" action="{{ route('user.delete', $admin->id) }}" style="display:inline">
                     @csrf
@@ -50,7 +50,6 @@
                 @endif
             </td>
         </tr>
-
         @endforeach
     </tbody>
 </table>

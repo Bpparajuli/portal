@@ -13,11 +13,14 @@ class Course extends Model
         'university_id',
         'course_code',
         'title',
+        'course_type',
         'description',
         'duration',
         'fee',
         'intakes',
-        'MOI Requirement',
+        'ielts_pte_other_languages',
+        'moi_requirement',
+        'application_fee',
     ];
 
     /**

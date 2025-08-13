@@ -6,23 +6,27 @@
     <h2>User Profile: {{ $user->name }}</h2>
 
     <div class="card mb-3">
-        <div class="card-body">
-            <p><strong>Business Name:</strong> {{ $user->business_name }}</p>
-            <p><strong>Owner:</strong> {{ $user->owner_name }}</p>
-            <p><strong>Contact:</strong> {{ $user->contact }}</p>
-            <p><strong>Email:</strong> {{ $user->email }}</p>
-            <p><strong>Role:</strong>
-                @if($user->is_admin) Admin
-                @elseif($user->is_agent) Agent
-                @else User
+        <div class="d-flex justify-content-between align-items-center p-1">
+            <div class="card-body">
+                <p><strong>Business Name:</strong> {{ $user->business_name }}</p>
+                <p><strong>Owner:</strong> {{ $user->owner_name }}</p>
+                <p><strong>Contact:</strong> {{ $user->contact }}</p>
+                <p><strong>Email:</strong> {{ $user->email }}</p>
+                <p><strong>Role:</strong>
+                    @if($user->is_admin) Admin
+                    @elseif($user->is_agent) Agent
+                    @else User
+                    @endif
+                </p>
+                <p><strong>Status:</strong>
+                    {!! $user->active ? '<span class="badge bg-success">Active</span>' : '<span class="badge bg-secondary">Pending</span>' !!}
+                </p>
+            </div>
+            <div class="business-logo">
+                @if($user->business_logo)
+                <img src="{{ asset('images/Agents_logo/' . $user->business_logo) }}" alt="Logo" class="uni-logo">
                 @endif
-            </p>
-            <p><strong>Status:</strong>
-                {!! $user->active ? '<span class="badge bg-success">Active</span>' : '<span class="badge bg-secondary">Pending</span>' !!}
-            </p>
-            @if($user->business_logo)
-            <img src="{{ asset('images/Agents_logo/' . $user->business_logo) }}" alt="Logo" height="200px">
-            @endif
+            </div>
         </div>
     </div>
 

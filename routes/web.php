@@ -9,6 +9,7 @@ use App\Http\Controllers\ContactController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\UniversityController;
 use App\Http\Controllers\CourseController;
+use App\Http\Middleware\AdminMiddleware;
 
 /*
 |--------------------------------------------------------------------------
@@ -75,7 +76,6 @@ Route::middleware('auth')->group(function () {
 
     // Other pages
     Route::view('/student/list', 'student.list')->name('student.list');
-    Route::view('/university/list', 'university.list')->name('university.list');
 
     // User management routes with manual check inside controller
     Route::get('/users', [UserController::class, 'list'])->name('user.list');
@@ -94,8 +94,24 @@ Route::middleware('auth')->group(function () {
     Route::post('/notifications/mark-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.markAll');
     Route::delete('/notifications/delete-all', [NotificationController::class, 'deleteAll'])->name('notifications.deleteAll');
 });
+// Public routes
+Route::get('universities', [UniversityController::class, 'index'])->name('universities.index');
 
-Route::middleware(['auth'])->group(function () {
-    Route::resource('universities', UniversityController::class);
+// Authenticated routes for admins
+Route::middleware(['auth',  AdminMiddleware::class])->group(function () {
+    Route::get('universities/create', [UniversityController::class, 'create'])->name('universities.create');
+    Route::post('universities', [UniversityController::class, 'store'])->name('universities.store');
+    Route::get('universities/{id}/edit', [UniversityController::class, 'edit'])->name('universities.edit');
+    Route::put('universities/{id}', [UniversityController::class, 'update'])->name('universities.update');
+    Route::delete('universities/{id}', [UniversityController::class, 'destroy'])->name('universities.destroy');
+
+    // Courses management
+    Route::get('courses/create', [CourseController::class, 'create'])->name('courses.create');
+    Route::post('courses', [CourseController::class, 'store'])->name('courses.store');
+    Route::get('courses/{id}/edit', [CourseController::class, 'edit'])->name('courses.edit');
+    Route::put('courses/{id}', [CourseController::class, 'update'])->name('courses.update');
+    Route::delete('courses/{id}', [CourseController::class, 'destroy'])->name('courses.destroy');
 });
-Route::resource('courses', CourseController::class)->except(['index', 'show', 'create']);
+
+// This must come LAST so it doesn't override create/edit
+Route::get('universities/{id}', [UniversityController::class, 'profile'])->name('universities.profile');

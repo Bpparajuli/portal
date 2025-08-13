@@ -9,8 +9,9 @@ class AdminMiddleware
 {
     public function handle($request, Closure $next)
     {
+        // Check if the logged-in user is admin
         if (!Auth::check() || !Auth::user()->is_admin) {
-            abort(403, 'Unauthorized action.');
+            return redirect('/')->with('error', 'You do not have admin access.');
         }
 
         return $next($request);

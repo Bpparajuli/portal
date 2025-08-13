@@ -1,13 +1,12 @@
-@extends('layouts.app')
+@extends('layout.app')
 
 @section('content')
-<div class="container mt-4">
+<div class=" mt-4">
     <h2>Edit University</h2>
 
     {{-- Validation Errors --}}
     @if($errors->any())
     <div class="alert alert-danger">
-        <strong>There were some errors:</strong>
         <ul class="mb-0 mt-2">
             @foreach($errors->all() as $error)
             <li>{{ $error }}</li>
@@ -16,7 +15,12 @@
     </div>
     @endif
 
-    <form action="{{ route('universities.update', $university->id) }}" method="POST">
+    {{-- Success Message --}}
+    @if(session('success'))
+    <div class="alert alert-success">{{ session('success') }}</div>
+    @endif
+
+    <form action="{{ route('universities.update', $university->id) }}" method="POST" enctype="multipart/form-data">
         @csrf
         @method('PUT')
 
@@ -27,8 +31,8 @@
     </form>
 
     <hr>
-
-    <h3>Courses</h3>
+    <h3>Courses at {{ $university->short_name ?? $university->name }}</h3>
+    <a href="{{ route('courses.create') }}" class="btn btn-primary mb-3">Add New Course</a>
 
     @if($university->courses->count())
     <table class="table table-bordered">
@@ -67,46 +71,5 @@
     @else
     <p>No courses found for this university.</p>
     @endif
-
-    <hr>
-
-    <h3>Add New Course</h3>
-    <form action="{{ route('courses.store') }}" method="POST">
-        @csrf
-
-        <input type="hidden" name="university_id" value="{{ $university->id }}">
-
-        <div class="mb-3">
-            <label for="course_code" class="form-label">Course Code</label>
-            <input type="text" class="form-control" id="course_code" name="course_code" required>
-        </div>
-
-        <div class="mb-3">
-            <label for="title" class="form-label">Title</label>
-            <input type="text" class="form-control" id="title" name="title" required>
-        </div>
-
-        <div class="mb-3">
-            <label for="duration" class="form-label">Duration</label>
-            <input type="text" class="form-control" id="duration" name="duration">
-        </div>
-
-        <div class="mb-3">
-            <label for="fee" class="form-label">Fee</label>
-            <input type="number" class="form-control" id="fee" name="fee" step="0.01" min="0">
-        </div>
-
-        <div class="mb-3">
-            <label for="intakes" class="form-label">Intakes</label>
-            <input type="text" class="form-control" id="intakes" name="intakes">
-        </div>
-
-        <div class="mb-3">
-            <label for="moi_requirement" class="form-label">MOI Requirement</label>
-            <input type="text" class="form-control" id="moi_requirement" name="moi_requirement">
-        </div>
-
-        <button type="submit" class="btn btn-primary">Add Course</button>
-    </form>
 </div>
 @endsection
