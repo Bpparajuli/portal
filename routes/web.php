@@ -7,6 +7,8 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\UniversityController;
+use App\Http\Controllers\CourseController;
 
 /*
 |--------------------------------------------------------------------------
@@ -92,3 +94,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/notifications/mark-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.markAll');
     Route::delete('/notifications/delete-all', [NotificationController::class, 'deleteAll'])->name('notifications.deleteAll');
 });
+
+Route::middleware(['auth'])->group(function () {
+    Route::resource('universities', UniversityController::class);
+});
+Route::resource('courses', CourseController::class)->except(['index', 'show', 'create']);

@@ -70,8 +70,8 @@ $user = auth()->user();
                                 <p class="nav-text">Students</p>
                             </a>
                         </li>
-                        <li class="nav-item {{ request()->is('university/list') ? 'active' : '' }}">
-                            <a href="{{ route('university.list') }}">
+                        <li class="nav-item {{ request()->is('universities') ? 'active' : '' }}">
+                            <a href="{{ route('universities.index') }}">
                                 <i class="fa fa-calendar-check nav-icon"></i>
                                 <p class="nav-text">Universities</p>
                             </a>
