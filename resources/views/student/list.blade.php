@@ -1,7 +1,6 @@
 @extends('layout.app')
-
-@section('main')
-<div class="container mt-4">
+@section('content')
+<div class=" mt-4">
     <div class="d-flex justify-content-between">
         <h2>All Student List</h2>
         <a href="manage_student.php" class="btn btn-primary">Add New Student</a>
@@ -17,12 +16,11 @@
                 <label for="agent" class="form-label">Filter by Agent</label>
                 <select class="form-select" id="agent" name="agent">
                     <option value="">All Agents</option>
-                    <option value="6">
-                        Client Outreach </option>
-                    <option value="12">
-                        DEC </option>
-                    <option value="5">
-                        Sales Connect </option>
+                    @foreach($agents as $agent)
+                    <option value="{{ $agent->id }}">
+                        {{ $agent->business_name ?? $agent->username }}
+                    </option>
+                    @endforeach
                 </select>
             </div>
             <div class="col-md-3">

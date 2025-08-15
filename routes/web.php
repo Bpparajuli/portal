@@ -10,6 +10,8 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\UniversityController;
 use App\Http\Controllers\CourseController;
 use App\Http\Middleware\AdminMiddleware;
+use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\StudentController;
 
 /*
 |--------------------------------------------------------------------------
@@ -59,12 +61,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/logout', [LoginController::class, 'logout']); // optional fallback
 
     // Admin dashboard with manual check
-    Route::get('/admin/dashboard', function () {
-        if (!Auth::user()->is_admin) {
-            abort(403, 'Unauthorized');
-        }
-        return view('admin.dashboard');
-    })->name('admin.dashboard');
+
+    Route::get('/admin/dashboard', [DashboardController::class, 'index'])
+        ->name('admin.dashboard')
+        ->middleware('auth'); // optional, ensures only logged-in users can access
 
     // Agent dashboard with manual check
     Route::get('/agent/dashboard', function () {
@@ -75,18 +75,17 @@ Route::middleware('auth')->group(function () {
     })->name('agent.dashboard');
 
     // Other pages
-    Route::view('/student/list', 'student.list')->name('student.list');
 
     // User management routes with manual check inside controller
-    Route::get('/users', [UserController::class, 'list'])->name('user.list');
-    Route::get('/users/create', [UserController::class, 'create'])->name('user.create');
-    Route::post('/users/store', [UserController::class, 'store'])->name('user.store');
-    Route::get('/users/edit/{id}', [UserController::class, 'edit'])->name('user.edit');
-    Route::put('/users/update/{id}', [UserController::class, 'update'])->name('user.update');
+    Route::get('/user', [UserController::class, 'list'])->name('user.list');
+    Route::get('/user/create', [UserController::class, 'create'])->name('user.create');
+    Route::post('/user/store', [UserController::class, 'store'])->name('user.store');
+    Route::get('/user/edit/{id}', [UserController::class, 'edit'])->name('user.edit');
+    Route::put('/user/update/{id}', [UserController::class, 'update'])->name('user.update');
     Route::delete('/user/{id}/delete', [UserController::class, 'destroy'])->name('user.delete');
-    Route::get('/users/waiting', [UserController::class, 'waitingList'])->name('user.waiting');
-    Route::post('/users/approve/{id}', [UserController::class, 'approve'])->name('user.approve');
-    Route::get('/users/{id}/profile', [UserController::class, 'profile'])->name('user.profile');
+    Route::get('/user/waiting', [UserController::class, 'waitingList'])->name('user.waiting');
+    Route::post('/user/approve/{id}', [UserController::class, 'approve'])->name('user.approve');
+    Route::get('/user/{id}/profile', [UserController::class, 'profile'])->name('user.profile');
 
     // Notification routes
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
@@ -115,3 +114,4 @@ Route::middleware(['auth',  AdminMiddleware::class])->group(function () {
 
 // This must come LAST so it doesn't override create/edit
 Route::get('universities/{id}', [UniversityController::class, 'profile'])->name('universities.profile');
+Route::get('/student/list', [StudentController::class, 'list'])->name('student.list');

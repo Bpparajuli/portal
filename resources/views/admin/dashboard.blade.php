@@ -3,8 +3,8 @@
 @section('admin-content')
 <div class="mt-4">
     <div class="row">
-        <div class="col-md-3 mb-4">
-            <div class="card bg-warning text-white shadow">
+        <div class="col-md-2 mb-4">
+            <div class="card bg-primary text-white shadow">
                 <div class="card-body">
                     <h5 class="card-title">New Applications</h5>
                     <p class="card-text fs-2">0</p>
@@ -12,17 +12,17 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-3 mb-4">
-            <div class="card bg-success text-dark shadow">
+        <div class="col-md-2 mb-4">
+            <div class="card bg-secondary text-white shadow">
                 <div class="card-body">
                     <h5 class="card-title">Total Agents</h5>
-                    <p class="card-text fs-2">3</p>
-                    <a href="admin_students_list.php?status_filter=Documents Submitted" class="btn btn-sm btn-dark">View All</a>
+                    <p class="card-text text-white fs-2">{{ $totalAgents }}</p>
+                    <a href="{{ route('user.list') }}" class="btn btn-sm btn-dark">View All</a>
                 </div>
             </div>
         </div>
-        <div class="col-md-3 mb-4">
-            <div class="card bg-secondary text-white shadow">
+        <div class="col-md-2 mb-4">
+            <div class="card bg-primary text-white shadow">
                 <div class="card-body">
                     <h5 class="card-title">Total Students</h5>
                     <p class="card-text fs-2">7</p>
@@ -30,12 +30,30 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-3 mb-4">
-            <div class="card bg-info text-white shadow">
+        <div class="col-md-2 mb-4">
+            <div class="card bg-secondary text-white shadow">
                 <div class="card-body">
                     <h5 class="card-title">Total Universities</h5>
-                    <p class="card-text fs-2">10</p>
-                    <a href="universities_list.php" class="btn btn-sm btn-light">View All</a>
+                    <p class="card-text text-white fs-2">{{ $totalUniversities }}</p>
+                    <a href="{{ route('universities.index') }}" class="btn btn-sm btn-dark">View All</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2 mb-4">
+            <div class="card bg-primary text-white shadow">
+                <div class="card-body">
+                    <h5 class="card-title">Total Courses</h5>
+                    <p class="card-text text-white fs-2">{{ $totalCourses }}</p>
+                    <a href="{{ route('universities.index') }}" class="btn btn-sm btn-dark">View All</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2 mb-4">
+            <div class="card bg-secondary text-white shadow">
+                <div class="card-body">
+                    <h5 class="card-title">Pending Users</h5>
+                    <p class="card-text text-white fs-2">{{ $totalPendingUsers}}</p>
+                    <a href="{{ route('user.waiting') }}" class="btn btn-sm btn-dark">View All</a>
                 </div>
             </div>
         </div>

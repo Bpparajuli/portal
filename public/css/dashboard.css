@@ -153,8 +153,11 @@ main {
 .activity-container {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
-    grid-template-rows: repeat(2, 150px);
-    column-gap: 10px;
+    grid-template-rows: repeat(2, 250px);
+    column-gap: 20px;
+    row-gap: 15px;
+    margin-top: 20px;
+    margin-bottom: 20px;
 }
 
 .img-one {

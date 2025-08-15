@@ -13,6 +13,28 @@
         </div>
     </div>
 </div>
+<div class="it-cta-area it-cta-height black-bg p-relative">
+    <div class="it-cta-bg d-none d-xl-block">
+        <img src="assets/img/cta-1.png" alt>
+    </div>
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-xl-9 col-lg-7 col-md-7">
+                <div class="it-cta-content">
+                    <h4 class="it-cta-title">Grow your business 10x with MAKE IT IN ABROAD</h4>
+                    <p class="it-cta-para">Create applications within 30 mins</p>
+                </div>
+            </div>
+
+            <div class="col-xl-3 col-lg-5 col-md-5">
+                <div class="it-cta-button text-md-end">
+                    <a href="partner-register.php" class="theme-btn"><i class="fa-regular fa-user-tie"></i>
+                        Become a partner </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 <h3 class="bg-gray-300 text-dark bold p-3 text-center m-2">Countries We Are Working With</h3>
 <div class="activity-container">
     <div class="image-container img-one">
