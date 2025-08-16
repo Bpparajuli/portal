@@ -114,4 +114,32 @@ Route::middleware(['auth',  AdminMiddleware::class])->group(function () {
 
 // This must come LAST so it doesn't override create/edit
 Route::get('universities/{id}', [UniversityController::class, 'profile'])->name('universities.profile');
-Route::get('/student/list', [StudentController::class, 'list'])->name('student.list');
+
+
+//students routes
+
+Route::middleware(['auth'])->group(function () {
+    // Student CRUD
+    Route::get('/students', [StudentController::class, 'index'])->name('students.index');
+    Route::get('/student/list', [StudentController::class, 'list'])->name('students.list');
+    Route::get('/student/create', [StudentController::class, 'create'])->name('students.create');
+    Route::post('/student', [StudentController::class, 'store'])->name('students.store');
+    Route::get('/student/{student}/edit', [StudentController::class, 'edit'])->name('students.edit');
+    Route::put('/student/{student}', [StudentController::class, 'update'])->name('students.update');
+    Route::get('/student/{student}', [StudentController::class, 'show'])->name('students.show');
+
+    // Apply Now
+    Route::get('/student/{student}/apply', [StudentController::class, 'apply'])->name('students.apply');
+    Route::post('/student/{student}/submit-application', [StudentController::class, 'submitApplication'])->name('students.submitApplication');
+
+    // Documents
+    Route::get('/application/{application}/documents', [StudentController::class, 'documents'])->name('applications.documents');
+    Route::post('/application/{application}/documents', [StudentController::class, 'storeDocuments'])->name('applications.documents.store');
+
+    // Chat
+    Route::get('/application/{application}/chat', [StudentController::class, 'chat'])->name('applications.chat');
+    Route::post('/application/{application}/chat', [StudentController::class, 'storeChat'])->name('applications.chat.store');
+
+    // Profile
+    Route::get('/profile', [StudentController::class, 'profile'])->name('profile');
+});
