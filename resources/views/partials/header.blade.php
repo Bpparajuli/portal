@@ -65,7 +65,7 @@ $user = auth()->user();
                             </a>
                         </li>
                         <li class="nav-item {{ request()->is('student/list') ? 'active' : '' }}">
-                            <a href="{{ route('student.list') }}">
+                            <a href="{{ route('students.index') }}">
                                 <i class="fa fa-users nav-icon"></i>
                                 <p class="nav-text">Students</p>
                             </a>
@@ -96,7 +96,7 @@ $user = auth()->user();
                             </a>
                         </li>
                         <li class="nav-item {{ request()->is('student/list') ? 'active' : '' }}">
-                            <a href="{{ route('student.list') }}">
+                            <a href="{{ route('students.index') }}">
                                 <i class="fa fa-users nav-icon"></i>
                                 <p class="nav-text">Students</p>
                             </a>

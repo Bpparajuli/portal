@@ -24,7 +24,7 @@
         @csrf
         @method('PUT')
 
-        @include('universities._form')
+        @include('universities.form')
 
         <button type="submit" class="btn btn-success">Update University</button>
         <a href="{{ route('universities.index') }}" class="btn btn-secondary">Cancel</a>

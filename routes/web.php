@@ -116,30 +116,28 @@ Route::middleware(['auth',  AdminMiddleware::class])->group(function () {
 Route::get('universities/{id}', [UniversityController::class, 'profile'])->name('universities.profile');
 
 
-//students routes
-
 Route::middleware(['auth'])->group(function () {
-    // Student CRUD
-    Route::get('/students', [StudentController::class, 'index'])->name('students.index');
-    Route::get('/student/list', [StudentController::class, 'list'])->name('students.list');
-    Route::get('/student/create', [StudentController::class, 'create'])->name('students.create');
-    Route::post('/student', [StudentController::class, 'store'])->name('students.store');
-    Route::get('/student/{student}/edit', [StudentController::class, 'edit'])->name('students.edit');
-    Route::put('/student/{student}', [StudentController::class, 'update'])->name('students.update');
-    Route::get('/student/{student}', [StudentController::class, 'show'])->name('students.show');
 
-    // Apply Now
-    Route::get('/student/{student}/apply', [StudentController::class, 'apply'])->name('students.apply');
-    Route::post('/student/{student}/submit-application', [StudentController::class, 'submitApplication'])->name('students.submitApplication');
+    // Main Student Resource
+    Route::resource('students', StudentController::class);
 
-    // Documents
-    Route::get('/application/{application}/documents', [StudentController::class, 'documents'])->name('applications.documents');
-    Route::post('/application/{application}/documents', [StudentController::class, 'storeDocuments'])->name('applications.documents.store');
+    Route::get('students/{student}/documents', [StudentController::class, 'documents'])->name('students.documents');
+    Route::post('students/{student}/documents', [StudentController::class, 'storeDocuments'])->name('students.storeDocuments');
 
-    // Chat
-    Route::get('/application/{application}/chat', [StudentController::class, 'chat'])->name('applications.chat');
-    Route::post('/application/{application}/chat', [StudentController::class, 'storeChat'])->name('applications.chat.store');
+    // Applications (always tied to a student)
+    Route::get('students/{student}/apply', [StudentController::class, 'apply'])->name('students.apply');
+    Route::post('students/{student}/apply', [StudentController::class, 'submitApplication'])->name('students.submitApplication');
 
-    // Profile
-    Route::get('/profile', [StudentController::class, 'profile'])->name('profile');
+    Route::get('students/{student}/chat', [StudentController::class, 'chat'])->name('students.chat');
+    Route::post('students/{student}/chat', [StudentController::class, 'storeChat'])->name('students.storeChat');
+
+
+    // Documents tied to an application    Route::get('applications/{application}/documents', [StudentController::class, 'documents'])->name('applications.documents');
+
+    Route::get('applications/{application}/documents', [StudentController::class, 'documents'])->name('applications.documents');
+    Route::post('applications/{application}/documents', [StudentController::class, 'storeDocuments'])->name('applications.documents.store');
+
+    // Chat tied to an application
+    Route::get('applications/{application}/chat', [StudentController::class, 'chat'])->name('applications.chat');
+    Route::post('applications/{application}/chat', [StudentController::class, 'storeChat'])->name('applications.chat.store');
 });

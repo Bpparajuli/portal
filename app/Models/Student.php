@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Student extends Model
 {
+    use HasFactory;
+    protected $table = 'students';
     protected $fillable = [
         'agent_id',
         'first_name',
@@ -43,5 +46,9 @@ class Student extends Model
     public function applications()
     {
         return $this->hasMany(StudentApplication::class);
+    }
+    public function chats()
+    {
+        return $this->hasMany(Chat::class);
     }
 }

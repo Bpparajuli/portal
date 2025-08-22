@@ -23,7 +23,7 @@
     <form action="{{ route('universities.store') }}" method="POST" enctype="multipart/form-data">
         @csrf
 
-        @include('universities._form')
+        @include('universities.form')
 
         <button type="submit" class="btn btn-success">Add University</button>
         <a href="{{ route('universities.index') }}" class="btn btn-secondary">Cancel</a>

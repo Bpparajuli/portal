@@ -24,7 +24,7 @@ class ContactController extends Controller
 
         // Send a simple email
         Mail::send([], [], function ($message) use ($data) {
-            $message->to('info@ideaconsultancyservices.com')
+            $message->to('bishesworparajuli@gmail.com')
                 ->from($data['email'], $data['name'])
                 ->subject($data['subject'] ?? 'New Contact Form Message')
                 ->setBody(

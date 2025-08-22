@@ -3,9 +3,9 @@
 @section('content')
 <h2>Edit Student</h2>
 
-<form method="POST" action="{{ route('student.update',$student->id) }}">
+<form method="POST" action="{{ route('students.update',$student->id) }}">
     @csrf @method('PUT')
-    @include('student.form')
+    @include('students.form')
     <button class="btn btn-primary">Update Student</button>
 </form>
 @endsection
