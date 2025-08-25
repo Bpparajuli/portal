@@ -4,17 +4,22 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class ApplicationDocument extends Model
+class Application extends Model
 {
-    protected $fillable = [
-        'application_id',
-        'document_type',
-        'file_path',
-        'uploaded_by',
-    ];
+    protected $fillable = ['student_id', 'university_id', 'course_id', 'status'];
 
-    public function application()
+    public function student()
     {
-        return $this->belongsTo(StudentApplication::class, 'application_id');
+        return $this->belongsTo(Student::class);
+    }
+
+    public function universities()
+    {
+        return $this->belongsTo(University::class);
+    }
+
+    public function course()
+    {
+        return $this->belongsTo(Course::class);
     }
 }

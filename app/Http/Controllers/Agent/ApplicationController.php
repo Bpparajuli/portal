@@ -4,50 +4,47 @@ namespace App\Http\Controllers\Agent;
 
 use App\Http\Controllers\Controller;
 use App\Models\Application;
-use App\Models\Student;
-use App\Models\University;
-use App\Models\Course;
-use App\Models\User;
-use App\Notifications\ApplicationSubmittedNotification;
 use Illuminate\Http\Request;
 
 class ApplicationController extends Controller
 {
-    public function create(Student $student)
+    public function index()
     {
-        if ($student->agent_id !== auth()->id()) {
-            abort(403);
-        }
-        $universities = University::all();
-        return view('agent.applications.create', compact('student', 'universities'));
+        $applications = Application::with(['student', 'university', 'course'])->latest()->get();
+        return view('agent.applications.index', compact('applications'));
     }
 
-    public function store(Request $request, Student $student)
+    public function create()
     {
-        if ($student->agent_id !== auth()->id()) {
-            abort(403);
-        }
-        $validatedData = $request->validate([
-            'university_id' => 'required|exists:universities,id',
-            'course_id' => 'required|exists:courses,id',
-            // ... other validation rules
+        return view('agent.applications.create');
+    }
+
+    public function store(Request $request)
+    {
+        $request->validate([
+            'student_id' => 'required',
+            'university_id' => 'required',
+            'course_id' => 'required'
         ]);
 
-        $application = $student->applications()->create($validatedData);
+        Application::create($request->all());
 
-        $admin = User::where('role', 'admin')->first();
-        if ($admin) {
-            $admin->notify(new ApplicationSubmittedNotification($application));
-        }
-
-        return redirect()->route('agent.applications.show', $application)->with('success', 'Application submitted successfully.');
+        return redirect()->route('agent.applications.index')->with('success', 'Application created.');
     }
 
-    public function show(Application $application)
+    public function edit(Application $application)
     {
-        if ($application->student->agent_id !== auth()->id()) {
-            abort(403);
-        }
-        return view('agent.applications.show', compact('application'));
+        return view('agent.applications.edit', compact('application'));
+    }
+
+    public function update(Request $request, Application $application)
+    {
+        $request->validate([
+            'status' => 'required'
+        ]);
+
+        $application->update($request->all());
+
+        return redirect()->route('agent.applications.index')->with('success', 'Application updated.');
     }
 }

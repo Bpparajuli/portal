@@ -1,143 +1,136 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Auth;
-use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Guest\CourseController as GuestCourseController;
+use App\Http\Controllers\Guest\UniversityController as GuestUniversityController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
-use App\Http\Controllers\ContactController;
-use App\Http\Controllers\NotificationController;
-use App\Http\Controllers\UniversityController;
-use App\Http\Controllers\CourseController;
-use App\Http\Middleware\AdminMiddleware;
-use App\Http\Controllers\Admin\DashboardController;
-use App\Http\Controllers\StudentController;
+use App\Http\Controllers\Auth\ContactController;
+use App\Http\Controllers\Admin\ApplicationController as AdminApplicationController;
+use App\Http\Controllers\Admin\ChatController as AdminChatController;
+use App\Http\Controllers\Admin\CourseController as AdminCourseController;
+use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\DocumentController as AdminDocumentController;
+use App\Http\Controllers\Admin\NotificationController as AdminNotificationController;
+use App\Http\Controllers\Admin\StudentController as AdminStudentController;
+use App\Http\Controllers\Admin\UniversityController as AdminUniversityController;
+use App\Http\Controllers\Admin\UserController as AdminUserController;
+use App\Http\Controllers\Agent\ApplicationController as AgentApplicationController;
+use App\Http\Controllers\Agent\ChatController as AgentChatController;
+use App\Http\Controllers\Agent\CourseController as AgentCourseController;
+use App\Http\Controllers\Agent\DashboardController as AgentDashboardController;
+use App\Http\Controllers\Agent\DocumentController as AgentDocumentController;
+use App\Http\Controllers\Agent\NotificationController as AgentNotificationController;
+use App\Http\Controllers\Agent\StudentController as AgentStudentController;
+use App\Http\Controllers\Agent\UniversityController as AgentUniversityController;
 
 /*
 |--------------------------------------------------------------------------
-| Public / Guest Routes
+| Web Routes
 |--------------------------------------------------------------------------
+|
+| This file contains all the routes for your application. These
+| routes are loaded by the RouteServiceProvider within a group
+| which contains the "web" middleware group.
+|
 */
 
+// Welcome page
 Route::view('/', 'welcome')->name('welcome');
-Route::view('/contact', 'contact')->name('contact');
-Route::view('/terms', 'terms')->name('terms');
-Route::post('/contact', [ContactController::class, 'submit'])->name('contact.submit');
 
-Route::get('/dashboard', function () {
-    if (Auth::check()) {
-        $user = Auth::user();
-        if ($user->is_admin) {
-            return redirect()->route('admin.dashboard');
-        } elseif ($user->is_agent) {
-            return redirect()->route('agent.dashboard');
-        } else {
-            return redirect('/user/dashboard'); // fallback
-        }
-    }
-    return view('dashboard'); // guest view
-})->name('dashboard');
+// Guest routes - Accessible to all
+Route::prefix('guest')->name('guest.')->group(function () {
+    Route::controller(GuestUniversityController::class)->group(function () {
+        Route::get('universities', 'index')->name('universities.index');
+        Route::get('universities/{university}', 'show')->name('universities.show');
+    });
 
-/*
-|--------------------------------------------------------------------------
-| Guest Routes
-|--------------------------------------------------------------------------
-*/
-Route::middleware('guest')->group(function () {
-    Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
-    Route::post('/login', [LoginController::class, 'login']);
-    Route::get('/register', [RegisterController::class, 'showRegistrationForm'])->name('register');
-    Route::post('/register', [RegisterController::class, 'register']);
+    Route::controller(GuestCourseController::class)->group(function () {
+        Route::get('courses', 'index')->name('courses.index');
+        Route::get('courses/{course}', 'show')->name('courses.show');
+    });
+
+    // Assuming this is a guest dashboard or homepage.
+    Route::get('dashboard', function () {
+        return view('guest.dashboard');
+    })->name('dashboard');
 });
 
-/*
-|--------------------------------------------------------------------------
-| Authenticated Routes
-|--------------------------------------------------------------------------
-*/
+// Add a route alias for `universities.show` to redirect to the correct prefixed route
+Route::get('universities/{university}', function ($university) {
+    return redirect()->route('guest.universities.show', ['university' => $university]);
+})->name('universities.show');
+
+
+// Authentication routes
+Route::prefix('auth')->name('auth.')->group(function () {
+    Route::controller(LoginController::class)->group(function () {
+        // Updated login routes to support both GET and POST methods
+        Route::get('login', 'showLoginForm')->name('login');
+        Route::post('login', 'login')->name('login.post');
+    });
+
+    Route::controller(RegisterController::class)->group(function () {
+        Route::get('register', 'showRegistrationForm')->name('register');
+        Route::post('register', 'register');
+    });
+
+    // Updated contact routes to handle both GET (show form) and POST (submit form)
+    Route::get('contact', [ContactController::class, 'showForm'])->name('contact');
+    Route::post('contact', [ContactController::class, 'submit'])->name('contact.submit');
+
+    // Terms page
+    Route::view('terms', 'auth.terms')->name('terms');
+});
+
+// A route to handle logout requests
+Route::post('/logout', [LoginController::class, 'logout'])->middleware('auth')->name('logout');
+
+
+// Add route aliases for 'login' and 'register' to avoid redirect errors from middleware
+Route::get('/login', function () {
+    return redirect()->route('auth.login');
+})->name('login');
+
+Route::get('/register', function () {
+    return redirect()->route('auth.register');
+})->name('register');
+
+
+// Admin routes - Protected by the 'admin' middleware
+// USING THE FULL CLASS PATH TO AVOID KERNEL ALIAS ISSUES
+Route::middleware(['auth', \App\Http\Middleware\IsAdmin::class])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
+    Route::get('chat', [AdminChatController::class, 'index'])->name('chat');
+    Route::get('notifications', [AdminNotificationController::class, 'index'])->name('notifications');
+    Route::get('users/waiting', [AdminUserController::class, 'waiting'])->name('users.waiting');
+
+    // Resource routes for CRUD operations
+    Route::resource('applications', AdminApplicationController::class);
+    Route::resource('courses', AdminCourseController::class);
+    Route::resource('students', AdminStudentController::class);
+    Route::resource('universities', AdminUniversityController::class);
+    Route::resource('users', controller: AdminUserController::class);
+    Route::resource('documents', AdminDocumentController::class);
+});
+
+// Agent routes - Protected by the 'agent' middleware
+// USING THE FULL CLASS PATH TO AVOID KERNEL ALIAS ISSUES
+Route::middleware(['auth', \App\Http\Middleware\IsAgent::class])->prefix('agent')->name('agent.')->group(function () {
+    Route::get('dashboard', [AgentDashboardController::class, 'index'])->name('dashboard');
+    Route::get('chat', [AgentChatController::class, 'index'])->name('chat');
+    Route::get('notifications', [AgentNotificationController::class, 'index'])->name('notifications');
+
+    // Resource routes for CRUD operations
+    Route::resource('applications', AgentApplicationController::class)->only(['index', 'show', 'edit', 'update']);
+    Route::resource('documents', AgentDocumentController::class);
+    Route::resource('students', AgentStudentController::class);
+    Route::resource('universities', AgentUniversityController::class)->only(['index', 'show']);
+    Route::resource('courses', AgentCourseController::class)->only(['index', 'show']);
+});
+
+// User routes (assuming regular users or students)
+// Add any routes here for students/users who are logged in but not admins or agents.
 Route::middleware('auth')->group(function () {
-
-    Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
-    Route::get('/logout', [LoginController::class, 'logout']); // optional fallback
-
-    // Admin dashboard with manual check
-
-    Route::get('/admin/dashboard', [DashboardController::class, 'index'])
-        ->name('admin.dashboard')
-        ->middleware('auth'); // optional, ensures only logged-in users can access
-
-    // Agent dashboard with manual check
-    Route::get('/agent/dashboard', function () {
-        if (!Auth::user()->is_agent) {
-            abort(403, 'Unauthorized');
-        }
-        return view('agent.dashboard');
-    })->name('agent.dashboard');
-
-    // Other pages
-
-    // User management routes with manual check inside controller
-    Route::get('/user', [UserController::class, 'list'])->name('user.list');
-    Route::get('/user/create', [UserController::class, 'create'])->name('user.create');
-    Route::post('/user/store', [UserController::class, 'store'])->name('user.store');
-    Route::get('/user/edit/{id}', [UserController::class, 'edit'])->name('user.edit');
-    Route::put('/user/update/{id}', [UserController::class, 'update'])->name('user.update');
-    Route::delete('/user/{id}/delete', [UserController::class, 'destroy'])->name('user.delete');
-    Route::get('/user/waiting', [UserController::class, 'waitingList'])->name('user.waiting');
-    Route::post('/user/approve/{id}', [UserController::class, 'approve'])->name('user.approve');
-    Route::get('/user/{id}/profile', [UserController::class, 'profile'])->name('user.profile');
-
-    // Notification routes
-    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
-    Route::post('/notifications/{id}/mark', [NotificationController::class, 'markAsRead'])->name('notifications.mark');
-    Route::post('/notifications/mark-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.markAll');
-    Route::delete('/notifications/delete-all', [NotificationController::class, 'deleteAll'])->name('notifications.deleteAll');
-});
-// Public routes
-Route::get('universities', [UniversityController::class, 'index'])->name('universities.index');
-
-// Authenticated routes for admins
-Route::middleware(['auth',  AdminMiddleware::class])->group(function () {
-    Route::get('universities/create', [UniversityController::class, 'create'])->name('universities.create');
-    Route::post('universities', [UniversityController::class, 'store'])->name('universities.store');
-    Route::get('universities/{id}/edit', [UniversityController::class, 'edit'])->name('universities.edit');
-    Route::put('universities/{id}', [UniversityController::class, 'update'])->name('universities.update');
-    Route::delete('universities/{id}', [UniversityController::class, 'destroy'])->name('universities.destroy');
-
-    // Courses management
-    Route::get('courses/create', [CourseController::class, 'create'])->name('courses.create');
-    Route::post('courses', [CourseController::class, 'store'])->name('courses.store');
-    Route::get('courses/{id}/edit', [CourseController::class, 'edit'])->name('courses.edit');
-    Route::put('courses/{id}', [CourseController::class, 'update'])->name('courses.update');
-    Route::delete('courses/{id}', [CourseController::class, 'destroy'])->name('courses.destroy');
-});
-
-// This must come LAST so it doesn't override create/edit
-Route::get('universities/{id}', [UniversityController::class, 'profile'])->name('universities.profile');
-
-
-Route::middleware(['auth'])->group(function () {
-
-    // Main Student Resource
-    Route::resource('students', StudentController::class);
-
-    Route::get('students/{student}/documents', [StudentController::class, 'documents'])->name('students.documents');
-    Route::post('students/{student}/documents', [StudentController::class, 'storeDocuments'])->name('students.storeDocuments');
-
-    // Applications (always tied to a student)
-    Route::get('students/{student}/apply', [StudentController::class, 'apply'])->name('students.apply');
-    Route::post('students/{student}/apply', [StudentController::class, 'submitApplication'])->name('students.submitApplication');
-
-    Route::get('students/{student}/chat', [StudentController::class, 'chat'])->name('students.chat');
-    Route::post('students/{student}/chat', [StudentController::class, 'storeChat'])->name('students.storeChat');
-
-
-    // Documents tied to an application    Route::get('applications/{application}/documents', [StudentController::class, 'documents'])->name('applications.documents');
-
-    Route::get('applications/{application}/documents', [StudentController::class, 'documents'])->name('applications.documents');
-    Route::post('applications/{application}/documents', [StudentController::class, 'storeDocuments'])->name('applications.documents.store');
-
-    // Chat tied to an application
-    Route::get('applications/{application}/chat', [StudentController::class, 'chat'])->name('applications.chat');
-    Route::post('applications/{application}/chat', [StudentController::class, 'storeChat'])->name('applications.chat.store');
+    //
 });

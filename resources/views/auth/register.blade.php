@@ -1,4 +1,4 @@
-@extends('layout.app')
+@extends('layouts.app')
 
 @section('content')
 <div class="row justify-content-center mt-5">
@@ -36,7 +36,7 @@
             <div class="form-check mb-2">
                 <input class="form-check-input" type="checkbox" name="terms" id="terms" required>
                 <label class="form-check-label" for="terms">
-                    I agree to the <a href="{{ route('terms') }}">Terms and Conditions</a>
+                    I agree to the <a href="{{ route('auth.terms') }}">Terms and Conditions</a>
                 </label>
             </div>
 

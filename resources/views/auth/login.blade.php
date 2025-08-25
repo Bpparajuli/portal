@@ -1,4 +1,4 @@
-@extends('layout.app')
+@extends('layouts.app')
 @section('title', 'Login')
 
 @section('content')
@@ -12,7 +12,7 @@
         @endif
         @endforeach
 
-        <form method="POST" action="{{ route('login') }}">
+        <form action="{{ route('auth.login.post') }}" method="POST">
             @csrf
             <h2 class="bold text-white text-center">Please Sign-in to enter</h2>
             {{-- Error messages --}}
@@ -34,7 +34,7 @@
                 <label class="text-white" for="password">Password</label>
             </div>
             <div class="text-white">
-                <a href="{{ route('contact') }}">Forgot Password?</a>
+                <a href="{{ route('auth.contact') }}">Forgot Password?</a>
             </div>
             <button data-mdb-ripple-init type="submit" class="btn button bg-primary btn-outline-light btn-block">Sign in</button>
         </form>

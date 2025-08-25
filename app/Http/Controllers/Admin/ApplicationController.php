@@ -4,32 +4,53 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Application;
-use App\Models\User;
-use App\Notifications\ApplicationStatusUpdatedNotification;
 use Illuminate\Http\Request;
 
 class ApplicationController extends Controller
 {
     public function index()
     {
-        $applications = Application::with('student', 'university', 'course')->latest()->get();
+        $applications = Application::with(['student', 'university', 'course'])->latest()->get();
         return view('admin.applications.index', compact('applications'));
     }
 
-    public function show(Application $application)
+    public function create()
     {
-        return view('admin.applications.show', compact('application'));
+        return view('admin.applications.create');
     }
 
-    public function updateStatus(Request $request, Application $application)
+    public function store(Request $request)
     {
-        $request->validate(['status' => 'required|string']);
-        $application->update(['application_status' => $request->status]);
+        $request->validate([
+            'student_id' => 'required',
+            'university_id' => 'required',
+            'course_id' => 'required'
+        ]);
 
-        // Notify the agent who created this application
-        $agent = $application->student->agent;
-        $agent->notify(new ApplicationStatusUpdatedNotification($application));
+        Application::create($request->all());
 
-        return back()->with('success', 'Application status updated successfully.');
+        return redirect()->route('admin.applications.index')->with('success', 'Application created.');
+    }
+
+    public function edit(Application $application)
+    {
+        return view('admin.applications.edit', compact('application'));
+    }
+
+    public function update(Request $request, Application $application)
+    {
+        $request->validate([
+            'status' => 'required'
+        ]);
+
+        $application->update($request->all());
+
+        return redirect()->route('admin.applications.index')->with('success', 'Application updated.');
+    }
+
+    public function destroy(Application $application)
+    {
+        $application->delete();
+        return redirect()->route('admin.applications.index')->with('success', 'Application deleted.');
     }
 }

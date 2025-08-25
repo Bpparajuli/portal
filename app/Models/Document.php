@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
-class StudentDocument extends Model
+class Document extends Model
 {
     use HasFactory;
 
@@ -17,6 +17,6 @@ class StudentDocument extends Model
 
     public function application()
     {
-        return $this->belongsTo(StudentApplication::class, 'student_application_id');
+        return $this->belongsTo(Application::class, 'student_application_id');
     }
 }

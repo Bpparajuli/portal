@@ -19,7 +19,7 @@ class LoginController extends Controller
                 return redirect()->intended('/agent/dashboard');
             }
 
-            return redirect()->intended('/dashboard'); // fallback if no role
+            return redirect()->intended('/'); // fallback if no role
         }
 
         return view('auth.login');
@@ -53,7 +53,7 @@ class LoginController extends Controller
                 return redirect('/agent/dashboard');
             }
 
-            return redirect('/dashboard');
+            return redirect('/');
         }
 
         return back()->withErrors(['email' => 'Invalid credentials.']);

@@ -1,4 +1,4 @@
-@extends('layout.admin')
+@extends('layouts.admin')
 
 @section('admin-content')
 <div class="mt-4">
@@ -8,7 +8,7 @@
                 <div class="card-body">
                     <h5 class="card-title">New Applications</h5>
                     <p class="card-text fs-2">0</p>
-                    <a href="admin_students_list.php?status_filter=Pending" class="btn btn-sm btn-light">View All</a>
+                    <a href="{{ route('admin.students.index', ['status_filter' => 'Pending']) }}" class="btn btn-sm btn-light">View All</a>
                 </div>
             </div>
         </div>
@@ -17,7 +17,7 @@
                 <div class="card-body">
                     <h5 class="card-title">Total Agents</h5>
                     <p class="card-text text-white fs-2">{{ $totalAgents }}</p>
-                    <a href="{{ route('user.list') }}" class="btn btn-sm btn-dark">View All</a>
+                    <a href="{{ route('admin.users.index') }}" class="btn btn-sm btn-dark">View All</a>
                 </div>
             </div>
         </div>
@@ -26,7 +26,7 @@
                 <div class="card-body">
                     <h5 class="card-title">Total Students</h5>
                     <p class="card-text fs-2">7</p>
-                    <a href="admin_students_list.php" class="btn btn-sm btn-light">View All</a>
+                    <a href="admin.students.index" class="btn btn-sm btn-light">View All</a>
                 </div>
             </div>
         </div>
@@ -35,7 +35,7 @@
                 <div class="card-body">
                     <h5 class="card-title">Total Universities</h5>
                     <p class="card-text text-white fs-2">{{ $totalUniversities }}</p>
-                    <a href="{{ route('universities.index') }}" class="btn btn-sm btn-dark">View All</a>
+                    <a href="{{ route('admin.universities.index') }}" class="btn btn-sm btn-dark">View All</a>
                 </div>
             </div>
         </div>
@@ -44,7 +44,7 @@
                 <div class="card-body">
                     <h5 class="card-title">Total Courses</h5>
                     <p class="card-text text-white fs-2">{{ $totalCourses }}</p>
-                    <a href="{{ route('universities.index') }}" class="btn btn-sm btn-dark">View All</a>
+                    <a href="{{ route('admin.courses.index') }}" class="btn btn-sm btn-dark">View All</a>
                 </div>
             </div>
         </div>
@@ -53,7 +53,7 @@
                 <div class="card-body">
                     <h5 class="card-title">Pending Users</h5>
                     <p class="card-text text-white fs-2">{{ $totalPendingUsers}}</p>
-                    <a href="{{ route('user.waiting') }}" class="btn btn-sm btn-dark">View All</a>
+                    <a href="{{ route('admin.users.waiting') }}" class="btn btn-sm btn-dark">View All</a>
                 </div>
             </div>
         </div>

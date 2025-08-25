@@ -1,4 +1,4 @@
-@extends('layout.agent')
+@extends('layouts.agent')
 
 @section('agent-content')
 <div class=" mt-4">

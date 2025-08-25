@@ -35,9 +35,19 @@ class Student extends Model
     {
         return $this->belongsTo(User::class, 'agent_id');
     }
+    /* A student can have many applications to different universities and courses.
+     */
     public function university()
     {
-        return $this->belongsTo(University::class, 'university_id');
+        return $this->belongsTo(University::class);
+    }
+
+    /**
+     * A student can have many documents.
+     */
+    public function documents()
+    {
+        return $this->hasMany(StudentDocument::class);
     }
     public function course()
     {
@@ -45,7 +55,7 @@ class Student extends Model
     }
     public function applications()
     {
-        return $this->hasMany(StudentApplication::class);
+        return $this->hasMany(Application::class);
     }
     public function chats()
     {

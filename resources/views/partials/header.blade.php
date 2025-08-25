@@ -30,17 +30,24 @@ $user = auth()->user();
                     @php
                     $notifications = auth()->user()->unreadNotifications;
                     @endphp
+                    @if ($user?->is_admin)
                     <li class="nav-item dropdown">
-                        <a class="nav-link" href="{{ route('notifications.index') }}">
+                        <a class="nav-link" href="{{ route('admin.notifications') }}">
                             🔔 @if($notifications->count())
                             <span class="badge bg-danger">{{ $notifications->count() }}</span>
                             @endif
                         </a>
-
-
                     </li>
+                    @elseif ($user?->is_agent)
+                    <li class="nav-item dropdown">
+                        <a class="nav-link" href="{{ route('agent.notifications') }}">
+                            🔔 @if($notifications->count())
+                            <span class="badge bg-danger">{{ $notifications->count() }}</span>
+                            @endif
+                        </a>
+                    </li>
+                    @endif
                     @endauth
-
 
                     @if ($user)
                     </a>
@@ -49,7 +56,6 @@ $user = auth()->user();
                     </div>
                     <div class="user-avatar">
                         <img style="width:60px; border-radius:20%;" src="{{ asset('images/Agents_logo/' . $user->business_logo) }}" alt="user" />
-
                     </div>
                     @endif
                 </div>
@@ -64,26 +70,26 @@ $user = auth()->user();
                                 <p class="nav-text">Dashboard</p>
                             </a>
                         </li>
-                        <li class="nav-item {{ request()->is('student/list') ? 'active' : '' }}">
-                            <a href="{{ route('students.index') }}">
+                        <li class="nav-item {{ request()->is('student/index') ? 'active' : '' }}">
+                            <a href="{{ route('admin.students.index') }}">
                                 <i class="fa fa-users nav-icon"></i>
                                 <p class="nav-text">Students</p>
                             </a>
                         </li>
-                        <li class="nav-item {{ request()->is('universities') ? 'active' : '' }}">
-                            <a href="{{ route('universities.index') }}">
+                        <li class="nav-item {{ request()->is('universities/index') ? 'active' : '' }}">
+                            <a href="{{ route('admin.universities.index') }}">
                                 <i class="fa fa-calendar-check nav-icon"></i>
                                 <p class="nav-text">Universities</p>
                             </a>
                         </li>
-                        <li class="nav-item {{ request()->is('user/list') ? 'active' : '' }}">
-                            <a href="{{ route('user.list') }}">
+                        <li class="nav-item {{ request()->is('user/index') ? 'active' : '' }}">
+                            <a href="{{ route('admin.users.index') }}">
                                 <i class="fa fa-sliders nav-icon"></i>
                                 <p class="nav-text">Users</p>
                             </a>
                         </li>
                         <li class="nav-item {{ request()->is('user/waiting') ? 'active' : '' }}">
-                            <a href="{{ route('user.waiting') }}">
+                            <a href="{{ route('admin.users.waiting') }}">
                                 <i class="fa fa-question nav-icon"></i>
                                 <p class="nav-text">Waiting Users</p>
                             </a>
@@ -95,20 +101,20 @@ $user = auth()->user();
                                 <p class="nav-text">Dashboard</p>
                             </a>
                         </li>
-                        <li class="nav-item {{ request()->is('student/list') ? 'active' : '' }}">
-                            <a href="{{ route('students.index') }}">
+                        <li class="nav-item {{ request()->is('student/index') ? 'active' : '' }}">
+                            <a href="{{ route('agent.students.index') }}">
                                 <i class="fa fa-users nav-icon"></i>
                                 <p class="nav-text">Students</p>
                             </a>
                         </li>
-                        <li class="nav-item {{ request()->is('university/list') ? 'active' : '' }}">
-                            <a href="{{ route('universities.index') }}">
+                        <li class="nav-item {{ request()->is('university/index') ? 'active' : '' }}">
+                            <a href="{{ route('agent.universities.index') }}">
                                 <i class="fa fa-calendar-check nav-icon"></i>
                                 <p class="nav-text">Universities</p>
                             </a>
                         </li>
                         <li class="nav-item {{ request()->is('user/list') ? 'active' : '' }}">
-                            <a href="{{ route('user.list') }}">
+                            <a href="{{ route('agent.students.index') }}">
                                 <i class="fa fa-sliders nav-icon"></i>
                                 <p class="nav-text">Applied List</p>
                             </a>
@@ -121,6 +127,24 @@ $user = auth()->user();
                                 <p class="nav-text">Dashboard</p>
                             </a>
                         </li>
+                        <li class="nav-item ">
+                            <a href="https://ideaconsultancyservices.com/">
+                                <i class="fa fa-globe nav-icon"></i>
+                                <p class="nav-text"> Webpage</p>
+                            </a>
+                        </li>
+                        <li class="nav-item {{ request()->is('university/index') ? 'active' : '' }}">
+                            <a href="{{ route('guest.universities.index') }}">
+                                <i class="fa fa-calendar-check nav-icon"></i>
+                                <p class="nav-text">Universities</p>
+                            </a>
+                        </li>
+                        <li class="nav-item {{ request()->is('contact/show') ? 'active' : '' }}">
+                            <a href="{{ route('auth.contact') }}">
+                                <i class="fa fa-envelope nav-icon"></i>
+                                <p class="nav-text">Contact Us</p>
+                            </a>
+                        </li>
                         <li class="nav-item {{ request()->is('login') ? 'active' : '' }}">
                             <a href="{{ route('login') }}">
                                 <i class="fa fa-sign-in nav-icon"></i>
@@ -131,18 +155,6 @@ $user = auth()->user();
                             <a href="{{ route('register') }}">
                                 <i class="fa fa-user-plus nav-icon"></i>
                                 <p class="nav-text">Register</p>
-                            </a>
-                        </li>
-                        <li class="nav-item ">
-                            <a href="https://ideaconsultancyservices.com/">
-                                <i class="fa fa-globe nav-icon"></i>
-                                <p class="nav-text"> Webpage</p>
-                            </a>
-                        </li>
-                        <li class="nav-item {{ request()->is('contact') ? 'active' : '' }}">
-                            <a href="{{ route('contact') }}">
-                                <i class="fa fa-envelope nav-icon"></i>
-                                <p class="nav-text">Contact Us</p>
                             </a>
                         </li>
                         @endif
