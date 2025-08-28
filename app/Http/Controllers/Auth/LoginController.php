@@ -52,10 +52,8 @@ class LoginController extends Controller
             } elseif ($user->is_agent) {
                 return redirect('/agent/dashboard');
             }
-
             return redirect('/');
         }
-
         return back()->withErrors(['email' => 'Invalid credentials.']);
     }
 
@@ -65,5 +63,15 @@ class LoginController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
         return redirect('/login');
+    }
+    protected function authenticated($request, $user)
+    {
+        if ($user->is_admin) {
+            return redirect()->route('admin.dashboard');
+        } elseif ($user->is_agent) {
+            return redirect()->route('agent.dashboard');
+        }
+
+        return redirect()->route('guest.dashboard');
     }
 }

@@ -73,7 +73,7 @@
         <tr>
             <td>
                 @if($agent->business_logo)
-                <img src="{{ asset('images/Agents_logo/' . $agent->business_logo) }}" width="40">
+                <img src="{{ asset('images/agents/' . $agent->business_logo) }}" alt="Logo">
                 @endif
             </td>
             <td>{{ $agent->name }}</td>
@@ -88,7 +88,7 @@
                 @endif
             </td>
             <td>
-                <button href="{{ route('admin.users.edit', $agent->id) }}" class="bg-gray-300 p-3 mx-1">Edit</button>
+                <button> <a href="{{ route('admin.users.edit', $agent->id) }}" class="bg-gray-300 p-3 mx-1">Edit</a></button>
                 @if(auth()->id() === 1 && auth()->id() !== $agent->id)
                 <form method="POST" action="{{ route('admin.users.destroy', $agent->id) }}" style="display:inline">
                     @csrf

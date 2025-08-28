@@ -27,6 +27,9 @@ class User extends Authenticatable
     protected $hidden = ['password', 'remember_token'];
 
     protected $casts = [
-        'email_verified_at' => 'datetime',
+        // ✅ Cast to boolean
+        'is_admin' => 'boolean',
+        'is_agent' => 'boolean',
+        'active'   => 'boolean',
     ];
 }

@@ -3,9 +3,9 @@
 @section('content')
 <h2>Create Student</h2>
 
-<form method="POST" action="{{ route('students.store') }}">
+<form method="POST" action="{{ route('admin.students.store') }}">
     @csrf
-    @include('students.form')
+    @include('admin.students.form')
     <!-- We will create a partial form -->
     <button class="btn btn-primary">Create Student</button>
 </form>

@@ -24,7 +24,7 @@
 
 @auth
 @if(auth()->user()->is_admin)
-<a href="{{ route('courses.create') }}" class="btn btn-primary mb-3">Add New Course</a>
+<a href="{{ route('admin.courses.create') }}" class="btn btn-primary mb-3">Add New Course</a>
 @endif
 @endauth
 
@@ -57,8 +57,8 @@
             @auth
             @if(auth()->user()->is_admin)
             <td>
-                <a href="{{ route('courses.edit', $course->id) }}" class="btn btn-sm btn-info">Edit</a>
-                <form action="{{ route('courses.destroy', $course->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this course?');">
+                <a href="{{ route('admin.courses.edit', $course->id) }}" class="btn btn-sm btn-info">Edit</a>
+                <form action="{{ route('admin.courses.destroy', $course->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this course?');">
                     @csrf
                     @method('DELETE')
                     <button class="btn btn-sm btn-danger">Delete</button>

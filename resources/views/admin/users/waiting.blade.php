@@ -3,11 +3,6 @@
 @section('content')
 <div class="p-3">
     <h2 class="text-center mb-4">Users Waiting for Approval</h2>
-
-    @if(session('success'))
-    <div class="alert alert-success">{{ session('success') }}</div>
-    @endif
-
     @if($users->isEmpty())
     <div class="alert alert-info">No users waiting for approval.</div>
     @else
@@ -31,9 +26,10 @@
                 <td>{{ $user->contact }}</td>
                 <td>{{ $user->address }}</td>
                 <td>
-                    <form method="POST" action="{{ route('user.approve', $user->id) }}">
+                    <form action="{{ route('admin.users.approve', $user->id) }}" method="POST">
                         @csrf
-                        <button type="submit" class="btn btn-success btn-sm">Approve</button>
+                        @method('PUT')
+                        <button type="submit" class="btn btn-success">Approve</button>
                     </form>
                 </td>
             </tr>

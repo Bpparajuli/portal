@@ -8,7 +8,9 @@ use Illuminate\Database\Eloquent\Model;
 class Student extends Model
 {
     use HasFactory;
+
     protected $table = 'students';
+
     protected $fillable = [
         'agent_id',
         'first_name',
@@ -28,37 +30,51 @@ class Student extends Model
         'financial_proof',
         'student_status',
         'agent_student_id',
-        'notes'
+        'notes',
     ];
 
+    public const STATUSES = ['pending', 'in_progress', 'accepted', 'rejected'];
+    public const GENDERS  = ['male', 'female', 'other'];
+
+    // Relationships
     public function agent()
     {
         return $this->belongsTo(User::class, 'agent_id');
     }
-    /* A student can have many applications to different universities and courses.
-     */
+
     public function university()
     {
         return $this->belongsTo(University::class);
     }
 
-    /**
-     * A student can have many documents.
-     */
+    public function course()
+    {
+        return $this->belongsTo(Course::class);
+    }
+
     public function documents()
     {
         return $this->hasMany(StudentDocument::class);
     }
-    public function course()
-    {
-        return $this->belongsTo(Course::class, 'course_id');
-    }
+
     public function applications()
     {
         return $this->hasMany(Application::class);
     }
+
     public function chats()
     {
         return $this->hasMany(Chat::class);
+    }
+
+    // Helper
+    public static function getStatusLabel(string $status): string
+    {
+        return ucwords(str_replace('_', ' ', $status));
+    }
+
+    public static function getGenderLabel(string $gender): string
+    {
+        return ucwords($gender);
     }
 }

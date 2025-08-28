@@ -6,9 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-
-use App\Notifications\NewUserRegistered;
 use Illuminate\Support\Facades\Notification;
+use App\Notifications\NewUserRegistered;
+
 
 class RegisterController extends Controller
 {
@@ -33,12 +33,22 @@ class RegisterController extends Controller
         $logoName = null;
 
         if ($request->hasFile('business_logo')) {
-            $extension = $request->file('business_logo')->getClientOriginalExtension();
+            // Sanitize business name (no spaces or special chars)
             $safeBusinessName = str_replace(' ', '_', strtolower($request->business_name ?? 'agent'));
-            $logoName = $safeBusinessName . '.' . $extension;
 
-            // Save logo to public/images/Agents_logo
-            $request->file('business_logo')->move(public_path('images/Agents_logo'), $logoName);
+            // Build the folder path inside /public/images/{business_name}
+            $folderPath = public_path('images/agents/' . $safeBusinessName);
+
+            // Create the folder if it does not exist
+            if (!file_exists($folderPath)) {
+                mkdir($folderPath, 0777, true); // recursive = true
+            }
+
+            // Set fixed filename: business_name_logo.png
+            $logoName = $safeBusinessName . '_logo.png';
+
+            // Move uploaded file to new folder with fixed name
+            $request->file('business_logo')->move($folderPath, $logoName);
         }
 
         $user = User::create([
@@ -49,7 +59,7 @@ class RegisterController extends Controller
             'address' => $request->address,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'business_logo' => $logoName,
+            'business_logo' => $safeBusinessName . '/' . $logoName,
             'is_admin' => $request->input('is_admin', 0),
             'is_agent' => $request->input('is_agent', 1),
             'active' => $request->input('active', 0),
@@ -57,8 +67,6 @@ class RegisterController extends Controller
 
         $admins = User::where('is_admin', 1)->get();
         Notification::send($admins, new NewUserRegistered($user));
-        // Optionally log in the user after registration
-        // Auth::login($user); // Uncomment if you want to log in the user immediately
         return redirect()->route('login')->with('success', 'Registered successfully. Please wait for admins approvel to log in.');
     }
 }

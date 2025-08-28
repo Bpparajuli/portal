@@ -4,7 +4,7 @@
 <div class="row justify-content-center mt-5">
     <div class="col-md-6 p-5 border border-primary rounded">
         <h1 class="bg-secondary bold text-center text-white p-3">Fill the form and submit to become an IDEA AGENT</h1><br>
-        <form method="POST" action="{{ route('register') }}" enctype="multipart/form-data">
+        <form method="POST" action="{{ route('auth.register') }}" enctype="multipart/form-data">
             @csrf
             <label>Business Name</label>
             <input type="text" name="business_name" placeholder="Business Name" class="form-control mb-2" value="{{ old('business_name') }}">

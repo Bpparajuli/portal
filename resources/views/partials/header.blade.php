@@ -7,7 +7,7 @@ $user = auth()->user();
     <nav class="main-menu">
         <div class="row d-flex flex-wrap justify-content-between align-items-center p-2">
             <div class="col-md-1 d-flex align-items-center gap-3">
-                <img src="https://ideaconsultancyservices.com/wp-content/uploads/2023/08/Untitled_design-removebg-preview.png" alt="Idea Consultancy" width="80%" />
+                <img src="https://ideaconsultancyservices.com/wp-content/uploads/2023/10/Logos.png" alt="Idea Consultancy" width="80%" />
             </div>
             <div class="col-md-8 justify-content-center">
                 <div class="d-flex justify-content-center align-items-center">
@@ -31,20 +31,66 @@ $user = auth()->user();
                     $notifications = auth()->user()->unreadNotifications;
                     @endphp
                     @if ($user?->is_admin)
-                    <li class="nav-item dropdown">
-                        <a class="nav-link" href="{{ route('admin.notifications') }}">
-                            🔔 @if($notifications->count())
-                            <span class="badge bg-danger">{{ $notifications->count() }}</span>
+                    <li class="notification-dropdown">
+                        <a class="notification-toggle" href="#" data-dropdown-toggle="admin-notif-menu">
+                            🔔
+                            @if(auth()->user()->unreadNotifications->count() > 0)
+                            <span class="notification-badge">
+                                {{ auth()->user()->unreadNotifications->count() }}
+                            </span>
                             @endif
                         </a>
+                        <ul id="admin-notif-menu" class="notification-menu">
+                            @forelse(auth()->user()->unreadNotifications->take(5) as $notification)
+                            <li>
+                                <a class="notification-item" href="{{ $notification->data['link'] ?? '#' }}">
+                                    {{ $notification->data['message'] ?? 'New Notification' }}
+                                    <small class="notification-timestamp">{{ $notification->created_at->diffForHumans() }}</small>
+                                </a>
+                            </li>
+                            @empty
+                            <li><span class="notification-item-text">No new notifications</span></li>
+                            @endforelse
+                            <li>
+                                <hr class="notification-divider">
+                            </li>
+                            <li>
+                                <a class="notification-item notification-center-text" href="{{ route('admin.notifications') }}">
+                                    View All Notifications
+                                </a>
+                            </li>
+                        </ul>
                     </li>
                     @elseif ($user?->is_agent)
-                    <li class="nav-item dropdown">
-                        <a class="nav-link" href="{{ route('agent.notifications') }}">
-                            🔔 @if($notifications->count())
-                            <span class="badge bg-danger">{{ $notifications->count() }}</span>
+                    <li class="notification-dropdown">
+                        <a class="notification-toggle" href="#" data-dropdown-toggle="agent-notif-menu">
+                            🔔
+                            @if(auth()->user()->unreadNotifications->count() > 0)
+                            <span class="notification-badge">
+                                {{ auth()->user()->unreadNotifications->count() }}
+                            </span>
                             @endif
                         </a>
+                        <ul id="agent-notif-menu" class="notification-menu">
+                            @forelse(auth()->user()->unreadNotifications->take(5) as $notification)
+                            <li>
+                                <a class="notification-item" href="#">
+                                    {{ $notification->data['message'] ?? 'New Notification' }}
+                                    <small class="notification-timestamp">{{ $notification->created_at->diffForHumans() }}</small>
+                                </a>
+                            </li>
+                            @empty
+                            <li><span class="notification-item-text">No new notifications</span></li>
+                            @endforelse
+                            <li>
+                                <hr class="notification-divider">
+                            </li>
+                            <li>
+                                <a class="notification-item notification-center-text" href="{{ route('agent.notifications') }}">
+                                    View All Notifications
+                                </a>
+                            </li>
+                        </ul>
                     </li>
                     @endif
                     @endauth
@@ -60,7 +106,7 @@ $user = auth()->user();
                     @endif
                 </div>
             </div>
-            <div class="row">
+            <div class="row-nav">
                 <div class="text-center">
                     <ul class="mt-2 bg-primary nav-list">
                         @if ($user?->is_admin)
@@ -88,12 +134,20 @@ $user = auth()->user();
                                 <p class="nav-text">Users</p>
                             </a>
                         </li>
+                        @php
+                        $totalWaitingUsers = \App\Models\User::where('active', 0)->count();
+                        @endphp
                         <li class="nav-item {{ request()->is('user/waiting') ? 'active' : '' }}">
-                            <a href="{{ route('admin.users.waiting') }}">
-                                <i class="fa fa-question nav-icon"></i>
-                                <p class="nav-text">Waiting Users</p>
+                            <a href="{{ route('admin.users.waiting') }}" class="d-flex align-items-center justify-content-between">
+                                <div>
+                                    <i class="fa fa-question nav-icon"> @if($totalWaitingUsers > 0)
+                                        <span class="badge bg-danger rounded-pill ms-2">{{$totalWaitingUsers}}</span>
+                                        @endif</i>
+                                    <p class="nav-text">Waiting Users</p>
+                                </div>
                             </a>
                         </li>
+
                         @elseif ($user?->is_agent)
                         <li class="nav-item {{ request()->is('agent/dashboard') ? 'active' : '' }}">
                             <a href="{{ route('agent.dashboard') }}">

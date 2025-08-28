@@ -8,19 +8,17 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // Drop table first if it exists (optional, for fresh start)
-        Schema::dropIfExists('applications');
-
         Schema::create('applications', function (Blueprint $table) {
             $table->id();
-
-            // Use bigInteger unsigned to match students.id, universities.id, courses.id
-            $table->foreignId('student_id')->constrained('students')->onDelete('cascade');
-            $table->foreignId('university_id')->constrained('universities')->onDelete('cascade');
-            $table->foreignId('course_id')->constrained('courses')->onDelete('cascade');
-
+            $table->unsignedBigInteger('student_id');
+            $table->unsignedBigInteger('university_id');
+            $table->unsignedBigInteger('course_id');
             $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
             $table->timestamps();
+
+            $table->foreign('student_id')->references('id')->on('students')->onDelete('cascade');
+            $table->foreign('university_id')->references('id')->on('universities')->onDelete('cascade');
+            $table->foreign('course_id')->references('id')->on('courses')->onDelete('cascade');
         });
     }
 

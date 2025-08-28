@@ -12,28 +12,35 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('students', function (Blueprint $table) {
-            $table->bigIncrements('id');
-            $table->unsignedBigInteger('agent_id')->index('agent_id');
+            $table->id(); // Correct way to define the primary key
+
+            $table->unsignedBigInteger('agent_id');
             $table->string('first_name', 100);
             $table->string('last_name', 100);
             $table->date('dob')->nullable();
             $table->enum('gender', ['male', 'female', 'other'])->nullable()->default('male');
-            $table->string('email');
+            $table->string('email')->unique(); // 'email' should usually be unique
             $table->string('phone_number', 20)->nullable();
             $table->string('address')->nullable();
             $table->string('passport_number', 50)->nullable();
             $table->string('preferred_country', 100)->nullable();
             $table->string('nationality', 100)->nullable();
-            $table->integer('university_id')->nullable()->index('university_id');
-            $table->integer('course_id')->nullable()->index('course_id');
+            $table->unsignedBigInteger('university_id')->nullable();
+            $table->unsignedBigInteger('course_id')->nullable();
             $table->text('academic_background')->nullable();
             $table->string('english_proficiency', 100)->nullable();
             $table->string('financial_proof')->nullable();
-            $table->enum('student_status', ['pending', 'in_progress', 'accepted', 'rejected'])->nullable()->default('pending');
+            $table->enum('student_status', ['pending', 'in_progress', 'accepted', 'rejected'])->default('pending');
             $table->string('agent_student_id', 50)->nullable();
             $table->text('notes')->nullable();
-            $table->timestamp('created_at')->nullable()->useCurrent();
-            $table->timestamp('updated_at')->useCurrentOnUpdate()->nullable()->useCurrent();
+
+            // Using $table->timestamps() for correct created_at and updated_at columns
+            $table->timestamps();
+
+            // Foreign key constraints
+            $table->foreign('agent_id')->references('id')->on('users')->onDelete('cascade');
+            $table->foreign('university_id')->references('id')->on('universities')->onDelete('set null');
+            $table->foreign('course_id')->references('id')->on('courses')->onDelete('set null');
         });
     }
 

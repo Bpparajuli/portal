@@ -12,11 +12,11 @@ return new class extends Migration {
             $table->string('business_name')->nullable();
             $table->string('owner_name')->nullable();
             $table->string('business_logo')->nullable();
-            $table->string('username')->unique();
+            $table->string('name')->unique();
             $table->string('contact')->nullable();
             $table->string('address')->nullable();
             $table->string('email')->unique();
-            $table->string('password_hash');
+            $table->string('password');
             $table->boolean('is_admin')->default(false);
             $table->boolean('is_agent')->default(false);
             $table->boolean('active')->default(true);

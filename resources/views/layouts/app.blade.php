@@ -17,6 +17,8 @@
     <link rel="stylesheet" href="{{ asset('css/mdb.min.css') }}" />
     <link rel="stylesheet" href="{{ asset('css/dashboard.css') }}" />
     <link rel="stylesheet" href="{{ asset('css/login.css') }}" />
+    <link rel="stylesheet" href="{{ asset('css/notifications.css') }}" />
+
     @stack('head')
 </head>
 <body class="font-roboto">

@@ -4,14 +4,6 @@
 @section('content')
 <div class="row justify-content-center mt-5">
     <div class="col-md-5 bg-secondary p-5 border border-primary rounded">
-        @foreach (['success', 'error', 'warning', 'info'] as $msg)
-        @if(session($msg))
-        <div class="alert alert-{{ $msg }} mt-3 text-center">
-            {{ session($msg) }}
-        </div>
-        @endif
-        @endforeach
-
         <form action="{{ route('auth.login.post') }}" method="POST">
             @csrf
             <h2 class="bold text-white text-center">Please Sign-in to enter</h2>

@@ -3,7 +3,7 @@
 @section('content')
 <h2>Edit Course for University: {{ $course->university->name ?? '' }}</h2>
 
-<form action="{{ route('courses.update', $course->id) }}" method="POST">
+<form action="{{ route('admin.courses.update', $course->id) }}" method="POST">
     @csrf
     @method('PUT')
 
@@ -67,6 +67,6 @@
     </div>
 
     <button type="submit" class="btn btn-primary">Update</button>
-    <a href="{{ route('universities.edit', $course->university_id) }}" class="btn btn-secondary">Back to University</a>
+    <a href="{{ route('admin.universities.edit', $course->university_id) }}" class="btn btn-secondary">Back to University</a>
 </form>
 @endsection

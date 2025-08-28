@@ -31,17 +31,17 @@
     </div>
 
     <h4>Students Added by User</h4>
-    {{-- @if($students->isEmpty())
+    @if($students->isEmpty())
     <p>No students yet.</p>
     @else
     <ul class="list-group mb-3">
         @foreach($students as $student)
         <li class="list-group-item">
             <strong>{{ $student->name }}</strong> ({{ $student->email ?? 'N/A' }})
-    </li>
-    @endforeach
+        </li>
+        @endforeach
     </ul>
-    @endif --}}
+    @endif
 
     <h4>User Notifications</h4>
     @if($notifications->isEmpty())
@@ -59,7 +59,7 @@
     @endif
 
     @if(auth()->user()->is_admin)
-    <a href="{{ route('user.edit', $user->id) }}" class="btn btn-sm btn-primary">Edit User</a>
+    <a href="{{ route('admin.users.edit', $user->id) }}" class="btn btn-sm btn-primary">Edit User</a>
     @endif
 </div>
 @endsection

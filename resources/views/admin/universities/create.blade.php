@@ -20,17 +20,17 @@
     <div class="alert alert-success">{{ session('success') }}</div>
     @endif
 
-    <form action="{{ route('universities.store') }}" method="POST" enctype="multipart/form-data">
+    <form action="{{ route('admin.universities.store') }}" method="POST" enctype="multipart/form-data">
         @csrf
 
-        @include('universities.form')
+        @include('admin.universities.form')
 
         <button type="submit" class="btn btn-success">Add University</button>
-        <a href="{{ route('universities.index') }}" class="btn btn-secondary">Cancel</a>
+        <a href="{{ route('admin.universities.index') }}" class="btn btn-secondary">Cancel</a>
     </form>
 
     <hr>
     <h3>Or Add a Course</h3>
-    <a href="{{ route('courses.create') }}" class="btn btn-primary">Add New Course</a>
+    <a href="{{ route('admin.courses.create') }}" class="btn btn-primary">Add New Course</a>
 </div>
 @endsection

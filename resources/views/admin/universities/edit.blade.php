@@ -20,19 +20,19 @@
     <div class="alert alert-success">{{ session('success') }}</div>
     @endif
 
-    <form action="{{ route('universities.update', $university->id) }}" method="POST" enctype="multipart/form-data">
+    <form action="{{ route('admin.universities.update', $university->id) }}" method="POST" enctype="multipart/form-data">
         @csrf
         @method('PUT')
 
-        @include('universities.form')
+        @include('admin.universities.form')
 
         <button type="submit" class="btn btn-success">Update University</button>
-        <a href="{{ route('universities.index') }}" class="btn btn-secondary">Cancel</a>
+        <a href="{{ route('admin.universities.index') }}" class="btn btn-secondary">Cancel</a>
     </form>
 
     <hr>
     <h3>Courses at {{ $university->short_name ?? $university->name }}</h3>
-    <a href="{{ route('courses.create') }}" class="btn btn-primary mb-3">Add New Course</a>
+    <a href="{{ route('admin.courses.create') }}" class="btn btn-primary mb-3">Add New Course</a>
 
     @if($university->courses->count())
     <table class="table table-bordered">
@@ -57,8 +57,8 @@
                 <td>{{ $course->intakes }}</td>
                 <td>{{ $course->moi_requirement }}</td>
                 <td>
-                    <a href="{{ route('courses.edit', $course->id) }}" class="btn btn-sm btn-info">Edit</a>
-                    <form action="{{ route('courses.destroy', $course->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this course?');">
+                    <a href="{{ route('admin.courses.edit', $course->id) }}" class="btn btn-sm btn-info">Edit</a>
+                    <form action="{{ route('admin.courses.destroy', $course->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this course?');">
                         @csrf
                         @method('DELETE')
                         <button class="btn btn-sm btn-danger">Delete</button>
@@ -71,5 +71,7 @@
     @else
     <p>No courses found for this university.</p>
     @endif
+    <a href="{{ route('admin.universities.index') }}" class="btn btn-secondary">Back to Universities list</a>
+
 </div>
 @endsection

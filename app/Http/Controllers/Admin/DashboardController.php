@@ -9,7 +9,7 @@ use App\Models\Student;
 use App\Models\University;
 use App\Models\Course;
 use App\Models\Application;
-use App\Models\PendingUser;
+use App\Models\totalWaitingUsers;
 
 class DashboardController extends Controller
 {
@@ -23,11 +23,11 @@ class DashboardController extends Controller
         // Example counts
         $totalAgents      = User::where('is_agent', 1)->count();
         $totalAdmins      = User::where('is_admin', 1)->count();
-        // $totalStudents    = Student::count();
+        $totalStudents    = Student::count();
         $totalUniversities = University::count();
         $totalCourses     = Course::count();
-        // $totalApplications = Application::count();
-        $totalPendingUsers = PendingUser::count();
+        $totalApplications = Application::count();
+        $totalWaitingUsers = User::where('active', 0)->count();
         // Example latest items
         // $latestStudents   = Student::latest()->take(5)->get();
         $latestAgents     = User::where('is_agent', 1)->latest()->take(5)->get();
@@ -35,11 +35,11 @@ class DashboardController extends Controller
         return view('admin.dashboard', compact(
             'totalAgents',
             'totalAdmins',
-            // 'totalStudents',
+            'totalStudents',
             'totalUniversities',
             'totalCourses',
-            'totalPendingUsers',
-            // 'totalApplications',
+            'totalWaitingUsers',
+            'totalApplications',
             // 'latestStudents',
             'latestAgents'
         ));

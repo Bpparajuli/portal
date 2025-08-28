@@ -10,15 +10,16 @@
     {{-- Filter Form --}}
     <form class="mb-4 p-3 border rounded bg-light" method="GET" action="{{ route('admin.students.index') }}">
         <div class="row g-3">
+
             <div class="col-md-3">
-                <label for="search" class="form-label">Search</label>
-                <input type="text" class="form-control" id="search" name="search" value="{{ request('search') }}">
+                <label class="form-label">Search</label>
+                <input type="text" class="form-control" name="search" value="{{ request('search') }}">
             </div>
 
-            @if(Auth::user()->is_admin)
+            @if(auth()->user()->is_admin)
             <div class="col-md-3">
-                <label for="agent" class="form-label">Filter by Agent</label>
-                <select class="form-select" id="agent" name="agent">
+                <label class="form-label">Filter by Agent</label>
+                <select class="form-select" name="agent">
                     <option value="">All Agents</option>
                     @foreach($agents as $agent)
                     <option value="{{ $agent->id }}" {{ request('agent') == $agent->id ? 'selected' : '' }}>
@@ -30,8 +31,8 @@
             @endif
 
             <div class="col-md-3">
-                <label for="university" class="form-label">Filter by University</label>
-                <select class="form-select" id="university" name="university">
+                <label class="form-label">Filter by University</label>
+                <select class="form-select" name="university">
                     <option value="">All Universities</option>
                     @foreach($universities as $university)
                     <option value="{{ $university->id }}" {{ request('university') == $university->id ? 'selected' : '' }}>
@@ -42,8 +43,8 @@
             </div>
 
             <div class="col-md-3">
-                <label for="course_title" class="form-label">Filter by Course Name</label>
-                <select class="form-select" id="course_title" name="course_title">
+                <label class="form-label">Filter by Course</label>
+                <select class="form-select" name="course_title">
                     <option value="">All Courses</option>
                     @foreach($courses as $course)
                     <option value="{{ $course->title }}" {{ request('course_title') == $course->title ? 'selected' : '' }}>
@@ -54,23 +55,20 @@
             </div>
 
             <div class="col-md-3">
-                <label for="status" class="form-label">Filter by Status</label>
-                <select class="form-select" id="status" name="status">
+                <label class="form-label">Filter by Status</label>
+                <select class="form-select" name="status">
                     <option value="">All Statuses</option>
-                    @php
-                    $statuses = ['pending', 'approved', 'rejected'];
-                    @endphp
-                    @foreach($statuses as $status)
+                    @foreach(\App\Models\Student::STATUSES as $status)
                     <option value="{{ $status }}" {{ request('status') == $status ? 'selected' : '' }}>
-                        {{ ucwords(str_replace('_', ' ', $status)) }}
+                        {{ \App\Models\Student::getStatusLabel($status) }}
                     </option>
                     @endforeach
                 </select>
             </div>
 
             <div class="col-md-3">
-                <label for="sort_by" class="form-label">Sort By</label>
-                <select class="form-select" id="sort_by" name="sort_by">
+                <label class="form-label">Sort By</label>
+                <select class="form-select" name="sort_by">
                     @php
                     $sortOptions = ['created_at' => 'Created At', 'first_name' => 'First Name', 'email' => 'Email'];
                     @endphp
@@ -83,17 +81,18 @@
             </div>
 
             <div class="col-md-3">
-                <label for="sort_order" class="form-label">Sort Order</label>
-                <select class="form-select" id="sort_order" name="sort_order">
+                <label class="form-label">Sort Order</label>
+                <select class="form-select" name="sort_order">
                     <option value="ASC" {{ request('sort_order') == 'ASC' ? 'selected' : '' }}>Ascending</option>
                     <option value="DESC" {{ request('sort_order', 'DESC') == 'DESC' ? 'selected' : '' }}>Descending</option>
                 </select>
             </div>
 
-            <div class="col-md-12 mt-3 d-flex justify-content-end">
+            <div class="col-12 mt-3 d-flex justify-content-end">
                 <a href="{{ route('admin.students.index') }}" class="btn btn-secondary me-2">Clear Filters</a>
                 <button type="submit" class="btn btn-primary">Apply Filters</button>
             </div>
+
         </div>
     </form>
 
@@ -108,7 +107,7 @@
                     <th>University</th>
                     <th>Course</th>
                     <th>Status</th>
-                    <th>Agent Name</th>
+                    <th>Agent</th>
                     <th>Created At</th>
                     <th>Actions</th>
                 </tr>
@@ -121,23 +120,16 @@
                     <td>{{ $student->email }}</td>
                     <td>{{ $student->university->name ?? 'N/A' }}</td>
                     <td>{{ $student->course->title ?? 'N/A' }}</td>
-                    <td>
-                        <span class="badge bg-light text-dark">
-                            {{ ucwords(str_replace('_', ' ', $student->student_status)) }}
-                        </span>
-                    </td>
-                    <td>{{ $student->agent->username ?? 'N/A' }}</td>
+                    <td><span class="badge bg-light text-dark">{{ \App\Models\Student::getStatusLabel($student->student_status) }}</span></td>
+                    <td>{{ $student->agent->business_name ?? $student->agent->username ?? 'N/A' }}</td>
                     <td>{{ $student->created_at->format('Y-m-d H:i') }}</td>
                     <td>
-                        <a href="{{ route('admin.students.show', $student) }}" class="btn btn-sm btn-outline-primary me-1">View</a>
-                        <a href="{{ route('admin.students.edit', $student) }}" class="btn btn-sm btn-outline-secondary me-1">Edit</a>
-                        {{-- Delete button - use a form for security --}}
-                        <form action="{{ route('admin.students.destroy', $student) }}" method="POST" class="d-inline">
+                        <a href="{{ route('admin.students.show', $student->id) }}" class="btn btn-sm btn-outline-primary">View</a>
+                        <a href="{{ route('admin.students.edit', $student->id) }}" class="btn btn-sm btn-outline-secondary">Edit</a>
+                        <form action="{{ route('admin.students.destroy', $student->id) }}" method="POST" class="d-inline">
                             @csrf
                             @method('DELETE')
-                            <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure you want to delete this student?');">
-                                Delete
-                            </button>
+                            <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure?')">Delete</button>
                         </form>
                     </td>
                 </tr>
@@ -150,10 +142,8 @@
         </table>
     </div>
 
-    {{-- Pagination Links --}}
     <div class="mt-4">
         {{ $students->appends(request()->query())->links() }}
     </div>
-
 </div>
 @endsection

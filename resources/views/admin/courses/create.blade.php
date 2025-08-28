@@ -3,12 +3,11 @@
 @section('content')
 <h2>{{ isset($course) ? 'Edit' : 'Add' }} Course</h2>
 
-<form action="{{ isset($course) ? route('courses.update', $course->id) : route('courses.store') }}" method="POST">
+<form action="{{ isset($course) ? route('admin.courses.update', $course->id) : route('admin.courses.store') }}" method="POST">
     @csrf
     @if(isset($course))
     @method('PUT')
     @endif
-
     <div class="mb-3">
         <label>University</label>
         <select name="university_id" class="form-control" required>
@@ -77,7 +76,7 @@
     </div>
 
     <button type="submit" class="btn btn-primary">{{ isset($course) ? 'Update' : 'Save' }}</button>
-    <a href="{{ route('universities.edit', $university->id) }}" class="btn btn-secondary">Back to University</a>
+    <a href="{{ route('admin.universities.edit', $university->id) }}" class="btn btn-secondary">Back to University</a>
 
 </form>
 @endsection

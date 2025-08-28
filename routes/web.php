@@ -1,5 +1,7 @@
 <?php
 
+use Illuminate\Support\Facades\Auth;
+
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Guest\CourseController as GuestCourseController;
 use App\Http\Controllers\Guest\UniversityController as GuestUniversityController;
@@ -36,7 +38,19 @@ use App\Http\Controllers\Agent\UniversityController as AgentUniversityController
 */
 
 // Welcome page
-Route::view('/', 'welcome')->name('welcome');
+Route::get('/', function () {
+    if (Auth::check()) {
+        // Check role
+        if (Auth::user()->is_admin) {
+            return redirect()->route('admin.dashboard');
+        } elseif (Auth::user()->is_agent) {
+            return redirect()->route('agent.dashboard');
+        }
+    }
+
+    // Guest
+    return view('welcome');
+})->name('home');
 
 // Guest routes - Accessible to all
 Route::prefix('guest')->name('guest.')->group(function () {
@@ -103,7 +117,13 @@ Route::middleware(['auth', \App\Http\Middleware\IsAdmin::class])->prefix('admin'
     Route::get('dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
     Route::get('chat', [AdminChatController::class, 'index'])->name('chat');
     Route::get('notifications', [AdminNotificationController::class, 'index'])->name('notifications');
+    Route::patch('notifications/{id}/read', [AdminNotificationController::class, 'markAsRead'])->name('notifications.read');
+    Route::patch('notifications/read-all', [AdminNotificationController::class, 'markAllAsRead'])->name('notifications.readAll');
+    Route::get('notifications/{id}/read-redirect', [AdminNotificationController::class, 'readAndRedirect'])->name('notifications.readRedirect');
+
+
     Route::get('users/waiting', [AdminUserController::class, 'waiting'])->name('users.waiting');
+    Route::put('users/{user}/approve', [AdminUserController::class, 'approve'])->name('users.approve');
 
     // Resource routes for CRUD operations
     Route::resource('applications', AdminApplicationController::class);

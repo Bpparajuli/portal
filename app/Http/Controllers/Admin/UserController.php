@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\File;
+use App\Notifications\UserApproved;
 
 class UserController extends Controller
 {
@@ -51,50 +52,39 @@ class UserController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'business_name' => 'required',
-            'name'          => 'required',
-            'email'         => 'required|email|unique:users',
-            'contact'       => 'required',
-            'address'       => 'nullable',
+            'business_name' => 'required|string|max:255',
+            'owner_name'    => 'nullable|string|max:255',
+            'name'          => 'required|string|max:255',
+            'email'         => 'required|email|max:255|unique:users',
+            'contact'       => 'nullable|string|max:20',
+            'address'       => 'nullable|string|max:255',
             'role'          => 'required|in:admin,agent',
-            'status'        => 'required|in:Active,Inactive',
-            'password'      => 'required|min:6|confirmed',
+            'status'        => 'required|in:0,1',
+            'password'      => 'required|string|min:6|confirmed',
             'business_logo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
         $user = new User();
         $this->assignUserFields($user, $request);
-
         $user->password = Hash::make($request->password);
         $this->handleBusinessLogoUpload($request, $user);
-
         $user->save();
 
         return redirect()->route('admin.users.index')->with('success', 'User added successfully.');
     }
 
-    /**
-     * Show the form for editing the specified user.
-     */
-    public function edit(User $user)
-    {
-        return view('admin.users.edit', compact('user'));
-    }
-
-    /**
-     * Update the specified user in storage.
-     */
     public function update(Request $request, User $user)
     {
         $request->validate([
-            'business_name' => 'required',
-            'name'          => 'required',
-            'email'         => 'required|email|unique:users,email,' . $user->id,
-            'contact'       => 'required',
-            'address'       => 'nullable',
+            'business_name' => 'required|string|max:255',
+            'owner_name'    => 'nullable|string|max:255',
+            'name'          => 'required|string|max:255',
+            'email'         => 'required|email|max:255|unique:users,email,' . $user->id,
+            'contact'       => 'nullable|string|max:20',
+            'address'       => 'nullable|string|max:255',
             'role'          => 'required|in:admin,agent',
-            'status'        => 'required|in:Active,Inactive',
-            'password'      => 'nullable|min:6|confirmed',
+            'status'        => 'required|in:0,1',
+            'password'      => 'nullable|string|min:6|confirmed',
             'business_logo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
@@ -105,11 +95,19 @@ class UserController extends Controller
         }
 
         $this->handleBusinessLogoUpload($request, $user);
-
         $user->save();
 
         return redirect()->route('admin.users.index')->with('success', 'User updated successfully.');
     }
+
+    /**
+     * Show the form for editing the specified user.
+     */
+    public function edit(User $user)
+    {
+        return view('admin.users.edit', compact('user'));
+    }
+
 
     /**
      * Remove the specified user from storage.
@@ -144,19 +142,26 @@ class UserController extends Controller
     public function waiting()
     {
         $users = User::where('active', 0)->paginate(10);
-        return view('admin.users.waiting', compact('users'));
+        $totalWaitingUsers = User::where('active', 0)->count();
+
+        return view('admin.users.waiting', compact('users', 'totalWaitingUsers'));
     }
 
     /**
      * Approve a user by activating their account.
      */
+
     public function approve(User $user)
     {
         $user->active = true;
         $user->save();
 
-        return back()->with('success', 'User approved successfully.');
+        // Notify the user that they have been approved
+        $user->notify(new UserApproved());
+
+        return back()->with('success',     $user->business_name . ' has been approved and the notification has been successfully send to their email.');
     }
+
 
     /**
      * Assign common fields to a User model.
@@ -164,14 +169,16 @@ class UserController extends Controller
     private function assignUserFields(User $user, Request $request)
     {
         $user->business_name = $request->business_name;
+        $user->owner_name    = $request->owner_name;
         $user->name          = $request->name;
         $user->email         = $request->email;
         $user->contact       = $request->contact;
         $user->address       = $request->address;
         $user->is_admin      = $request->role === 'admin';
         $user->is_agent      = $request->role === 'agent';
-        $user->active        = $request->status === 'Active';
+        $user->active        = (int) $request->status;
     }
+
 
     /**
      * Handle business logo upload and replacement.
@@ -179,23 +186,22 @@ class UserController extends Controller
     private function handleBusinessLogoUpload(Request $request, User $user)
     {
         if ($request->hasFile('business_logo')) {
-            $extension = $request->file('business_logo')->getClientOriginalExtension();
             $safeBusinessName = str_replace(' ', '_', strtolower($request->business_name ?? 'agent'));
-            $logoName = $safeBusinessName . '.' . $extension;
+            $folderPath = public_path('images/agents/' . $safeBusinessName);
 
-            $destinationPath = public_path('images/Agents_logo');
-
-            if (!File::exists($destinationPath)) {
-                File::makeDirectory($destinationPath, 0755, true);
+            if (!File::exists($folderPath)) {
+                File::makeDirectory($folderPath, 0755, true);
             }
+
+            $logoName = $safeBusinessName . '_logo.png';
 
             // Delete old logo if exists
-            if ($user->business_logo && File::exists($destinationPath . '/' . $user->business_logo)) {
-                File::delete($destinationPath . '/' . $user->business_logo);
+            if ($user->business_logo && File::exists(public_path('images/agents/' . $user->business_logo))) {
+                File::delete(public_path('images/agents/' . $user->business_logo));
             }
 
-            $request->file('business_logo')->move($destinationPath, $logoName);
-            $user->business_logo = $logoName;
+            $request->file('business_logo')->move($folderPath, $logoName);
+            $user->business_logo = $safeBusinessName . '/' . $logoName;
         }
     }
 }

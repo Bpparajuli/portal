@@ -21,7 +21,7 @@
     border-radius: 8px 0 0 0;
 }
 
-.row ul {
+.row-nav ul {
     display: flex;
     justify-content: space-around;
     margin: 0px;

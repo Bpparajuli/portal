@@ -5,6 +5,11 @@
 
 <div class="form-group mb-2">
     <label>Owner Name</label>
+    <input type="text" name="owner_name" class="form-control" value="{{ old('owner_name', $user->owner_name ?? '') }}">
+</div>
+
+<div class="form-group mb-2">
+    <label>Name</label>
     <input type="text" name="name" class="form-control" value="{{ old('name', $user->name ?? '') }}">
 </div>
 
@@ -43,7 +48,7 @@
     <label>Business Logo</label>
     <input type="file" name="business_logo" class="form-control">
     @if(isset($user->business_logo))
-    <img src="{{ asset('images/Agents_logo/' . $user->business_logo) }}" width="60">
+    <img src="{{ asset('images/agents/' . $user->business_logo) }}" width="60">
     @endif
 </div>
 
@@ -55,6 +60,7 @@
     <input type="password" name="password_confirmation" class="form-control mt-1" placeholder="Confirm Password">
 </div>
 @endif
+
 @if ($errors->any())
 <div class="alert alert-danger">
     <ul class="mb-0">
@@ -62,12 +68,6 @@
         <li>{{ $error }}</li>
         @endforeach
     </ul>
-</div>
-@endif
-
-@if (session('success'))
-<div class="alert alert-success">
-    {{ session('success') }}
 </div>
 @endif
 <script>
@@ -78,19 +78,25 @@
         const matchIcon = document.createElement('span');
         matchIcon.style.marginLeft = '10px';
 
-        confirmPassword.parentNode.insertBefore(matchIcon, confirmPassword.nextSibling);
-
-        confirmPassword.addEventListener('input', () => {
-            if (confirmPassword.value === "") {
-                matchIcon.innerHTML = "";
-            } else if (confirmPassword.value === password.value) {
-                matchIcon.innerHTML = "✅";
-                matchIcon.style.color = "green";
+        function validatePassword() {
+            if (password.value && confirmPassword.value) {
+                if (password.value === confirmPassword.value) {
+                    matchIcon.textContent = '✔️';
+                    matchIcon.style.color = 'green';
+                } else {
+                    matchIcon.textContent = '❌';
+                    matchIcon.style.color = 'red';
+                }
             } else {
-                matchIcon.innerHTML = "❌";
-                matchIcon.style.color = "red";
+                matchIcon.textContent = '';
             }
-        });
+        }
+
+        if (password && confirmPassword) {
+            confirmPassword.parentNode.appendChild(matchIcon);
+            password.addEventListener('input', validatePassword);
+            confirmPassword.addEventListener('input', validatePassword);
+        }
     });
 
 </script>

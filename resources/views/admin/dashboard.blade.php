@@ -7,7 +7,7 @@
             <div class="card bg-primary text-white shadow">
                 <div class="card-body">
                     <h5 class="card-title">New Applications</h5>
-                    <p class="card-text fs-2">0</p>
+                    <p class="card-text text-white fs-2">{{ $totalApplications }}</p>
                     <a href="{{ route('admin.students.index', ['status_filter' => 'Pending']) }}" class="btn btn-sm btn-light">View All</a>
                 </div>
             </div>
@@ -51,8 +51,8 @@
         <div class="col-md-2 mb-4">
             <div class="card bg-secondary text-white shadow">
                 <div class="card-body">
-                    <h5 class="card-title">Pending Users</h5>
-                    <p class="card-text text-white fs-2">{{ $totalPendingUsers}}</p>
+                    <h5 class="card-title">Waiting Users</h5>
+                    <p class="card-text text-white fs-2">{{ $totalWaitingUsers}}</p>
                     <a href="{{ route('admin.users.waiting') }}" class="btn btn-sm btn-dark">View All</a>
                 </div>
             </div>
@@ -202,15 +202,6 @@
     </div>
 
     <div class="right-content">
-        <div class="user-info">
-            <div class="icon-container">
-                <i class="fa fa-bell nav-icon"></i>
-                <i class="fa fa-message nav-icon"></i>
-            </div>
-
-            <h4>Admin Dashboard!</h4>
-            <img src="https://github.com/ecemgo/mini-samples-great-tricks/assets/13468728/40b7cce2-c289-4954-9be0-938479832a9c" alt="user" />
-        </div>
         <div class="active-calories">
             <h1 style="align-self: flex-start">Application status</h1>
             <div class="active-calories-container">

@@ -91,7 +91,7 @@ class UniversityController extends Controller
     public function edit($id)
     {
         $university = University::with('courses')->findOrFail($id);
-        return view('adminuniversities.edit', compact('university'));
+        return view('admin.universities.edit', compact('university'));
     }
 
     /**
@@ -172,9 +172,9 @@ class UniversityController extends Controller
     /**
      * Show university profile page.
      */
-    public function profile($id)
+    public function show($id)
     {
         $university = University::with('courses')->findOrFail($id);
-        return view('admin.universities.profile', compact('university'));
+        return view('admin.universities.show', compact('university'));
     }
 }

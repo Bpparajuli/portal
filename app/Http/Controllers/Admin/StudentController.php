@@ -8,47 +8,28 @@ use App\Models\University;
 use App\Models\Course;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class StudentController extends Controller
 {
-    /**
-     * Display a listing of the students with filtering and pagination.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\View\View
-     */
     public function index(Request $request)
     {
-        // Start with a query builder instance
         $query = Student::with(['agent', 'university', 'course']);
 
-        // Apply filters from the request
         if ($search = $request->input('search')) {
             $query->where(function ($q) use ($search) {
-                $q->where('first_name', 'like', '%' . $search . '%')
-                    ->orWhere('last_name', 'like', '%' . $search . '%')
-                    ->orWhere('email', 'like', '%' . $search . '%');
+                $q->where('first_name', 'like', "%$search%")
+                    ->orWhere('last_name', 'like', "%$search%")
+                    ->orWhere('email', 'like', "%$search%");
             });
         }
 
-        if ($agent = $request->input('agent')) {
-            $query->where('agent_id', $agent);
-        }
-
-        if ($university = $request->input('university')) {
-            $query->where('university_id', $university);
-        }
-
+        if ($agent = $request->input('agent')) $query->where('agent_id', $agent);
+        if ($university = $request->input('university')) $query->where('university_id', $university);
         if ($courseTitle = $request->input('course_title')) {
-            // Filter by course title, needs to join the courses table
-            $query->whereHas('course', function ($q) use ($courseTitle) {
-                $q->where('title', $courseTitle);
-            });
+            $query->whereHas('course', fn($q) => $q->where('title', $courseTitle));
         }
-
-        if ($status = $request->input('status')) {
-            $query->where('student_status', $status);
-        }
+        if ($status = $request->input('status')) $query->where('student_status', $status);
 
         // Apply sorting
         $sortBy = $request->input('sort_by', 'created_at');
@@ -56,94 +37,118 @@ class StudentController extends Controller
         $query->orderBy($sortBy, $sortOrder);
 
         // Get the paginated results
-        $students = $query->paginate(10); // Use paginate() instead of get()
+        $students = $query->orderBy(
+            $request->input('sort_by', 'created_at'),
+            $request->input('sort_order', 'DESC')
+        )->paginate(10);
 
         // Fetch all necessary variables for the filter dropdowns
         $agents = User::where('is_agent', 1)->get();
         $universities = University::all();
         $courses = Course::all();
 
-        // Pass all variables to the view
         return view('admin.students.index', compact('students', 'agents', 'universities', 'courses'));
     }
 
-    /**
-     * Show the form for creating a new student.
-     *
-     * @return \Illuminate\View\View
-     */
     public function create()
     {
-        $agents = User::where('is_agent', 1)->get();
         $universities = University::all();
         $courses = Course::all();
-        return view('admin.students.create', compact('agents', 'universities', 'courses'));
+        $statuses = Student::STATUSES;
+
+        $agents = [];
+        if (auth()->user()->is_admin) {
+            $agents = User::where('is_agent', 1)->get();
+        }
+
+        return view('admin.students.create', compact('universities', 'courses', 'statuses', 'agents'));
     }
 
-    /**
-     * Store a newly created student in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\RedirectResponse
-     */
     public function store(Request $request)
     {
-        // Add validation and storing logic here
-        // ...
+        $validated = $request->validate([
+            'first_name'        => 'required|string|max:100',
+            'last_name'         => 'required|string|max:100',
+            'dob'               => 'nullable|date',
+            'gender'            => ['nullable', Rule::in(Student::GENDERS)],
+            'email'             => 'required|email|unique:students,email',
+            'phone_number'      => 'nullable|string|max:20',
+            'address'           => 'nullable|string',
+            'passport_number'   => 'nullable|string|max:50',
+            'preferred_country' => 'nullable|string|max:100',
+            'nationality'       => 'nullable|string|max:100',
+            'university_id'     => 'nullable|exists:universities,id',
+            'course_id'         => 'nullable|exists:courses,id',
+            'student_status'    => ['required', Rule::in(Student::STATUSES)],
+            'agent_id'          => ['nullable', 'exists:users,id'], // admin selects
+        ]);
+
+        if (auth()->user()->is_agent) {
+            $validated['agent_id'] = auth()->id();
+        }
+
+        Student::create($validated);
+
         return redirect()->route('admin.students.index')->with('success', 'Student created successfully.');
     }
 
-    /**
-     * Display the specified student.
-     *
-     * @param  int  $id
-     * @return \Illuminate\View\View
-     */
-    public function show($id)
-    {
-        $student = Student::with(['agent', 'university', 'course'])->findOrFail($id);
-        return view('admin.students.show', compact('student'));
-    }
-
-    /**
-     * Show the form for editing the specified student.
-     *
-     * @param  int  $id
-     * @return \Illuminate\View\View
-     */
     public function edit($id)
     {
-        $student = Student::with(['agent', 'university', 'course'])->findOrFail($id);
-        $agents = User::where('is_agent', 1)->get();
+        $student = Student::findOrFail($id);
         $universities = University::all();
         $courses = Course::all();
-        return view('admin.students.edit', compact('student', 'agents', 'universities', 'courses'));
+        $statuses = Student::STATUSES;
+
+        $agents = [];
+        if (auth()->user()->is_admin) {
+            $agents = User::where('is_agent', 1)->get();
+        }
+
+        return view('admin.students.edit', compact('student', 'universities', 'courses', 'statuses', 'agents'));
     }
 
-    /**
-     * Update the specified student in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\RedirectResponse
-     */
     public function update(Request $request, $id)
     {
-        // Add validation and update logic here
-        // ...
+        $student = Student::findOrFail($id);
+
+        $validated = $request->validate([
+            'first_name'        => 'required|string|max:100',
+            'last_name'         => 'required|string|max:100',
+            'dob'               => 'nullable|date',
+            'gender'            => ['nullable', Rule::in(Student::GENDERS)],
+            'email'             => ['required', 'email', Rule::unique('students')->ignore($student->id)],
+            'phone_number'      => 'nullable|string|max:20',
+            'address'           => 'nullable|string',
+            'passport_number'   => 'nullable|string|max:50',
+            'preferred_country' => 'nullable|string|max:100',
+            'nationality'       => 'nullable|string|max:100',
+            'university_id'     => 'nullable|exists:universities,id',
+            'course_id'         => 'nullable|exists:courses,id',
+            'student_status'    => ['required', Rule::in(Student::STATUSES)],
+            'agent_id'          => ['nullable', 'exists:users,id'], // admin selects
+        ]);
+
+        if (auth()->user()->is_agent) {
+            $validated['agent_id'] = $student->agent_id; // cannot reassign
+        }
+
+        $student->update($validated);
+
         return redirect()->route('admin.students.index')->with('success', 'Student updated successfully.');
     }
 
-    /**
-     * Remove the specified student from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\RedirectResponse
-     */
     public function destroy($id)
     {
         $student = Student::findOrFail($id);
         $student->delete();
         return redirect()->route('admin.students.index')->with('success', 'Student deleted successfully.');
+    }
+    /**
+     * Display the specified student.
+     */
+    public function show($id)
+    {
+        $student = Student::with(['agent', 'university', 'course'])->findOrFail($id);
+        return view('admin.students.show', compact('student'));
     }
 }
