@@ -1,15 +1,6 @@
 @extends('layouts.app')
 
 @section('content')
-{{-- Flash Messages --}}
-@if(session('success'))
-<div class="alert alert-success">{{ session('success') }}</div>
-@endif
-
-@if(session('error'))
-<div class="alert alert-danger">{{ session('error') }}</div>
-@endif
-
 {{-- Add University Button only for Admin --}}
 @auth
 @if(auth()->user()->is_admin)
@@ -22,18 +13,18 @@
 <h2>University List</h2>
 
 @if($universities->count())
-<table class="table table-bordered table-striped">
+<table class="table table-bordered w-100 table-striped">
     <thead class="bg-secondary text-white">
         <tr>
-            <th class="text-white">ID</th>
-            <th class="text-white">University Logo</th>
-            <th class="text-white">Name</th>
-            <th class="text-white">Short Name</th>
-            <th class="text-white">Country</th>
-            <th class="text-white">City</th>
-            <th class="text-white">Website</th>
-            <th class="text-white">Contact Email</th>
-            <th class="text-white">Courses</th>
+            <th class="text-dark">ID</th>
+            <th class="text-dark">University Logo</th>
+            <th class="text-dark">Name</th>
+            <th class="text-dark">Short Name</th>
+            <th class="text-dark">Country</th>
+            <th class="text-dark">City</th>
+            <th class="text-dark">Website</th>
+            <th class="text-dark">Contact Email</th>
+            <th class="text-dark">Courses</th>
             @auth
             @if(auth()->user()->is_admin)
             <th class="text-white">Actions</th>

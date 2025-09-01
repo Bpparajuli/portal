@@ -14,11 +14,16 @@ return new class extends Migration
         Schema::create('documents', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('student_id');
-            $table->enum('type', ['education', 'identification', 'financial', 'ward']);
-            $table->string('file_path');
-            $table->timestamps();
+            $table->unsignedBigInteger('uploaded_by');
+            $table->string('filename');
+            $table->string('original_name');
+            $table->string('file_type', 50)->nullable();
+            $table->bigInteger('file_size')->nullable();
+            $table->timestamps(); // created_at & updated_at with auto timestamps
 
+            // Foreign keys
             $table->foreign('student_id')->references('id')->on('students')->onDelete('cascade');
+            $table->foreign('uploaded_by')->references('id')->on('users')->onDelete('cascade');
         });
     }
 

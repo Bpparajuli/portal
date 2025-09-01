@@ -1,7 +1,6 @@
 <?php
 
 use Illuminate\Support\Facades\Auth;
-
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Guest\CourseController as GuestCourseController;
 use App\Http\Controllers\Guest\UniversityController as GuestUniversityController;
@@ -47,29 +46,27 @@ Route::get('/', function () {
             return redirect()->route('agent.dashboard');
         }
     }
-
     // Guest
     return view('welcome');
 })->name('home');
 
-// Guest routes - Accessible to all
 Route::prefix('guest')->name('guest.')->group(function () {
-    Route::controller(GuestUniversityController::class)->group(function () {
-        Route::get('universities', 'index')->name('universities.index');
-        Route::get('universities/{university}', 'show')->name('universities.show');
-    });
+    Route::get('universities', [GuestUniversityController::class, 'index'])->name('universities.index');
+    Route::get('universities/{university}', [GuestUniversityController::class, 'show'])->name('universities.show');
+
+    Route::get('get-cities/{country}', [GuestUniversityController::class, 'getCities'])->name('get-cities');
+    Route::get('get-universities/{city}', [GuestUniversityController::class, 'getUniversities'])->name('get-universities');
+    Route::get('get-courses/{universityId}', [GuestUniversityController::class, 'getCourses'])->name('get-courses');
 
     Route::controller(GuestCourseController::class)->group(function () {
         Route::get('courses', 'index')->name('courses.index');
         Route::get('courses/{course}', 'show')->name('courses.show');
     });
 
-    // Assuming this is a guest dashboard or homepage.
     Route::get('dashboard', function () {
         return view('guest.dashboard');
     })->name('dashboard');
 });
-
 // Add a route alias for `universities.show` to redirect to the correct prefixed route
 Route::get('universities/{university}', function ($university) {
     return redirect()->route('guest.universities.show', ['university' => $university]);
@@ -112,7 +109,7 @@ Route::get('/register', function () {
 
 
 // Admin routes - Protected by the 'admin' middleware
-// USING THE FULL CLASS PATH TO AVOID KERNEL ALIAS ISSUES
+
 Route::middleware(['auth', \App\Http\Middleware\IsAdmin::class])->prefix('admin')->name('admin.')->group(function () {
     Route::get('dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
     Route::get('chat', [AdminChatController::class, 'index'])->name('chat');
@@ -132,6 +129,8 @@ Route::middleware(['auth', \App\Http\Middleware\IsAdmin::class])->prefix('admin'
     Route::resource('universities', AdminUniversityController::class);
     Route::resource('users', controller: AdminUserController::class);
     Route::resource('documents', AdminDocumentController::class);
+    Route::get('documents/{document}/download', [AdminDocumentController::class, 'download'])
+        ->name('documents.download');
 });
 
 // Agent routes - Protected by the 'agent' middleware
@@ -143,10 +142,12 @@ Route::middleware(['auth', \App\Http\Middleware\IsAgent::class])->prefix('agent'
 
     // Resource routes for CRUD operations
     Route::resource('applications', AgentApplicationController::class)->only(['index', 'show', 'edit', 'update']);
-    Route::resource('documents', AgentDocumentController::class);
     Route::resource('students', AgentStudentController::class);
     Route::resource('universities', AgentUniversityController::class)->only(['index', 'show']);
     Route::resource('courses', AgentCourseController::class)->only(['index', 'show']);
+    Route::resource('documents', AgentDocumentController::class);
+    Route::get('documents/{document}/download', [AgentDocumentController::class, 'download'])
+        ->name('documents.download');
 });
 
 // User routes (assuming regular users or students)

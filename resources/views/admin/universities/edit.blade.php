@@ -4,22 +4,6 @@
 <div class=" mt-4">
     <h2>Edit University</h2>
 
-    {{-- Validation Errors --}}
-    @if($errors->any())
-    <div class="alert alert-danger">
-        <ul class="mb-0 mt-2">
-            @foreach($errors->all() as $error)
-            <li>{{ $error }}</li>
-            @endforeach
-        </ul>
-    </div>
-    @endif
-
-    {{-- Success Message --}}
-    @if(session('success'))
-    <div class="alert alert-success">{{ session('success') }}</div>
-    @endif
-
     <form action="{{ route('admin.universities.update', $university->id) }}" method="POST" enctype="multipart/form-data">
         @csrf
         @method('PUT')

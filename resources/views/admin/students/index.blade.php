@@ -1,149 +1,175 @@
 @extends('layouts.app')
+
 @section('content')
-<div class="mt-4">
-    <div class="d-flex justify-content-between align-items-center">
-        <h2>All Students</h2>
-        <a href="{{ route('admin.students.create') }}" class="btn btn-primary">Add New Student</a>
+<div class="student-page">
+
+    {{-- Filter Section --}}
+    <div class="filter-card">
+        <form method="GET" action="{{ route('admin.students.index') }}" class="filter-form">
+            <div class="filter-grid">
+                <!-- Search -->
+                <div class="filter-field">
+                    <label for="search">Search by Name </label>
+                    <input type="text" id="search" name="search" value="{{ request('search') }}" class="filter-input">
+                </div>
+
+                <!-- Agent -->
+                <div class="filter-field">
+                    <label for="agent">Agent</label>
+                    <select id="agent" name="agent" class="filter-select">
+                        <option value="">All</option>
+                        @foreach($agents as $agent)
+                        <option value="{{ $agent->id }}" {{ request('agent') == $agent->id ? 'selected' : '' }}>
+                            {{ $agent->business_name ?? $agent->username }}
+                        </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <!-- University -->
+                <div class="filter-field">
+                    <label for="university">University</label>
+                    <select id="university" name="university" class="filter-select">
+                        <option value="">All</option>
+                        @foreach($universities as $university)
+                        <option value="{{ $university->id }}" {{ request('university') == $university->id ? 'selected' : '' }}>
+                            {{ $university->name }}
+                        </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <!-- Course -->
+                <div class="filter-field">
+                    <label for="course_title">Course</label>
+                    <select id="course_title" name="course_title" class="filter-select">
+                        <option value="">All</option>
+                        @foreach($courses as $course)
+                        <option value="{{ $course->title }}" {{ request('course_title') == $course->title ? 'selected' : '' }}>
+                            {{ $course->title }}
+                        </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <!-- Status -->
+                <div class="filter-field">
+                    <label for="status">Status</label>
+                    <select id="status" name="status" class="filter-select">
+                        <option value="">All</option>
+                        @foreach(\App\Models\Student::STATUS as $status)
+                        <option value="{{ $status }}" {{ request('status') == $status ? 'selected' : '' }}>
+                            {{ ucfirst($status) }}
+                        </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <!-- Sort By -->
+                <div class="filter-field">
+                    <label for="sort_by">Sort By</label>
+                    <select id="sort_by" name="sort_by" class="filter-select">
+                        @foreach(['created_at'=>'Created At','first_name'=>'First Name','email'=>'Email'] as $key=>$val)
+                        <option value="{{ $key }}" {{ request('sort_by')==$key ? 'selected' : '' }}>{{ $val }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <!-- Order -->
+                <div class="filter-field">
+                    <label for="sort_order">Order</label>
+                    <select id="sort_order" name="sort_order" class="filter-select">
+                        <option value="ASC" {{ request('sort_order')=='ASC'?'selected':'' }}>Ascending</option>
+                        <option value="DESC" {{ request('sort_order','DESC')=='DESC'?'selected':'' }}>Descending</option>
+                    </select>
+                </div>
+                <!-- Actions -->
+                <div class="filter-field">
+                    <div class="filter-actions">
+                        <a href="{{ route('admin.students.index') }}" class="btn btn-clear">Clear All</a>
+                    </div>
+                </div>
+                <div class="filter-field">
+                    <div class="filter-actions">
+                        <button type="submit" class="btn btn-apply">Apply Filters</button>
+                    </div>
+                </div>
+            </div>
+        </form>
     </div>
-    <hr>
 
-    {{-- Filter Form --}}
-    <form class="mb-4 p-3 border rounded bg-light" method="GET" action="{{ route('admin.students.index') }}">
-        <div class="row g-3">
-
-            <div class="col-md-3">
-                <label class="form-label">Search</label>
-                <input type="text" class="form-control" name="search" value="{{ request('search') }}">
-            </div>
-
-            @if(auth()->user()->is_admin)
-            <div class="col-md-3">
-                <label class="form-label">Filter by Agent</label>
-                <select class="form-select" name="agent">
-                    <option value="">All Agents</option>
-                    @foreach($agents as $agent)
-                    <option value="{{ $agent->id }}" {{ request('agent') == $agent->id ? 'selected' : '' }}>
-                        {{ $agent->business_name ?? $agent->username }}
-                    </option>
-                    @endforeach
-                </select>
-            </div>
-            @endif
-
-            <div class="col-md-3">
-                <label class="form-label">Filter by University</label>
-                <select class="form-select" name="university">
-                    <option value="">All Universities</option>
-                    @foreach($universities as $university)
-                    <option value="{{ $university->id }}" {{ request('university') == $university->id ? 'selected' : '' }}>
-                        {{ $university->name }}
-                    </option>
-                    @endforeach
-                </select>
-            </div>
-
-            <div class="col-md-3">
-                <label class="form-label">Filter by Course</label>
-                <select class="form-select" name="course_title">
-                    <option value="">All Courses</option>
-                    @foreach($courses as $course)
-                    <option value="{{ $course->title }}" {{ request('course_title') == $course->title ? 'selected' : '' }}>
-                        {{ $course->title }}
-                    </option>
-                    @endforeach
-                </select>
-            </div>
-
-            <div class="col-md-3">
-                <label class="form-label">Filter by Status</label>
-                <select class="form-select" name="status">
-                    <option value="">All Statuses</option>
-                    @foreach(\App\Models\Student::STATUSES as $status)
-                    <option value="{{ $status }}" {{ request('status') == $status ? 'selected' : '' }}>
-                        {{ \App\Models\Student::getStatusLabel($status) }}
-                    </option>
-                    @endforeach
-                </select>
-            </div>
-
-            <div class="col-md-3">
-                <label class="form-label">Sort By</label>
-                <select class="form-select" name="sort_by">
-                    @php
-                    $sortOptions = ['created_at' => 'Created At', 'first_name' => 'First Name', 'email' => 'Email'];
-                    @endphp
-                    @foreach($sortOptions as $key => $value)
-                    <option value="{{ $key }}" {{ request('sort_by') == $key ? 'selected' : '' }}>
-                        {{ $value }}
-                    </option>
-                    @endforeach
-                </select>
-            </div>
-
-            <div class="col-md-3">
-                <label class="form-label">Sort Order</label>
-                <select class="form-select" name="sort_order">
-                    <option value="ASC" {{ request('sort_order') == 'ASC' ? 'selected' : '' }}>Ascending</option>
-                    <option value="DESC" {{ request('sort_order', 'DESC') == 'DESC' ? 'selected' : '' }}>Descending</option>
-                </select>
-            </div>
-
-            <div class="col-12 mt-3 d-flex justify-content-end">
-                <a href="{{ route('admin.students.index') }}" class="btn btn-secondary me-2">Clear Filters</a>
-                <button type="submit" class="btn btn-primary">Apply Filters</button>
-            </div>
-
+    {{-- Students Table --}}
+    <div class="table-card">
+        <div class="table-header">
+            <h2 class="table-title">All Students</h2>
+            <a href="{{ route('admin.students.create') }}" class="btn btn-primary add-btn">
+                + Add Student
+            </a>
         </div>
-    </form>
 
-    {{-- Student Table --}}
-    <div class="table-responsive">
-        <table class="table table-striped table-hover border">
-            <thead class="bg-primary text-white">
+        <table class="student-table">
+            <thead>
                 <tr>
-                    <th>ID</th>
+                    <th>Profile</th>
                     <th>Name</th>
-                    <th>Email</th>
+                    <th>Email / Contact</th>
+                    <th>Agent</th>
+                    <th>Application Status</th>
                     <th>University</th>
                     <th>Course</th>
-                    <th>Status</th>
-                    <th>Agent</th>
-                    <th>Created At</th>
                     <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
                 @forelse($students as $student)
                 <tr>
-                    <td>{{ $student->id }}</td>
-                    <td>{{ $student->first_name }} {{ $student->last_name }}</td>
-                    <td>{{ $student->email }}</td>
-                    <td>{{ $student->university->name ?? 'N/A' }}</td>
-                    <td>{{ $student->course->title ?? 'N/A' }}</td>
-                    <td><span class="badge bg-light text-dark">{{ \App\Models\Student::getStatusLabel($student->student_status) }}</span></td>
-                    <td>{{ $student->agent->business_name ?? $student->agent->username ?? 'N/A' }}</td>
-                    <td>{{ $student->created_at->format('Y-m-d H:i') }}</td>
                     <td>
-                        <a href="{{ route('admin.students.show', $student->id) }}" class="btn btn-sm btn-outline-primary">View</a>
-                        <a href="{{ route('admin.students.edit', $student->id) }}" class="btn btn-sm btn-outline-secondary">Edit</a>
-                        <form action="{{ route('admin.students.destroy', $student->id) }}" method="POST" class="d-inline">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure?')">Delete</button>
-                        </form>
+                        @if($student->students_photo)
+                        <img src="{{ asset($student->students_photo) }}" alt="photo" class="student-photo">
+                        @else
+                        <div class="no-photo">No Photo</div>
+                        @endif
+                    </td>
+                    <td>
+                        <a href="{{ route('admin.students.show',$student->id) }}" class="student-link">
+                            {{ $student->first_name }} {{ $student->last_name }}
+                        </a>
+                    </td>
+                    <td>{{ $student->email }} <br> {{ $student->phone_number }}</td>
+                    <td>{{ $student->agent?->business_name ?? $student->agent?->username }}</td>
+                    <td>
+                        @php
+                        $statusClass = match($student->student_status) {
+                        'accepted' => 'success',
+                        'pending' => 'warning',
+                        'rejected' => 'danger',
+                        default => 'secondary',
+                        };
+                        @endphp
+                        <span class="badge bg-{{ $statusClass }}">
+                            {{ ucfirst($student->student_status ?? 'N/A') }}
+                        </span>
+                    </td>
+                    <td>{{ $student->university?->name ?? 'N/A' }}</td>
+                    <td>{{ $student->course?->title ?? 'N/A' }}</td>
+                    <td>
+                        <div class="action-buttons">
+                            <a href="{{ route('admin.students.edit',$student->id) }}" class="btn btn-edit">Edit</a>
+                            <a href="{{ route('admin.documents.index',$student->id) }}" class="btn btn-doc">Documents</a>
+                        </div>
                     </td>
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="9" class="text-center">No students found.</td>
+                    <td colspan="8" class="empty-row">No students found.</td>
                 </tr>
                 @endforelse
             </tbody>
         </table>
-    </div>
 
-    <div class="mt-4">
-        {{ $students->appends(request()->query())->links() }}
+        <div class="pagination-wrap">
+            {{ $students->links() }}
+        </div>
     </div>
 </div>
 @endsection
