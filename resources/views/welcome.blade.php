@@ -54,14 +54,14 @@
         </div>
         <div class="dash-feature-card">
             <i class="fa fa-chart-line dash-icon"></i>
-            <h3>Status & Progress</h3>
+            <h3>Status, Progress & Updates</h3>
             <p>Monitor performance and gain insights into operations.</p>
         </div>
     </section>
 
     <!-- Countries Section -->
     <section class="countries-section">
-        <h3 class="section-title">Countries We Are Working With</h3>
+        <h3 class="section-title">Countries We Are Working For</h3>
 
         <div class="countries-custom-grid">
             <!-- Row 1 -->
@@ -108,22 +108,22 @@
 
     <!-- Programs Section -->
     <section class="dash-programs-section" data-aos="fade-up">
-        <h2>Upcoming Trainings & Webinars</h2>
+        <h2 class="section-title">Upcoming Trainings & Webinars</h2>
         <div class="dash-programs-grid">
             <div class="dash-program-card">
                 <h3>Student Management Training</h3>
                 <p>Date: 2025-09-15</p>
-                <a href="#" class="btn btn-primary">Register</a>
+                <a href="#" class="dash-btn-blue">Register</a>
             </div>
             <div class="dash-program-card">
                 <h3>University Applications Webinar</h3>
                 <p>Date: 2025-09-20</p>
-                <a href="#" class="btn btn-primary">Register</a>
+                <a href="#" class="dash-btn-blue">Register</a>
             </div>
             <div class="dash-program-card">
                 <h3>Visa Process Guidance For Germany</h3>
                 <p>Date: 2025-09-25</p>
-                <a href="#" class="btn btn-primary">Register</a>
+                <a href="#" class="dash-btn-blue">Register</a>
             </div>
         </div>
     </section>
@@ -167,7 +167,7 @@
 
     {{-- 🎓 University Logo Slider --}}
     <section class="dash-universities">
-        <h2>Our Partner Universities</h2>
+        <h2 class="section-title">Our Partner Universities</h2>
         <div class="dash-university-slider" id="uni-slider">
             <div class="dash-university-logo"><img src="/images/uni_logo/anu.jpg" alt="ANU"></div>
             <div class="dash-university-logo"><img src="/images/uni_logo/cambridge_logo.png" alt="Cambridge"></div>

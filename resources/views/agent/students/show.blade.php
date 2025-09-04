@@ -100,22 +100,49 @@
                 </div>
 
                 {{-- Documents --}}
-                <div class="tab-pane fade" id="documents">
-                    <div class="card shadow-sm p-3 rounded">
-                        <h5>Documents</h5>
-                        @if($student->documents->isEmpty())
-                        <p>No documents uploaded.</p>
-                        @else
-                        <ul class="list-group">
-                            @foreach($student->documents as $doc)
-                            <li class="list-group-item">
-                                <a href="{{ asset('storage/'.$doc->file_path) }}" target="_blank">{{ $doc->file_name }}</a>
-                            </li>
-                            @endforeach
-                        </ul>
-                        @endif
-                    </div>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5>📂 Documents</h5>
+                    <a href="{{ route('agent.students.documents.create', $student->id) }}" class="btn btn-primary btn-sm">
+                        + Upload Document
+                    </a>
                 </div>
+
+                @if($student->documents->isEmpty())
+                <p>No documents uploaded yet.</p>
+                @else
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Type</th>
+                            <th>File</th>
+                            <th>Notes</th>
+                            <th>Uploaded By</th>
+                            <th>Date</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($student->documents as $doc)
+                        <tr>
+                            <td>{{ $doc->document_type ?? '—' }}</td>
+                            <td>{{ $doc->file_name }}</td>
+                            <td>{{ $doc->notes }}</td>
+                            <td>{{ $doc->uploader->username ?? $doc->uploader->business_name }}</td>
+                            <td>{{ $doc->created_at->format('Y-m-d') }}</td>
+                            <td class="text-end">
+                                <a href="{{ route('admin.documents.download', $doc->id) }}" class="btn btn-sm btn-outline-primary">⬇️</a>
+                                <a href="{{ route('admin.students.documents.edit', [$student->id, $doc->id]) }}" class="btn btn-sm btn-outline-warning">✏️</a>
+                                <form method="POST" action="{{ route('admin.students.documents.destroy', [$student->id, $doc->id]) }}" class="d-inline" onsubmit="return confirm('Delete this document?')">
+                                    @csrf @method('DELETE')
+                                    <button class="btn btn-sm btn-outline-danger">🗑</button>
+                                </form>
+                            </td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+                @endif
+
             </div>
 
             {{-- Row 2 Tabs --}}

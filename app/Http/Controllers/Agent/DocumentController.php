@@ -13,78 +13,78 @@ use App\Notifications\DocumentUploaded;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Auth;
 
-
 class DocumentController extends Controller
 {
-    // List documents for a student (agent must own the student)
     public function index($studentId)
     {
-        $student = Student::where('agent_id', Auth::id())->with('agent')->findOrFail($studentId);
-        $documents = $student->documents()->orderBy('created_at', 'desc')->get();
+        $student = Student::where('agent_id', Auth::id())
+            ->with('agent')->findOrFail($studentId);
+
+        $documents = $student->documents()->latest()->get();
+
         return view('agent.documents.index', compact('student', 'documents'));
     }
 
-    // Show upload form
     public function create($studentId)
     {
-        $student = Student::where('agent_id', Auth::id())->with('agent')->findOrFail($studentId);
+        $student = Student::where('agent_id', Auth::id())
+            ->with('agent')->findOrFail($studentId);
+
         return view('agent.documents.create', compact('student'));
     }
-
-    // Store uploaded file
     public function store(Request $request, $studentId)
     {
         $student = Student::where('agent_id', Auth::id())->with('agent')->findOrFail($studentId);
 
         $request->validate([
-            'file' => 'required|file|max:15360|mimes:pdf,jpg,jpeg,png,doc,docx',
-            'document_type' => 'nullable|string|max:100'
+            'file'          => 'required|file|max:15360|mimes:pdf,jpg,jpeg,png,doc,docx',
+            'document_type' => 'nullable|string|max:100',
+            'notes'         => 'nullable|string',
         ]);
 
         $file = $request->file('file');
 
-        $agentSlug = Str::slug($student->agent->business_name ?? $student->agent->username ?? 'agent');
+        $agentSlug   = Str::slug($student->agent->business_name ?? $student->agent->username ?? 'agent');
         $studentSlug = Str::slug($student->first_name . ' ' . $student->last_name ?? 'student');
 
-        $folder = "agents/{$agentSlug}/{$studentSlug}/documents";
+        $folder   = "agents/{$agentSlug}/{$studentSlug}/documents";
         $filename = time() . '_' . preg_replace('/[^A-Za-z0-9\-\_\.]/', '_', $file->getClientOriginalName());
-        $path = Storage::disk('public')->putFileAs($folder, $file, $filename);
+        $path     = Storage::disk('public')->putFileAs($folder, $file, $filename);
 
         $document = Document::create([
-            'student_id'   => $student->id,
-            'uploaded_by'  => Auth::id(),
-            'file_name'    => $file->getClientOriginalName(),
-            'file_path'    => $path,
-            'file_type'    => $file->getClientMimeType(),
-            'file_size'    => $file->getSize(),
+            'student_id'    => $student->id,
+            'uploaded_by'   => Auth::id(),
+            'file_name'     => $file->getClientOriginalName(),
+            'file_path'     => $path,
+            'file_type'     => $file->getClientMimeType(),
+            'file_size'     => $file->getSize(),
             'document_type' => $request->document_type,
+            'notes'         => $request->notes,
         ]);
 
-        // Notify all admins about agent-uploaded document
+        // Notify all admins
         $admins = User::where('is_admin', 1)->get();
         Notification::send($admins, new DocumentUploaded($document));
 
         return redirect()->route('agent.documents.index', $student->id)
-            ->with('success', 'Document uploaded successfully.');
+            ->with('success', 'Document uploaded successfully. Admin notified.');
     }
 
     public function download($id)
     {
-        $document = Document::findOrFail($id);
-
-        // confirm student belongs to agent
-        if ($document->student->agent_id != Auth::id()) abort(403);
+        $document = Document::with('student')->findOrFail($id);
+        abort_unless($document->student->agent_id == Auth::id(), 403);
 
         $file = storage_path('app/public/' . $document->file_path);
-        if (!file_exists($file)) abort(404);
+        abort_unless(file_exists($file), 404);
 
         return response()->download($file, $document->file_name);
     }
 
     public function destroy($id)
     {
-        $document = Document::findOrFail($id);
-        if ($document->student->agent_id != Auth::id()) abort(403);
+        $document = Document::with('student')->findOrFail($id);
+        abort_unless($document->student->agent_id == Auth::id(), 403);
 
         Storage::disk('public')->delete($document->file_path);
         $studentId = $document->student_id;

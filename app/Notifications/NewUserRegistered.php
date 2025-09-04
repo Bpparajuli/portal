@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 use Illuminate\Notifications\Messages\MailMessage;
+use App\Helpers\ActivityLogger;
 
 class NewUserRegistered extends Notification
 {
@@ -36,6 +37,8 @@ class NewUserRegistered extends Notification
 
     public function toDatabase(object $notifiable): array
     {
+        ActivityLogger::log("New user registered: {$this->newUser->business_name}");
+
         return [
             'user_id' => $this->newUser->id,
             'name'    => $this->newUser->name,

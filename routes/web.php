@@ -97,7 +97,6 @@ Route::prefix('auth')->name('auth.')->group(function () {
 // A route to handle logout requests
 Route::post('/logout', [LoginController::class, 'logout'])->middleware('auth')->name('logout');
 
-
 // Add route aliases for 'login' and 'register' to avoid redirect errors from middleware
 Route::get('/login', function () {
     return redirect()->route('auth.login');
@@ -118,6 +117,10 @@ Route::middleware(['auth', \App\Http\Middleware\IsAdmin::class])->prefix('admin'
     Route::patch('notifications/read-all', [AdminNotificationController::class, 'markAllAsRead'])->name('notifications.readAll');
     Route::get('notifications/{id}/read-redirect', [AdminNotificationController::class, 'readAndRedirect'])->name('notifications.readRedirect');
 
+    Route::get('get-cities/{country}', [AdminUniversityController::class, 'getCities'])->name('get-cities');
+    Route::get('get-universities/{city}', [AdminUniversityController::class, 'getUniversities'])->name('get-universities');
+    Route::get('get-courses/{universityId}', [AdminUniversityController::class, 'getCourses'])->name('get-courses');
+
 
     Route::get('users/waiting', [AdminUserController::class, 'waiting'])->name('users.waiting');
     Route::put('users/{user}/approve', [AdminUserController::class, 'approve'])->name('users.approve');
@@ -128,7 +131,8 @@ Route::middleware(['auth', \App\Http\Middleware\IsAdmin::class])->prefix('admin'
     Route::resource('students', AdminStudentController::class);
     Route::resource('universities', AdminUniversityController::class);
     Route::resource('users', controller: AdminUserController::class);
-    Route::resource('documents', AdminDocumentController::class);
+    Route::resource('documents', AdminDocumentController::class)
+        ->only(['create', 'store', 'edit', 'update', 'destroy']);
     Route::get('documents/{document}/download', [AdminDocumentController::class, 'download'])
         ->name('documents.download');
 });
@@ -140,12 +144,17 @@ Route::middleware(['auth', \App\Http\Middleware\IsAgent::class])->prefix('agent'
     Route::get('chat', [AgentChatController::class, 'index'])->name('chat');
     Route::get('notifications', [AgentNotificationController::class, 'index'])->name('notifications');
 
+    Route::get('get-cities/{country}', [AgentUniversityController::class, 'getCities'])->name('get-cities');
+    Route::get('get-universities/{city}', [AgentUniversityController::class, 'getUniversities'])->name('get-universities');
+    Route::get('get-courses/{universityId}', [AgentUniversityController::class, 'getCourses'])->name('get-courses');
+
     // Resource routes for CRUD operations
-    Route::resource('applications', AgentApplicationController::class)->only(['index', 'show', 'edit', 'update']);
+    Route::resource('applications', AgentApplicationController::class);
     Route::resource('students', AgentStudentController::class);
     Route::resource('universities', AgentUniversityController::class)->only(['index', 'show']);
     Route::resource('courses', AgentCourseController::class)->only(['index', 'show']);
-    Route::resource('documents', AgentDocumentController::class);
+    Route::resource('documents', AgentDocumentController::class)
+        ->only(['create', 'store', 'edit', 'update', 'destroy']);
     Route::get('documents/{document}/download', [AgentDocumentController::class, 'download'])
         ->name('documents.download');
 });

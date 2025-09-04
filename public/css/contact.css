@@ -1,0 +1,90 @@
+/* Divider Line */
+.contact-page .divider {
+    width: 80px;
+    height: 4px;
+    background: linear-gradient(90deg, #007bff, #00c6ff);
+    border-radius: 2px;
+    margin-top: 10px;
+}
+
+/* Info Section */
+.contact-info .info-box i {
+    min-width: 40px;
+    transition: transform 0.3s ease;
+}
+.contact-info .info-box:hover i {
+    transform: scale(1.2);
+}
+.contact-info h5 {
+    font-size: 1rem;
+    margin-bottom: 4px;
+}
+.contact-info p,
+.contact-info li {
+    font-size: 0.9rem;
+    color: #6c757d;
+}
+
+/* Form Styling */
+.form-section {
+    background: #fff;
+    transition: all 0.3s ease;
+}
+.form-section:hover {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+.form-control {
+    border-radius: 10px;
+    padding: 12px;
+}
+.contact-btn {
+    border-radius: 30px;
+    background: linear-gradient(90deg, #007bff, #00c6ff);
+    border: none;
+    color: #fff;
+    font-weight: 600;
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease;
+}
+.contact-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+}
+
+/* Animations */
+.fade-in-up {
+    opacity: 0;
+    transform: translateY(30px);
+    animation: fadeInUp 0.8s ease forwards;
+}
+.fade-in-left {
+    opacity: 0;
+    transform: translateX(-30px);
+    animation: fadeInLeft 0.8s ease forwards;
+}
+.fade-in-right {
+    opacity: 0;
+    transform: translateX(30px);
+    animation: fadeInRight 0.8s ease forwards;
+}
+.delay-1 {
+    animation-delay: 0.3s;
+}
+
+@keyframes fadeInUp {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+@keyframes fadeInLeft {
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+@keyframes fadeInRight {
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}

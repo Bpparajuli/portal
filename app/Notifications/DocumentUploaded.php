@@ -4,44 +4,63 @@ namespace App\Notifications;
 
 use App\Models\Document;
 use Illuminate\Bus\Queueable;
-use Illuminate\Notifications\Notification;
+use Illuminate\Contracts\Queue\ShouldQueue; // optional if you use queues
 use Illuminate\Notifications\Messages\MailMessage;
+use Illuminate\Notifications\Notification;
+use App\Helpers\ActivityLogger;
 
-class DocumentUploaded extends Notification
+class DocumentUploaded extends Notification // implements ShouldQueue
 {
     use Queueable;
 
-    protected $document;
-
-    public function __construct(Document $document)
-    {
-        $this->document = $document;
-    }
+    public function __construct(public Document $document) {}
 
     public function via($notifiable)
     {
-        return ['database', 'mail'];
+        // database always; mail optional if you have mail setup
+        return ['database']; // add 'mail' if you want emails too
     }
 
     public function toMail($notifiable)
     {
-        $student = $this->document->student;
+        $doc = $this->document;
+        $student = $doc->student;
+
         return (new MailMessage)
-            ->subject('New Document uploaded')
-            ->line("A new document was uploaded for student: {$student->first_name} {$student->last_name}.")
-            ->action('View Student', url("/admin/students/{$student->id}"))
-            ->line('Thanks.');
+            ->subject('New Document Uploaded')
+            ->greeting('Hello!')
+            ->line("A new document ({$doc->file_name}) was uploaded for student {$student->first_name} {$student->last_name}.")
+            ->action('View Documents', route(
+                $notifiable->is_admin ? 'admin.documents.index' : 'agent.documents.index',
+                $student->id
+            ))
+            ->line('Thank you.');
     }
 
-    public function toDatabase($notifiable)
+    public function toArray($notifiable)
     {
-        $student = $this->document->student;
+        $doc = $this->document;
+        $student = $doc->student;
+        $uploader = $doc->uploader;
+        ActivityLogger::log("Uploaded document: {$this->document->title}", $this->document->uploaded_by);
+
         return [
-            'document_id' => $this->document->id,
-            'student_id' => $student->id,
-            'message' => "Document '{$this->document->file_name}' uploaded for {$student->first_name} {$student->last_name} by. $this->document->student->agent->business_name",
-            'type' => 'Document_Uploaded', // <- important!
-            'link' => url("/admin/students/{$student->id}"), // <- link to the admin student show page
+            'type'        => 'document_uploaded',
+            'document_id' => $doc->id,
+            'file_name'   => $doc->file_name,
+            'document_type' => $doc->document_type,
+            'student'     => [
+                'id' => $student->id,
+                'name' => $student->first_name . ' ' . $student->last_name,
+            ],
+            'uploaded_by' => [
+                'id' => $uploader->id,
+                'name' => $uploader->business_name ?? $uploader->username ?? $uploader->name,
+            ],
+            'link' => route(
+                $notifiable->is_admin ? 'admin.documents.index' : 'agent.documents.index',
+                $student->id
+            ),
         ];
     }
 }

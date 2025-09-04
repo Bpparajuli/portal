@@ -1,0 +1,99 @@
+.agent-applications {
+    margin: 2rem;
+    font-family: "Inter", sans-serif;
+    color: #333;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.app-btn {
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-weight: 500;
+}
+
+.app-table table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.app-table th,
+.app-table td {
+    padding: 0.75rem;
+    text-align: left;
+}
+
+.status-badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.5rem;
+    color: #fff;
+    font-size: 0.85rem;
+}
+
+.status-badge.created {
+    background-color: #6c757d;
+}
+.status-badge.received {
+    background-color: #0d6efd;
+}
+.status-badge.approved {
+    background-color: #198754;
+}
+.status-badge.rejected {
+    background-color: #dc3545;
+}
+.status-badge['applied to university'] {
+    background-color: #ffc107;
+}
+.status-badge['applied to another university'] {
+    background-color: #fd7e14;
+}
+.status-badge.forwarded {
+    background-color: #6610f2;
+}
+
+.app-form .form-group {
+    margin-bottom: 1rem;
+}
+
+.app-form .form-control,
+.app-form .form-select,
+.app-form textarea {
+    border-radius: 0.5rem;
+    padding: 0.5rem;
+}
+
+.app-card {
+    border: 1px solid #ddd;
+    border-radius: 0.75rem;
+    padding: 1rem 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    background-color: #fff;
+}
+
+.app-row {
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+}
+
+/*
+* admin side css for application */
+.table-applications th,
+.table-applications td {
+    text-align: center;
+    vertical-align: middle;
+}
+
+.application-details p {
+    font-size: 16px;
+    margin-bottom: 8px;
+}
+
+.application-details strong {
+    color: #333;
+}

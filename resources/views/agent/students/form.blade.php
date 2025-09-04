@@ -147,7 +147,7 @@
                 </div>
             </div>
 
-            {{-- Application Info --}}
+            {{-- Application Info
             <div class="accordion-item">
                 <h2 class="accordion-header" id="headingApplication">
                     <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseApplication">
@@ -162,36 +162,36 @@
                                 <option value="">Select</option>
                                 @foreach($universities as $uni)
                                 <option value="{{ $uni->id }}" {{ old('university_id', $student->university_id ?? '') == $uni->id ? 'selected' : '' }}>
-                                    {{ $uni->name }}
-                                </option>
-                                @endforeach
-                            </select>
-                        </div>
-
-                        <div class="mb-3">
-                            <label>Course</label>
-                            <select name="course_id" class="form-select">
-                                <option value="">Select</option>
-                                @foreach($courses as $course)
-                                <option value="{{ $course->id }}" {{ old('course_id', $student->course_id ?? '') == $course->id ? 'selected' : '' }}>
-                                    {{ $course->title }}
-                                </option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label>Notes</label>
-                            <textarea name="notes" class="form-control">{{ old('notes', $student->notes ?? '') }}</textarea>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            {{ $uni->name }}
+            </option>
+            @endforeach
+            </select>
         </div>
 
-        {{-- Submit Button --}}
-        <div class="mt-3">
-            <button type="submit" class="btn btn-primary">{{ isset($student) ? 'Update Student' : 'Add Student' }}</button>
+        <div class="mb-3">
+            <label>Course</label>
+            <select name="course_id" class="form-select">
+                <option value="">Select</option>
+                @foreach($courses as $course)
+                <option value="{{ $course->id }}" {{ old('course_id', $student->course_id ?? '') == $course->id ? 'selected' : '' }}>
+                    {{ $course->title }}
+                </option>
+                @endforeach
+            </select>
         </div>
-    </form>
+        <div class="mb-3">
+            <label>Notes</label>
+            <textarea name="notes" class="form-control">{{ old('notes', $student->notes ?? '') }}</textarea>
+        </div>
+</div>
+</div>
+</div>
+</div> --}}
+
+{{-- Submit Button --}}
+<div class="mt-3">
+    <button type="submit" class="btn btn-primary">{{ isset($student) ? 'Update Student' : 'Add Student' }}</button>
+</div>
+</form>
 </div>
 @endsection

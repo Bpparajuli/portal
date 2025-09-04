@@ -43,7 +43,6 @@ class UniversityController extends Controller
 
         return view('guest.universities.index', compact('countries', 'universities'));
     }
-
     public function show(University $university)
     {
         $university->load('courses');

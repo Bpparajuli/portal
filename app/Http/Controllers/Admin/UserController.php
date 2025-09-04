@@ -157,7 +157,7 @@ class UserController extends Controller
         $user->save();
 
         // Notify the user that they have been approved
-        $user->notify(new UserApproved());
+        $user->notify(instance: new UserApproved());
 
         return back()->with('success',     $user->business_name . ' has been approved and the notification has been successfully send to their email.');
     }

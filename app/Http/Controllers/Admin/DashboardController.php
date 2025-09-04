@@ -9,7 +9,7 @@ use App\Models\Student;
 use App\Models\University;
 use App\Models\Course;
 use App\Models\Application;
-use App\Models\totalWaitingUsers;
+use App\models\Activity;
 
 class DashboardController extends Controller
 {
@@ -28,9 +28,8 @@ class DashboardController extends Controller
         $totalCourses     = Course::count();
         $totalApplications = Application::count();
         $totalWaitingUsers = User::where('active', 0)->count();
-        // Example latest items
-        // $latestStudents   = Student::latest()->take(5)->get();
         $latestAgents     = User::where('is_agent', 1)->latest()->take(5)->get();
+        $activities = Activity::with('user')->latest()->take(10)->get();
 
         return view('admin.dashboard', compact(
             'totalAgents',
@@ -40,8 +39,28 @@ class DashboardController extends Controller
             'totalCourses',
             'totalWaitingUsers',
             'totalApplications',
-            // 'latestStudents',
-            'latestAgents'
+            'latestAgents',
+            'activities'
         ));
+    }
+    public function getCities($country)
+    {
+        $cities = University::where('country', $country)
+            ->select('city')->distinct()->pluck('city');
+        return response()->json($cities);
+    }
+
+    public function getUniversities($city)
+    {
+        $unis = University::where('city', $city)
+            ->select('id', 'name')->get();
+        return response()->json($unis);
+    }
+
+    public function getCourses($universityId)
+    {
+        $courses = Course::where('university_id', $universityId)
+            ->select('id', 'title')->get();
+        return response()->json($courses);
     }
 }

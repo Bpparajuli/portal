@@ -11,6 +11,7 @@ use App\Notifications\NewStudentAdded;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Notification;
+use App\Models\Activity;
 
 class StudentController extends Controller
 {
@@ -62,8 +63,8 @@ class StudentController extends Controller
             'last_name' => 'required|string|max:255',
             'email' => 'required|email',
             'students_photo' => 'nullable|image|max:2048',
-            'university_id' => 'required|exists:universities,id',
-            'course_id' => 'required|exists:courses,id',
+            'university_id' => 'nullable|exists:universities,id',
+            'course_id' => 'nullable|exists:courses,id',
             // add other validations as needed
         ]);
 

@@ -5,6 +5,7 @@ namespace App\Notifications;
 use App\Models\Student;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
+use App\Helpers\ActivityLogger;
 
 class StudentStatusChanged extends Notification
 {
@@ -23,6 +24,8 @@ class StudentStatusChanged extends Notification
 
     public function toDatabase($notifiable)
     {
+        ActivityLogger::log("Student {$this->student->name} status updated to {$this->student->status}");
+
         return [
             'message' => 'The process for ' . $this->student->name . ' has been updated to ' . $this->student->status,
             'student_id' => $this->student->id,

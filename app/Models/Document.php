@@ -2,23 +2,19 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Document extends Model
 {
-    use HasFactory;
-
-    protected $table = 'documents';
-
     protected $fillable = [
         'student_id',
         'uploaded_by',
-        'file_name',     // original filename for display
-        'file_path',     // path relative to storage/app/public
+        'file_name',
+        'file_path',
         'file_type',
         'file_size',
-        'document_type'  // optional: education, identification, financial, ward
+        'document_type',
+        'notes',
     ];
 
     public function student()
@@ -29,5 +25,14 @@ class Document extends Model
     public function uploader()
     {
         return $this->belongsTo(User::class, 'uploaded_by');
+    }
+
+    // Optional: nice size
+    public function getSizeHumanAttribute()
+    {
+        $size = $this->file_size ?? 0;
+        $units = ['B', 'KB', 'MB', 'GB', 'TB'];
+        for ($i = 0; $size >= 1024 && $i < count($units) - 1; $i++) $size /= 1024;
+        return round($size, 2) . ' ' . $units[$i];
     }
 }

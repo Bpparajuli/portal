@@ -2,6 +2,7 @@
 
 namespace App\Notifications;
 
+use App\Helpers\ActivityLogger;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -28,6 +29,8 @@ class UserApproved extends Notification
 
     public function toDatabase(object $notifiable): array
     {
+        ActivityLogger::log("Approved user: {$notifiable->business_name}");
+
         return [
             'message' => 'Your account has been approved. You can now log in.',
         ];
