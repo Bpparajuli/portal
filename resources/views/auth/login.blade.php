@@ -2,7 +2,7 @@
 @section('title', 'Login')
 
 @section('content')
-<div class="login-page d-flex align-items-center justify-content-center py-5">
+<div class="login-page d-flex align-items-center justify-content-center py-2">
 
     <div class="row w-100 g-0 shadow-lg rounded-4 overflow-hidden login-container">
         {{-- Left: Login Form --}}

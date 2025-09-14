@@ -47,6 +47,7 @@
 .status-badge.rejected {
     background-color: #dc3545;
 }
+
 .status-badge['applied to university'] {
     background-color: #ffc107;
 }

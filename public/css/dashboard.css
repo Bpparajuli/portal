@@ -215,53 +215,128 @@
 }
 /* Testimonials */
 .dash-testimonials {
-    padding: 2rem;
-    background: var(--light);
+    padding: 4rem 2rem;
+    background: linear-gradient(135deg, #f0f4ff, #e8f0fe);
     text-align: center;
+    font-family: "Poppins", sans-serif;
 }
 
+.dash-testimonials h2 {
+    font-size: 2.2rem;
+    margin-bottom: 2rem;
+    color: #1a1a1a;
+    font-weight: 600;
+}
+
+/* Slider Container */
 .testimonial-slider-container {
     position: relative;
-    max-width: 600px;
+    max-width: 800px;
     margin: 0 auto;
     overflow: hidden;
 }
 
+/* Slider Track */
 .dash-testimonial-slider {
-    display: flex; /* ✅ make horizontal */
+    display: flex;
     gap: 2rem;
-    overflow-x: hidden; /* ✅ hide scrollbar */
+    transition: transform 0.5s ease-in-out;
+}
+
+/* Testimonials Section */
+.dash-testimonials {
+    padding: 4rem 2rem;
+    background: #f0f4ff;
+    text-align: center;
+    font-family: "Poppins", sans-serif;
+}
+
+.dash-testimonials h2 {
+    font-size: 2.2rem;
+    margin-bottom: 2rem;
+    color: #1a1a1a;
+    font-weight: 600;
+}
+
+/* Slider Container */
+.testimonial-slider-container {
+    position: relative;
+    max-width: 800px;
+    margin: 0 auto;
+    overflow: hidden;
+}
+
+/* Slider Track */
+.dash-testimonial-slider {
+    display: flex;
+    gap: 2rem; /* spacing between cards */
+    overflow-x: hidden; /* hide scrollbar */
     scroll-behavior: smooth;
 }
 
+/* Slider Card */
 .dash-testimonial-card {
-    flex: 0 0 100%; /* ✅ one card per view */
-    background: #f9f9f9;
-    padding: 2rem;
-    border-radius: 12px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    flex: 0 0 100%; /* One card per view */
+    background: #ffffff;
+    padding: 2.5rem 2rem;
+    border-radius: 16px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
     text-align: center;
+    min-height: 220px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
+.dash-testimonial-card p {
+    font-size: 1.05rem;
+    line-height: 1.6;
+    color: #333;
+    margin-bottom: 1.5rem;
+}
+
+.dash-testimonial-card h4 {
+    font-size: 1rem;
+    color: #555;
+    font-weight: 500;
+}
+
+/* Slider Buttons */
 .slider-btn {
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
-    background: #333;
+    background: var(--secondary-color);
     color: #fff;
     border: none;
-    padding: 10px;
+    padding: 12px 16px;
     cursor: pointer;
-    border-radius: 10px;
+    border-radius: 50%;
     font-size: 1.5rem;
     z-index: 2;
+    transition: background 0.3s;
+}
+
+.slider-btn:hover {
+    background: var(--primary-color);
 }
 
 .slider-btn.prev {
-    left: 10px;
+    left: -10px;
 }
 .slider-btn.next {
-    right: 10px;
+    right: -10px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .dash-testimonial-card {
+        padding: 2rem 1.5rem;
+        min-height: 200px;
+    }
+    .dash-testimonials h2 {
+        font-size: 1.8rem;
+    }
 }
 
 /* CTA Section */
@@ -524,156 +599,5 @@
 /* ========================= 
 
 Agent dashboard styles starts from here 
+agentdashboard.css - custom styles for agent dashboard
  ========================= */
-/* Container */
-.ad-container {
-    padding: 2rem;
-    background: #f8fafc;
-}
-
-/* Header */
-.ad-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-}
-.ad-header h2 {
-    font-weight: 600;
-}
-.ad-quick-actions .ad-btn {
-    margin-left: 0.5rem;
-    margin-top: 0.5rem;
-}
-
-/* Buttons */
-.ad-btn {
-    padding: 0.5rem 1rem;
-    border-radius: 6px;
-    text-decoration: none;
-    font-size: 0.9rem;
-}
-.ad-btn-primary {
-    background: #3b82f6;
-    color: white;
-}
-.ad-btn-secondary {
-    background: #22c55e;
-    color: white;
-}
-.ad-btn-tertiary {
-    background: #fbbf24;
-    color: #111;
-}
-.ad-btn:hover {
-    opacity: 0.85;
-}
-
-/* Metrics Cards */
-.ad-card {
-    background: #fff;
-    border-radius: 12px;
-    padding: 1rem;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-    transition: transform 0.2s ease;
-}
-.ad-card:hover {
-    transform: translateY(-3px);
-}
-.ad-card-primary {
-    background: #3b82f6;
-    color: white;
-}
-.ad-card-success {
-    background: #22c55e;
-    color: white;
-}
-.ad-card-info {
-    background: #0ea5e9;
-    color: white;
-}
-.ad-card-light {
-    background: #fff;
-    color: #111;
-}
-
-/* Metric texts */
-.ad-card h2 {
-    font-size: 2rem;
-    margin: 0.3rem 0;
-}
-.ad-link {
-    font-size: 0.85rem;
-    color: #3b82f6;
-    text-decoration: none;
-}
-.ad-link:hover {
-    text-decoration: underline;
-}
-.ad-small-text {
-    font-size: 0.8rem;
-    color: #555;
-}
-
-/* Filters */
-.ad-filters .ad-input,
-.ad-filters .ad-select {
-    width: 100%;
-    padding: 0.5rem;
-    border-radius: 6px;
-    border: 1px solid #ddd;
-}
-
-/* Activity / Tasks / Notifications */
-.ad-activity-list,
-.ad-tasks,
-.ad-notifications,
-.ad-events {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-.ad-activity-list li,
-.ad-tasks li,
-.ad-notifications li,
-.ad-events li {
-    padding: 0.5rem 0;
-    border-bottom: 1px solid #eee;
-    font-size: 0.9rem;
-}
-
-/* Pipeline */
-.ad-pipeline {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 1rem;
-    gap: 0.5rem;
-}
-.ad-step {
-    flex: 1;
-    text-align: center;
-    padding: 0.6rem 0.3rem;
-    border-radius: 6px;
-    background: #e5e7eb;
-    font-size: 0.85rem;
-}
-.ad-step.completed {
-    background: #22c55e;
-    color: white;
-}
-.ad-step.active {
-    background: #3b82f6;
-    color: white;
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-    .ad-header {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-    .ad-quick-actions .ad-btn {
-        margin-left: 0;
-        margin-top: 0.5rem;
-    }
-}

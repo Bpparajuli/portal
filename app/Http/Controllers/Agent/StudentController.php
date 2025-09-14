@@ -110,8 +110,8 @@ class StudentController extends Controller
             'last_name' => 'required|string|max:255',
             'email' => 'required|email',
             'students_photo' => 'nullable|image|max:2048',
-            'university_id' => 'required|exists:universities,id',
-            'course_id' => 'required|exists:courses,id',
+            'university_id' => 'nullable|exists:universities,id',
+            'course_id' => 'nullable|exists:courses,id',
             // add other validations as needed
         ]);
 

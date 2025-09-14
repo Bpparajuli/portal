@@ -2,7 +2,7 @@
 .contact-page .divider {
     width: 80px;
     height: 4px;
-    background: linear-gradient(90deg, #007bff, #00c6ff);
+    background: linear-gradient(90deg, #1a0262, #820b5c);
     border-radius: 2px;
     margin-top: 10px;
 }
@@ -39,7 +39,7 @@
 }
 .contact-btn {
     border-radius: 30px;
-    background: linear-gradient(90deg, #007bff, #00c6ff);
+    background: linear-gradient(90deg, #1a0262, #820b5c);
     border: none;
     color: #fff;
     font-weight: 600;

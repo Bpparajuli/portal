@@ -1,73 +1,157 @@
 @extends('layouts.app')
+@section('title', 'Become an IDEA Agent')
 
 @section('content')
-<div class="row justify-content-center mt-5">
-    <div class="col-md-6 p-5 border border-primary rounded">
-        <h1 class="bg-secondary bold text-center text-white p-3">Fill the form and submit to become an IDEA AGENT</h1><br>
-        <form method="POST" action="{{ route('auth.register') }}" enctype="multipart/form-data">
-            @csrf
-            <label>Business Name</label>
-            <input type="text" name="business_name" placeholder="Business Name" class="form-control mb-2" value="{{ old('business_name') }}">
+<div class="register-page py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
 
-            <label>Owner Name</label>
-            <input type="text" name="owner_name" placeholder="Owner Name" class="form-control mb-2" value="{{ old('owner_name') }}">
+                {{-- Card --}}
+                <div class="card shadow-lg border-0 rounded-4 overflow-hidden">
 
-            <label>Name</label>
-            <input type="text" name="name" placeholder="Name" class="form-control mb-2" value="{{ old('name') }}" required>
+                    {{-- Header --}}
+                    <div class="card-header bg-idea2 text-white text-center py-4">
+                        <h2 class="fw-bold mb-1">Become an IDEA Agent</h2>
+                        <p class="mb-0 small">Fill the form below to register your agency with us</p>
+                    </div>
 
-            <label>Contact</label>
-            <input type="text" name="contact" placeholder="Contact" class="form-control mb-2" value="{{ old('contact') }}">
+                    {{-- Body --}}
+                    <div class="card-body p-5">
+                        {{-- Errors --}}
+                        @if ($errors->any())
+                        <div class="alert alert-danger">
+                            <ul class="mb-0">
+                                @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                        @endif
 
-            <label>Address</label>
-            <input type="text" name="address" placeholder="Address" class="form-control mb-2" value="{{ old('address') }}">
+                        <form method="POST" action="{{ route('auth.register') }}" enctype="multipart/form-data">
+                            @csrf
+                            <div class="row g-4">
 
-            <label>Email</label>
-            <input type="email" name="email" placeholder="Email" class="form-control mb-2" value="{{ old('email') }}" required>
+                                {{-- Business Name --}}
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Business Name</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-building"></i></span>
+                                        <input type="text" name="business_name" class="form-control" placeholder="Business Name" value="{{ old('business_name') }}">
+                                    </div>
+                                </div>
 
-            <label>Password</label>
-            <input type="password" name="password" placeholder="Password" class="form-control mb-2" required>
+                                {{-- Owner Name --}}
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Owner Name</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-user-tie"></i></span>
+                                        <input type="text" name="owner_name" class="form-control" placeholder="Owner Name" value="{{ old('owner_name') }}">
+                                    </div>
+                                </div>
 
-            <label>Confirm Password</label>
-            <input type="password" name="password_confirmation" placeholder="Confirm Password" class="form-control mb-2" required>
+                                {{-- Name --}}
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Your Name <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-user"></i></span>
+                                        <input type="text" name="name" class="form-control" placeholder="Full Name" value="{{ old('name') }}" required>
+                                    </div>
+                                </div>
 
-            <label>Business Logo</label>
-            <input type="file" name="business_logo" class="form-control mb-3" accept="image/*">
+                                {{-- Contact --}}
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Contact</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-phone"></i></span>
+                                        <input type="text" name="contact" class="form-control" placeholder="Contact Number" value="{{ old('contact') }}">
+                                    </div>
+                                </div>
 
-            <div class="form-check mb-2">
-                <input class="form-check-input" type="checkbox" name="terms" id="terms" required>
-                <label class="form-check-label" for="terms">
-                    I agree to the <a href="{{ route('auth.terms') }}">Terms and Conditions</a>
-                </label>
+                                {{-- Address --}}
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Address</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-map-marker-alt"></i></span>
+                                        <input type="text" name="address" class="form-control" placeholder="Address" value="{{ old('address') }}">
+                                    </div>
+                                </div>
+
+                                {{-- Email --}}
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Email <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                                        <input type="email" name="email" class="form-control" placeholder="Email Address" value="{{ old('email') }}" required>
+                                    </div>
+                                </div>
+
+                                {{-- Password --}}
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Password <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                        <input type="password" name="password" class="form-control" placeholder="Password" required>
+                                    </div>
+                                </div>
+
+                                {{-- Confirm Password --}}
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Confirm Password <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-check-circle"></i></span>
+                                        <input type="password" name="password_confirmation" class="form-control" placeholder="Confirm Password" required>
+                                        <span id="password-match-icon" class="input-group-text"></span>
+                                    </div>
+                                </div>
+
+                                {{-- Business Logo --}}
+                                <div class="col-12">
+                                    <label class="form-label fw-semibold">Business Logo</label>
+                                    <input type="file" name="business_logo" class="form-control" accept="image/*">
+                                </div>
+
+                                {{-- Terms --}}
+                                <div class="col-12">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="terms" id="terms" required>
+                                        <label class="form-check-label" for="terms">
+                                            I agree to the <a href="{{ route('auth.terms') }}" target="_blank">Terms & Conditions</a>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                {{-- Submit --}}
+                                <div class="col-12">
+                                    <button type="submit" class="btn btn-primary w-100 py-2">
+                                        <i class="fas fa-user-plus me-2"></i> Register
+                                    </button>
+                                </div>
+
+                                {{-- Login Link --}}
+                                <div class="col-12 text-center">
+                                    <small class="text-muted">Already have an account? <a href="{{ route('login') }}">Login</a></small>
+                                </div>
+
+                            </div>
+                        </form>
+                    </div>
+                </div> {{-- /card --}}
+
             </div>
-
-            <button type="submit" class="btn bg-primary text-white w-100">Register</button>
-
-            <div class="text-center mt-2">
-                <a href="{{ route('login') }}" class="text-primary">Already have an account? Login</a>
-            </div>
-        </form>
-        @if ($errors->any())
-        <div class="alert alert-danger">
-            <ul class="mb-0">
-                @foreach ($errors->all() as $error)
-                <li>{{ $error }}</li>
-                @endforeach
-            </ul>
         </div>
-        @endif
-
     </div>
 </div>
 @endsection
+
+{{-- Password Match Script --}}
+@push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const password = document.querySelector('input[name="password"]');
         const confirmPassword = document.querySelector('input[name="password_confirmation"]');
-
-        const matchIcon = document.createElement('span');
-        matchIcon.style.marginLeft = '10px';
-
-        confirmPassword.parentNode.insertBefore(matchIcon, confirmPassword.nextSibling);
+        const matchIcon = document.getElementById('password-match-icon');
 
         confirmPassword.addEventListener('input', () => {
             if (confirmPassword.value === "") {
@@ -83,3 +167,4 @@
     });
 
 </script>
+@endpush

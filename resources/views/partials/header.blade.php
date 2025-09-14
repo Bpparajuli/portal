@@ -9,7 +9,7 @@ $user = auth()->user();
             {{-- Left Section: Logo --}}
             <div class="header-left">
                 <div class="header-logo">
-                    <img src="https://ideaconsultancyservices.com/wp-content/uploads/2023/10/Logos.png" alt="Idea Consultancy" />
+                    <img src="{{ asset('images/main_logo.png') }}" alt="Idea Consultancy" />
                 </div>
             </div>
 
@@ -23,10 +23,11 @@ $user = auth()->user();
             {{-- Right Section: Brand Title, User Info, and Mobile Toggle --}}
             <div class="header-right">
                 @guest
-                <div class="header-title">
+                <div class="header-title header-logo d-flex g-2 ">
                     <h1 class="header-title-text">
                         Idea Consultancy
                     </h1>
+                    <img src="{{ asset('images/logo2.png') }}" alt="Idea Consultancy" />
                 </div>
                 @endguest
                 {{-- User Info and Notifications (visible on desktop) --}}
@@ -144,17 +145,17 @@ $user = auth()->user();
                         <i class="fa fa-calendar-check"></i> Universities
                     </a>
                 </li>
-                <li class="nav-item {{ request()->is('contact/show') ? 'active' : '' }}">
+                <li class="nav-item {{ request()->is('auth/contact') ? 'active' : '' }}">
                     <a href="{{ route('auth.contact') }}">
                         <i class="fa fa-envelope"></i> Contact Us
                     </a>
                 </li>
-                <li class="nav-item {{ request()->is('login') ? 'active' : '' }}">
+                <li class="nav-item {{ request()->is('auth/login') ? 'active' : '' }}">
                     <a href="{{ route('login') }}">
                         <i class="fa fa-sign-in"></i> Login
                     </a>
                 </li>
-                <li class="nav-item {{ request()->is('register') ? 'active' : '' }}">
+                <li class="nav-item {{ request()->is('auth/register') ? 'active' : '' }}">
                     <a href="{{ route('register') }}">
                         <i class="fa fa-user-plus"></i> Register
                     </a>

@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Guest\CourseController as GuestCourseController;
 use App\Http\Controllers\Guest\UniversityController as GuestUniversityController;
+use App\Http\Controllers\Guest\DashboardController as GuestDashboardController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\ContactController;
@@ -36,18 +37,17 @@ use App\Http\Controllers\Agent\UniversityController as AgentUniversityController
 |
 */
 
-// Welcome page
 Route::get('/', function () {
     if (Auth::check()) {
-        // Check role
         if (Auth::user()->is_admin) {
             return redirect()->route('admin.dashboard');
         } elseif (Auth::user()->is_agent) {
             return redirect()->route('agent.dashboard');
         }
     }
-    // Guest
-    return view('welcome');
+
+    // Guest -> call welcome method
+    return app(GuestDashboardController::class)->welcome(request());
 })->name('home');
 
 Route::prefix('guest')->name('guest.')->group(function () {
@@ -154,7 +154,7 @@ Route::middleware(['auth', \App\Http\Middleware\IsAgent::class])->prefix('agent'
     Route::resource('universities', AgentUniversityController::class)->only(['index', 'show']);
     Route::resource('courses', AgentCourseController::class)->only(['index', 'show']);
     Route::resource('documents', AgentDocumentController::class)
-        ->only(['create', 'store', 'edit', 'update', 'destroy']);
+        ->only(['create', 'store', 'edit', 'update', 'destroy', 'index']);
     Route::get('documents/{document}/download', [AgentDocumentController::class, 'download'])
         ->name('documents.download');
 });

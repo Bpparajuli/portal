@@ -5,6 +5,12 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Application;
 use Illuminate\Http\Request;
+use App\Models\University;
+use App\Models\Activity;
+use App\Models\User;
+use App\Models\Student;
+use App\Models\Course;
+use Illuminate\Support\Facades\Auth;
 
 class ApplicationController extends Controller
 {
@@ -34,6 +40,9 @@ class ApplicationController extends Controller
 
     public function edit(Application $application)
     {
+        $universities = University::all();
+        $students = Student::all();
+
         return view('admin.applications.edit', compact('application'));
     }
 
@@ -52,5 +61,12 @@ class ApplicationController extends Controller
     {
         $application->delete();
         return redirect()->route('admin.applications.index')->with('success', 'Application deleted.');
+    }
+
+    public function show(Application $application)
+    {
+        // No agent check needed, admin can view all applications.
+
+        return view('admin.applications.show', compact('application'));
     }
 }

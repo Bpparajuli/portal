@@ -11,7 +11,7 @@
             <div class="dash-hero-buttons">
                 <a href="{{ route('auth.register') }}" class="dash-btn dash-btn-register"> <i class="fa fa-user-plus"></i>
                     Register</a>
-                <a href="#" class="dash-btn dash-btn-login"> <i class="fa fa-university"></i>
+                <a href="{{ route('guest.universities.index') }}" class=" dash-btn dash-btn-login"> <i class="fa fa-university"></i>
                     Find Universities</a>
             </div>
         </div>
@@ -40,6 +40,10 @@
         </div>
     </section>
 
+    {{-- Filter Section --}}
+    <section class="uni-filter">
+        @include('partials.uni_filter')
+    </section>
     <!-- Features Section -->
     <section class="dash-features" data-aos="fade-up">
         <div class="dash-feature-card">
@@ -136,21 +140,58 @@
             <button class="slider-btn prev">&#10094;</button>
             <div class="dash-testimonial-slider" id="testimonial-slider">
                 <div class="dash-testimonial-card">
-                    <p>"Amazing support! My application process was super smooth."</p>
-                    <h4>- John Doe</h4>
+                    <p>"The way documents are handled in IDEA’s portal is very smooth and hassle-free. Everything is organized, making the application process easy."</p>
+                    <h4>- Ramesh Kumar Thapa, Kathmandu, Nepal</h4>
                 </div>
                 <div class="dash-testimonial-card">
-                    <p>"The team guided me to the best universities."</p>
-                    <h4>- Priya Sharma</h4>
+                    <p>"Finding courses and program details is really simple. The portal makes it easy to compare universities and options without any confusion."</p>
+                    <h4>- Anisha Gurung, Pokhara, Nepal</h4>
                 </div>
                 <div class="dash-testimonial-card">
-                    <p>"I loved the personalized approach and quick responses."</p>
-                    <h4>- Ahmed Ali</h4>
+                    <p>"The IDEA team members are very supportive. They guide us at every step and are always available to answer questions."</p>
+                    <h4>- Bipin Shrestha, Lalitpur, Nepal</h4>
+                </div>
+                <div class="dash-testimonial-card">
+                    <p>"The training sessions organized by IDEA were extremely helpful. They gave practical insights and prepared us well for the application and visa process."</p>
+                    <h4>- Sabina KC, Bhaktapur, Nepal</h4>
+                </div>
+                <div class="dash-testimonial-card">
+                    <p>"Germany is such a great study destination, and IDEA has promoted it effectively. We are receiving complete support for our Germany applications."</p>
+                    <h4>- Manoj Adhikari, Dharan, Nepal</h4>
+                </div>
+                <div class="dash-testimonial-card">
+                    <p>"This inbuilt portal by IDEA is fantastic. It is user-friendly, intuitive, and makes navigating courses and universities very easy."</p>
+                    <h4>- Priya Thapa Magar, Chitwan, Nepal</h4>
+                </div>
+                <div class="dash-testimonial-card">
+                    <p>"The portal is simple to use, yet it offers many advanced functions. From checking eligibility to uploading documents, everything is seamless."</p>
+                    <h4>- Suman Lama, Ilam, Nepal</h4>
+                </div>
+                <div class="dash-testimonial-card">
+                    <p>"We are grateful that courses, university details, and other important info are visible on the homepage without even logging in. This is excellent service!"</p>
+                    <h4>- Ritu Shrestha, Kathmandu, Nepal</h4>
+                </div>
+                <div class="dash-testimonial-card">
+                    <p>"IDEA’s training and support system is top-notch. Every session adds value and helps in understanding the application process better."</p>
+                    <h4>- Dev Raj Bhatt, Kailali, Nepal</h4>
+                </div>
+                <div class="dash-testimonial-card">
+                    <p>"The IDEA team communicates clearly and promptly. They are helpful, professional, and make the whole study abroad process smooth."</p>
+                    <h4>- Sunita Karki, Pokhara, Nepal</h4>
+                </div>
+                <div class="dash-testimonial-card">
+                    <p>"The portal allows us to track our application progress easily. Its organized layout and simple navigation make it very convenient."</p>
+                    <h4>- Pramod Kunwar, Lalitpur, Nepal</h4>
+                </div>
+                <div class="dash-testimonial-card">
+                    <p>"We love that IDEA’s portal combines everything in one place—course info, university details, and support resources—making it very efficient and reliable."</p>
+                    <h4>- Bishal Pokharel, Kathmandu, Nepal</h4>
                 </div>
             </div>
             <button class="slider-btn next">&#10095;</button>
         </div>
     </section>
+
     <!-- Call To Action Section -->
     <section class="dash-cta">
         <div class="cta-container">
@@ -169,18 +210,18 @@
     <section class="dash-universities">
         <h2 class="section-title">Our Partner Universities</h2>
         <div class="dash-university-slider" id="uni-slider">
-            <div class="dash-university-logo"><img src="/images/uni_logo/anu.jpg" alt="ANU"></div>
-            <div class="dash-university-logo"><img src="/images/uni_logo/cambridge_logo.png" alt="Cambridge"></div>
-            <div class="dash-university-logo"><img src="/images/uni_logo/eth.png" alt="ETH"></div>
-            <div class="dash-university-logo"><img src="/images/uni_logo/harvard.png" alt="Harvard"></div>
-            <div class="dash-university-logo"><img src="/images/uni_logo/melbourne_logo.png" alt="Melbourne"></div>
-            <div class="dash-university-logo"><img src="/images/uni_logo/mit.jpg" alt="MIT"></div>
-            <div class="dash-university-logo"><img src="/images/uni_logo/nus_logo.png" alt="NUS"></div>
-            <div class="dash-university-logo"><img src="/images/uni_logo/oxford_logo.png" alt="Oxford"></div>
-            <div class="dash-university-logo"><img src="/images/uni_logo/toronto_logo.png" alt="Toronto"></div>
-            <div class="dash-university-logo"><img src="/images/uni_logo/ubc_logo.png" alt="UBC"></div>
+            @foreach (File::files(public_path('images/uni_logo')) as $file)
+            @php
+            $fileName = basename($file);
+            $alt = pathinfo($fileName, PATHINFO_FILENAME);
+            @endphp
+            <div class="dash-university-logo">
+                <img src="{{ asset('images/uni_logo/' . $fileName) }}" alt="{{ ucfirst($alt) }}">
+            </div>
+            @endforeach
         </div>
     </section>
+
 </div>
 @endsection
 

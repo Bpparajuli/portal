@@ -4,63 +4,9 @@
 <div class="uni-page">
 
     {{-- Filter Section --}}
-    <div class="uni-filter-card">
-        <form method="GET" action="{{ route('guest.universities.index') }}" class="uni-filter-form">
-            <div class="uni-filter-grid">
-                {{-- Search --}}
-                <div class="uni-filter-field">
-                    <label for="search">Search</label>
-                    <input type="text" id="search" name="search" value="{{ old('search', request('search')) }}" class="uni-input" placeholder="University or Course">
-                </div>
-
-                {{-- Country --}}
-                <div class="uni-filter-field">
-                    <label for="country">Country</label>
-                    <select id="country" name="country" class="uni-select" data-cities-url="{{ route('guest.get-cities', ':country') }}">
-                        <option value="">All Countries</option>
-                        @foreach($countries as $country)
-                        <option value="{{ $country }}" {{ request('country') == $country ? 'selected' : '' }}>
-                            {{ $country }}
-                        </option>
-                        @endforeach
-                    </select>
-                </div>
-
-                {{-- City --}}
-                <div class="uni-filter-field">
-                    <label for="city">City</label>
-                    <select id="city" name="city" class="uni-select" data-universities-url="{{ route('guest.get-universities', ':city') }}">
-                        <option value="">All Cities</option>
-                    </select>
-                </div>
-
-                {{-- University --}}
-                <div class="uni-filter-field">
-                    <label for="university_id">University</label>
-                    <select id="university_id" name="university_id" class="uni-select" data-courses-url="{{ route('guest.get-courses', ':universityId') }}">
-                        <option value="">All Universities</option>
-                    </select>
-                </div>
-
-                {{-- Course --}}
-                <div class="uni-filter-field">
-                    <label for="course_id">Course</label>
-                    <select id="course_id" name="course_id" class="uni-select">
-                        <option value="">All Courses</option>
-                    </select>
-                </div>
-            </div>
-
-            {{-- Actions --}}
-            <div class="uni-filter-actions">
-                <a href="{{ route('guest.universities.index') }}" class="uni-btn-clear">Reset</a>
-                <button type="submit" class="uni-btn-apply">Filter</button>
-            </div>
-        </form>
-    </div>
-
+    @include('partials.uni_filter')
     {{-- Universities Cards --}}
-    <div class="uni-cards-grid">
+    <div class="uni-cards-grid mt-3">
         @forelse($universities as $uni)
         <div class="uni-card">
             <div class="uni-card-header">
@@ -81,7 +27,7 @@
             </div>
             @if($uni->courses->count())
             <div class="uni-card-footer">
-                <button class="uni-btn-toggle" onclick="openCourseModal({{ $uni->id }})">
+                <button class="uni-btn-toggle btn-primary" onclick="openCourseModal({{ $uni->id }})">
                     View Courses ({{ $uni->courses->count() }})
                 </button>
             </div>
@@ -127,7 +73,7 @@
         @endforelse
     </div>
 
-    <div class="pagination-wrap">
+    <div class="pagination-wrap mt-4">
         {{ $universities->links() }}
     </div>
 </div>

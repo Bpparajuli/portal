@@ -49,22 +49,21 @@ document.addEventListener("DOMContentLoaded", function () {
 
     if (slider && prevBtn && nextBtn) {
         let scrollAmount = 0;
-        const slideWidth = slider.querySelector(".dash-testimonial-card")
-            ? slider.querySelector(".dash-testimonial-card").offsetWidth + 30 // 30 = gap
-            : 320;
+        const card = slider.querySelector(".dash-testimonial-card");
+        const gap = parseInt(getComputedStyle(slider).gap);
+        const slideWidth = card.offsetWidth + gap;
 
         nextBtn.addEventListener("click", () => {
-            if (scrollAmount < slider.scrollWidth - slider.clientWidth) {
-                scrollAmount += slideWidth;
-                slider.scrollTo({ left: scrollAmount, behavior: "smooth" });
-            }
+            scrollAmount = Math.min(
+                scrollAmount + slideWidth,
+                slider.scrollWidth - slider.clientWidth
+            );
+            slider.scrollTo({ left: scrollAmount, behavior: "smooth" });
         });
 
         prevBtn.addEventListener("click", () => {
-            if (scrollAmount > 0) {
-                scrollAmount -= slideWidth;
-                slider.scrollTo({ left: scrollAmount, behavior: "smooth" });
-            }
+            scrollAmount = Math.max(scrollAmount - slideWidth, 0);
+            slider.scrollTo({ left: scrollAmount, behavior: "smooth" });
         });
     }
 

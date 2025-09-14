@@ -39,7 +39,7 @@ class UniversityController extends Controller
             $query->whereHas('courses', fn($q) => $q->where('id', $request->course_id));
         }
 
-        $universities = $query->paginate(10)->withQueryString();
+        $universities = $query->inRandomOrder()->paginate(16)->withQueryString();
 
         return view('guest.universities.index', compact('countries', 'universities'));
     }
