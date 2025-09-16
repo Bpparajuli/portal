@@ -19,8 +19,8 @@ body {
 }
 
 :root {
-    --primary-color: #820b5c;
-    --secondary-color: #1a0262;
+    --primary: #820b5c;
+    --secondary: #1a0262;
     --white: #ffffff;
     --black: #000000;
     --gray: #f6f7fb;
@@ -39,9 +39,9 @@ main {
     background-color: #ffffff;
 }
 
-.bg-idea1 {
+.bg-primary {
     background: #1a0262;
 }
-.bg-idea2 {
+.bg-secondary {
     background: #820b5c;
 }

@@ -12,7 +12,7 @@
         @include('agent.students.form')
 
         <div class="form-actions mt-3">
-            <a href="{{ route('agent.documents.create', $student->id) }}" class="btn btn-warning">📄 Upload Document</a>
+            <a href="{{ route('agent.documents.index', $student->id) }}" class="btn btn-warning">📄 Upload Document</a>
             <button type="submit" class="btn btn-success">💾 Save Changes</button>
         </div>
     </form>

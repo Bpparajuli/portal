@@ -59,4 +59,8 @@ class Student extends Model
     {
         return $this->hasMany(Document::class);
     }
+    public function applications()
+    {
+        return $this->hasMany(Application::class);
+    }
 }

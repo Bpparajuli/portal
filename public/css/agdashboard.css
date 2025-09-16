@@ -11,6 +11,13 @@
     --warning: #f59e0b;
     --radius: 12px;
     --shadow: 0 6px 20px rgba(15, 23, 42, 0.06);
+    --primary: #1a0262;
+    --secondary: #820b5c;
+    --text-light: #fff;
+    --text-dark: #333;
+    --bg-light: #f8f9fa;
+    --border: #ddd;
+    --active: linear-gradient(180deg, #1a0262 0%, #1a0262 50%, #820b5c 100%);
 }
 
 body {
@@ -24,12 +31,17 @@ body {
     display: grid;
     grid-template-columns: 3fr 1fr;
     gap: 20px;
-    padding: 22px;
-    max-width: 1200px;
-    margin: 18px auto;
+    margin: auto;
     align-items: start;
 }
-
+.full-width {
+    padding: 1.5rem !important;
+    margin: auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
 /* left column */
 .left-content {
     display: flex;
@@ -58,10 +70,6 @@ body {
 }
 
 /* welcome */
-.welcome-card h2 {
-    margin: 0 0 8px;
-    font-size: 20px;
-}
 .actions {
     display: flex;
     gap: 10px;
@@ -74,15 +82,17 @@ body {
     color: #fff;
     font-weight: 600;
 }
+.btn:hover {
+    background: var(--active);
+}
 .btn-primary {
-    background: var(--accent);
+    background: var(--primary);
 }
 .btn-secondary {
-    background: var(--success);
+    background: var(--secondary);
 }
-.btn-tertiary {
-    background: var(--warning);
-    color: #111;
+.btn-active {
+    background: var(--active);
 }
 
 /* stats row */
@@ -93,8 +103,15 @@ body {
 .stat-card {
     flex: 1;
     text-align: center;
-    padding: 18px;
+    padding: 18px 18px;
     border: 2px solid rgba(0, 0, 0, 0.05);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    justify-content: center;
+}
+.stat-card > i {
+    font-size: 50px;
 }
 .stat-card h6 {
     color: var(--muted);
@@ -113,11 +130,30 @@ body {
 }
 .stat-card.big {
     border-left: 6px solid #1a0262;
+    flex: 1;
 }
 .stat-card.maroon {
     border-bottom: 6px solid #820b5c;
 }
-
+/* fix chart sizes */
+#conversionChart,
+#statusChart,
+#monthlyChart,
+#progressChart {
+    width: 100% !important;
+    height: 250px !important; /* control height */
+    max-height: 300px; /* safety limit */
+}
+.stat-card.big,
+.chart-card,
+.progress-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 300px;
+    max-height: 400px;
+    overflow: hidden;
+}
 /* activities */
 .activities-row {
     display: flex;
@@ -150,8 +186,9 @@ body {
 
 /* charts */
 .charts-row {
-    display: flex;
+    display: grid;
     gap: 12px;
+    grid-template-columns: 1fr 2fr;
 }
 .chart-card {
     flex: 1;

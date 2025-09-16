@@ -161,16 +161,18 @@ Route::middleware(['auth', \App\Http\Middleware\IsAgent::class])->prefix('agent'
     Route::resource('universities', AgentUniversityController::class)->only(['index', 'show']);
     Route::resource('courses', AgentCourseController::class)->only(['index', 'show']);
 
-    // Documentsname
+    // Documents
     Route::get('students/{student}/documents', [AgentDocumentController::class, 'index'])->name('documents.index');
     Route::get('students/{student}/documents/create', [AgentDocumentController::class, 'create'])->name('documents.create');
     Route::post('students/{student}/documents', [AgentDocumentController::class, 'store'])->name('documents.store');
-    Route::delete('students/{student}/documents/{document}', [AgentDocumentController::class, 'destroy'])->name('documents.destroy');
-    Route::get('students/{student}/documents/{document}/download', [AgentDocumentController::class, 'download'])->name('documents.download');
+    Route::get('documents/{document}/download', [AgentDocumentController::class, 'download'])->name('documents.download');
+    Route::get('documents/{document}/destroy', [AgentDocumentController::class, 'destroy'])->name('documents.destroy');
 
     // Applications
-    Route::resource('applications', AgentApplicationController::class,);
+    Route::get('applications', [AgentApplicationController::class, 'index'])->name('applications.index');
+    Route::get('applications/create', [AgentApplicationController::class, 'create'])->name('applications.create');
     Route::post('applications', [AgentApplicationController::class, 'store'])->name('applications.store');
+    Route::delete('applications/{application}/show', [AgentApplicationController::class, 'show'])->name('applications.show');
 });
 
 // User routes (assuming regular users or students)

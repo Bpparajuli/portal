@@ -3,94 +3,103 @@
 namespace App\Http\Controllers\Agent;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\Document;
 use App\Models\Student;
 use App\Models\User;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
-use App\Notifications\DocumentUploaded;
-use Illuminate\Support\Facades\Notification;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Notification;
+use App\Notifications\DocumentUploaded;
 
 class DocumentController extends Controller
 {
-    public function index($studentId)
+    public function index(Student $student)
     {
-        $student = Student::where('agent_id', Auth::id())
-            ->with('agent')->findOrFail($studentId);
-
-        $documents = $student->documents()->latest()->get();
-
+        $documents = $student->documents()->get();
         return view('agent.documents.index', compact('student', 'documents'));
     }
 
-    public function create($studentId)
+    public function create(Student $student)
     {
-        $student = Student::where('agent_id', Auth::id())
-            ->with('agent')->findOrFail($studentId);
-
         return view('agent.documents.create', compact('student'));
     }
-    public function store(Request $request, $studentId)
-    {
-        $student = Student::where('agent_id', Auth::id())->with('agent')->findOrFail($studentId);
 
+    public function store(Request $request, Student $student)
+    {
         $request->validate([
-            'file'          => 'required|file|max:15360|mimes:pdf,jpg,jpeg,png,doc,docx',
-            'document_type' => 'nullable|string|max:100',
-            'notes'         => 'nullable|string',
+            'document_type' => [
+                'required',
+                'string',
+                // Check if document type already exists for this student
+                function ($attribute, $value, $fail) use ($student) {
+                    if ($student->documents()->where('document_type', $value)->exists()) {
+                        $fail("A document of type '{$value}' has already been uploaded.");
+                    }
+                }
+            ],
+            'file' => 'required|mimes:jpg,jpeg,png,pdf|max:51200', // 50MB
         ]);
+
+        $agent = Auth::user();
+
+        // Create safe folder names
+        $safeAgent = preg_replace('/[^A-Za-z0-9_\-]/', '_', strtolower($agent->business_name ?? 'agent'));
+
+        // Combine first_name and last_name for student folder
+        $fullStudentName = trim($student->first_name . '_' . $student->last_name);
+        $safeStudent = preg_replace('/[^A-Za-z0-9_\-]/', '_', strtolower($fullStudentName));
 
         $file = $request->file('file');
+        $fileName = $request->document_type . '.' . $file->getClientOriginalExtension();
 
-        $agentSlug   = Str::slug($student->agent->business_name ?? $student->agent->username ?? 'agent');
-        $studentSlug = Str::slug($student->first_name . ' ' . $student->last_name ?? 'student');
+        // Folder: storage/app/public/agents/{agent}/{student}
+        $folderPath = "agents/{$safeAgent}/{$safeStudent}";
 
-        $folder   = "agents/{$agentSlug}/{$studentSlug}/documents";
-        $filename = time() . '_' . preg_replace('/[^A-Za-z0-9\-\_\.]/', '_', $file->getClientOriginalName());
-        $path     = Storage::disk('public')->putFileAs($folder, $file, $filename);
+        // Store the file using 'public' disk
+        $filePath = $file->storeAs($folderPath, $fileName, 'public');
 
+        // Save document record in DB
         $document = Document::create([
-            'student_id'    => $student->id,
-            'uploaded_by'   => Auth::id(),
-            'file_name'     => $file->getClientOriginalName(),
-            'file_path'     => $path,
-            'file_type'     => $file->getClientMimeType(),
-            'file_size'     => $file->getSize(),
+            'student_id' => $student->id,
+            'uploaded_by' => $agent->id,
+            'file_name' => $fileName,
+            'file_path' => $filePath,
+            'file_type' => $file->getMimeType(),
             'document_type' => $request->document_type,
-            'notes'         => $request->notes,
+            'status' => 'uploaded',
         ]);
 
-        // Notify all admins
+        // Notify admins
         $admins = User::where('is_admin', 1)->get();
-        Notification::send($admins, new DocumentUploaded($document));
+        Notification::send($admins, new DocumentUploaded($agent, $student, $document));
 
         return redirect()->route('agent.documents.index', $student->id)
-            ->with('success', 'Document uploaded successfully. Admin notified.');
+            ->with('success', 'Document uploaded successfully.');
     }
 
-    public function download($id)
+    public function destroy(Student $student, Document $document)
     {
-        $document = Document::with('student')->findOrFail($id);
-        abort_unless($document->student->agent_id == Auth::id(), 403);
+        if ($document->file_path && Storage::disk('public')->exists($document->file_path)) {
+            Storage::disk('public')->delete($document->file_path);
+        }
 
-        $file = storage_path('app/public/' . $document->file_path);
-        abort_unless(file_exists($file), 404);
-
-        return response()->download($file, $document->file_name);
-    }
-
-    public function destroy($id)
-    {
-        $document = Document::with('student')->findOrFail($id);
-        abort_unless($document->student->agent_id == Auth::id(), 403);
-
-        Storage::disk('public')->delete($document->file_path);
-        $studentId = $document->student_id;
         $document->delete();
 
-        return redirect()->route('agent.documents.index', $studentId)
-            ->with('success', 'Document deleted.');
+        return back()->with('success', 'Document deleted.');
+    }
+
+    public function download(Student $student, Document $document)
+    {
+        if ($document->student_id !== $student->id) {
+            abort(403, 'Unauthorized access.');
+        }
+
+        if (!Storage::disk('public')->exists($document->file_path)) {
+            abort(404, 'File not found.');
+        }
+
+        $absolutePath = Storage::disk('public')->path($document->file_path);
+        return response()->download($absolutePath, $document->file_name);
     }
 }

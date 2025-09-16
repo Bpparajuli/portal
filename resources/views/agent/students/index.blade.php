@@ -120,8 +120,9 @@
                     <td>{{ $student->course?->title ?? 'N/A' }}</td>
                     <td>
                         <div class="action-buttons">
-                            <a href="{{ route('agent.students.edit',$student->id) }}" class="btn btn-edit">Edit</a>
-                            <a href="{{ route('agent.documents.create', $student->id) }}" class="btn btn-sm btn-primary">📂 Upload Document</a>
+                            <a href="{{ route('agent.students.edit',$student->id) }}" class="btn btn-edit">📝Edit</a>
+                            <a href="{{ route('agent.documents.index', $student->id) }}" class="btn btn-sm btn-primary">📂 Upload Document</a>
+                            <a href="{{ route('agent.applications.create') }}?student_id={{ $student->id }}" class="btn btn-success">📤Apply Now</a>
                         </div>
                     </td>
                 </tr>

@@ -41,7 +41,7 @@ class UniversityController extends Controller
         }
 
         $universities = $query->paginate(10)->withQueryString();
-        return view('agent.universities.index', compact('universities'));
+        return view('agent.universities.index', compact('universities', 'countries'));
     }
 
     public function show(University $university)

@@ -56,7 +56,6 @@ $user = auth()->user();
                     </div>
                     @endif
                     <div class="welcome-message">
-                        Welcome,<br>
                         <strong>{{ $user->name }}</strong>
                     </div>
                     <div class="user-avatar">

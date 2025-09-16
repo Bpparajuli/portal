@@ -1,20 +1,23 @@
-@extends('layouts.app')
+@extends('layouts.agent')
+@section('agent-content')
+<h2>Application Details</h2>
 
-@section('content')
-<div class="agent-applications">
-    <div class="page-header">
-        <h2>Application Details</h2>
-        <a href="{{ route('agent.applications.index') }}" class="btn btn-secondary app-btn">← Back</a>
-    </div>
-
-    <div class="app-card">
-        <div class="app-row"><strong>Student:</strong> {{ $application->student->first_name }} {{ $application->student->last_name }}</div>
-        <div class="app-row"><strong>University:</strong> {{ $application->university->name }}</div>
-        <div class="app-row"><strong>Course:</strong> {{ $application->course?->title ?? '-' }}</div>
-        <div class="app-row"><strong>Status:</strong> <span class="status-badge {{ $application->application_status_class }}">{{ ucfirst($application->application_status) }}</span></div>
-        <div class="app-row"><strong>Remarks:</strong> {{ $application->remarks ?? '-' }}</div>
-        <div class="app-row"><strong>Created At:</strong> {{ $application->created_at->format('Y-m-d') }}</div>
-        <div class="app-row"><strong>Updated At:</strong> {{ $application->updated_at->format('Y-m-d') }}</div>
-    </div>
+<div class="card p-3 mb-3">
+    <p><strong>Student:</strong> {{ $application->student->first_name }} {{ $application->student->last_name }}</p>
+    <p><strong>University:</strong> {{ $application->university->name }}</p>
+    <p><strong>Course:</strong> {{ $application->course->name ?? '-' }}</p>
+    <p><strong>Status:</strong> {{ $application->application_status }}</p>
+    <p><strong>Remarks:</strong> {{ $application->remarks ?? '-' }}</p>
 </div>
+
+<h4>SOP Document</h4>
+@if($application->sop)
+<p>
+    <a href="{{ route('agent.documents.download', $application->sop->id) }}" class="btn btn-sm btn-success">
+        Download SOP
+    </a>
+</p>
+@else
+<p>No SOP uploaded.</p>
+@endif
 @endsection

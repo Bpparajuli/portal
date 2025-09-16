@@ -1,34 +1,48 @@
 @extends('layouts.agent')
 
 @section('agent-content')
-<link rel="stylesheet" href="{{ asset('css/agentdashboard.css') }}">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-<section class="content">
-
+<link rel="stylesheet" href="{{ asset('css/agdashboard.css') }}">
+<section class="full-width">
+    <h2>Hi {{ auth()->user()->name }}, Welcome Back!</h2>
+    <div class="actions">
+        <a href="{{ route('agent.students.create') }}" class="btn btn-primary"><i class="fa fa-user"></i> + Add Student</a>
+        <a href="{{ route('agent.applications.create') }}" class="btn btn-secondary"><i class="fa fa-vcard"></i> +New Application</a>
+        {{-- <a href="{{ route('agent.documents.create') }}" class="btn btn-active"><i class='fas fa-folder-open'></i> Upload Document</a> --}}
+    </div>
+</section>
+<section class="uni-filter p-4">
+    @include('partials.uni_filter')
+</section>
+<section class="content p-4">
     {{-- LEFT --}}
     <div class="left-content">
-        <div class="welcome-card d-flex justify-content-between text-center">
-            <h2>Hi {{ auth()->user()->name }}, Welcome Back!</h2>
-            <div class="actions">
-                <a href="{{ route('agent.students.create') }}" class="btn btn-primary">+ Add Student</a>
-                <a href="{{ route('agent.applications.create') }}" class="btn btn-secondary">New Application</a>
-                <a href="{{ route('agent.documents.create') }}" class="btn btn-dark">Upload Document</a>
-            </div>
-        </div>
-
         <div class="stats-row">
             <div class="stat-card blue">
+                <i class="fa fa-users"></i>
                 <h6>Total Students</h6>
                 <h2>{{ $totalStudents ?? 0 }}</h2>
             </div>
             <div class="stat-card green">
+                <i class="fa fa-vcard"></i>
                 <h6>Applications Submitted</h6>
                 <h2>{{ $totalApplications ?? 0 }}</h2>
             </div>
             <div class="stat-card maroon">
+                <i class="fa fa-university"></i>
                 <h6>Available Universities</h6>
                 <h2>{{ $totalUniversities ?? 0 }}</h2>
+            </div>
+        </div>
+
+        <div class="charts-row">
+            <div class="chart-card">
+                <h6>Application Status</h6>
+                <canvas id="statusChart"></canvas>
+            </div>
+
+            <div class="chart-card">
+                <h6>Monthly Applications (Last 12 months)</h6>
+                <canvas id="monthlyChart"></canvas>
             </div>
         </div>
         <div class="activities-row">
@@ -49,7 +63,6 @@
                     @endforelse
                 </ul>
             </div>
-
             <div class="activity-card">
                 <h6>Applications</h6>
                 <ul>
@@ -67,7 +80,6 @@
                     @endforelse
                 </ul>
             </div>
-
             <div class="activity-card">
                 <h6>Recent Activities</h6>
                 <ul>
@@ -90,37 +102,16 @@
                 </ul>
             </div>
         </div>
-
-        <div class="charts-row">
-            <div class="chart-card">
-                <h6>Application Status</h6>
-                <canvas id="statusChart"></canvas>
-            </div>
-
-            <div class="chart-card">
-                <h6>Monthly Applications (Last 12 months)</h6>
-                <canvas id="monthlyChart"></canvas>
-            </div>
-        </div>
-
         <div class="pipeline-card">
             <h6>Student Application Pipeline</h6>
-            <div class="pipeline">
-                <div class="step completed">Registered</div>
-                <div class="step completed">Docs Uploaded</div>
-                <div class="step active">Application Submitted</div>
-                <div class="step">University Review</div>
-                <div class="step">Visa Process</div>
-                <div class="step">Final Decision</div>
-            </div>
+            <img src="{{ asset('images/pipeline.png') }}" alt="Application Pipeline" style="width:100%; height:auto;">
         </div>
     </div>
-
     {{-- RIGHT --}}
     <div class="right-content">
         <div class="stat-card big">
             <h6>Conversion Rate</h6>
-            <canvas id="conversionChart" height="100"></canvas>
+            <canvas id="conversionChart"></canvas>
             <p>{{ round((($totalApplications ?? 0) / max(($totalStudents ?? 1),1)) * 100, 1) }}% Applied</p>
         </div>
         <div class="progress-card">
@@ -132,17 +123,30 @@
                 <div><strong>{{ $totalApplications ?? 0 }}</strong><span>Total</span></div>
             </div>
         </div>
-
         <div class="events-card">
-            <h6>Upcoming</h6>
+            <h6><strong>Upcoming Trainings</strong></h6>
             <ul>
-                <li>🎓 Agent Training – Sept 15</li>
-                <li>🌍 Study Abroad Fair – Sept 20</li>
-                <li>💬 Webinar – Sept 25</li>
+                <li>⚙️ Embassy Training – Sept 15</li>
+                <li>⚙️ Agent portal Training – Sept 20</li>
+                <li>⚙️ University Portal Training – Sept 25</li>
+            </ul>
+            <h6><strong>University Counselling</strong></h6>
+            <ul>
+                <li>🎓 Gisma Counselling – Sept 15</li>
+                <li>🎓 PFH Counselling – Sept 20</li>
+                <li>🎓 SRH Counselling – Sept 25</li>
+            </ul>
+            <h6><strong>Countries</strong></h6>
+            <ul>
+                <li>🏳️ UK Counselling – Sept 15</li>
+                <li>🏳️ Dubai Counselling – Sept 20</li>
+                <li>🏳️ Germany Counselling – Sept 25</li>
             </ul>
         </div>
     </div>
+
 </section>
+
 
 <!-- Chart.js (load once) -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -171,7 +175,7 @@ for ($m = 1; $m <= 12; $m++) { $monthlyArr[]=($monthlyApplications && isset($mon
     backgroundColor: ['#22c55e', '#e5e7eb']
     }]
     },
-    options: { cutout: '70%', plugins: { legend: { display: false } } }
+    options: { cutout: '70%', maintainAspectRatio: false, plugins: { legend: { display: false } } }
     });
 
     // status pie

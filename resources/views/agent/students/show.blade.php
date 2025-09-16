@@ -1,8 +1,8 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="my-4">
-    <div class="row">
+<div class="p-3">
+    <div class=" row">
         {{-- Left Column: Profile --}}
         <div class="col-lg-4">
             <div class="card shadow-sm mb-3 p-3 rounded text-center">
@@ -34,7 +34,7 @@
                 </div>
                 <hr>
                 <a href="{{ route('agent.students.edit', $student->id) }}" class="btn btn-warning w-100 mb-2">✏️ Edit</a>
-                <a href="{{ route('agent.documents.create', $student->id) }}" class="btn btn-primary w-100">📄 Upload Doc</a>
+                <a href="{{ route('agent.documents.index', $student->id) }}" class="btn btn-primary w-100">📄 Upload Doc</a>
             </div>
         </div>
 
@@ -84,7 +84,6 @@
                         </div>
                     </div>
                 </div>
-
                 {{-- Application --}}
                 <div class="tab-pane fade" id="application">
                     <div class="card shadow-sm p-3 rounded">
@@ -100,49 +99,57 @@
                 </div>
 
                 {{-- Documents --}}
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h5>📂 Documents</h5>
-                    <a href="{{ route('agent.students.documents.create', $student->id) }}" class="btn btn-primary btn-sm">
-                        + Upload Document
-                    </a>
-                </div>
+                <div class="tab-pane fade" id="documents">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5>📂 Documents</h5>
+                        <a href="{{ route('agent.documents.index', $student->id) }}" class="btn btn-primary btn-sm">
+                            + Upload Document
+                        </a>
+                    </div>
 
-                @if($student->documents->isEmpty())
-                <p>No documents uploaded yet.</p>
-                @else
-                <table class="table table-sm">
-                    <thead>
-                        <tr>
-                            <th>Type</th>
-                            <th>File</th>
-                            <th>Notes</th>
-                            <th>Uploaded By</th>
-                            <th>Date</th>
-                            <th class="text-end">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
+                    @if($student->documents->isEmpty())
+                    <p>No documents uploaded yet.</p>
+                    @else
+                    <div class="row">
                         @foreach($student->documents as $doc)
-                        <tr>
-                            <td>{{ $doc->document_type ?? '—' }}</td>
-                            <td>{{ $doc->file_name }}</td>
-                            <td>{{ $doc->notes }}</td>
-                            <td>{{ $doc->uploader->username ?? $doc->uploader->business_name }}</td>
-                            <td>{{ $doc->created_at->format('Y-m-d') }}</td>
-                            <td class="text-end">
-                                <a href="{{ route('admin.documents.download', $doc->id) }}" class="btn btn-sm btn-outline-primary">⬇️</a>
-                                <a href="{{ route('admin.students.documents.edit', [$student->id, $doc->id]) }}" class="btn btn-sm btn-outline-warning">✏️</a>
-                                <form method="POST" action="{{ route('admin.students.documents.destroy', [$student->id, $doc->id]) }}" class="d-inline" onsubmit="return confirm('Delete this document?')">
-                                    @csrf @method('DELETE')
-                                    <button class="btn btn-sm btn-outline-danger">🗑</button>
-                                </form>
-                            </td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-                @endif
+                        <div class="col-md-4 mb-3">
+                            <div class="card document-card shadow-sm">
+                                @php
+                                $extension = pathinfo($doc->file_name, PATHINFO_EXTENSION);
+                                $isImage = in_array(strtolower($extension), ['jpg','jpeg','png','gif','webp']);
+                                // Full path using storage disk
+                                $filePath = asset('storage/' . $doc->file_path);
+                                @endphp
 
+                                @if($isImage)
+                                <img src="{{ $filePath }}" class="card-img-top doc-preview" alt="Document Preview">
+                                @else
+                                <div class="doc-placeholder text-center">
+                                    <i class="bi bi-file-earmark-text" style="font-size:48px;"></i>
+                                    <p class="mt-2">{{ strtoupper($extension) }}</p>
+                                </div>
+                                @endif
+                                <div class="card-body">
+                                    <h6 class="card-title">{{ $doc->document_type ?? '—' }}</h6>
+                                    <p class="card-text text-truncate">{{ $doc->notes ?? '' }}</p>
+                                    <p class="text-muted mb-1"><small>Uploaded by: {{ $doc->uploader->username ?? $doc->uploader->business_name }}</small></p>
+                                    <p class="text-muted mb-2"><small>{{ $doc->created_at->format('Y-m-d') }}</small></p>
+                                    <div class="d-flex justify-content-between">
+                                        <a href="{{ route('agent.documents.download', ['student' => $student->id, 'document' => $doc->id]) }}" class="btn btn-sm btn-success">
+                                            ⬇ Download
+                                        </a>
+                                        <form method="POST" action="{{ route('agent.documents.destroy', [$student->id, $doc->id]) }}" class="d-inline" onsubmit="return confirm('Delete this document?')">
+                                            @csrf @method('DELETE')
+                                            <button class="btn btn-sm btn-outline-danger">🗑 Delete</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        @endforeach
+                    </div>
+                    @endif
+                </div>
             </div>
 
             {{-- Row 2 Tabs --}}

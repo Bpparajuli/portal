@@ -8,17 +8,24 @@ use Illuminate\Contracts\Queue\ShouldQueue; // optional if you use queues
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use App\Helpers\ActivityLogger;
+use App\Models\Student;
+use App\Models\User;
 
 class DocumentUploaded extends Notification // implements ShouldQueue
 {
     use Queueable;
 
-    public function __construct(public Document $document) {}
+    public $agent, $student, $document;
 
+    public function __construct(User $agent, Student $student, Document $document)
+    {
+        $this->agent = $agent;
+        $this->student = $student;
+        $this->document = $document;
+    }
     public function via($notifiable)
     {
-        // database always; mail optional if you have mail setup
-        return ['database']; // add 'mail' if you want emails too
+        return ['database', 'mail'];
     }
 
     public function toMail($notifiable)
@@ -30,11 +37,7 @@ class DocumentUploaded extends Notification // implements ShouldQueue
             ->subject('New Document Uploaded')
             ->greeting('Hello!')
             ->line("A new document ({$doc->file_name}) was uploaded for student {$student->first_name} {$student->last_name}.")
-            ->action('View Documents', route(
-                $notifiable->is_admin ? 'admin.documents.index' : 'agent.documents.index',
-                $student->id
-            ))
-            ->line('Thank you.');
+            ->action('View Documents', url("/admin/students/{$this->student->id}/documents"));
     }
 
     public function toArray($notifiable)

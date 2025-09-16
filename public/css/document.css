@@ -1,0 +1,64 @@
+.upload-section {
+    max-width: 600px;
+    margin: auto;
+}
+
+.upload-box {
+    border: 2px dashed #aaa;
+    padding: 20px;
+    text-align: center;
+    margin-bottom: 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    background: #fafafa;
+}
+.upload-box:hover {
+    background: #f0f0ff;
+}
+
+.form-group {
+    margin: 15px 0;
+}
+
+.btn-group {
+    display: flex;
+    gap: 10px;
+}
+
+.btn-save {
+    background: #4caf50;
+    color: white;
+    padding: 8px 15px;
+    border: none;
+    border-radius: 5px;
+}
+
+.btn-cancel {
+    background: #aaa;
+    color: white;
+    padding: 8px 15px;
+    border-radius: 5px;
+    text-decoration: none;
+}
+
+.uploaded-list {
+    margin-top: 20px;
+}
+.uploaded-item {
+    background: #f9f9f9;
+    border: 1px solid #ddd;
+    padding: 8px 12px;
+    border-radius: 5px;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.uploaded-item .actions a,
+.uploaded-item .actions button {
+    margin-left: 8px;
+    text-decoration: none;
+    background: none;
+    border: none;
+    cursor: pointer;
+}

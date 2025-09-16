@@ -14,13 +14,13 @@ return new class extends Migration
         Schema::create('documents', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('student_id');
-            $table->unsignedBigInteger('uploaded_by'); // user id (agent or admin)
+            $table->unsignedBigInteger('uploaded_by'); // user id (agent/admin)
             $table->string('file_name');
             $table->string('file_path');  // storage path (public disk)
             $table->string('file_type')->nullable(); // mime
-            $table->unsignedBigInteger('file_size')->nullable(); // bytes
             $table->string('document_type')->nullable(); // e.g. Passport, Transcript, SOP
-            $table->text('notes')->nullable();
+            $table->enum('status', ['uploaded', 'missing', 'reviewed', 'downloaded'])->default('uploaded');
+
             $table->timestamps();
 
             $table->foreign('student_id')->references('id')->on('students')->onDelete('cascade');
