@@ -51,8 +51,8 @@
 
                 {{-- Actions --}}
                 <div class="mt-4 d-flex justify-content-end gap-2">
-                    <a href="{{ route('guest.universities.index') }}" class="btn btn-secondary">Reset</a>
-                    <button type="submit" class="btn btn-primary">Filter</button>
+                    <a href="{{ route('guest.universities.index') }}" class="btn btn-secondary">Clear</a>
+                    <button type="submit" class="btn btn-primary">Find</button>
                 </div>
             </form>
         </div>

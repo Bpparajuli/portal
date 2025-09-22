@@ -1,8 +1,8 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="my-4">
-    <div class="row">
+<div class="p-3">
+    <div class=" row">
         {{-- Left Column: Profile --}}
         <div class="col-lg-4">
             <div class="card shadow-sm mb-3 p-3 rounded text-center">
@@ -33,8 +33,8 @@
                     <p><strong>Agent:</strong> {{ $student->agent?->business_name ?? $student->agent?->username ?? 'N/A' }}</p>
                 </div>
                 <hr>
-                <a href="{{ route('admin.students.edit', $student->id) }}" class="btn btn-warning w-100 mb-2">✏️ Edit</a>
-                <a href="{{ route('admin.documents.create', $student->id) }}" class="btn btn-primary w-100">📄 Upload Doc</a>
+                <a href="{{ route('agent.students.edit', $student->id) }}" class="btn btn-warning w-100 mb-2">✏️ Edit</a>
+                <a href="{{ route('agent.documents.index', $student->id) }}" class="btn btn-primary w-100">📄 Upload Doc</a>
             </div>
         </div>
 
@@ -84,7 +84,6 @@
                         </div>
                     </div>
                 </div>
-
                 {{-- Application --}}
                 <div class="tab-pane fade" id="application">
                     <div class="card shadow-sm p-3 rounded">
@@ -101,20 +100,55 @@
 
                 {{-- Documents --}}
                 <div class="tab-pane fade" id="documents">
-                    <div class="card shadow-sm p-3 rounded">
-                        <h5>Documents</h5>
-                        @if($student->documents->isEmpty())
-                        <p>No documents uploaded.</p>
-                        @else
-                        <ul class="list-group">
-                            @foreach($student->documents as $doc)
-                            <li class="list-group-item">
-                                <a href="{{ asset('storage/'.$doc->file_path) }}" target="_blank">{{ $doc->file_name }}</a>
-                            </li>
-                            @endforeach
-                        </ul>
-                        @endif
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5>📂 Documents</h5>
+                        <a href="{{ route('agent.documents.index', $student->id) }}" class="btn btn-primary btn-sm">
+                            + Upload Document
+                        </a>
                     </div>
+
+                    @if($student->documents->isEmpty())
+                    <p>No documents uploaded yet.</p>
+                    @else
+                    <div class="row">
+                        @foreach($student->documents as $doc)
+                        <div class="col-md-4 mb-3">
+                            <div class="card document-card shadow-sm">
+                                @php
+                                $extension = pathinfo($doc->file_name, PATHINFO_EXTENSION);
+                                $isImage = in_array(strtolower($extension), ['jpg','jpeg','png','gif','webp']);
+                                // Full path using storage disk
+                                $filePath = asset('storage/' . $doc->file_path);
+                                @endphp
+
+                                @if($isImage)
+                                <img src="{{ $filePath }}" class="card-img-top doc-preview" alt="Document Preview">
+                                @else
+                                <div class="doc-placeholder text-center">
+                                    <i class="bi bi-file-earmark-text" style="font-size:48px;"></i>
+                                    <p class="mt-2">{{ strtoupper($extension) }}</p>
+                                </div>
+                                @endif
+                                <div class="card-body">
+                                    <h6 class="card-title">{{ $doc->document_type ?? '—' }}</h6>
+                                    <p class="card-text text-truncate">{{ $doc->notes ?? '' }}</p>
+                                    <p class="text-muted mb-1"><small>Uploaded by: {{ $doc->uploader->username ?? $doc->uploader->business_name }}</small></p>
+                                    <p class="text-muted mb-2"><small>{{ $doc->created_at->format('Y-m-d') }}</small></p>
+                                    <div class="d-flex justify-content-between">
+                                        <a href="{{ route('agent.documents.download', ['student' => $student->id, 'document' => $doc->id]) }}" class="btn btn-sm btn-success">
+                                            ⬇ Download
+                                        </a>
+                                        <form method="POST" action="{{ route('agent.documents.destroy', [$student->id, $doc->id]) }}" class="d-inline" onsubmit="return confirm('Delete this document?')">
+                                            @csrf @method('DELETE')
+                                            <button class="btn btn-sm btn-outline-danger">🗑 Delete</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        @endforeach
+                    </div>
+                    @endif
                 </div>
             </div>
 
@@ -155,7 +189,7 @@
                 <div class="tab-pane fade" id="settings">
                     <div class="card shadow-sm p-3 rounded">
                         <h5>Settings</h5>
-                        <form action="{{ route('admin.students.destroy', $student->id) }}" method="POST" onsubmit="return confirm('Are you sure?');">
+                        <form action="{{ route('agent.students.destroy', $student->id) }}" method="POST" onsubmit="return confirm('Are you sure?');">
                             @csrf
                             @method('DELETE')
                             <button type="submit" class="btn btn-danger">🗑️ Delete Student</button>

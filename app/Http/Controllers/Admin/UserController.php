@@ -7,8 +7,9 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Storage;
 use App\Notifications\UserApproved;
+use App\Models\Application;
 
 class UserController extends Controller
 {
@@ -28,15 +29,26 @@ class UserController extends Controller
      */
     public function show(User $user)
     {
-        // Only root admin or the user themselves can view
         if (!Auth::user()->is_admin && Auth::id() !== $user->id) {
             abort(403, 'Unauthorized');
         }
 
         $notifications = $user->notifications()->latest()->get();
 
-        return view('admin.users.show', compact('user', 'notifications'));
+        // Relationships
+        $students = $user->students()->withCount('applications')->get();
+        $applications = Application::whereIn('student_id', $students->pluck('id'))
+            ->with(['student', 'course.university'])
+            ->get();
+
+        // Stats
+        $user->students_count = $students->count();
+        $user->applications_count = $applications->count();
+        $user->pending_applications = $applications->where('status', 'pending')->count();
+
+        return view('admin.users.show', compact('user', 'notifications', 'students', 'applications'));
     }
+
 
     /**
      * Show the form for creating a new user.
@@ -61,7 +73,7 @@ class UserController extends Controller
             'role'          => 'required|in:admin,agent',
             'status'        => 'required|in:0,1',
             'password'      => 'required|string|min:6|confirmed',
-            'business_logo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'business_logo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
         ]);
 
         $user = new User();
@@ -85,7 +97,7 @@ class UserController extends Controller
             'role'          => 'required|in:admin,agent',
             'status'        => 'required|in:0,1',
             'password'      => 'nullable|string|min:6|confirmed',
-            'business_logo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'business_logo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
         ]);
 
         $this->assignUserFields($user, $request);
@@ -108,13 +120,11 @@ class UserController extends Controller
         return view('admin.users.edit', compact('user'));
     }
 
-
     /**
      * Remove the specified user from storage.
      */
     public function destroy(User $user)
     {
-        // Only root admin (ID=1) can delete
         if (Auth::id() !== 1) {
             return back()->with('error', 'Only root admin can delete users.');
         }
@@ -123,12 +133,9 @@ class UserController extends Controller
             return back()->with('error', 'Cannot delete root admin.');
         }
 
-        // Delete logo file if exists
-        if ($user->business_logo) {
-            $logoPath = public_path('images/Agents_logo/' . $user->business_logo);
-            if (File::exists($logoPath)) {
-                File::delete($logoPath);
-            }
+        // Delete logo from storage
+        if ($user->business_logo && Storage::disk('public')->exists($user->business_logo)) {
+            Storage::disk('public')->delete($user->business_logo);
         }
 
         $user->delete();
@@ -150,18 +157,15 @@ class UserController extends Controller
     /**
      * Approve a user by activating their account.
      */
-
     public function approve(User $user)
     {
         $user->active = true;
         $user->save();
 
-        // Notify the user that they have been approved
-        $user->notify(instance: new UserApproved());
+        $user->notify(new UserApproved());
 
-        return back()->with('success',     $user->business_name . ' has been approved and the notification has been successfully send to their email.');
+        return back()->with('success', $user->business_name . ' has been approved and notified.');
     }
-
 
     /**
      * Assign common fields to a User model.
@@ -179,7 +183,6 @@ class UserController extends Controller
         $user->active        = (int) $request->status;
     }
 
-
     /**
      * Handle business logo upload and replacement.
      */
@@ -187,21 +190,19 @@ class UserController extends Controller
     {
         if ($request->hasFile('business_logo')) {
             $safeBusinessName = str_replace(' ', '_', strtolower($request->business_name ?? 'agent'));
-            $folderPath = public_path('images/agents/' . $safeBusinessName);
-
-            if (!File::exists($folderPath)) {
-                File::makeDirectory($folderPath, 0755, true);
-            }
-
+            $folderPath = 'agents/' . $safeBusinessName;
             $logoName = $safeBusinessName . '_logo.png';
 
             // Delete old logo if exists
-            if ($user->business_logo && File::exists(public_path('images/agents/' . $user->business_logo))) {
-                File::delete(public_path('images/agents/' . $user->business_logo));
+            if ($user->business_logo && Storage::disk('public')->exists($user->business_logo)) {
+                Storage::disk('public')->delete($user->business_logo);
             }
 
-            $request->file('business_logo')->move($folderPath, $logoName);
-            $user->business_logo = $safeBusinessName . '/' . $logoName;
+            // Store new logo in storage/app/public/agents/{business_name}/
+            $path = $request->file('business_logo')->storeAs($folderPath, $logoName, 'public');
+
+            // Save relative path (so we can retrieve with Storage::url)
+            $user->business_logo = $path;
         }
     }
 }

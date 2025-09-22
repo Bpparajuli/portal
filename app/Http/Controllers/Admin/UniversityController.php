@@ -47,7 +47,7 @@ class UniversityController extends Controller
             'website'         => 'nullable|url|max:255',
             'contact_email'   => 'nullable|email|max:255',
             'description'     => 'nullable|string',
-            'university_logo' => 'nullable|image|mimes:jpg,jpeg,png,gif,webp|max:2048',
+            'university_logo' => 'nullable|image|mimes:jpg,jpeg,png,gif,webp|max:5120',
         ]);
 
         $university = new University($request->only([
@@ -107,7 +107,7 @@ class UniversityController extends Controller
             'website'         => 'nullable|url|max:255',
             'contact_email'   => 'nullable|email|max:255',
             'description'     => 'nullable|string',
-            'university_logo' => 'nullable|image|mimes:jpg,jpeg,png,gif,webp|max:2048',
+            'university_logo' => 'nullable|image|mimes:jpg,jpeg,png,gif,webp|max:5120',
         ]);
 
         $university = University::findOrFail($id);

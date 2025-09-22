@@ -45,10 +45,12 @@ class DocumentUploaded extends Notification // implements ShouldQueue
         $doc = $this->document;
         $student = $doc->student;
         $uploader = $doc->uploader;
+
         ActivityLogger::log("Uploaded document: {$this->document->title}", $this->document->uploaded_by);
 
         return [
             'type'        => 'document_uploaded',
+            'message'     => "New document uploaded: {$doc->file_name} for {$student->first_name} {$student->last_name}",
             'document_id' => $doc->id,
             'file_name'   => $doc->file_name,
             'document_type' => $doc->document_type,

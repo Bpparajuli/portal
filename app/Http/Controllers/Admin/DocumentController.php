@@ -61,7 +61,8 @@ class DocumentController extends Controller
 
         // Notify agent (if any)
         if ($student->agent) {
-            $student->agent->notify(new DocumentUploaded($document));
+            // Pass the required arguments to DocumentUploaded constructor
+            $student->agent->notify(new DocumentUploaded(Auth::user(), $student, $document));
         }
 
         return redirect()->route('admin.documents.index', $student->id)

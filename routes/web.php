@@ -171,6 +171,13 @@ Route::middleware(['auth', \App\Http\Middleware\IsAgent::class])->prefix('agent'
     // Applications
     Route::resource('applications', AgentApplicationController::class,);
     Route::post('applications', [AgentApplicationController::class, 'store'])->name('applications.store');
+    // For agent application create page
+    Route::get('applications/get-courses/{universityId}', [AgentApplicationController::class, 'getCourses'])
+        ->name('applications.get-courses');
+    Route::patch('/applications/{application}/withdraw', [AgentApplicationController::class, 'withdraw'])
+        ->name('applications.withdraw');
+    Route::post('/applications/{application}/add-comment', [AgentApplicationController::class, 'addComment'])
+        ->name('applications.add-comment');
 });
 
 // User routes (assuming regular users or students)

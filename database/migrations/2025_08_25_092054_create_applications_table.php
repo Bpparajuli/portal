@@ -30,6 +30,8 @@ return new class extends Migration {
             $table->string('application_number')->nullable()->unique();
             $table->text('remarks')->nullable();
             $table->timestamps();
+            $table->timestamp('withdrawn_at')->nullable();
+            $table->string('withdraw_reason')->nullable();
         });
 
         Schema::table('applications', function (Blueprint $table) {

@@ -1,40 +1,8 @@
-/* ============================
-    COMMON STYLES (ALL PAGES)
-=============================== */
-body,
-.student-page,
-.create-form-wrapper,
-.profile-card,
-.card,
-.table-card {
+/*====== Index & Student Page ======*/
+.student-page {
     font-family: "Segoe UI", sans-serif;
-    color: #333;
 }
 
-a {
-    text-decoration: none;
-}
-
-h2,
-h3,
-h5,
-h6 {
-    margin: 0;
-}
-
-.btn {
-    border: none;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.btn:hover {
-    opacity: 0.9;
-}
-
-/* ============================
-    FILTER & SEARCH (INDEX PAGE)
-=============================== */
 .filter-card {
     background: #f8f9fa;
     border-radius: 8px;
@@ -42,22 +10,32 @@ h6 {
     margin-bottom: 20px;
 }
 
-.filter-card label {
-    font-weight: 500;
-}
-
-.filter-form .btn {
-    min-width: 80px;
-}
-
-/* ============================
-    STUDENT TABLE (INDEX PAGE)
-=============================== */
 .table-card {
     background: #fff;
     border-radius: 12px;
     padding: 15px;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.table-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    gap: 10px;
+}
+
+.table-title {
+    flex: 1 1 70%;
+    font-weight: bold;
+    text-align: center;
+    margin: 0;
+}
+
+.add-btn {
+    flex: 0 1 15%;
+    text-align: center;
+    white-space: nowrap;
 }
 
 .student-table {
@@ -69,8 +47,9 @@ h6 {
 .student-table td {
     padding: 12px;
     border-bottom: 1px solid #eee;
-    vertical-align: middle;
+    text-align: left;
     font-size: 14px;
+    vertical-align: middle;
 }
 
 .student-table th {
@@ -79,76 +58,63 @@ h6 {
 }
 
 .student-photo {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    border-radius: 8px;
     object-fit: cover;
 }
 
 .no-photo {
-    width: 50px;
-    height: 50px;
+    width: 60px;
+    height: 60px;
     background: #f1f1f1;
     color: #777;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 12px;
-    border-radius: 50%;
+    border-radius: 8px;
 }
 
 .student-link {
     font-weight: 600;
     color: #1a0262;
+    text-decoration: none;
 }
 
 .student-link:hover {
     text-decoration: underline;
 }
 
-/* Status badges (application / document) */
+/* Status Badges */
+.badge-status,
 .status-badge {
     display: inline-block;
     padding: 4px 10px;
     border-radius: 8px;
     font-weight: 500;
-    font-size: 0.85rem;
+    font-size: 0.9rem;
     text-align: center;
 }
 
-.status-badge.bg-info {
-    background: #17a2b8;
-    color: #fff;
-}
-.status-badge.bg-primary {
-    background: #007bff;
-    color: #fff;
-}
-.status-badge.bg-warning {
-    background: #ffc107;
+.status-badge.pending {
+    background: #ffeb3b;
     color: #333;
 }
-.status-badge.bg-success {
-    background: #28a745;
+
+.status-badge.approved {
+    background: #4caf50;
     color: #fff;
 }
-.status-badge.bg-danger {
-    background: #dc3545;
+
+.status-badge.rejected {
+    background: #f44336;
     color: #fff;
-}
-.status-badge.bg-dark {
-    background: #343a40;
-    color: #fff;
-}
-.status-badge.bg-light {
-    background: #f8f9fa;
-    color: #333;
 }
 
 /* Action Buttons */
 .action-buttons {
     display: flex;
-    flex-direction: column;
     gap: 6px;
 }
 
@@ -156,13 +122,15 @@ h6 {
     background: #ffc107;
     color: #333;
 }
+
 .btn-doc {
     background: #17a2b8;
-    color: #fff;
+    color: white;
 }
-.btn-sm {
-    font-size: 0.85rem;
-    padding: 5px 10px;
+
+.action-buttons .btn {
+    width: 100%;
+    margin-bottom: 4px;
 }
 
 .empty-row {
@@ -178,12 +146,10 @@ h6 {
     justify-content: center;
 }
 
-/* ============================
-    FORM PAGE (CREATE/EDIT)
-=============================== */
+/* Form Page */
 .create-form-wrapper {
     background: #fff;
-    padding: 40px;
+    padding: 50px;
     border-radius: 12px;
     box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
 }
@@ -192,6 +158,7 @@ h6 {
     font-size: 1.4rem;
     font-weight: 600;
     margin-bottom: 15px;
+    color: #333;
 }
 
 .student-form .mb-3 label {
@@ -208,61 +175,62 @@ h6 {
 .form-actions {
     margin-top: 20px;
     display: flex;
-    justify-content: flex-start;
+    justify-content: space-between;
     gap: 10px;
 }
 
 /* Buttons */
 .btn-main {
     background: #2a9d8f;
-    color: #fff;
+    color: white;
+    border: none;
     padding: 8px 16px;
     border-radius: 8px;
+    text-decoration: none;
+    transition: 0.3s;
 }
+
+.btn-main:hover {
+    background: #21867a;
+}
+
 .btn-secondary {
     background: #e9ecef;
     padding: 8px 16px;
     border-radius: 8px;
     color: #333;
+    text-decoration: none;
 }
+
 .btn-warning {
     background: #f4a261;
-    color: #fff;
+    color: white;
     padding: 8px 16px;
     border-radius: 8px;
 }
+
 .btn-danger {
     background: #e63946;
-    color: #fff;
+    color: white;
     padding: 8px 16px;
     border-radius: 8px;
 }
 
-/* ============================
-    STUDENT SHOW / PROFILE
-=============================== */
-
-.custom-tabs .nav-link {
-    font-weight: 500;
-    padding: 10px 20px;
-    border: none;
-    border-bottom: 3px solid transparent;
-    transition: all 0.3s ease;
-    color: #495057;
+.btn-sm {
+    font-size: 0.85rem;
+    padding: 5px 10px;
 }
 
-.custom-tabs .nav-link:hover {
-    color: #0d6efd;
-    background-color: #f8f9fa;
-    border-radius: 8px 8px 0 0;
+/* Profile Layout */
+.student-profile {
+    margin-top: 20px;
 }
 
-.custom-tabs .nav-link.active {
-    color: #0d6efd;
-    background-color: #ffffff;
-    border-bottom: 3px solid #0d6efd;
-    border-radius: 8px 8px 0 0;
-    font-weight: 600;
+.profile-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
 }
 
 .profile-card {
@@ -276,15 +244,17 @@ h6 {
 }
 
 .profile-left {
-    flex: 0 0 150px;
+    flex: 0 0 200px;
     text-align: center;
 }
+
 .profile-photo {
     width: 150px;
     height: 150px;
     border-radius: 50%;
     object-fit: cover;
 }
+
 .profile-placeholder {
     width: 150px;
     height: 150px;
@@ -300,44 +270,24 @@ h6 {
     margin-bottom: 10px;
 }
 
-.card {
-    border-radius: 12px;
-    overflow: hidden;
-    margin-bottom: 15px;
-}
-
-.card-avatar {
+/* Tables */
+.styled-table {
     width: 100%;
-    height: 250px;
-    border-radius: 12px;
-    object-fit: cover;
-    border: 4px solid #fff;
+    border-collapse: collapse;
 }
 
-.card-fullname {
-    text-align: center;
-    font-size: 1.5rem;
-    margin-top: 10px;
-}
-.card-jobtitle {
-    text-align: center;
-    font-size: 1rem;
-    color: #555;
-    margin-bottom: 15px;
-}
-.card-section {
-    padding: 15px;
-}
-.card-social {
-    padding: 10px 15px;
-    display: flex;
-    gap: 10px;
-    justify-content: center;
+.styled-table th,
+.styled-table td {
+    padding: 10px;
+    border-bottom: 1px solid #ddd;
 }
 
-/* ============================
-    DOCUMENT / UPLOAD SECTION
-=============================== */
+.styled-table th {
+    background: #f9f9f9;
+    font-weight: 600;
+}
+
+/* Document Section */
 .document-card {
     border-radius: 12px;
     transition: transform 0.2s, box-shadow 0.2s;
@@ -368,12 +318,23 @@ h6 {
     color: #6c757d;
     font-size: 18px;
     margin-bottom: 10px;
+    transition: background-color 0.3s ease;
+}
+
+.doc-placeholder:hover {
+    background-color: #e0e0e0;
 }
 
 .upload-section {
     max-width: 1000px;
     margin: auto;
     padding: 20px;
+}
+
+.upload-section h2,
+.upload-section h3 {
+    color: #333;
+    font-weight: 600;
 }
 
 .upload-box {
@@ -383,6 +344,8 @@ h6 {
     text-align: center;
     color: #555;
     font-size: 16px;
+    background-color: #f9f9f9;
+    transition: all 0.3s ease;
     cursor: pointer;
 }
 
@@ -398,6 +361,11 @@ h6 {
     align-items: center;
 }
 
+#file-preview span {
+    font-weight: 500;
+    margin-bottom: 8px;
+}
+
 #file-preview img {
     max-width: 180px;
     max-height: 180px;
@@ -411,6 +379,16 @@ h6 {
     transform: scale(1.05);
 }
 
+/* Document Type Dropdown */
+.form-group select.form-control {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+}
+
+/* Uploaded Files Grid */
 .uploaded-files-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -418,6 +396,7 @@ h6 {
     margin-top: 30px;
 }
 
+/* Individual Document Card */
 .uploaded-file {
     background-color: #fff;
     border: 1px solid #e0e0e0;
@@ -432,67 +411,121 @@ h6 {
     transform: translateY(-3px);
 }
 
+.uploaded-file p {
+    font-size: 14px;
+    word-break: break-word;
+    margin-bottom: 10px;
+    font-weight: 500;
+    color: #333;
+}
+
+/* File Actions */
 .file-actions {
     display: flex;
     justify-content: center;
     gap: 6px;
 }
 
-.file-actions a.btn-view {
-    background: #17a2b8;
-    color: #fff;
+.file-actions a,
+.file-actions button {
+    font-size: 13px;
     padding: 5px 10px;
     border-radius: 6px;
-}
-.file-actions a.btn-download {
-    background: #28a745;
-    color: #fff;
-    padding: 5px 10px;
-    border-radius: 6px;
-}
-.file-actions button.btn-delete {
-    background: #dc3545;
-    color: #fff;
-    padding: 5px 10px;
-    border-radius: 6px;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
 }
 
-/* ============================
-    RESPONSIVE
-=============================== */
+.file-actions a.btn-view {
+    background-color: #17a2b8;
+    color: #fff;
+}
+
+.file-actions a.btn-view:hover {
+    background-color: #117a8b;
+}
+
+.file-actions a.btn-download {
+    background-color: #28a745;
+    color: #fff;
+}
+
+.file-actions a.btn-download:hover {
+    background-color: #1e7e34;
+}
+
+.file-actions button.btn-delete {
+    background-color: #dc3545;
+    color: #fff;
+}
+
+.file-actions button.btn-delete:hover {
+    background-color: #b21f2d;
+}
+
+/* Card Show Page */
+.card {
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+.card-avatar {
+    width: 100%;
+    height: 300px;
+    border-radius: 15px;
+    border: 4px solid #fff;
+    margin: auto;
+}
+
+.card-fullname {
+    margin-top: 10px;
+    font-size: 1.5rem;
+    text-align: center;
+}
+
+.card-jobtitle {
+    font-size: 1rem;
+    color: #555;
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+.card-section {
+    padding: 15px;
+}
+
+.card-social {
+    padding: 10px 15px;
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+/* Responsive */
 @media (max-width: 768px) {
     .filter-card .row > div {
         margin-bottom: 10px;
     }
+
+    .table-card {
+        padding: 10px;
+    }
+
     .student-table th,
     .student-table td {
         font-size: 0.85rem;
-        padding: 8px;
     }
+
     .btn {
         font-size: 0.75rem;
-        padding: 5px 10px;
     }
+
     .uploaded-files-grid {
         grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
         gap: 15px;
     }
-    .profile-card {
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-    }
-    .profile-left,
-    .profile-right {
-        width: 100%;
-    }
-    .card-avatar {
-        height: 200px;
-    }
-    .card-fullname {
-        font-size: 1.2rem;
-    }
-    .card-jobtitle {
-        font-size: 0.9rem;
-    }
+}
+a {
+    text-decoration: none;
 }

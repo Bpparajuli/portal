@@ -1,36 +1,79 @@
-@extends('layouts.app')
+@extends('layouts.agent')
 
-@section('content')
-<h2>Create Application</h2>
-<form action="{{ route('agent.applications.store') }}" method="POST">
-    @csrf
-    <label>Student</label>
-    <select name="student_id" required>
-        <option value="">Select Student</option>
-        @foreach($students as $student)
-        <option value="{{ $student->id }}">{{ $student->first_name }} {{ $student->last_name }}</option>
-        @endforeach
-    </select>
+@section('agent-content')
+<div class="container p-4">
+    <h3>➕ Create Application</h3>
 
-    <label>University</label>
-    <select name="university_id" required>
-        <option value="">Select University</option>
-        @foreach($universities as $uni)
-        <option value="{{ $uni->id }}">{{ $uni->name }}</option>
-        @endforeach
-    </select>
+    <form action="{{ route('agent.applications.store') }}" method="POST" enctype="multipart/form-data">
+        @csrf
 
-    <label>Course</label>
-    <select name="course_id">
-        <option value="">Select Course</option>
-        @foreach($courses as $course)
-        <option value="{{ $course->id }}">{{ $course->title }}</option>
-        @endforeach
-    </select>
+        {{-- STUDENT --}}
+        @if(isset($student))
+        <x-form.input name="student_name" label="Student" :value="$student->first_name . ' ' . $student->last_name" readonly />
+        <input type="hidden" name="student_id" value="{{ $student->id }}">
+        @else
+        <x-form.select name="student_id" label="Select Student" required>
+            <option value="">-- Select Student --</option>
+            @foreach($students as $s)
+            <option value="{{ $s->id }}">{{ $s->first_name }} {{ $s->last_name }}</option>
+            @endforeach
+        </x-form.select>
+        @endif
 
-    <label>Remarks</label>
-    <textarea name="remarks"></textarea>
+        {{-- UNIVERSITY --}}
+        <x-form.select name="university_id" label="University" required id="university_select">
+            <option value="">-- Select University --</option>
+            @foreach($universities as $uni)
+            <option value="{{ $uni->id }}">{{ $uni->name }} - {{$uni->city}}</option>
+            @endforeach
+        </x-form.select>
 
-    <button type="submit">Submit Application</button>
-</form>
+        {{-- COURSE (dynamic) --}}
+        <x-form.select name="course_id" label="Course" id="course_select">
+            <option value="">-- Select Course --</option>
+        </x-form.select>
+
+        {{-- SOP --}}
+        <x-form.file name="sop" label="Upload SOP (PDF/DOC)" required />
+
+        {{-- REMARKS --}}
+        <x-form.textarea name="remarks" label="Remarks" />
+
+        <button type="submit" class="btn btn-success mt-3">Submit Application</button>
+    </form>
+</div>
+
+{{-- DYNAMIC COURSES --}}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const uniSelect = document.getElementById('university_select');
+        const courseSelect = document.getElementById('course_select');
+
+        uniSelect.addEventListener('change', function() {
+            const uniId = this.value;
+            courseSelect.innerHTML = '<option value="">Loading...</option>';
+
+            if (!uniId) {
+                courseSelect.innerHTML = '<option value="">-- Select Course --</option>';
+                return;
+            }
+
+            // Use the full URL of your working JSON endpoint
+            fetch(`/agent/applications/get-courses/${uniId}`)
+                .then(response => response.json())
+                .then(data => {
+                    let options = '<option value="">-- Select Course --</option>';
+                    data.forEach(course => {
+                        options += `<option value="${course.id}">${course.name}</option>`;
+                    });
+                    courseSelect.innerHTML = options;
+                })
+                .catch(err => {
+                    console.error('Error fetching courses:', err);
+                    courseSelect.innerHTML = '<option value="">-- Select Course --</option>';
+                });
+        });
+    });
+
+</script>
 @endsection

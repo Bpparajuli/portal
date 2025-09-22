@@ -20,11 +20,13 @@
     <link rel="stylesheet" href="{{ asset('css/university.css') }}">
     <link rel="stylesheet" href="{{asset('css/contact.css')}}">
     <link rel="stylesheet" href="{{asset('css/login.css')}}">
+    <link rel="stylesheet" href="{{asset('css/application.css')}}">
 </head>
 <body class="font-roboto">
 
     @include('partials.header')
     @include('partials.alerts')
+    @include('components.image-modal')
 
     <div class="main-content">
         @yield('content')
@@ -47,6 +49,8 @@
     <script src="{{ asset('js/login.js') }}"></script>
     <script src="{{ asset('js/header.js') }}"></script>
     <script src="{{ asset('js/filter.js') }}"></script>
+
+    <script src="{{ asset('js/modal-preview.js') }}"></script>
 
 
     @stack('scripts')

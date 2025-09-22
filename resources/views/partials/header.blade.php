@@ -42,19 +42,24 @@ $user = auth()->user();
                             <span class="notification-badge">{{ auth()->user()->unreadNotifications->count() }}</span>
                             @endif
                         </button>
+
                         <div class="notification-menu" id="notif-menu">
                             @forelse(auth()->user()->unreadNotifications->take(5) as $notification)
-                            <a href="{{ $notification->data['link'] ?? '#' }}" class="notification-item">
-                                {{ $notification->data['message'] ?? 'New Notification' }}
-                                <small>{{ $notification->created_at->diffForHumans() }}</small>
+                            <a href="{{ $notification->data['link'] ?? '#' }}" class="notification-item {{ is_null($notification->read_at) ? 'unread' : '' }}">
+                                <div>{{ $notification->data['message'] ?? 'New Notification' }}</div>
+                                <small class="text-muted">{{ $notification->created_at->diffForHumans() }}</small>
                             </a>
                             @empty
                             <span class="notification-item-text">No new notifications</span>
                             @endforelse
-                            <a href="{{ $user->is_admin ? route('admin.notifications') : route('agent.notifications') }}" class="notification-view-all">View All Notifications</a>
+
+                            <a href="{{ $user->is_admin ? route('admin.notifications') : route('agent.notifications') }}" class="notification-view-all">
+                                View All Notifications
+                            </a>
                         </div>
                     </div>
                     @endif
+
                     <div class="welcome-message">
                         <strong>{{ $user->name }}</strong>
                     </div>

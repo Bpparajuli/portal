@@ -2,8 +2,8 @@
 
 @section('agent-content')
 <link rel="stylesheet" href="{{ asset('css/agdashboard.css') }}">
-<section class="full-width">
-    <h2>Hi {{ auth()->user()->name }}, Welcome Back!</h2>
+<section class="full-width p-4">
+    <h2 class="text-success bold">Hi {{ auth()->user()->name }}, Welcome Back!</h2>
     <div class="actions">
         <a href="{{ route('agent.students.create') }}" class="btn btn-primary"><i class="fa fa-user"></i> + Add Student</a>
         <a href="{{ route('agent.applications.create') }}" class="btn btn-secondary"><i class="fa fa-vcard"></i> +New Application</a>

@@ -33,6 +33,7 @@ class Student extends Model
         'last_grades',
         'education_board',
         'preferred_country',
+        'preferred_course',
         'university_id',
         'course_id',
         'student_status',
@@ -59,8 +60,17 @@ class Student extends Model
     {
         return $this->hasMany(Document::class);
     }
+
     public function applications()
     {
         return $this->hasMany(Application::class);
+    }
+    public function latestApplication()
+    {
+        // If your Laravel supports latestOfMany:
+        return $this->hasOne(Application::class)->latestOfMany();
+
+        // Fallback alternative:
+        // return $this->hasOne(Application::class)->orderBy('created_at', 'desc');
     }
 }

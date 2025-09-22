@@ -36,6 +36,7 @@ return new class extends Migration
             $table->string('education_board')->nullable();
 
             $table->string('preferred_country')->nullable();
+            $table->string('preferred_course')->nullable();
 
             $table->unsignedBigInteger('university_id')->nullable();
             $table->unsignedBigInteger('course_id')->nullable();

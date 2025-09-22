@@ -1,56 +1,33 @@
-@extends('layouts.app')
+@extends('layouts.agent')
 
-@section('content')
-<div class="agent-applications">
-    <div class="page-header">
-        <h2>Edit Application</h2>
-        <a href="{{ route('agent.applications.index') }}" class="btn btn-secondary app-btn">← Back</a>
-    </div>
+@section('agent-content')
+<div class="container my-4">
+    <h3>✏️ Edit Application</h3>
 
-    <form action="{{ route('agent.applications.update', $application->id) }}" method="POST" class="app-form">
+    <form action="{{ route('agent.applications.update',$application->id) }}" method="POST" enctype="multipart/form-data">
         @csrf
         @method('PUT')
 
-        <div class="form-group">
-            <label>Student</label>
-            <select name="student_id" class="form-select">
-                @foreach($students as $student)
-                <option value="{{ $student->id }}" {{ $application->student_id == $student->id ? 'selected' : '' }}>
-                    {{ $student->first_name }} {{ $student->last_name }}
-                </option>
-                @endforeach
-            </select>
+        <div class="mb-3">
+            <label class="form-label">Student</label>
+            <input type="text" class="form-control" value="{{ $application->student->full_name }}" readonly>
         </div>
 
-        <div class="form-group">
-            <label>University</label>
-            <select name="university_id" class="form-select">
-                @foreach($universities as $uni)
-                <option value="{{ $uni->id }}" {{ $application->university_id == $uni->id ? 'selected' : '' }}>
-                    {{ $uni->name }}
-                </option>
-                @endforeach
-            </select>
+        <div class="mb-3">
+            <label class="form-label">University</label>
+            <input type="text" class="form-control" value="{{ $application->university->name }}" readonly>
         </div>
 
-        <div class="form-group">
-            <label>Course</label>
-            <select name="course_id" class="form-select">
-                <option value="">Select Course</option>
-                @foreach($courses as $course)
-                <option value="{{ $course->id }}" {{ $application->course_id == $course->id ? 'selected' : '' }}>
-                    {{ $course->title }}
-                </option>
-                @endforeach
-            </select>
+        <div class="mb-3">
+            <label class="form-label">Course</label>
+            <input type="text" class="form-control" value="{{ $application->course->name }}" readonly>
         </div>
 
-        <div class="form-group">
-            <label>Remarks</label>
-            <textarea name="remarks" class="form-control">{{ $application->remarks }}</textarea>
-        </div>
+        <x-form.textarea name="remarks" label="Remarks" :value="$application->remarks" />
 
-        <button type="submit" class="btn btn-warning app-btn">Update Application</button>
+        <x-form.file name="sop" label="Replace SOP (optional)" />
+
+        <button type="submit" class="btn btn-primary">Update Application</button>
     </form>
 </div>
 @endsection

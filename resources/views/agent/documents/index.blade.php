@@ -1,19 +1,27 @@
 @extends('layouts.app')
 <link rel="stylesheet" href="{{ asset('css/document.css') }}">
 @section('content')
+
 <div class="upload-section container">
-    <h2 class="mb-4">Upload Documents for {{ $student->first_name }} {{ $student->last_name }}</h2>
-    {{-- Upload Form --}}
-    <form action="{{ route('agent.documents.store', $student->id) }}" method="POST" enctype="multipart/form-data" class="upload-form mb-5">
+    <h2 class="mb-4">Upload Documents for {{ trim($student->first_name . ' ' . $student->last_name) }}</h2>
+
+    {{-- Upload Form OR Apply Now --}}
+    @if(count($availableTypes) > 0)
+    <form action="{{ route('agent.documents.store', $student->id) }}" method="POST" enctype="multipart/form-data" class="upload-form mb-4">
         @csrf
-        <div class="upload-box d-flex align-items-center gap-3 p-3 border rounded" style="cursor:pointer;" onclick="document.getElementById('document').click()">
-            <p class="mb-0">Drag & drop <br> Or</p>
-            <button type="button" class="btn btn-primary">Click to browse</button>
+
+        <div class="upload-box d-flex align-items-center gap-3 p-3 rounded" onclick="document.getElementById('document').click()">
+            <div>
+                <p class="mb-0">Drag & drop <br> Or</p>
+            </div>
+            <div>
+                <button type="button" class="btn btn-primary" onclick="document.getElementById('document').click(); return false;">Click to browse</button>
+            </div>
             <input type="file" name="file" id="document" hidden required>
             <small class="text-muted ms-auto">* Max file size: 50MB</small>
         </div>
 
-        <div class="d-flex align-items-center justify-content-center gap-3 mt-3">
+        <div class="d-flex align-items-start gap-3 mt-3">
             {{-- File Preview --}}
             <div id="file-preview" style="display:none;">
                 <strong>Selected File:</strong> <span id="file-name"></span>
@@ -23,56 +31,68 @@
             {{-- Document Type --}}
             <div class="form-group mt-0 flex-grow-1">
                 <label>Select Document Type</label>
-                @php
-                $uploadedTypes = $student->documents->pluck('document_type')->toArray();
-                @endphp
                 <select name="document_type" class="form-control" required>
                     <option value="">-- Choose Type --</option>
-                    <option value="passport" @if(in_array('passport', $uploadedTypes)) disabled @endif>Passport</option>
-                    <option value="id" @if(in_array('id', $uploadedTypes)) disabled @endif>National ID</option>
-                    <option value="transcript" @if(in_array('transcript', $uploadedTypes)) disabled @endif>Transcript</option>
-                    <option value="financial" @if(in_array('financial', $uploadedTypes)) disabled @endif>Financial Document</option>
-                    <option value="other" @if(in_array('other', $uploadedTypes)) disabled @endif>Other</option>
+                    @foreach($availableTypes as $type)
+                    <option value="{{ $type }}">{{ ucwords(str_replace('_',' ', $type)) }}</option>
+                    @endforeach
                 </select>
             </div>
 
             {{-- Buttons --}}
-            <div class="btn-group mt-3 d-flex flex-row gap-2">
+            <div class="btn-group mt-3 d-flex gap-2">
+                <button type="submit" class="btn btn-success">Save</button>
                 <a href="{{ route('agent.students.show', $student->id) }}" class="btn btn-secondary">Cancel</a>
-                <button type="submit" class="btn btn-primary">Save</button>
             </div>
         </div>
     </form>
+    @else
+    {{-- Apply Now Section --}}
+    <div class="apply-now-box text-center p-5 bg-light rounded shadow-sm mb-4">
+        <h4 class="mb-3 text-success">✅ All required documents have been uploaded</h4>
+        <a href="{{ route('agent.applications.create') }}?student_id={{ $student->id }}" class="btn btn-lg btn-success px-5">
+            <i class="fa-solid fa-paper-plane me-2"></i> Apply Now
+        </a>
+    </div>
+    @endif
 
     {{-- Uploaded Documents --}}
     <h3 class="mb-3">Uploaded Documents</h3>
-    <div class="uploaded-files-grid d-flex flex-wrap gap-3">
-        @foreach($student->documents as $doc)
+    <div class="uploaded-files-grid">
+        @foreach($documents as $doc)
         @php
         $extension = pathinfo($doc->file_name, PATHINFO_EXTENSION);
         $isImage = in_array(strtolower($extension), ['jpg','jpeg','png','gif','webp']);
         $filePath = asset('storage/' . $doc->file_path);
         @endphp
 
-        <div class="uploaded-file card p-2" style="width:180px;">
+        <div class="uploaded-file card p-2">
             @if($isImage)
-            <img src="{{ $filePath }}" class="card-img-top doc-preview mb-2" alt="Document Preview" style="border-radius:5px;">
+            {{-- image link -> JS opens modal --}}
+            <a href="#" class="img-preview-link" data-img="{{ $filePath }}" aria-label="Open image preview">
+                <img src="{{ $filePath }}" class="card-img-top doc-preview" alt="Document Preview">
+            </a>
             @else
-            <div class="doc-placeholder text-center p-4 border rounded mb-2">
-                <i class="bi bi-file-earmark-text" style="font-size:48px;"></i>
+            {{-- FontAwesome placeholder for non-image --}}
+            <div class="doc-placeholder text-center p-3">
+                <i class="fa-solid fa-file-lines fa-3x text-muted" aria-hidden="true"></i>
                 <p class="mt-2">{{ strtoupper($extension) }}</p>
             </div>
             @endif
 
-            <p class="text-center mt-1 small">{{ $doc->document_type }}<br>{{ $doc->file_name }}</p>
+            <p class="text-center mt-2">{{ ucwords(str_replace('_',' ', $doc->document_type)) }}<br>{{ $doc->file_name }}</p>
 
-            <div class="file-actions d-flex justify-content-center gap-2 mt-2 flex-wrap">
-                <a href="{{ $filePath }}" target="_blank" class="btn btn-info btn-sm">👁 View</a>
-                <a href="{{ route('agent.documents.download', [$student->id, $doc->id]) }}" class="btn btn-success btn-sm">⬇ Download</a>
+            <div class="file-actions d-flex justify-content-center gap-2 mt-2">
+                <a href="{{ route('agent.documents.download', [$student->id, $doc->id]) }}" class="btn btn-success btn-sm">
+                    <i class="fa-solid fa-download me-1"></i> Download
+                </a>
+
                 <form action="{{ route('agent.documents.destroy', [$student->id, $doc->id]) }}" method="POST" style="display:inline;">
                     @csrf
                     @method('DELETE')
-                    <button type="submit" class="btn btn-danger btn-sm">🗑 Delete</button>
+                    <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Delete this document?')">
+                        <i class="fa-solid fa-trash me-1"></i> Delete
+                    </button>
                 </form>
             </div>
         </div>
@@ -80,26 +100,79 @@
     </div>
 </div>
 
-{{-- JS for file preview --}}
+{{-- Image Preview Modal (Bootstrap) --}}
+<div class="modal fade" id="imageModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content bg-light">
+            <div class="modal-body text-center p-3">
+                <img src="" id="modalImage" class="img-fluid rounded" alt="Preview">
+            </div>
+            <div class="modal-footer justify-content-center">
+                <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- JS for file preview + modal (robust) --}}
 <script>
-    document.getElementById('document').addEventListener('change', function(event) {
-        const file = event.target.files[0];
-        const preview = document.getElementById('file-preview');
-        const fileName = document.getElementById('file-name');
-        const imgPreview = document.getElementById('img-preview');
+    // File preview for upload input
+    const docInput = document.getElementById('document');
+    if (docInput) {
+        docInput.addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            const preview = document.getElementById('file-preview');
+            const fileName = document.getElementById('file-name');
+            const imgPreview = document.getElementById('img-preview');
 
-        if (file) {
-            preview.style.display = 'block';
-            fileName.textContent = file.name;
+            if (file) {
+                preview.style.display = 'block';
+                fileName.textContent = file.name;
 
-            if (file.type.startsWith('image/')) {
-                imgPreview.src = URL.createObjectURL(file);
-                imgPreview.style.display = 'block';
-            } else {
-                imgPreview.style.display = 'none';
+                if (file.type && file.type.startsWith('image/')) {
+                    imgPreview.src = URL.createObjectURL(file);
+                    imgPreview.style.display = 'block';
+                } else {
+                    imgPreview.style.display = 'none';
+                }
             }
-        }
-    });
+        });
+    }
+
+    // Image modal handler (works with Bootstrap if loaded; fallback opens in new tab)
+    (function() {
+        const links = document.querySelectorAll('.img-preview-link');
+        const modalEl = document.getElementById('imageModal');
+        const modalImg = document.getElementById('modalImage');
+
+        links.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const imgUrl = this.dataset.img;
+                if (!imgUrl) return;
+
+                // If Bootstrap JS is present, use it to show modal
+                if (typeof bootstrap !== 'undefined' && modalEl) {
+                    modalImg.src = imgUrl;
+
+                    // create/get instance and show
+                    let modalInstance = bootstrap.Modal.getInstance(modalEl);
+                    if (!modalInstance) modalInstance = new bootstrap.Modal(modalEl);
+                    modalInstance.show();
+
+                    // clear src when modal hidden to free memory
+                    modalEl.addEventListener('hidden.bs.modal', function handler() {
+                        modalImg.src = '';
+                        modalEl.removeEventListener('hidden.bs.modal', handler);
+                    });
+
+                } else {
+                    // fallback: open image in a new tab
+                    window.open(imgUrl, '_blank');
+                }
+            });
+        });
+    })();
 
 </script>
 

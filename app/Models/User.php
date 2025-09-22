@@ -32,4 +32,8 @@ class User extends Authenticatable
         'is_agent' => 'boolean',
         'active'   => 'boolean',
     ];
+    public function students()
+    {
+        return $this->hasMany(Student::class, 'agent_id');
+    }
 }

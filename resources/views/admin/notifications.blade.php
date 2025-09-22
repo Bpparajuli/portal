@@ -2,7 +2,7 @@
 
 @section('content')
 <div class="">
-    <h3 class=" mb-4">All Notifications</h3>
+    <h3 class="mb-4">All Notifications</h3>
 
     @php
     $user = auth()->user();
@@ -38,7 +38,14 @@
         @foreach ($typeNotifications as $notification)
         <li class="list-group-item d-flex justify-content-between align-items-center {{ is_null($notification->read_at) ? 'bg-light' : '' }}">
             <div>
-                <div>{{ $notification->data['message'] ?? 'No message provided' }}</div>
+                @if(!empty($notification->data['link']))
+                <a href="{{ $notification->data['link'] }}">
+                    {{ $notification->data['message'] ?? 'No message provided' }}
+                </a>
+                @else
+                {{ $notification->data['message'] ?? 'No message provided' }}
+                @endif
+                <br>
                 <small class="text-muted">{{ $notification->created_at->diffForHumans() }}</small>
             </div>
             <div class="d-flex gap-2">
