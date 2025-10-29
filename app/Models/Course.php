@@ -21,6 +21,7 @@ class Course extends Model
         'ielts_pte_other_languages',
         'moi_requirement',
         'application_fee',
+        'scholarships',
     ];
 
     /**

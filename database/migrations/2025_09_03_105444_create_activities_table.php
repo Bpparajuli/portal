@@ -13,8 +13,11 @@ return new class extends Migration
     {
         Schema::create('activities', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('user_id'); // who did it
-            $table->string('description'); // what happened
+            $table->unsignedBigInteger('user_id');
+            $table->string('type');            // e.g., student_added, document_uploaded
+            $table->text('description');
+            $table->unsignedBigInteger('notifiable_id')->nullable(); // e.g., student_id, application_id
+            $table->string('link')->nullable(); // optional URL to related resource
             $table->timestamps();
 
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');

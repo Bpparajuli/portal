@@ -3,27 +3,76 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Course;
 use Illuminate\Http\Request;
 use App\Models\University;
-use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Storage;
+
 
 class UniversityController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('auth'); // Ensure only authenticated users can access
+        $this->middleware('auth'); // Only authenticated users
     }
 
     /**
-     * Index universities with their courses (paginated).
+     * Display paginated list of universities with courses.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $universities = University::with('courses')
-            ->orderBy('name', 'asc')
-            ->paginate(10);
+        $countries = University::select('country')->distinct()->pluck('country');
+        $query = University::with('courses');
 
-        return view('admin.universities.index', compact('universities'));
+        if ($request->filled('search')) {
+            $keyword = $request->search;
+            $query->where(function ($q) use ($keyword) {
+                $q->where('name', 'like', "%$keyword%")
+                    ->orWhereHas('courses', fn($qc) => $qc->where('title', 'like', "%$keyword%"));
+            });
+        }
+
+        if ($request->filled('country')) {
+            $query->where('country', $request->country);
+        }
+
+        if ($request->filled('city')) {
+            $query->where('city', $request->city);
+        }
+
+        if ($request->filled('university_id')) {
+            $query->where('id', $request->university_id);
+        }
+
+        if ($request->filled('course_id')) {
+            $query->whereHas('courses', fn($q) => $q->where('id', $request->course_id));
+        }
+
+        $universities = $query->paginate(16)->withQueryString();
+        return view('agent.universities.index', compact('universities', 'countries'));
+    }
+
+
+
+    public function getCities($country)
+    {
+        $cities = University::where('country', $country)
+            ->select('city')->distinct()->pluck('city');
+        return response()->json($cities);
+    }
+
+    public function getUniversities($city)
+    {
+        $unis = University::where('city', $city)
+            ->select('id', 'name')->get();
+        return response()->json($unis);
+    }
+
+    public function getCourses($universityId)
+    {
+        $courses = Course::where('university_id', $universityId)
+            ->select('id', 'title')->get();
+        return response()->json($courses);
     }
 
     /**
@@ -47,7 +96,7 @@ class UniversityController extends Controller
             'website'         => 'nullable|url|max:255',
             'contact_email'   => 'nullable|email|max:255',
             'description'     => 'nullable|string',
-            'university_logo' => 'nullable|image|mimes:jpg,jpeg,png,gif,webp|max:5120',
+            'university_logo' => 'nullable|mimetypes:image/jpeg,image/png,image/gif,image/webp|max:5120',
         ]);
 
         $university = new University($request->only([
@@ -62,19 +111,14 @@ class UniversityController extends Controller
 
         // Handle university logo upload
         if ($request->hasFile('university_logo')) {
-            $extension = $request->file('university_logo')->getClientOriginalExtension();
+            $file = $request->file('university_logo');
+            $extension = $file->getClientOriginalExtension();
             $safeShortName = str_replace(' ', '_', strtolower($request->short_name ?? 'university'));
             $logoName = $safeShortName . '.' . $extension;
 
-            $destinationPath = public_path('images/uni_logo');
+            // Store logo in storage/app/public/uni_logo
+            $file->storeAs('uni_logo', $logoName, 'public');
 
-            // Make directory if it doesn't exist
-            if (!file_exists($destinationPath)) {
-                mkdir($destinationPath, 0755, true);
-            }
-
-            // Move new logo to folder
-            $request->file('university_logo')->move($destinationPath, $logoName);
             $university->university_logo = $logoName;
         }
 
@@ -107,7 +151,7 @@ class UniversityController extends Controller
             'website'         => 'nullable|url|max:255',
             'contact_email'   => 'nullable|email|max:255',
             'description'     => 'nullable|string',
-            'university_logo' => 'nullable|image|mimes:jpg,jpeg,png,gif,webp|max:5120',
+            'university_logo' => 'nullable|mimetypes:image/jpeg,image/png,image/gif,image/webp|max:5120',
         ]);
 
         $university = University::findOrFail($id);
@@ -123,19 +167,18 @@ class UniversityController extends Controller
 
         // Handle university logo upload
         if ($request->hasFile('university_logo')) {
-            $extension = $request->file('university_logo')->getClientOriginalExtension();
+            $file = $request->file('university_logo');
+            $extension = $file->getClientOriginalExtension();
             $safeShortName = str_replace(' ', '_', strtolower($request->short_name ?? 'university'));
             $logoName = $safeShortName . '.' . $extension;
 
-            $destinationPath = public_path('images/uni_logo');
-
             // Delete old logo if exists
-            if ($university->university_logo && file_exists($destinationPath . '/' . $university->university_logo)) {
-                unlink($destinationPath . '/' . $university->university_logo);
+            if ($university->university_logo && Storage::disk('public')->exists('uni_logo/' . $university->university_logo)) {
+                Storage::disk('public')->delete('uni_logo/' . $university->university_logo);
             }
 
-            // Move new logo to folder
-            $request->file('university_logo')->move($destinationPath, $logoName);
+            // Store new logo
+            $file->storeAs('uni_logo', $logoName, 'public');
             $university->university_logo = $logoName;
         }
 
@@ -154,9 +197,8 @@ class UniversityController extends Controller
         $university = University::findOrFail($id);
 
         // Delete logo if exists
-        $logoPath = public_path('images/uni_logo/' . $university->university_logo);
-        if ($university->university_logo && file_exists($logoPath)) {
-            unlink($logoPath);
+        if ($university->university_logo && Storage::disk('public')->exists('uni_logo/' . $university->university_logo)) {
+            Storage::disk('public')->delete('uni_logo/' . $university->university_logo);
         }
 
         // Delete related courses

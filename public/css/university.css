@@ -106,13 +106,19 @@
     font-weight: 600;
     margin-bottom: 0.2rem;
 }
-
+.uni-card-title a {
+    color: #1a0262 !important;
+    text-decoration: none;
+}
 .uni-card-subtitle {
     font-size: 0.9rem;
     color: #555;
     margin-bottom: 0.5rem;
 }
-
+.uni-card-subtitle a {
+    color: #820b5c !important;
+    text-decoration: none;
+}
 .uni-card-location {
     font-size: 0.85rem;
     color: #777;

@@ -51,7 +51,7 @@
             <td>{{ $course->course_code }}</td>
             <td>{{ $course->title }}</td>
             <td>{{ $course->duration }}</td>
-            <td>${{ number_format($course->fee,2) }}</td>
+            <td>{{$course->fee}}</td>
             <td>{{ $course->intakes }}</td>
             <td>{{ $course->moi_requirement }}</td>
             @auth

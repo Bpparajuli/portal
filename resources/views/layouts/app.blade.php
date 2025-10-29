@@ -21,6 +21,8 @@
     <link rel="stylesheet" href="{{asset('css/contact.css')}}">
     <link rel="stylesheet" href="{{asset('css/login.css')}}">
     <link rel="stylesheet" href="{{asset('css/application.css')}}">
+    <link rel="stylesheet" href="{{asset('css/user.css')}}">
+
 </head>
 <body class="font-roboto">
 

@@ -1,131 +1,121 @@
 @extends('layouts.app')
 
 @section('content')
-{{-- Add University Button only for Admin --}}
-@auth
-@if(auth()->user()->is_admin)
-<div class="text-center">
-    <a href="{{ route('admin.universities.create') }}" class="d-inline-block mx-auto p-3 text-white text-center fw-bold bg-secondary mb-3">+ Add New University</a>
-</div>
-@endif
-@endauth
+<div class="uni-page">
 
-<h2>University List</h2>
+    {{-- Filter Section --}}
+    @include('partials.uni_filter')
 
-@if($universities->count())
-<table class="table table-bordered w-100 table-striped">
-    <thead class="bg-secondary text-white">
-        <tr>
-            <th class="text-dark">ID</th>
-            <th class="text-dark">University Logo</th>
-            <th class="text-dark">Name</th>
-            <th class="text-dark">Short Name</th>
-            <th class="text-dark">Country</th>
-            <th class="text-dark">City</th>
-            <th class="text-dark">Website</th>
-            <th class="text-dark">Contact Email</th>
-            <th class="text-dark">Courses</th>
-            @auth
-            @if(auth()->user()->is_admin)
-            <th class="text-white">Actions</th>
-            @endif
-            @endauth
-        </tr>
-    </thead>
-    <tbody>
-        @foreach($universities as $university)
-        <tr>
-            <td onclick="window.location='{{ route('admin.universities.show', $university->id) }}'" style="cursor:pointer;">{{ $university->id }}</td>
-            <td onclick="window.location='{{ route('admin.universities.show', $university->id) }}'" style="cursor:pointer;">
-                @if($university->university_logo)
-                <img src="{{ asset('images/uni_logo/' . $university->university_logo) }}" width="40" alt="Logo">
+    {{-- Universities Cards --}}
+    <div class="uni-cards-grid mt-3">
+        @forelse($universities as $uni)
+        <div class="uni-card">
+            <div class="uni-card-header">
+                @if($uni->university_logo)
+                <img src="{{ asset('storage/uni_logo/'.$uni->university_logo) }}" class="uni-logo" alt="{{ $uni->name }}">
                 @endif
-            </td>
-            <td onclick="window.location='{{ route('admin.universities.show', $university->id) }}'" style="cursor:pointer;">{{ $university->name }}</td>
-            <td onclick="window.location='{{ route('admin.universities.show', $university->id) }}'" style="cursor:pointer;">{{ $university->short_name ?? 'N/A' }}</td>
-            <td>{{ $university->country }}</td>
-            <td>{{ $university->city ?? 'N/A' }}</td>
-            <td>
-                @if($university->website)
-                <a href="{{ $university->website }}" target="_blank">{{ $university->website }}</a>
-                @else
-                N/A
-                @endif
-            </td>
-            <td>{{ $university->contact_email ?? 'N/A' }}</td>
-            <td>
-                @if($university->courses->count())
-                <button class="badge bg-success" type="button" data-bs-toggle="collapse" data-bs-target="#coursesCollapse{{ $university->id }}" aria-expanded="false">
-                    View <br>Courses ({{ $university->courses->count() }})
+            </div>
+            <div class="uni-card-body">
+                <h3 class="uni-card-title">{{ $uni->name }}</h3>
+                <p class="uni-card-subtitle">{{ $uni->short_name ?? 'N/A' }}</p>
+                <p class="uni-card-location">{{ $uni->city ?? 'N/A' }}, {{ $uni->country }}</p>
+                <p>
+                    @if($uni->website)
+                    <a href="{{ $uni->website }}" target="_blank" class="uni-web-link" rel="noopener">{{ $uni->website }}</a>
+                    @endif
+                </p>
+                <p>{{ $uni->contact_email ?? 'N/A' }}</p>
+            </div>
+
+            <div class="uni-card-footer d-flex flex-wrap gap-2">
+                @if($uni->courses->count())
+                <a href="{{ route('agent.applications.create') }}?university_id={{ $uni->id }}" class="btn btn-secondary">
+                    Apply to this university
+                </a>
+                <button class="uni-btn-toggle btn-primary" onclick="openCourseModal({{ $uni->id }})">
+                    View Courses ({{ $uni->courses->count() }})
                 </button>
-                @else
-                <span class="text-muted">No Courses</span>
                 @endif
-            </td>
 
-            {{-- Actions only for Admin --}}
-            @auth
-            @if(auth()->user()->is_admin)
-            <td class="text-center d-flex">
-                <a href="{{ route('admin.universities.edit', $university->id) }}" class="bg-gray-300 p-3 mx-1">Edit</a>
-                <form method="POST" action="{{ route('admin.universities.destroy', $university->id) }}" style="display:inline">
+                {{-- Edit & Delete Buttons --}}
+                <a href="{{ route('admin.universities.edit', $uni->id) }}" class="btn btn-warning">Edit</a>
+
+                <form action="{{ route('admin.universities.destroy', $uni->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this university?');">
                     @csrf
                     @method('DELETE')
-                    <button type="submit" onclick="return confirm('Delete university?')" class="bg-danger text-white p-3">Delete</button>
+                    <button class="btn btn-danger">Delete</button>
                 </form>
-            </td>
-            @endif
-            @endauth
-        </tr>
+            </div>
+        </div>
 
-        {{-- Collapsible Courses Row --}}
-        <tr class="collapse" id="coursesCollapse{{ $university->id }}">
-            <td colspan="{{ auth()->check() && auth()->user()->is_admin ? 10 : 9 }}">
-                <div class="card card-body bg-light mt-2 mb-2 p-2">
-                    @if($university->courses->count())
-                    <h6>Courses at {{ $university->short_name ?? $university->name }}:</h6>
-                    <table class="table table-sm table-bordered bg-white">
-                        <thead class="table-secondary">
-                            <tr>
-                                <th>Course Code</th>
-                                <th>Title</th>
-                                <th>Description</th>
-                                <th>Duration</th>
-                                <th>Fee</th>
-                                <th>Intakes</th>
-                                <th>MOI Requirement</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($university->courses as $course)
-                            <tr>
-                                <td>{{ $course->course_code }}</td>
-                                <td>{{ $course->title }}</td>
-                                <td>{{ $course->description ?? 'N/A' }}</td>
-                                <td>{{ $course->duration ?? 'N/A' }}</td>
-                                <td>${{ number_format($course->fee, 2) }}</td>
-                                <td>{{ $course->intakes ?? 'N/A' }}</td>
-                                <td>{{ $course->moi_requirement ?? 'N/A' }}</td>
-                            </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                    @else
-                    <p class="text-muted text-center">No courses listed for {{ $university->name }}.</p>
-                    @endif
-                </div>
-            </td>
-        </tr>
+        {{-- Courses Modal --}}
+        <div id="courseModal{{ $uni->id }}" class="uni-modal">
+            <div class="uni-modal-content">
+                <span class="uni-modal-close" onclick="closeCourseModal({{ $uni->id }})">&times;</span>
+                <h3>Courses of {{ $uni->name }}</h3>
+                <table class="uni-inner-table">
+                    <thead>
+                        <tr>
+                            <th>Code</th>
+                            <th>Title</th>
+                            <th>Description</th>
+                            <th>Duration</th>
+                            <th>Fee</th>
+                            <th>Intakes</th>
+                            <th>MOI</th>
+                            <th>Scholarships </th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($uni->courses as $course)
+                        <tr>
+                            <td>{{ $course->course_code }}</td>
+                            <td>{{ $course->title }}</td>
+                            <td>{{ $course->description ?? 'N/A' }}</td>
+                            <td>{{ $course->duration ?? 'N/A' }}</td>
+                            <td>{{ $course->fee}}</td>
+                            <td>{{ $course->intakes ?? 'N/A' }}</td>
+                            <td>{{ $course->scholarships }} </td>
+                            <td>{{ $course->moi_requirement ?? 'N/A' }}</td>
+                            <td>
+                                <a href="{{ route('admin.courses.edit', $course->id) }}" class="btn btn-sm btn-info">Edit</a>
+                            </td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
 
-        @endforeach
-    </tbody>
-</table>
+        @empty
+        <p class="uni-no-data">No universities found.</p>
+        @endforelse
+    </div>
 
-{{-- Pagination --}}
-<div class="d-flex justify-content-center">
-    {{ $universities->links() }}
+    {{-- Pagination --}}
+    <div class="pagination-wrap mt-4">
+        {{ $universities->links() }}
+    </div>
 </div>
-@else
-<p class="alert alert-info">No universities found.</p>
-@endif
 @endsection
+
+@push('scripts')
+<script>
+    function openCourseModal(id) {
+        document.getElementById('courseModal' + id).style.display = 'block';
+    }
+
+    function closeCourseModal(id) {
+        document.getElementById('courseModal' + id).style.display = 'none';
+    }
+
+    // Close modal on outside click
+    window.onclick = function(event) {
+        document.querySelectorAll('.uni-modal').forEach(modal => {
+            if (event.target == modal) modal.style.display = "none";
+        });
+    }
+
+</script>
+@endpush

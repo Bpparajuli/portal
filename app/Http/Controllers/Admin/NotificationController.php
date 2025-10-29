@@ -3,49 +3,52 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
 use Illuminate\Notifications\DatabaseNotification;
+use Illuminate\Support\Facades\Auth;
 
 class NotificationController extends Controller
 {
-    public function __construct()
+    public function index(Request $request)
     {
-        $this->middleware('auth'); // Ensure user is logged in
-    }
+        $notifications = Auth::user()
+            ->notifications()
+            ->latest()
+            ->paginate(12);
 
-    public function index()
-    {
-        $notifications = auth()->user()->notifications()->latest()->get(); // now guaranteed
         return view('admin.notifications', compact('notifications'));
     }
 
-    public function markAsRead($id)
+    public function markRead($id)
     {
-        $notification = DatabaseNotification::findOrFail($id);
-        $notification->markAsRead();
-        return back()->with('success', 'Notification marked as read.');
-    }
+        $notification = Auth::user()
+            ->notifications()
+            ->where('id', $id)
+            ->first();
 
-    public function markAllAsRead()
-    {
-        auth()->user()->unreadNotifications->each(function (DatabaseNotification $notification) {
+        if ($notification) {
             $notification->markAsRead();
-        });
-        return back()->with('success', 'All notifications marked as read.');
-    }
-
-    public function readAndRedirect($id)
-    {
-        $notification = DatabaseNotification::findOrFail($id);
-        $notification->markAsRead();
-
-        // Example: redirect after new user registration notification
-        if ($notification->type === \App\Notifications\NewUserRegistered::class) {
-            $userId = $notification->data['user_id'] ?? null;
-            if ($userId) {
-                return redirect()->route('admin.users.show', $userId);
-            }
+            return redirect()->back()->with('status', 'Notification marked as read.');
         }
 
-        return redirect()->route('admin.notifications');
+        return redirect()->back()->with('status', 'Notification not found.');
+    }
+
+    public function markUnread($id)
+    {
+        $notification = DatabaseNotification::find($id);
+
+        if ($notification && $notification->notifiable_id === Auth::id()) {
+            $notification->forceFill(['read_at' => null])->save();
+            return redirect()->back()->with('status', 'Notification marked as unread.');
+        }
+
+        return redirect()->back()->with('status', 'Notification not found.');
+    }
+
+    public function markAll()
+    {
+        Auth::user()->unreadNotifications()->update(['read_at' => now()]);
+        return redirect()->back()->with('status', 'All notifications marked as read.');
     }
 }

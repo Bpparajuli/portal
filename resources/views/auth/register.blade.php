@@ -4,6 +4,7 @@
 @section('content')
 <div class="register-page py-5">
     <div class="container">
+
         <div class="row justify-content-center">
             <div class="col-lg-8">
 
@@ -11,7 +12,7 @@
                 <div class="card shadow-lg border-0 rounded-4 overflow-hidden">
 
                     {{-- Header --}}
-                    <div class="card-header bg-idea2 text-white text-center py-4">
+                    <div class="card-header bg-secondary text-white text-center py-4">
                         <h2 class="fw-bold mb-1">Become an IDEA Agent</h2>
                         <p class="mb-0 small">Fill the form below to register your agency with us</p>
                     </div>
@@ -53,7 +54,7 @@
 
                                 {{-- Name --}}
                                 <div class="col-md-6">
-                                    <label class="form-label fw-semibold">Your Name <span class="text-danger">*</span></label>
+                                    <label class="form-label fw-semibold">User Name <span class="text-danger">*</span></label>
                                     <div class="input-group">
                                         <span class="input-group-text"><i class="fas fa-user"></i></span>
                                         <input type="text" name="name" class="form-control" placeholder="Full Name" value="{{ old('name') }}" required>

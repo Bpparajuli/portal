@@ -6,11 +6,13 @@ use App\Http\Controllers\Controller;
 use App\Models\Document;
 use App\Models\Student;
 use App\Models\User;
+use App\Notifications\DocumentDeleted;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Notification;
 use App\Notifications\DocumentUploaded;
+use App\Helpers\ActivityLogger;
 
 class DocumentController extends Controller
 {
@@ -105,16 +107,26 @@ class DocumentController extends Controller
             'status' => 'uploaded',
         ]);
 
-        // Notify admins (optional)
-        $admins = User::where('is_admin', 1)->get();
-        Notification::send($admins, new DocumentUploaded($agent, $student, $document));
+        // -----------------------------
+        // Notify only admin ID = 1
+        // -----------------------------
+        $admin = User::find(1);
+        Notification::send($admin, new DocumentUploaded($agent, $student, $document));
 
+        ActivityLogger::log(
+            'document_uploaded',
+            "📄 Document uploaded: {$documentType}",
+            $document->id,
+            route('agent.documents.index', $student->id)
+        );
         return redirect()->route('agent.documents.index', $student->id)
             ->with('success', 'Document uploaded successfully.');
     }
 
     public function destroy(Student $student, Document $document)
     {
+        $agent = Auth::user();
+
         // ensure document belongs to student
         if ($document->student_id !== $student->id) {
             abort(403);
@@ -125,6 +137,12 @@ class DocumentController extends Controller
         }
 
         $document->delete();
+
+        // Notify only admin ID = 1
+        // -----------------------------
+        $admin = User::find(1);
+        Notification::send($admin, new DocumentDeleted($agent, $student, $document));
+
 
         return back()->with('success', 'Document deleted.');
     }

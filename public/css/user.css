@@ -1,0 +1,173 @@
+/* === Page Layout === */
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+}
+
+.page-header h2 {
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 0.8rem;
+}
+
+.add-btn {
+    background: #22c55e;
+    color: white;
+    border-radius: 6px;
+    padding: 8px 16px;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.add-btn:hover {
+    background: #16a34a;
+    text-decoration: none;
+}
+
+/* === Filter & Search === */
+.filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.filter-bar input[type="text"],
+.filter-bar select {
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 8px 12px;
+    outline: none;
+    font-size: 0.95rem;
+}
+
+.filter-bar button {
+    border-radius: 6px;
+    padding: 8px 16px;
+    font-size: 0.9rem;
+    background: #2563eb;
+    color: white;
+    border: none;
+    transition: all 0.3s ease;
+}
+
+.filter-bar button:hover {
+    background: #1e40af;
+}
+
+/* === Card Section === */
+.card-section {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    margin-bottom: 2rem;
+    overflow: hidden;
+}
+
+.card-section h4 {
+    background: #f8fafc;
+    padding: 1rem 1.2rem;
+    margin: 0;
+    border-bottom: 1px solid #e2e8f0;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+/* === Table Styling === */
+.table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 850px;
+}
+
+thead {
+    background: #f1f5f9;
+}
+
+th,
+td {
+    padding: 0.9rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+th {
+    font-weight: 600;
+    color: #334155;
+    font-size: 0.95rem;
+}
+
+td {
+    font-size: 0.9rem;
+    color: #475569;
+}
+
+tr:hover {
+    background-color: #f8fafc;
+}
+
+img.rounded-circle,
+img.rounded-3 {
+    object-fit: cover;
+    border: 2px solid #e0e6ed;
+}
+
+.badge {
+    border-radius: 6px;
+    padding: 5px 10px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.bg-success {
+    background: #22c55e;
+    color: white;
+}
+
+.bg-secondary {
+    background: #94a3b8;
+    color: white;
+}
+
+/* === Pagination === */
+.pagination {
+    margin: 1rem 0;
+    justify-content: center;
+}
+
+.pagination .page-link {
+    color: #2563eb;
+    border: none;
+    font-weight: 500;
+}
+
+.pagination .active .page-link {
+    background-color: #2563eb;
+    color: white;
+    border-radius: 6px;
+}
+
+@media (max-width: 768px) {
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .filter-bar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .filter-bar button {
+        width: 100%;
+    }
+}

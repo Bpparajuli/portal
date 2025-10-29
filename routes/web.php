@@ -112,24 +112,28 @@ Route::get('/register', function () {
 Route::middleware(['auth', \App\Http\Middleware\IsAdmin::class])->prefix('admin')->name('admin.')->group(function () {
     Route::get('dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
     Route::get('chat', [AdminChatController::class, 'index'])->name('chat');
-    Route::get('notifications', [AdminNotificationController::class, 'index'])->name('notifications');
-    Route::patch('notifications/{id}/read', [AdminNotificationController::class, 'markAsRead'])->name('notifications.read');
-    Route::patch('notifications/read-all', [AdminNotificationController::class, 'markAllAsRead'])->name('notifications.readAll');
-    Route::get('notifications/{id}/read-redirect', [AdminNotificationController::class, 'readAndRedirect'])->name('notifications.readRedirect');
+
+    // Notifications
+    Route::get('admin/notifications', [AdminNotificationController::class, 'index'])->name('notifications');
+    Route::post('admin/notifications/mark-all', [AdminNotificationController::class, 'markAll'])->name('notifications.markAll');
+    Route::post('admin/notifications/{id}/read', [AdminNotificationController::class, 'markRead'])->name('notifications.markRead');
+    Route::post('admin/notifications/{id}/unread', [AdminNotificationController::class, 'markUnread'])->name('notifications.markUnread');
 
     Route::get('get-cities/{country}', [AdminUniversityController::class, 'getCities'])->name('get-cities');
     Route::get('get-universities/{city}', [AdminUniversityController::class, 'getUniversities'])->name('get-universities');
     Route::get('get-courses/{universityId}', [AdminUniversityController::class, 'getCourses'])->name('get-courses');
 
-
+    Route::resource('users', controller: AdminUserController::class);
+    Route::get('/users/{agent}/students', [AdminUserController::class, 'students'])->name('users.students');
+    Route::get('/users/{agent}/applications', [AdminUserController::class, 'applications'])->name('users.applications');
     Route::get('users/waiting', [AdminUserController::class, 'waiting'])->name('users.waiting');
     Route::put('users/{user}/approve', [AdminUserController::class, 'approve'])->name('users.approve');
+
 
     // Resource routes for CRUD operations
     Route::resource('courses', AdminCourseController::class);
     Route::resource('students', AdminStudentController::class);
     Route::resource('universities', AdminUniversityController::class);
-    Route::resource('users', controller: AdminUserController::class);
 
     // Documents
     Route::get('students/{student}/documents', [AdminDocumentController::class, 'index'])->name('documents.index');
@@ -139,10 +143,11 @@ Route::middleware(['auth', \App\Http\Middleware\IsAdmin::class])->prefix('admin'
     Route::delete('documents/{document}/destroy', [AdminDocumentController::class, 'destroy'])->name('documents.destroy');
 
     // Applications
-    Route::get('applications', [AdminApplicationController::class, 'index'])->name('applications.index');
-    Route::get('applications/create', [AdminApplicationController::class, 'create'])->name('applications.create');
-    Route::post('applications', [AdminApplicationController::class, 'store'])->name('applications.store');
-    Route::get('applications/{application}/show', [AdminApplicationController::class, 'show'])->name('applications.show');
+    Route::patch('/applications/{application}/withdraw', [AdminApplicationController::class, 'withdraw'])
+        ->name('applications.withdraw');
+    Route::post('/applications/{application}/addmessage', [AdminApplicationController::class, 'addMessage'])
+        ->name('applications.addmessage');
+    Route::resource('applications', AdminApplicationController::class);
 });
 
 // Agent routes - Protected by the 'agent' middleware
@@ -150,7 +155,17 @@ Route::middleware(['auth', \App\Http\Middleware\IsAdmin::class])->prefix('admin'
 Route::middleware(['auth', \App\Http\Middleware\IsAgent::class])->prefix('agent')->name('agent.')->group(function () {
     Route::get('dashboard', [AgentDashboardController::class, 'index'])->name('dashboard');
     Route::get('chat', [AgentChatController::class, 'index'])->name('chat');
-    Route::get('notifications', [AgentNotificationController::class, 'index'])->name('notifications');
+
+    //Notifications 
+    Route::get('notifications', [AgentNotificationController::class, 'index'])
+        ->name('notifications');
+    Route::get('notifications/mark-as-read/{id}', [AgentNotificationController::class, 'markAsRead'])
+        ->name('notifications.markAsRead');
+    Route::get('notifications/mark-all-as-read', [AgentNotificationController::class, 'markAllAsRead'])
+        ->name('notifications.markAllAsRead');
+    Route::get('notifications/read/{id}', [AgentNotificationController::class, 'readAndRedirect'])
+        ->name('notifications.readAndRedirect');
+
 
     Route::get('get-cities/{country}', [AgentUniversityController::class, 'getCities'])->name('get-cities');
     Route::get('get-universities/{city}', [AgentUniversityController::class, 'getUniversities'])->name('get-universities');
@@ -169,15 +184,13 @@ Route::middleware(['auth', \App\Http\Middleware\IsAgent::class])->prefix('agent'
     Route::get('students/{student}/documents/{document}/download', [AgentDocumentController::class, 'download'])->name('documents.download');
 
     // Applications
-    Route::resource('applications', AgentApplicationController::class,);
-    Route::post('applications', [AgentApplicationController::class, 'store'])->name('applications.store');
-    // For agent application create page
+    Route::resource('applications', AgentApplicationController::class);
     Route::get('applications/get-courses/{universityId}', [AgentApplicationController::class, 'getCourses'])
         ->name('applications.get-courses');
-    Route::patch('/applications/{application}/withdraw', [AgentApplicationController::class, 'withdraw'])
+    Route::patch('applications/{application}/withdraw', [AgentApplicationController::class, 'withdraw'])
         ->name('applications.withdraw');
-    Route::post('/applications/{application}/add-comment', [AgentApplicationController::class, 'addComment'])
-        ->name('applications.add-comment');
+    Route::post('applications/{application}/add-message', [AgentApplicationController::class, 'addMessage'])
+        ->name('applications.addMessage');
 });
 
 // User routes (assuming regular users or students)

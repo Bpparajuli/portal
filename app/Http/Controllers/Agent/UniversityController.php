@@ -40,7 +40,7 @@ class UniversityController extends Controller
             $query->whereHas('courses', fn($q) => $q->where('id', $request->course_id));
         }
 
-        $universities = $query->paginate(10)->withQueryString();
+        $universities = $query->paginate(16)->withQueryString();
         return view('agent.universities.index', compact('universities', 'countries'));
     }
 

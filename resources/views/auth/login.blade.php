@@ -3,7 +3,6 @@
 
 @section('content')
 <div class="login-page d-flex align-items-center justify-content-center py-2">
-
     <div class="row w-100 g-0 shadow-lg rounded-4 overflow-hidden login-container">
         {{-- Left: Login Form --}}
         <div class="col-lg-5 bg-white p-5 d-flex flex-column justify-content-center">

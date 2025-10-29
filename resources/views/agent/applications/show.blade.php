@@ -1,7 +1,7 @@
 @extends('layouts.agent')
 
 @section('agent-content')
-<div class="container my-4">
+<div class="container p-2">
     {{-- Header --}}
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2 class="fw-bold">📄 Application Details</h2>
@@ -13,8 +13,14 @@
     <div class="card shadow-lg border-0 rounded-3">
         <div class="card-body">
             {{-- Application Number --}}
-            <h4 class="mb-3 text-primary">Application #{{ $application->application_number }}</h4>
-
+            <div class="d-flex justify-content-between">
+                <h6 class="mb-3 text-primary">
+                    Application Number: {{ $application->application_number ?? 'N/A' }}
+                </h6>
+                <h6 class="mb-3 text-primary">
+                    Application Submitted On: {{ $application->created_at->format('Y-m-d') }}
+                </h6>
+            </div>
             {{-- Student & University Info --}}
             <div class="row g-4">
                 <div class="col-md-6">
@@ -65,7 +71,7 @@
             : 100;
             @endphp
 
-            <div class="app-progress" style="--steps: {{ $totalSteps }}; --progress: {{ $progressPercent }}%;">
+            <div class="app-progress mt-4" style="--steps: {{ $totalSteps }}; --progress: {{ $progressPercent }}%;">
                 <div class="progress-bar-wrap">
                     <!-- Horizontal bar + fill -->
                     <div class="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ $progressPercent }}">
@@ -107,27 +113,37 @@
                 </a>
             </div>
 
-            {{-- Comments Thread --}}
+            {{-- messages Thread --}}
             <div class="mt-4 p-3 bg-white border rounded-3">
-                <h5 class="fw-bold mb-3">💬 Comments</h5>
-                <div class="remarks-thread border rounded p-3 mb-3" style="max-height:400px; overflow:auto;">
-                    @forelse($application->comments as $c)
-                    <div class="mb-2">
-                        <strong>{{ ucfirst($c->type) }} ({{ $c->user->name ?? 'Unknown' }}):</strong>
-                        <span>{{ $c->comment }}</span>
-                        <small class="text-muted d-block">{{ $c->created_at->format('d M Y, H:i') }}</small>
+                <h5 class="fw-bold mb-3">💬 Messages</h5>
+
+                <div class="remarks-thread border rounded-1 p-3 m-2" style="max-height:400px; overflow:auto;">
+                    @forelse($application->messages as $m)
+                    <div class="d-flex mb-2 
+                        @if($m->type === 'agent') justify-content-start @else justify-content-end @endif">
+
+                        <div class="p-2 rounded" style="max-width:70%; 
+                            background-color: {{ $m->type === 'agent' ? '#f1f1f1' : '#1a0262' }};
+                            color: {{ $m->type === 'agent' ? '#000' : '#fff' }};">
+                            <strong>
+                                <p class="mb-1">{{ $m->message }}</p>
+                            </strong>
+                            <p><b>{{ $m->user->name ?? 'Unknown' }}</b>:{{ $m->created_at->format('d M Y, H:i') }}</p>
+                        </div>
                     </div>
                     @empty
-                    <p class="text-muted">No comments yet.</p>
+                    <p class="text-muted">No messages yet.</p>
                     @endforelse
                 </div>
 
-                <form method="POST" action="{{ route('agent.applications.add-comment', $application) }}">
+                <form method="POST" action="{{ route('agent.applications.addMessage', $application) }}">
                     @csrf
-                    <div class="mb-3">
-                        <textarea name="comment" class="form-control" rows="3" placeholder="Add a comment..." required></textarea>
+                    <div class="d-flex">
+                        <div class="m-2 w-100">
+                            <textarea name="message" class="form-control" rows="2" placeholder="Add a message..." required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary m-2 btn-sm">Add message</button>
                     </div>
-                    <button type="submit" class="btn btn-primary btn-sm">Add Comment</button>
                 </form>
             </div>
 

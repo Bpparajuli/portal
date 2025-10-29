@@ -1,4 +1,4 @@
- <footer class="bg-light">
+ <footer class="bg-light p-4">
      <div class=" text-center">
          <p class="mb-1">© {{ date('Y') }} Idea Consultancy. All rights reserved.</p>
          <div class="row">

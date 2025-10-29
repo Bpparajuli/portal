@@ -21,9 +21,10 @@ return new class extends Migration
             $table->string('duration', 100)->nullable();
             $table->decimal('fee', 10)->nullable();
             $table->string('intakes');
-            $table->text('ielts_pte_other_langugaes')->nullable();
+            $table->text('ielts_pte_other_languages')->nullable();
             $table->enum('moi_requirement', ['Yes', 'No']);
-            $table->integer('application_fee');
+            $table->integer('application_fee')->nullable();
+            $table->text('scholarships')->nullable();
             $table->timestamp('created_at')->nullable()->useCurrent();
             $table->timestamp('updated_at')->useCurrentOnUpdate()->nullable()->useCurrent();
         });

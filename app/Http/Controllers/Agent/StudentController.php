@@ -12,7 +12,7 @@ use App\Models\Application;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Notification;
-use App\Notifications\NewStudentAdded;
+use App\Notifications\StudentAdded;
 use App\Notifications\StudentStatusChanged;
 use Illuminate\Pagination\LengthAwarePaginator;
 
@@ -133,7 +133,14 @@ class StudentController extends Controller
             $student->students_photo = $this->uploadPhoto($request->file('students_photo'), $student);
             $student->save();
         }
-
+        // -----------------------------
+        // Notify only admin ID = 1
+        // -----------------------------
+        $admin = User::find(1);
+        $agent = Auth::user();
+        if ($admin) {
+            Notification::send($admin, new StudentAdded($agent, $student));
+        }
         return redirect()->route('agent.students.index')->with('success', 'Student created successfully.');
     }
 
@@ -187,6 +194,15 @@ class StudentController extends Controller
     {
         $this->authorizeStudent($student);
 
+        // Target only admin with ID = 1
+        $admin = User::find(1);
+        $agent = Auth::user();
+
+        if ($admin) {
+            Notification::send($admin, new \App\Notifications\StudentDeleted($agent, $student));
+        }
+
+        // Delete photo if exists
         if ($student->students_photo && Storage::disk('public')->exists($student->students_photo)) {
             Storage::disk('public')->delete($student->students_photo);
         }

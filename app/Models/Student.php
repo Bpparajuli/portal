@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Notifications\Notifiable;
 
 class Student extends Model
 {
-    use HasFactory;
+    use HasFactory, Notifiable;
 
     const GENDERS = ['Male', 'Female', 'Other'];
     const STATUS = ['created', 'viewed', 'applied to university', 'accepted', 'rejected', 'applied to another university', 'forwarded to embassy'];

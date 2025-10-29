@@ -52,7 +52,7 @@
 
     <div class="mb-3">
         <label>Fee</label>
-        <input type="number" step="0.01" name="fee" value="{{ $course->fee ?? '' }}" class="form-control">
+        <input type="text" name="fee" value="{{ $course->fee ?? '' }}" class="form-control">
     </div>
 
     <div class="mb-3">
@@ -72,9 +72,13 @@
 
     <div class="mb-3">
         <label>Application Fee</label>
-        <input type="number" step="0.01" name="application_fee" value="{{ $course->application_fee ?? '' }}" class="form-control">
+        <input type="text" name="application_fee" value="{{ $course->application_fee ?? '' }}" class="form-control">
     </div>
 
+    <div class="mb-3">
+        <label>Scholarships </label>
+        <input type="text" name="scholarships" value="{{ $course->scholarships ?? '' }}" class="form-control">
+    </div>
     <button type="submit" class="btn btn-primary">{{ isset($course) ? 'Update' : 'Save' }}</button>
     <a href="{{ route('admin.universities.edit', $university->id) }}" class="btn btn-secondary">Back to University</a>
 

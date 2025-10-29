@@ -1,85 +1,91 @@
 @extends('layouts.admin')
 
-@section('content')
-<h2>Edit Application - {{ $application->application_number }}</h2>
+@section('admin-content')
+<div class="container p-4">
+    <h3>✏️ Edit Application #{{ $application->id }}</h3>
 
-<form action="{{ route('admin.applications.update', $application->id) }}" method="POST">
-    @csrf
-    @method('PUT')
+    <form action="{{ route('admin.applications.update', $application->id) }}" method="POST" enctype="multipart/form-data">
+        @csrf
+        @method('PUT')
 
-    <div class="form-group">
-        <label>Student</label>
-        <select name="student_id" class="form-control">
-            @foreach($students as $student)
-            <option value="{{ $student->id }}" {{ $application->student_id == $student->id ? 'selected' : '' }}>
-                {{ $student->first_name }} {{ $student->last_name }}
+        {{-- STUDENT --}}
+        <x-form.input name="student_name" label="Student" :value="$application->student->first_name . ' ' . $application->student->last_name" readonly />
+        <input type="hidden" name="student_id" value="{{ $application->student->id }}">
+
+        {{-- UNIVERSITY --}}
+        <x-form.select name="university_id" label="University" required id="university_select">
+            <option value="">-- Select University --</option>
+            @foreach($universities as $uni)
+            <option value="{{ $uni->id }}" {{ $application->university_id == $uni->id ? 'selected' : '' }}>
+                {{ $uni->name }} - {{$uni->city}}
             </option>
             @endforeach
-        </select>
-    </div>
+        </x-form.select>
 
-    <div class="form-group">
-        <label>University</label>
-        <select name="university_id" class="form-control">
-            @foreach($universities as $university)
-            <option value="{{ $university->id }}" {{ $application->university_id == $university->id ? 'selected' : '' }}>
-                {{ $university->name }}
-            </option>
-            @endforeach
-        </select>
-    </div>
-
-    <div class="form-group">
-        <label>Course</label>
-        <select name="course_id" class="form-control">
-            <option value="">--None--</option>
+        {{-- COURSE (dynamic) --}}
+        <x-form.select name="course_id" label="Course" id="course_select">
+            <option value="">-- Select Course --</option>
             @foreach($courses as $course)
             <option value="{{ $course->id }}" {{ $application->course_id == $course->id ? 'selected' : '' }}>
-                {{ $course->name }}
+                {{ $course->title }}
             </option>
             @endforeach
-        </select>
-    </div>
+        </x-form.select>
 
-    <div class="form-group">
-        <label>Agent</label>
-        <select name="agent_id" class="form-control">
-            @foreach($agents as $agent)
-            <option value="{{ $agent->id }}" {{ $application->agent_id == $agent->id ? 'selected' : '' }}>
-                {{ $agent->username }}
+        {{-- SOP --}}
+        <x-form.file name="sop" label="Upload New SOP (PDF/DOC)" />
+        @if($application->sop && $application->sop->file_path)
+        <a href="{{ Storage::url($application->sop->file_path) }}" target="_blank" class="btn btn-sm btn-outline-primary mt-1">
+            👁️ Current SOP
+        </a>
+        @endif
+
+        {{-- REMARKS --}}
+        <x-form.textarea name="remarks" label="Remarks">{{ $application->remarks }}</x-form.textarea>
+
+        {{-- STATUS --}}
+        <x-form.select name="application_status" label="Status" required>
+            @foreach(\App\Models\Application::STATUSES as $status)
+            <option value="{{ $status }}" {{ $application->application_status == $status ? 'selected' : '' }}>
+                {{ $status }}
             </option>
             @endforeach
-        </select>
-    </div>
+        </x-form.select>
 
-    <div class="form-group">
-        <label>Status</label>
-        <select name="application_status" class="form-control">
-            @foreach([
-            'Application created',
-            'Application viewed by Admin',
-            'Applied to University',
-            'Need to give the test',
-            'Accepted by the University',
-            'Rejected by the University',
-            'Applied to another university',
-            'Application forwarded to embassy',
-            'Is on waiting list on Embassy',
-            'Visa Approved',
-            'Visa Rejected',
-            'Lost'
-            ] as $status)
-            <option value="{{ $status }}" {{ $application->application_status == $status ? 'selected' : '' }}>{{ $status }}</option>
-            @endforeach
-        </select>
-    </div>
+        <button type="submit" class="btn btn-success mt-3">Update Application</button>
+    </form>
+</div>
 
-    <div class="form-group">
-        <label>Remarks</label>
-        <textarea name="remarks" class="form-control">{{ $application->remarks }}</textarea>
-    </div>
+{{-- DYNAMIC COURSES --}}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const uniSelect = document.getElementById('university_select');
+        const courseSelect = document.getElementById('course_select');
 
-    <button type="submit" class="btn btn-success">Update</button>
-    <a href="{{ route('admin.applications.index') }}" class="btn btn-secondary">Cancel</a>
-</form>
+        uniSelect.addEventListener('change', function() {
+            const uniId = this.value;
+            courseSelect.innerHTML = '<option value="">Loading...</option>';
+
+            if (!uniId) {
+                courseSelect.innerHTML = '<option value="">-- Select Course --</option>';
+                return;
+            }
+
+            fetch(`/admin/applications/get-courses/${uniId}`)
+                .then(response => response.json())
+                .then(data => {
+                    let options = '<option value="">-- Select Course --</option>';
+                    data.forEach(course => {
+                        options += `<option value="${course.id}">${course.title}</option>`;
+                    });
+                    courseSelect.innerHTML = options;
+                })
+                .catch(err => {
+                    console.error('Error fetching courses:', err);
+                    courseSelect.innerHTML = '<option value="">-- Select Course --</option>';
+                });
+        });
+    });
+
+</script>
 @endsection

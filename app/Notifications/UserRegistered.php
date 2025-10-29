@@ -8,7 +8,7 @@ use Illuminate\Notifications\Notification;
 use Illuminate\Notifications\Messages\MailMessage;
 use App\Helpers\ActivityLogger;
 
-class NewUserRegistered extends Notification
+class UserRegistered extends Notification
 {
     use Queueable;
 
@@ -37,16 +37,23 @@ class NewUserRegistered extends Notification
 
     public function toDatabase(object $notifiable): array
     {
-        ActivityLogger::log("New user registered: {$this->newUser->business_name}");
+        // Log activity safely, user_id null is allowed
+        ActivityLogger::log(
+            'user_registered', // type
+            "New user registered: {$this->newUser->business_name}", // description
+            null,               // notifiable_id (optional)
+            route('admin.users.waiting'), // link (optional)
+            null                // user_id (optional; defaults to Auth::id())
+        );
+
 
         return [
             'user_id' => $this->newUser->id,
             'name'    => $this->newUser->name,
             'email'   => $this->newUser->email,
             'message' => 'New user registered and awaiting approval.',
-            'type' => 'user_registered', // <- important!
-            'link' => route('admin.users.waiting'), // <- link to the admin pending users page
-
+            'type' => 'user_registered',
+            'link' => route('admin.users.waiting'),
         ];
     }
 }

@@ -9,7 +9,7 @@
 </div>
 
 <div class="form-group mb-2">
-    <label>Name</label>
+    <label>User Name</label>
     <input type="text" name="name" class="form-control" value="{{ old('name', $user->name ?? '') }}">
 </div>
 
@@ -31,8 +31,8 @@
 <div class="form-group mb-2">
     <label>Role</label>
     <select name="role" class="form-control">
-        <option value="admin" {{ isset($user) && $user->is_admin ? 'selected' : '' }}>Admin</option>
         <option value="agent" {{ isset($user) && $user->is_agent ? 'selected' : '' }}>Agent</option>
+        <option value="admin" {{ isset($user) && $user->is_admin ? 'selected' : '' }}>Admin</option>
     </select>
 </div>
 
@@ -48,18 +48,18 @@
     <label>Business Logo</label>
     <input type="file" name="business_logo" class="form-control">
     @if(isset($user->business_logo))
-    <img src="{{ asset('images/agents/' . $user->business_logo) }}" width="60">
+    <img src="{{ Storage::url($user->business_logo) }}" width="60">
     @endif
 </div>
 
-@if(!$edit)
+
 <div class="form-group mb-3">
-    <label>Password</label>
+    <label>@if($edit)
+        Change @endif Password</label>
     <input type="password" name="password" class="form-control">
     <label>Confirm Password</label>
     <input type="password" name="password_confirmation" class="form-control mt-1" placeholder="Confirm Password">
 </div>
-@endif
 
 @if ($errors->any())
 <div class="alert alert-danger">

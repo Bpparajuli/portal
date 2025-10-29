@@ -13,26 +13,17 @@ class UserApproved extends Notification
 
     public function via(object $notifiable): array
     {
-        return ['mail', 'database'];
+        return ['mail'];
     }
 
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
             ->subject('Your Account Has Been Approved')
-            ->greeting('Hello ' . $notifiable->name . ',')
-            ->line('Good news! Your account has been approved by the admin.')
+            ->greeting('Hello ' . $notifiable->business_name . ',')
+            ->line('Good news! Your account has been approved by the Idea admin.')
             ->line('You can now log in and start using the portal.')
-            ->action('Login Now', route('login'))
+            ->action('Login Now', route('auth.login'))
             ->line('Thank you for registering with us!');
-    }
-
-    public function toDatabase(object $notifiable): array
-    {
-        ActivityLogger::log("Approved user: {$notifiable->business_name}");
-
-        return [
-            'message' => 'Your account has been approved. You can now log in.',
-        ];
     }
 }

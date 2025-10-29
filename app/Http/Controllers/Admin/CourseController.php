@@ -11,7 +11,6 @@ class CourseController extends Controller
 {
     // Only admin access is handled by middleware in web.php
 
-    // Display list of courses
     public function index()
     {
         $courses = Course::all();

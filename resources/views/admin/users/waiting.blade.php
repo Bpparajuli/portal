@@ -9,6 +9,7 @@
     <table class="table table-bordered">
         <thead>
             <tr>
+                <th>Logo</th>
                 <th>Business Name</th>
                 <th>Name</th>
                 <th>Email</th>
@@ -20,6 +21,13 @@
         <tbody>
             @foreach($users as $user)
             <tr>
+                <td>
+                    @if($user->business_logo)
+                    <img src="{{ Storage::url($user->business_logo) }}" alt="Logo" width="60" height="60" class="rounded-circle">
+                    @else
+                    <span class="text-muted">No Logo</span>
+                    @endif
+                </td>
                 <td>{{ $user->business_name }}</td>
                 <td>{{ $user->name }}</td>
                 <td>{{ $user->email }}</td>

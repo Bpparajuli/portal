@@ -1,22 +1,25 @@
 @extends('layouts.app')
+<link rel="stylesheet" href="{{ asset('css/student-index.css') }}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
 @section('content')
-<div class="student-page">
+<div class="student-page container">
 
     {{-- Filter Section --}}
-    <div class="filter-card">
+    <div class="filter-card mb-4 p-3 rounded shadow-sm">
         <form method="GET" action="{{ route('admin.students.index') }}" class="filter-form">
-            <div class="filter-grid">
-                <!-- Search -->
-                <div class="filter-field">
-                    <label for="search">Search by Name </label>
-                    <input type="text" id="search" name="search" value="{{ request('search') }}" class="filter-input">
+            <div class="row g-3 align-items-end">
+
+                {{-- Search --}}
+                <div class="col-md-2">
+                    <label for="search">Search by Name</label>
+                    <input type="text" name="search" value="{{ request('search') }}" class="form-control">
                 </div>
 
-                <!-- Agent -->
-                <div class="filter-field">
+                {{-- Agent --}}
+                <div class="col-md-2">
                     <label for="agent">Agent</label>
-                    <select id="agent" name="agent" class="filter-select">
+                    <select name="agent" class="form-select">
                         <option value="">All</option>
                         @foreach($agents as $agent)
                         <option value="{{ $agent->id }}" {{ request('agent') == $agent->id ? 'selected' : '' }}>
@@ -26,10 +29,10 @@
                     </select>
                 </div>
 
-                <!-- University -->
-                <div class="filter-field">
+                {{-- University --}}
+                <div class="col-md-2">
                     <label for="university">University</label>
-                    <select id="university" name="university" class="filter-select">
+                    <select name="university" class="form-select">
                         <option value="">All</option>
                         @foreach($universities as $university)
                         <option value="{{ $university->id }}" {{ request('university') == $university->id ? 'selected' : '' }}>
@@ -39,10 +42,10 @@
                     </select>
                 </div>
 
-                <!-- Course -->
-                <div class="filter-field">
+                {{-- Course --}}
+                <div class="col-md-2">
                     <label for="course_title">Course</label>
-                    <select id="course_title" name="course_title" class="filter-select">
+                    <select name="course_title" class="form-select">
                         <option value="">All</option>
                         @foreach($courses as $course)
                         <option value="{{ $course->title }}" {{ request('course_title') == $course->title ? 'selected' : '' }}>
@@ -52,10 +55,10 @@
                     </select>
                 </div>
 
-                <!-- Status -->
-                <div class="filter-field">
-                    <label for="status">Status</label>
-                    <select id="status" name="status" class="filter-select">
+                {{-- Status --}}
+                <div class="col-md-2">
+                    <label for="status">Application Status</label>
+                    <select name="status" class="form-select">
                         <option value="">All</option>
                         @foreach(\App\Models\Student::STATUS as $status)
                         <option value="{{ $status }}" {{ request('status') == $status ? 'selected' : '' }}>
@@ -65,51 +68,48 @@
                     </select>
                 </div>
 
-                <!-- Sort By -->
-                <div class="filter-field">
+                {{-- Sort By --}}
+                <div class="col-md-2">
                     <label for="sort_by">Sort By</label>
-                    <select id="sort_by" name="sort_by" class="filter-select">
+                    <select name="sort_by" class="form-select">
                         @foreach(['created_at'=>'Created At','first_name'=>'First Name','email'=>'Email'] as $key=>$val)
                         <option value="{{ $key }}" {{ request('sort_by')==$key ? 'selected' : '' }}>{{ $val }}</option>
                         @endforeach
                     </select>
                 </div>
 
-                <!-- Order -->
-                <div class="filter-field">
+                {{-- Order --}}
+                <div class="col-md-2">
                     <label for="sort_order">Order</label>
-                    <select id="sort_order" name="sort_order" class="filter-select">
+                    <select name="sort_order" class="form-select">
                         <option value="ASC" {{ request('sort_order')=='ASC'?'selected':'' }}>Ascending</option>
                         <option value="DESC" {{ request('sort_order','DESC')=='DESC'?'selected':'' }}>Descending</option>
                     </select>
                 </div>
-                <!-- Actions -->
-                <div class="filter-field">
-                    <div class="filter-actions">
-                        <a href="{{ route('admin.students.index') }}" class="btn btn-clear">Clear All</a>
-                    </div>
+
+                {{-- Buttons --}}
+                <div class="col-md-2 mt-2 d-flex gap-2">
+                    <a href="{{ route('admin.students.index') }}" class="btn btn-secondary">Clear</a>
+                    <button type="submit" class="btn btn-success">Apply</button>
                 </div>
-                <div class="filter-field">
-                    <div class="filter-actions">
-                        <button type="submit" class="btn btn-apply">Apply Filters</button>
-                    </div>
-                </div>
+
             </div>
         </form>
     </div>
 
     {{-- Students Table --}}
-    <div class="table-card">
-        <div class="table-header">
-            <h2 class="table-title">All Students</h2>
-            <a href="{{ route('admin.students.create') }}" class="btn btn-primary add-btn">
-                + Add Student
+    <div class="table-card rounded shadow-sm p-3 bg-white">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 class="h5">All Students</h2>
+            <a href="{{ route('admin.students.create') }}" class="btn btn-primary">
+                <i class="fa-solid fa-plus me-1"></i> Add Student
             </a>
         </div>
 
-        <table class="student-table">
+        <table class="table table-striped align-middle">
             <thead>
                 <tr>
+                    <th>ID</th>
                     <th>Profile</th>
                     <th>Name</th>
                     <th>Email / Contact</th>
@@ -117,57 +117,110 @@
                     <th>Application Status</th>
                     <th>University</th>
                     <th>Course</th>
+                    <th>Document Status</th>
                     <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
                 @forelse($students as $student)
+                @php
+                // Document status
+                $requiredDocumentTypes = ['passport','id','transcript','financial','other'];
+                $uploadedTypes = $student->documents->pluck('document_type')->map(fn($t) => strtolower(str_replace(' ', '', $t)))->toArray();
+                $allDocumentsUploaded = count(array_diff($requiredDocumentTypes, $uploadedTypes)) === 0;
+                $completedDocsCount = $student->documents->where('status','completed')->count();
+                $documentStatus = ($allDocumentsUploaded && $completedDocsCount == count($requiredDocumentTypes))
+                ? 'Completed'
+                : (count($uploadedTypes) == 0 ? 'Not Uploaded' : 'Incomplete');
+
+                // Latest application
+                $latestApplication = $student->applications->sortByDesc('created_at')->first();
+                @endphp
                 <tr>
-                    <td>
-                        @if($student->students_photo)
-                        <img src="{{ asset($student->students_photo) }}" alt="photo" class="student-photo">
+                    <td>{{ $student->id }}</td>
+                    {{-- Profile --}}
+                    <td class="text-center">
+                        @if ($student->students_photo && Storage::disk('public')->exists($student->students_photo))
+                        <img src="{{ Storage::url($student->students_photo) }}" alt="Profile" class="rounded-circle border" style="width:50px; height:50px; object-fit:cover;">
                         @else
-                        <div class="no-photo">No Photo</div>
+                        <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center border" style="width:50px; height:50px;">
+                            <i class="fa fa-user-circle text-white" style="font-size:24px;"></i>
+                        </div>
                         @endif
                     </td>
+
+                    {{-- Name --}}
                     <td>
-                        <a href="{{ route('admin.students.show',$student->id) }}" class="student-link">
+                        <a href="{{ route('admin.students.show', $student->id) }}">
                             {{ $student->first_name }} {{ $student->last_name }}
                         </a>
                     </td>
-                    <td>{{ $student->email }} <br> {{ $student->phone_number }}</td>
-                    <td>{{ $student->agent?->business_name ?? $student->agent?->username }}</td>
+
+                    {{-- Email / Contact --}}
                     <td>
-                        @php
-                        $statusClass = match($student->student_status) {
-                        'accepted' => 'success',
-                        'pending' => 'warning',
-                        'rejected' => 'danger',
-                        default => 'secondary',
-                        };
-                        @endphp
-                        <span class="badge bg-{{ $statusClass }}">
-                            {{ ucfirst($student->student_status ?? 'N/A') }}
-                        </span>
+                        <div>{{ $student->email }}</div>
+                        <div class="text-sm text-gray-500">{{ $student->phone_number }}</div>
                     </td>
-                    <td>{{ $student->university?->name ?? 'N/A' }}</td>
-                    <td>{{ $student->course?->title ?? 'N/A' }}</td>
+
+                    {{-- Agent --}}
+                    <td>{{ $student->agent?->business_name ?? $student->agent?->username ?? 'N/A' }}</td>
+
+                    {{-- Application Status --}}
                     <td>
-                        <div class="action-buttons">
-                            <a href="{{ route('admin.students.edit',$student->id) }}" class="btn btn-edit">Edit</a>
-                            <a href="{{ route('admin.documents.index',$student->id) }}" class="btn btn-doc">Documents</a>
-                        </div>
+                        @if($latestApplication)
+                        <a href="{{ route('agent.applications.show', $latestApplication->id) }}">
+                            <span class="badge {{ $latestApplication->status_class }}">
+                                {{ $latestApplication->application_status }}
+                            </span>
+                        </a>
+                        @else
+                        <span class="badge bg-light text-muted">No Application</span>
+                        @endif
+                    </td>
+
+                    {{-- University --}}
+                    <td>{{ $student->university?->name ?? 'N/A' }}</td>
+
+                    {{-- Course --}}
+                    <td>{{ $student->course?->title ?? 'N/A' }}</td>
+
+                    {{-- Document Status --}}
+                    <td>
+                        <a href="{{ route('admin.documents.index', $student->id) }}">
+                            @if($documentStatus == 'Not Uploaded')
+                            <div class="px-2 py-1 rounded text-xs bg-danger text-white">Not Uploaded</div>
+                            @elseif($allDocumentsUploaded)
+                            <div class="px-2 py-1 rounded text-xs bg-success text-white">Completed</div>
+                            @else
+                            <div class="px-2 py-1 rounded text-xs bg-warning text-dark">Incomplete</div>
+                            @endif
+                        </a>
+                    </td>
+
+                    {{-- Actions --}}
+                    <td class="d-flex flex-column gap-1">
+                        <a href="{{ route('admin.students.edit', $student->id) }}" class="btn btn-sm btn-primary">
+                            <i class="fa-solid fa-edit me-1"></i> Edit
+                        </a>
+                        <a href="{{ route('admin.documents.index', $student->id) }}" class="btn btn-sm btn-secondary">
+                            <i class="fa-solid fa-folder-open me-1"></i> Documents
+                        </a>
+                        @if($allDocumentsUploaded)
+                        <a href="{{ route('agent.applications.create') }}?student_id={{ $student->id }}" class="btn btn-sm btn-success">
+                            <i class="fa-solid fa-paper-plane me-1"></i> Apply Now
+                        </a>
+                        @endif
                     </td>
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="8" class="empty-row">No students found.</td>
+                    <td colspan="9" class="text-center text-gray-500">No students found.</td>
                 </tr>
                 @endforelse
             </tbody>
         </table>
 
-        <div class="pagination-wrap">
+        <div class="mt-3">
             {{ $students->links() }}
         </div>
     </div>

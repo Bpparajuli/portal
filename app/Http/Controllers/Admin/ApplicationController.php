@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use App\Models\Application;
 use App\Models\Student;
 use App\Models\University;
@@ -12,6 +13,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
+use App\Notifications\ApplicationMessageAdded;
+
 
 class ApplicationController extends Controller
 {
@@ -36,7 +39,6 @@ class ApplicationController extends Controller
             'student_id' => 'required|exists:students,id',
             'university_id' => 'required|exists:universities,id',
             'course_id' => 'nullable|exists:courses,id',
-            'remarks' => 'nullable|string',
             'sop' => 'required|file|mimes:pdf,doc,docx|max:15360',
         ]);
 
@@ -93,7 +95,6 @@ class ApplicationController extends Controller
         $request->validate([
             'university_id' => 'required|exists:universities,id',
             'course_id' => 'nullable|exists:courses,id',
-            'remarks' => 'nullable|string',
             'application_status' => 'required|string|in:' . implode(',', Application::STATUSES),
             'sop' => 'nullable|file|mimes:pdf,doc,docx|max:15360'
         ]);
@@ -101,7 +102,6 @@ class ApplicationController extends Controller
         $application->update([
             'university_id' => $request->university_id,
             'course_id' => $request->course_id,
-            'remarks' => $request->remarks,
             'application_status' => $request->application_status,
         ]);
 
@@ -141,6 +141,32 @@ class ApplicationController extends Controller
 
         return redirect()->route('admin.applications.index')->with('success', 'Application updated successfully.');
     }
+    public function addMessage(Request $request, Application $application)
+    {
+        $request->validate([
+            'message' => 'required|string|max:2000',
+        ]);
+
+        $user = Auth::user();
+        $userType = $user->is_admin ? 'admin' : 'agent';
+
+        $message = $application->messages()->create([
+            'user_id' => $user->id,
+            'type' => $userType,
+            'message' => $request->message,
+        ]);
+
+        // Notify the opposite role
+        if ($userType === 'admin' && $application->agent) {
+            $application->agent->notify(new ApplicationMessageAdded($application, $message));
+        } elseif ($userType === 'agent') {
+            $admins = User::where('is_admin', true)->get();
+            Notification::send($admins, new ApplicationMessageAdded($application, $message));
+        }
+
+        return back()->with('success', 'Message added and notification sent.');
+    }
+
 
     public function destroy(Application $application)
     {

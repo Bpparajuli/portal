@@ -11,7 +11,9 @@
         <div class="uni-card">
             <div class="uni-card-header">
                 @if($uni->university_logo)
-                <img src="{{ asset('images/uni_logo/'.$uni->university_logo) }}" class="uni-logo" alt="{{ $uni->name }}">
+                <a href="{{ route('guest.universities.show', $uni->id) }}">
+                    <img src="{{ asset('storage/uni_logo/'.$uni->university_logo) }}" class="uni-logo" alt="{{ $uni->name }}">
+                </a>
                 @endif
             </div>
             <div class="uni-card-body">
@@ -52,7 +54,9 @@
                             <th>Fee</th>
                             <th>Intakes</th>
                             <th>MOI</th>
+                            <th>Scholarships</th>
                             <th>Action</th>
+
                         </tr>
                     </thead>
                     <tbody>
@@ -62,9 +66,10 @@
                             <td>{{ $course->title }}</td>
                             <td>{{ $course->description ?? 'N/A' }}</td>
                             <td>{{ $course->duration ?? 'N/A' }}</td>
-                            <td>${{ number_format($course->fee,2) }}</td>
+                            <td>{{ $course->fee }}</td>
                             <td>{{ $course->intakes ?? 'N/A' }}</td>
                             <td>{{ $course->moi_requirement ?? 'N/A' }}</td>
+                            <td>{{ $course->scholarships }} </td>
                             <td><a href="{{ route('agent.applications.create') }}?university_id={{ $uni->id }}&course_id={{ $course->id }}" class="btn btn-primary">Apply for this Course</a>
                             </td>
                         </tr>

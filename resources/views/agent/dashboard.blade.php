@@ -47,7 +47,7 @@
         </div>
         <div class="activities-row">
             <div class="activity-card">
-                <h6>New Students</h6>
+                <h6>Students Activities </h6>
                 <ul>
                     @forelse($studentActivities as $act)
                     <li>
@@ -59,10 +59,25 @@
                         <span class="time">{{ $act->created_at->diffForHumans() }}</span>
                     </li>
                     @empty
-                    <li>No new students</li>
+                    <li>No students Activities</li>
                     @endforelse
                 </ul>
             </div>
+
+            <div class="activity-card">
+                <h6>Documents</h6>
+                <ul>
+                    @forelse($documentActivities as $act)
+                    <li>
+                        {{ $act->description }}
+                        <span class="time">{{ $act->created_at->diffForHumans() }}</span>
+                    </li>
+                    @empty
+                    <li>No document activities</li>
+                    @endforelse
+                </ul>
+            </div>
+
             <div class="activity-card">
                 <h6>Applications</h6>
                 <ul>
@@ -80,28 +95,8 @@
                     @endforelse
                 </ul>
             </div>
-            <div class="activity-card">
-                <h6>Recent Activities</h6>
-                <ul>
-                    @php $recent = $activities ?? collect(); @endphp
-                    @forelse($recent->take(10) as $act)
-                    <li>
-                        {{-- If it's linked to a student or application, attempt to link; else plain text --}}
-                        @if($act->type === 'newstudentadded' && $act->notifiable_id)
-                        <a href="{{ route('agent.students.show', $act->notifiable_id) }}">{{ $act->description }}</a>
-                        @elseif(in_array($act->type, ['newapplicationsubmitted','applicationstatusupdated']) && $act->notifiable_id)
-                        <a href="{{ route('agent.applications.show', $act->notifiable_id) }}">{{ $act->description }}</a>
-                        @else
-                        {{ $act->description }}
-                        @endif
-                        <span class="time">{{ $act->created_at->diffForHumans() }}</span>
-                    </li>
-                    @empty
-                    <li>No activities</li>
-                    @endforelse
-                </ul>
-            </div>
         </div>
+
         <div class="pipeline-card">
             <h6>Student Application Pipeline</h6>
             <img src="{{ asset('images/pipeline.png') }}" alt="Application Pipeline" style="width:100%; height:auto;">

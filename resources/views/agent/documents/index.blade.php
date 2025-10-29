@@ -80,7 +80,7 @@
             </div>
             @endif
 
-            <p class="text-center mt-2">{{ ucwords(str_replace('_',' ', $doc->document_type)) }}<br>{{ $doc->file_name }}</p>
+            <p class="text-center mt-2">{{ ucwords(str_replace('_',' ', $doc->document_type)) }}</p>
 
             <div class="file-actions d-flex justify-content-center gap-2 mt-2">
                 <a href="{{ route('agent.documents.download', [$student->id, $doc->id]) }}" class="btn btn-success btn-sm">

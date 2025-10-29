@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
 use App\Notifications\NewUserRegistered;
-
+use Illuminate\Support\Facades\Storage;
 
 class RegisterController extends Controller
 {
@@ -30,25 +30,17 @@ class RegisterController extends Controller
             'business_logo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
-        $logoName = null;
+        $logoPath = null;
+        $safeBusinessName = str_replace(' ', '_', strtolower($request->business_name ?? 'agent'));
 
         if ($request->hasFile('business_logo')) {
-            // Sanitize business name (no spaces or special chars)
-            $safeBusinessName = str_replace(' ', '_', strtolower($request->business_name ?? 'agent'));
-
-            // Build the folder path inside /public/images/{business_name}
-            $folderPath = public_path('images/agents/' . $safeBusinessName);
-
-            // Create the folder if it does not exist
-            if (!file_exists($folderPath)) {
-                mkdir($folderPath, 0777, true); // recursive = true
-            }
-
-            // Set fixed filename: business_name_logo.png
-            $logoName = $safeBusinessName . '_logo.png';
-
-            // Move uploaded file to new folder with fixed name
-            $request->file('business_logo')->move($folderPath, $logoName);
+            // Store in storage/app/public/agents/{business_name}/
+            $logoPath = $request->file('business_logo')
+                ->storeAs(
+                    'agents/' . $safeBusinessName,       // folder inside storage/app/public
+                    $safeBusinessName . '_logo.png',    // file name
+                    'public'                            // disk = public
+                );
         }
 
         $user = User::create([
@@ -59,14 +51,17 @@ class RegisterController extends Controller
             'address' => $request->address,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'business_logo' => $safeBusinessName . '/' . $logoName,
+            'business_logo' => $logoPath, // stored as storage path like "agents/acme/acme_logo.png"
             'is_admin' => $request->input('is_admin', 0),
             'is_agent' => $request->input('is_agent', 1),
             'active' => $request->input('active', 0),
         ]);
 
+
+        // Notify all admins
         $admins = User::where('is_admin', 1)->get();
         Notification::send($admins, new NewUserRegistered($user));
-        return redirect()->route('login')->with('success', 'Registered successfully. Please wait for admins approvel to log in.');
+
+        return redirect()->route('auth.login')->with('success', 'Registered successfully. Please wait for admin approval.');
     }
 }

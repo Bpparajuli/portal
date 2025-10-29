@@ -4,29 +4,51 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\Application;
+use App\Models\Student;
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use App\Notifications\UserApproved;
-use App\Models\Application;
 
 class UserController extends Controller
 {
-    /**
-     * Display a listing of the users for the admin dashboard.
-     */
-    public function index()
+    public function index(Request $request)
     {
-        $admins = User::where('is_admin', 1)->get();
-        $agents = User::where('is_agent', 1)->get();
+        $query = User::query();
+        $search = $request->input('search');
+        $role = $request->input('role');
 
-        return view('admin.users.index', compact('admins', 'agents'));
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('business_name', 'like', "%{$search}%");
+            });
+        }
+
+        if ($role === 'admin') {
+            $admins = User::where('is_admin', true)->paginate(5)->withQueryString();
+            $agents = collect();
+        } elseif ($role === 'agent') {
+            $admins = collect();
+            $agents = User::where('is_agent', true)
+                ->withCount(['students', 'applications'])
+                ->paginate(5)
+                ->withQueryString();
+        } else {
+            $admins = User::where('is_admin', true)->paginate(5)->withQueryString();
+            $agents = User::where('is_agent', true)
+                ->withCount(['students', 'applications'])
+                ->paginate(5)
+                ->withQueryString();
+        }
+
+        return view('admin.users.index', compact('admins', 'agents', 'search', 'role'));
     }
 
-    /**
-     * Display the specified user's profile.
-     */
     public function show(User $user)
     {
         if (!Auth::user()->is_admin && Auth::id() !== $user->id) {
@@ -34,14 +56,11 @@ class UserController extends Controller
         }
 
         $notifications = $user->notifications()->latest()->get();
-
-        // Relationships
         $students = $user->students()->withCount('applications')->get();
         $applications = Application::whereIn('student_id', $students->pluck('id'))
             ->with(['student', 'course.university'])
             ->get();
 
-        // Stats
         $user->students_count = $students->count();
         $user->applications_count = $applications->count();
         $user->pending_applications = $applications->where('status', 'pending')->count();
@@ -49,18 +68,11 @@ class UserController extends Controller
         return view('admin.users.show', compact('user', 'notifications', 'students', 'applications'));
     }
 
-
-    /**
-     * Show the form for creating a new user.
-     */
     public function create()
     {
         return view('admin.users.create');
     }
 
-    /**
-     * Store a newly created user in storage.
-     */
     public function store(Request $request)
     {
         $request->validate([
@@ -112,17 +124,11 @@ class UserController extends Controller
         return redirect()->route('admin.users.index')->with('success', 'User updated successfully.');
     }
 
-    /**
-     * Show the form for editing the specified user.
-     */
     public function edit(User $user)
     {
         return view('admin.users.edit', compact('user'));
     }
 
-    /**
-     * Remove the specified user from storage.
-     */
     public function destroy(User $user)
     {
         if (Auth::id() !== 1) {
@@ -133,7 +139,6 @@ class UserController extends Controller
             return back()->with('error', 'Cannot delete root admin.');
         }
 
-        // Delete logo from storage
         if ($user->business_logo && Storage::disk('public')->exists($user->business_logo)) {
             Storage::disk('public')->delete($user->business_logo);
         }
@@ -143,9 +148,6 @@ class UserController extends Controller
         return redirect()->route('admin.users.index')->with('success', 'User deleted successfully.');
     }
 
-    /**
-     * Show a list of waiting (inactive) users.
-     */
     public function waiting()
     {
         $users = User::where('active', 0)->paginate(10);
@@ -154,22 +156,15 @@ class UserController extends Controller
         return view('admin.users.waiting', compact('users', 'totalWaitingUsers'));
     }
 
-    /**
-     * Approve a user by activating their account.
-     */
     public function approve(User $user)
     {
         $user->active = true;
         $user->save();
-
         $user->notify(new UserApproved());
 
         return back()->with('success', $user->business_name . ' has been approved and notified.');
     }
 
-    /**
-     * Assign common fields to a User model.
-     */
     private function assignUserFields(User $user, Request $request)
     {
         $user->business_name = $request->business_name;
@@ -183,9 +178,6 @@ class UserController extends Controller
         $user->active        = (int) $request->status;
     }
 
-    /**
-     * Handle business logo upload and replacement.
-     */
     private function handleBusinessLogoUpload(Request $request, User $user)
     {
         if ($request->hasFile('business_logo')) {
@@ -193,16 +185,65 @@ class UserController extends Controller
             $folderPath = 'agents/' . $safeBusinessName;
             $logoName = $safeBusinessName . '_logo.png';
 
-            // Delete old logo if exists
             if ($user->business_logo && Storage::disk('public')->exists($user->business_logo)) {
                 Storage::disk('public')->delete($user->business_logo);
             }
 
-            // Store new logo in storage/app/public/agents/{business_name}/
             $path = $request->file('business_logo')->storeAs($folderPath, $logoName, 'public');
-
-            // Save relative path (so we can retrieve with Storage::url)
             $user->business_logo = $path;
         }
+    }
+
+    /**
+     * ✅ Admin view: students of an agent
+     */
+    public function students(User $agent, Request $request)
+    {
+        if (!$agent->is_agent) abort(404);
+
+        $query = Student::withCount('applications')
+            ->where('agent_id', $agent->id);
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('first_name', 'like', "%{$search}%")
+                    ->orWhere('last_name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
+        $students = $query->orderBy('created_at', 'desc')
+            ->paginate(10)
+            ->withQueryString();
+
+        return view('admin.users.students', compact('agent', 'students'));
+    }
+
+
+
+    /**
+     * ✅ Admin view: applications of an agent
+     */
+    public function applications(User $agent, Request $request)
+    {
+        if (!$agent->is_agent) abort(404);
+
+        $studentIds = $agent->students()->pluck('id');
+
+        $query = Application::with(['student', 'course.university'])
+            ->whereIn('student_id', $studentIds);
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->whereHas('student', function ($q) use ($search) {
+                $q->where('first_name', 'like', "%{$search}%")
+                    ->orWhere('last_name', 'like', "%{$search}%");
+            });
+        }
+
+        $applications = $query->orderBy('created_at', 'desc')->paginate(10)->withQueryString();
+
+        return view('admin.users.applications', compact('agent', 'applications'));
     }
 }

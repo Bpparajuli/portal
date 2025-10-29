@@ -11,7 +11,7 @@ use App\Helpers\ActivityLogger;
 use App\Models\Student;
 use App\Models\User;
 
-class DocumentUploaded extends Notification // implements ShouldQueue
+class DocumentDeleted extends Notification // implements ShouldQueue
 {
     use Queueable;
 
@@ -34,9 +34,9 @@ class DocumentUploaded extends Notification // implements ShouldQueue
         $student = $doc->student;
 
         return (new MailMessage)
-            ->subject('New Document Uploaded')
+            ->subject('New Document Deleted')
             ->greeting('Hello!')
-            ->line("A new document ({$doc->file_name}) was uploaded for student {$student->first_name} {$student->last_name}.")
+            ->line("A new document ({$doc->file_name}) was deleted for student {$student->first_name} {$student->last_name}.")
             ->action('View Documents', url("/admin/students/{$this->student->id}/documents"));
     }
 
@@ -46,12 +46,11 @@ class DocumentUploaded extends Notification // implements ShouldQueue
         $student = $doc->student;
         $uploader = $doc->uploader;
         $agent = $this->agent;
-
-        ActivityLogger::log("Uploaded document: {$this->document->title}", $this->document->uploaded_by);
+        ActivityLogger::log("Deleted document: {$this->document->title}", $this->document->deleted_by);
 
         return [
-            'type'        => 'document_uploaded',
-            'message'     => "{$doc->document_type} document uploaded for {$student->first_name} {$student->last_name} by {$agent->name}",
+            'type'        => 'document_deleted',
+            'message'     => "{$doc->document_type} document deleted for {$student->first_name} {$student->last_name} by {$agent->name}",
             'document_id' => $doc->id,
             'file_name'   => $doc->file_name,
             'document_type' => $doc->document_type,
@@ -59,7 +58,7 @@ class DocumentUploaded extends Notification // implements ShouldQueue
                 'id' => $student->id,
                 'name' => $student->first_name . ' ' . $student->last_name,
             ],
-            'uploaded_by' => [
+            'deleted_by' => [
                 'id' => $uploader->id,
                 'name' => $uploader->business_name ?? $uploader->username ?? $uploader->name,
             ],

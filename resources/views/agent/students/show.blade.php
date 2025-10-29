@@ -41,9 +41,30 @@
                         </div>
 
                         {{-- Actions --}}
+                        @php
+                        // Document status calculation
+                        $requiredDocumentTypes = ['passport','id','transcript','financial','other'];
+                        $uploadedTypes = $student->documents->pluck('document_type')
+                        ->map(fn($t) => strtolower(str_replace(' ', '', $t)))
+                        ->toArray();
+                        $allDocumentsUploaded = count(array_diff($requiredDocumentTypes, $uploadedTypes)) === 0;
+                        $completedDocsCount = $student->documents->where('status','completed')->count();
+
+                        $documentStatus = ($allDocumentsUploaded && $completedDocsCount == count($requiredDocumentTypes))
+                        ? 'Completed'
+                        : (count($uploadedTypes) == 0 ? 'Not Uploaded' : 'Incomplete');
+                        @endphp
                         <div class="card-social">
-                            <a href="{{ route('agent.students.edit', $student->id) }}" class="btn btn-dark btn-sm w-100">✏️ Edit</a>
-                            <a href="{{ route('agent.documents.index', $student->id) }}" class="btn btn-primary btn-sm w-100">📂 Upload Doc</a>
+                            <a href="{{ route('agent.students.edit', $student->id) }}" class="btn btn-dark btn-sm">✏️ Edit</a>
+                            @if($allDocumentsUploaded)
+                            <a href="{{ route('agent.applications.create') }}?student_id={{ $student->id }}" class="btn btn-sm btn-success">
+                                <i class="fa-solid fa-paper-plane me-1"></i> Apply Now
+                            </a>
+                            @else
+                            <a href="{{ route('agent.documents.index', $student->id) }}" class="btn btn-sm btn-secondary ">
+                                <i class="fa-solid fa-folder-open me-1"></i> Upload Docs
+                            </a>
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -55,8 +76,8 @@
             {{-- Tabs --}}
             <ul class="nav nav-tabs custom-tabs mb-3" role="tablist">
                 <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#general">👤 Information</button></li>
-                <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#application">📑 Application</button></li>
                 <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#documents">📂 Documents</button></li>
+                <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#application">📑 Application</button></li>
             </ul>
 
             <div class="tab-content ">
@@ -100,7 +121,6 @@
                     <div class="card shadow-sm mb-4 border-0 rounded-3">
                         <div class="card-body">
                             <div class="d-flex justify-content-between">
-
                                 <h6 class="mb-3 text-primary">
                                     Application Number: {{ $application->application_number ?? 'N/A' }}
                                 </h6>
@@ -142,7 +162,7 @@
                                 </div>
                             </div>
 
-                            {{-- Application Info --}}
+                            {{-- Application Comments Section --}}
 
                             <div class="mt-4 p-3 bg-white border rounded-3">
                                 <h5 class="fw-bold mb-3">💬 View Comments</h5>
@@ -168,7 +188,7 @@
                     </div>
                     @endforeach
                     @else
-                    <p class="text-muted">No applications found for this student.</p>
+                    <p class="text-muted">Please Upload all necessary Documents and Add Application for this Student.</p>
                     @endif
                 </div>
 
@@ -177,7 +197,15 @@
                 <div class="tab-pane fade" id="documents">
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h5>📂 Documents</h5>
-                        <a href="{{ route('agent.documents.index', $student->id) }}" class="btn btn-primary btn-sm">+ Upload Document</a>
+                        @if($allDocumentsUploaded)
+                        <a href="{{ route('agent.applications.create') }}?student_id={{ $student->id }}" class="btn btn-sm btn-success">
+                            <i class="fa-solid fa-paper-plane me-1"></i> Apply Now
+                        </a>
+                        @else
+                        <a href="{{ route('agent.documents.index', $student->id) }}" class="btn btn-sm btn-secondary ">
+                            <i class="fa-solid fa-folder-open me-1"></i> Upload Docs
+                        </a>
+                        @endif
                     </div>
 
                     @if($student->documents->isEmpty())
@@ -219,6 +247,52 @@
                         @endforeach
                     </div>
                     @endif
+                </div>
+            </div>
+
+            {{-- Row 2 Tabs --}}
+            <ul class="nav nav-pills mb-3" id="row2Tabs" role="tablist">
+                <li class="nav-item"><button class="nav-link active" data-bs-toggle="pill" data-bs-target="#chat">💬 Chats</button></li>
+                <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#remarks">📝 Remarks</button></li>
+                <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#settings">⚙️ Settings</button></li>
+            </ul>
+
+            <div class="tab-content">
+                <div class="tab-pane fade show active" id="chat">
+                    <div class="card shadow-sm p-3 rounded">
+                        <h5>Chats</h5>
+                        {{-- @if($student->chats->count())
+                        <ul class="list-group">
+                            @foreach($student->chats as $chat)
+                            <li class="list-group-item">
+                                <strong>{{ $chat->user->username ?? $chat->user->business_name ?? 'Unknown' }}:</strong>
+                        {{ $chat->message }}
+                        <span class="text-muted float-end">{{ $chat->created_at->diffForHumans() }}</span>
+                        </li>
+                        @endforeach
+                        </ul>
+                        @else
+                        <p>No chats available.</p>
+                        @endif --}}
+                    </div>
+                </div>
+
+                <div class="tab-pane fade" id="remarks">
+                    <div class="card shadow-sm p-3 rounded">
+                        <h5>Remarks</h5>
+                        {{ $student->notes ?? 'No remarks.' }}
+                    </div>
+                </div>
+
+                <div class="tab-pane fade" id="settings">
+                    <div class="card shadow-sm p-3 rounded">
+                        <h5>Settings</h5>
+                        <form action="{{ route('agent.students.destroy', $student->id) }}" method="POST" onsubmit="return confirm('Are you sure?');">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="btn btn-danger">🗑️ Delete Student</button>
+                        </form>
+                    </div>
                 </div>
             </div>
 

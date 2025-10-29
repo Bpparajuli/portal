@@ -2,10 +2,14 @@
 
 namespace App\Models;
 
+use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Application extends Model
 {
+    use HasFactory, Notifiable;
+
     protected $fillable = ['student_id', 'university_id', 'course_id', 'agent_id', 'application_status', 'remarks', 'application_number'];
     public const STATUSES = [
         'Application started',
@@ -75,8 +79,8 @@ class Application extends Model
 
         return $statusColors[$this->application_status] ?? 'bg-light text-dark';
     }
-    public function comments()
+    public function messages()
     {
-        return $this->hasMany(ApplicationComment::class);
+        return $this->hasMany(ApplicationMessage::class, 'application_id');
     }
 }

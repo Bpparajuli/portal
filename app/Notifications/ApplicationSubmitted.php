@@ -8,7 +8,7 @@ use Illuminate\Notifications\Notification;
 use Illuminate\Notifications\Messages\MailMessage;
 use App\Helpers\ActivityLogger;
 
-class NewApplicationSubmitted extends Notification
+class ApplicationSubmitted extends Notification
 {
     use Queueable;
 
@@ -17,7 +17,14 @@ class NewApplicationSubmitted extends Notification
     public function __construct(Application $application)
     {
         $this->application = $application;
-        ActivityLogger::log("Submitted new application for student {$this->application->student->first_name} {$this->application->student->last_name}");
+
+        ActivityLogger::log(
+            'application_submitted', // type
+            "Submitted new application for student {$this->application->student->first_name} {$this->application->student->last_name}", // description
+            $this->application->id, // notifiable_id
+            route('agent.applications.show', $this->application->id), // optional link to view
+            $this->application->agent_id // optional user_id
+        );
     }
 
     public function via($notifiable)
@@ -41,14 +48,14 @@ class NewApplicationSubmitted extends Notification
 
         return [
             'agent_id' => $this->application->agent_id,
-            'agent_name' => $this->application->agent->username,
+            'agent_name' => $this->application->agent->name,
             'student_id' => $this->application->student_id,
             'student_name' => $this->application->student->first_name . ' ' . $this->application->student->last_name,
             'university_id' => $this->application->university_id,
             'university_name' => $this->application->university->name,
             'application_id' => $this->application->id,
-            'message' => 'New application submitted for  ',
-            'type' => 'Application Submitted ',
+            'message' => 'Application submitted for ' . $this->application->student->first_name . ' ' . $this->application->student->last_name . ' to ' . $this->application->university->name . ' by ' . $this->application->agent->name,
+            'type' => 'application_submitted',
             'link' => url(route('admin.applications.index', $this->application->id)),
         ];
     }

@@ -21,17 +21,41 @@
         @endif
 
         {{-- UNIVERSITY --}}
+        @if(isset($selectedUniversityId))
+        @php
+        $selectedUniversity = $universities->firstWhere('id', $selectedUniversityId);
+        @endphp
+        <div class="form-group mb-3">
+            <label>Selected University</label>
+            <input type="hidden" name="university_id" value="{{ $selectedUniversityId }}">
+            <input type="text" class="form-control" value="{{ $selectedUniversity?->name ?? 'Unknown University' }}" readonly>
+        </div>
+        @else
         <x-form.select name="university_id" label="University" required id="university_select">
             <option value="">-- Select University --</option>
             @foreach($universities as $uni)
-            <option value="{{ $uni->id }}">{{ $uni->name }} - {{$uni->city}}</option>
+            <option value="{{ $uni->id }}">{{ $uni->name }} - {{ $uni->city }}</option>
             @endforeach
         </x-form.select>
+        @endif
 
-        {{-- COURSE (dynamic) --}}
+        {{-- COURSE --}}
+        @if(isset($selectedCourseId))
+        @php
+        $selectedCourse = isset($selectedUniversity)
+        ? $selectedUniversity->courses->firstWhere('id', $selectedCourseId)
+        : null;
+        @endphp
+        <div class="form-group mb-3">
+            <label>Selected Course</label>
+            <input type="hidden" name="course_id" value="{{ $selectedCourseId }}">
+            <input type="text" class="form-control" value="{{ $selectedCourse?->title ?? 'Unknown Course' }}" readonly>
+        </div>
+        @else
         <x-form.select name="course_id" label="Course" id="course_select">
             <option value="">-- Select Course --</option>
         </x-form.select>
+        @endif
 
         {{-- SOP --}}
         <x-form.file name="sop" label="Upload SOP (PDF/DOC)" required />
@@ -44,12 +68,13 @@
 </div>
 
 {{-- DYNAMIC COURSES --}}
+@if(!isset($selectedCourseId))
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const uniSelect = document.getElementById('university_select');
         const courseSelect = document.getElementById('course_select');
 
-        uniSelect.addEventListener('change', function() {
+        uniSelect ? .addEventListener('change', function() {
             const uniId = this.value;
             courseSelect.innerHTML = '<option value="">Loading...</option>';
 
@@ -58,7 +83,6 @@
                 return;
             }
 
-            // Use the full URL of your working JSON endpoint
             fetch(`/agent/applications/get-courses/${uniId}`)
                 .then(response => response.json())
                 .then(data => {
@@ -76,4 +100,5 @@
     });
 
 </script>
+@endif
 @endsection

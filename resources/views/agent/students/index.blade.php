@@ -85,6 +85,7 @@
         <table class="table table-striped align-middle">
             <thead>
                 <tr>
+                    <th>ID</th>
                     <th>Profile</th>
                     <th>Name</th>
                     <th>Email / Contact</th>
@@ -116,6 +117,7 @@
                 @endphp
 
                 <tr>
+                    <td>{{ $student->id }}</td>
                     {{-- Profile --}}
                     <td class="text-center">
                         <a href="{{ route('agent.students.show', $student->id) }}">

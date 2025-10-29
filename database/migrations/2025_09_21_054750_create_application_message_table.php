@@ -11,11 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('application_comments', function (Blueprint $table) {
+        Schema::create('application_message', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('application_id');
             $table->unsignedBigInteger('user_id'); // who made the remark
-            $table->text('comment');
+            $table->text('message');
             $table->enum('type', ['agent', 'admin']); // to differentiate who made the remark
             $table->timestamps();
 
@@ -29,6 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('application_comments');
+        Schema::dropIfExists('application_message');
     }
 };

@@ -44,15 +44,31 @@ $user = auth()->user();
                         </button>
 
                         <div class="notification-menu" id="notif-menu">
+                            {{-- Unread Notifications --}}
                             @forelse(auth()->user()->unreadNotifications->take(5) as $notification)
                             <a href="{{ $notification->data['link'] ?? '#' }}" class="notification-item {{ is_null($notification->read_at) ? 'unread' : '' }}">
-                                <div>{{ $notification->data['message'] ?? 'New Notification' }}</div>
+                                <div>{{ auth()->user()->formatNotification($notification) }}</div>
                                 <small class="text-muted">{{ $notification->created_at->diffForHumans() }}</small>
                             </a>
                             @empty
                             <span class="notification-item-text">No new notifications</span>
                             @endforelse
 
+                            {{-- Optional Divider --}}
+                            @if(auth()->user()->readNotifications->count() > 0)
+                            <hr class="my-1">
+                            <small class="text-muted ps-2">Earlier</small>
+                            @endif
+
+                            {{-- Read Notifications (optional older preview) --}}
+                            @foreach(auth()->user()->readNotifications->take(3) as $notification)
+                            <a href="{{ $notification->data['link'] ?? '#' }}" class="notification-item">
+                                <div>{{ auth()->user()->formatNotification($notification) }}</div>
+                                <small class="text-muted">{{ $notification->created_at->diffForHumans() }}</small>
+                            </a>
+                            @endforeach
+
+                            {{-- View All --}}
                             <a href="{{ $user->is_admin ? route('admin.notifications') : route('agent.notifications') }}" class="notification-view-all">
                                 View All Notifications
                             </a>
@@ -60,22 +76,25 @@ $user = auth()->user();
                     </div>
                     @endif
 
+
+                    {{-- Welcome Message --}}
                     <div class="welcome-message">
                         <strong>{{ $user->name }}</strong>
                     </div>
                     <div class="user-avatar">
-                        <img src="{{ asset('images/Agents_logo/' . $user->business_logo) }}" alt="user avatar" />
-                    </div>
+                        @if($user->business_logo)
+                        <img src="{{ Storage::url($user->business_logo) }}" alt="Logo" width="120" height="120" class="rounded border shadow-sm">
+                        @else
+                        <div class="no-logo">No Logo</div>
+                        @endif </div>
                 </div>
                 @endif
-
                 {{-- Mobile Toggle Button --}}
                 <button class="menu-toggle" aria-label="Toggle navigation menu">
                     <i class="fa fa-bars"></i>
                 </button>
             </div>
         </div>
-
         {{-- Main Navigation Menu --}}
         <nav class="header-nav">
             <ul class="nav-list">
@@ -100,17 +119,22 @@ $user = auth()->user();
                         <i class="fa fa-user"></i> Users
                     </a>
                 </li>
-                @php
+                <li class="nav-item {{ request()->is('admin/applied-list') ? 'active' : '' }}">
+                    <a href="{{ route('admin.applications.index') }}">
+                        <i class="fa fa-file-text"></i> Application List
+                    </a>
+                </li>
+                {{-- @php
                 $totalWaitingUsers = \App\Models\User::where('active', 0)->count();
                 @endphp
                 <li class="nav-item {{ request()->is('admin/users/waiting') ? 'active' : '' }}">
-                    <a href="{{ route('admin.users.waiting') }}">
-                        <i class="fa fa-question"></i> Waiting Users
-                        @if($totalWaitingUsers > 0)
-                        <span class="badge badge-danger">{{$totalWaitingUsers}}</span>
-                        @endif
-                    </a>
-                </li>
+                <a href="{{ route('admin.users.waiting') }}">
+                    <i class="fa fa-question"></i> Waiting Users
+                    @if($totalWaitingUsers > 0)
+                    <span class="badge badge-danger">{{$totalWaitingUsers}}</span>
+                    @endif
+                </a>
+                </li> --}}
                 @elseif ($user?->is_agent)
                 <li class="nav-item {{ request()->is('agent/dashboard') ? 'active' : '' }}">
                     <a href="{{ route('agent.dashboard') }}">

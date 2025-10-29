@@ -211,15 +211,16 @@
     <section class="dash-universities">
         <h2 class="section-title">Our Partner Universities</h2>
         <div class="dash-university-slider" id="uni-slider">
-            @foreach (File::files(public_path('images/uni_logo')) as $file)
+            @foreach (File::files(storage_path('app/public/uni_logo')) as $file)
             @php
             $fileName = basename($file);
             $alt = pathinfo($fileName, PATHINFO_FILENAME);
             @endphp
             <div class="dash-university-logo">
-                <img src="{{ asset('images/uni_logo/' . $fileName) }}" alt="{{ ucfirst($alt) }}">
+                <img src="{{ asset('storage/uni_logo/' . $fileName) }}" alt="{{ ucfirst($alt) }}">
             </div>
             @endforeach
+
         </div>
     </section>
 

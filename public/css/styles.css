@@ -27,6 +27,9 @@ body {
     --light-gray: #f0f0f0;
     --dark-gray: #484b57;
     --light: #ddeeff;
+    --dark: #1a202c;
+    --text-color: #4b5563;
+    --bg-color: #f8fafc;
 }
 main {
     background: rgb(254, 254, 254);
@@ -40,8 +43,23 @@ main {
 }
 
 .bg-primary {
-    background: #1a0262;
+    background: #1a0262 !important;
 }
 .bg-secondary {
-    background: #820b5c;
+    background: #820b5c !important;
+}
+.text-primary {
+    color: #1a0262 !important;
+}
+.text-secondary {
+    color: #820b5c !important;
+}
+
+.table-hover tbody tr:hover {
+    background-color: #f1f5f9;
+    transition: 0.2s;
+}
+.table {
+    border-radius: 0.5rem;
+    overflow: hidden;
 }

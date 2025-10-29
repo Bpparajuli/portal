@@ -67,23 +67,24 @@ class DashboardController extends Controller
         // ---------- ACTIVITIES (use 'type' column) ----------
         // you said activities table has `user_id` and `type`
         $studentActivities = Activity::where('user_id', $agentId)
-            ->where('type', 'newstudentadded')
+            ->whereIn('type', ['student_added', 'student_deleted'])
             ->latest()
-            ->take(6)
+            ->take(5)
             ->get();
 
         $documentActivities = Activity::where('user_id', $agentId)
-            ->where('type', 'documentuploaded')
+            ->whereIn('type', ['document_uploaded', 'document_deleted'])
             ->latest()
-            ->take(6)
+            ->take(5)
             ->get();
+
+
 
         $applicationActivities = Activity::where('user_id', $agentId)
-            ->where('type', 'newapplicationsubmitted')
+            ->whereIn('type', ['application_submitted', 'application_withdrawn'])
             ->latest()
-            ->take(6)
+            ->take(5)
             ->get();
-
         // ---------- APPLICATION STATUS COUNTS (for pie) ----------
         $applicationStatusCounts = Application::where('agent_id', $agentId)
             ->selectRaw('application_status, COUNT(*) as count')
@@ -123,6 +124,7 @@ class DashboardController extends Controller
             'countries',
             'universities',
             'totalStudents',
+            'totalUniversities',
             'totalApplications',
             'totalApproved',
             'visaApproved',

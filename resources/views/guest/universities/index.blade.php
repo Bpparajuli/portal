@@ -5,18 +5,29 @@
 
     {{-- Filter Section --}}
     @include('partials.uni_filter')
+
     {{-- Universities Cards --}}
     <div class="uni-cards-grid mt-3">
         @forelse($universities as $uni)
         <div class="uni-card">
             <div class="uni-card-header">
                 @if($uni->university_logo)
-                <img src="{{ asset('images/uni_logo/'.$uni->university_logo) }}" class="uni-logo" alt="{{ $uni->name }}">
+                <a href="{{ route('guest.universities.show', $uni->id) }}">
+                    <img src="{{ asset('storage/uni_logo/'.$uni->university_logo) }}" class="uni-logo" alt="{{ $uni->name }}">
+                </a>
                 @endif
             </div>
             <div class="uni-card-body">
-                <h3 class="uni-card-title">{{ $uni->name }}</h3>
-                <p class="uni-card-subtitle">{{ $uni->short_name ?? 'N/A' }}</p>
+                <h3 class="uni-card-title">
+                    <a href="{{ route('guest.universities.show', $uni->id) }}">
+                        {{ $uni->name }}
+                    </a>
+                </h3>
+                <p class="uni-card-subtitle">
+                    <a href="{{ route('guest.universities.show', $uni->id) }}">
+                        {{ $uni->short_name ?? 'N/A' }}
+                    </a>
+                </p>
                 <p class="uni-card-location">{{ $uni->city ?? 'N/A' }}, {{ $uni->country }}</p>
                 <p>
                     @if($uni->website)
@@ -25,6 +36,7 @@
                 </p>
                 <p>{{ $uni->contact_email ?? 'N/A' }}</p>
             </div>
+
             @if($uni->courses->count())
             <div class="uni-card-footer">
                 <button class="uni-btn-toggle btn-primary" onclick="openCourseModal({{ $uni->id }})">
@@ -49,6 +61,7 @@
                             <th>Fee</th>
                             <th>Intakes</th>
                             <th>MOI</th>
+                            <th>Scholarships </th>
                         </tr>
                     </thead>
                     <tbody>
@@ -58,9 +71,10 @@
                             <td>{{ $course->title }}</td>
                             <td>{{ $course->description ?? 'N/A' }}</td>
                             <td>{{ $course->duration ?? 'N/A' }}</td>
-                            <td>${{ number_format($course->fee,2) }}</td>
+                            <td>${{$course->fee}}</td>
                             <td>{{ $course->intakes ?? 'N/A' }}</td>
                             <td>{{ $course->moi_requirement ?? 'N/A' }}</td>
+                            <td>{{ $course->scholarships ?? 'N/A' }}</td>
                         </tr>
                         @endforeach
                     </tbody>
@@ -88,6 +102,7 @@
     function closeCourseModal(id) {
         document.getElementById('courseModal' + id).style.display = 'none';
     }
+
     // Close modal on outside click
     window.onclick = function(event) {
         document.querySelectorAll('.uni-modal').forEach(modal => {
