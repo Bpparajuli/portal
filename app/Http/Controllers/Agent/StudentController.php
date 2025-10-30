@@ -133,9 +133,8 @@ class StudentController extends Controller
             $student->students_photo = $this->uploadPhoto($request->file('students_photo'), $student);
             $student->save();
         }
-        // -----------------------------
-        // Notify only admin ID = 1
-        // -----------------------------
+
+
         $admin = User::find(1);
         $agent = Auth::user();
         if ($admin) {

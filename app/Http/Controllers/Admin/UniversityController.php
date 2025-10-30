@@ -49,7 +49,7 @@ class UniversityController extends Controller
         }
 
         $universities = $query->paginate(16)->withQueryString();
-        return view('agent.universities.index', compact('universities', 'countries'));
+        return view('admin.universities.index', compact('universities', 'countries'));
     }
 
 

@@ -1,0 +1,3 @@
+this is the code for storage must run in terminal for shortcut of storage to display image
+ln -s /home/bpparaju/portal/storage/app/public /home/bpparaju/portal/public/storage
+need to change the database username password and all in .env

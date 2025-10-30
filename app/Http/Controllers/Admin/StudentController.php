@@ -11,8 +11,8 @@ use App\Models\Course;
 use App\Models\Document;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Notification;
-use App\Notifications\NewStudentAdded;
-use App\Notifications\StudentStatusChanged;
+use App\Notifications\StudentAdded;
+use App\Notifications\StudentStatusUpdated;
 
 class StudentController extends Controller
 {
@@ -71,7 +71,7 @@ class StudentController extends Controller
 
         // Notify agent if assigned
         if ($student->agent_id) {
-            Notification::send(User::find($student->agent_id), new NewStudentAdded($student));
+            Notification::send(User::find($student->agent_id), new StudentAdded($agent, $student));
         }
 
         return redirect()->route('admin.students.index')->with('success', 'Student created successfully.');
@@ -110,7 +110,7 @@ class StudentController extends Controller
 
         // Notify agent if student status changed
         if ($student->wasChanged('student_status') && $student->agent) {
-            Notification::send($student->agent, new StudentStatusChanged($student));
+            Notification::send($student->agent, new StudentStatusUpdated($student));
         }
 
         return redirect()->route('admin.students.show', $student->id)->with('success', 'Student updated successfully.');

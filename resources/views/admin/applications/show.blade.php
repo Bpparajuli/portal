@@ -38,9 +38,10 @@
                 <div class="col-md-6">
                     <div class="p-3 bg-light rounded-3 h-100">
                         <h5 class="fw-bold">🏛 University Info</h5>
-                        <p><strong>University:</strong> {{ $application->university->name ?? 'N/A' }}</p>
+                        <p><strong>University:</strong> {{ $application->university->name ?? 'N/A' }} ({{ $application->university->id ?? 'N/A' }})</p>
                         <p><strong>City:</strong> {{ $application->university->city ?? 'N/A' }}</p>
                         <p><strong>Course:</strong> {{ $application->course->title ?? $application->course->name ?? 'N/A' }}</p>
+                        <p><strong>Agent Name:</strong> {{ $application->student->agent?->business_name ?? $student->agent?->username ?? 'N/A' }}</p>
                     </div>
                 </div>
             </div>
@@ -77,11 +78,11 @@
             <div class="app-progress mt-4" style="--steps: {{ $totalSteps }}; --progress: {{ $progressPercent }}%;">
                 <div class="progress-bar-wrap">
                     <!-- Horizontal bar + fill -->
-                    <div class="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ $progressPercent }}">
+                    <div class="progress-bar " role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ $progressPercent }}">
                         <div class="progress-fill" aria-hidden="true"></div>
 
                         <!-- Center box showing current step title -->
-                        <div class="progress-box" aria-hidden="false">
+                        <div class="progress-box bg-warning" aria-hidden="false">
                             <strong class="progress-box-title">{{ $steps[$currentIndex] }}</strong>
                             <div class="progress-box-sub">Step {{ $currentIndex + 1 }} of {{ $totalSteps }}</div>
                         </div>
@@ -94,10 +95,10 @@
                         $state = $i < $currentIndex ? 'completed' : ($i===$currentIndex ? 'current' : 'upcoming' ); @endphp <li class="step-item {{ $state }}" data-step="{{ $i + 1 }}">
                             <span class="step-dot" aria-hidden="true">
                                 @if($i < $currentIndex) &#10003; {{-- check mark for completed --}} @else {{ $i + 1 }} @endif </span>
-                                    <div class="step-label">{{ $step }}</div>
                                     </li>
                                     @endforeach
                     </ul>
+
                 </div>
             </div>
 
@@ -107,6 +108,9 @@
                 <form action="{{ route('admin.applications.update', $application->id) }}" method="POST">
                     @csrf
                     @method('PUT')
+                    {{-- Keep university and course values in hidden fields --}}
+                    <input type="hidden" name="university_id" value="{{ $application->university_id }}">
+                    <input type="hidden" name="course_id" value="{{ $application->course_id }}">
                     <div class="row align-items-end">
                         <div class="col-md-8">
                             <select name="application_status" id="application_status" class="form-select">
@@ -150,7 +154,7 @@
                             <strong>
                                 <p class="mb-1">{{ $m->message }}</p>
                             </strong>
-                            <small class="text-dark"><b>{{ $m->user->name ?? 'Unknown' }}</b>:{{ $m->created_at->format('d M Y, H:i') }}</small>
+                            <p><b>{{ $m->user->name ?? 'Unknown' }}</b>:{{ $m->created_at->format('d M Y, H:i') }}</p>
                         </div>
                     </div>
                     @empty

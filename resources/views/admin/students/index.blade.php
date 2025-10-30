@@ -168,7 +168,7 @@
                     {{-- Application Status --}}
                     <td>
                         @if($latestApplication)
-                        <a href="{{ route('agent.applications.show', $latestApplication->id) }}">
+                        <a href="{{ route('admin.applications.show', $latestApplication->id) }}">
                             <span class="badge {{ $latestApplication->status_class }}">
                                 {{ $latestApplication->application_status }}
                             </span>

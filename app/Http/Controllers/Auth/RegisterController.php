@@ -7,7 +7,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
-use App\Notifications\NewUserRegistered;
+use App\Notifications\UserRegistered;
 use Illuminate\Support\Facades\Storage;
 
 class RegisterController extends Controller
@@ -60,7 +60,7 @@ class RegisterController extends Controller
 
         // Notify all admins
         $admins = User::where('is_admin', 1)->get();
-        Notification::send($admins, new NewUserRegistered($user));
+        Notification::send($admins, new UserRegistered($user));
 
         return redirect()->route('auth.login')->with('success', 'Registered successfully. Please wait for admin approval.');
     }

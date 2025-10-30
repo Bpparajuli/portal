@@ -51,6 +51,7 @@
                         <th><i class="fas fa-dollar-sign me-1"></i> Fee</th>
                         <th><i class="fas fa-calendar-alt me-1"></i> Intakes</th>
                         <th><i class="fas fa-language me-1"></i> MOI Requirement</th>
+                        <th><i class="fas fa-graduation-cap me-1"></i> Scholarships</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -59,9 +60,11 @@
                         <td>{{ $course->course_code }}</td>
                         <td>{{ $course->title }}</td>
                         <td>{{ $course->duration }}</td>
-                        <td>${{ number_format($course->fee, 2) }}</td>
+                        <td>{{$course->fee}}</td>
                         <td>{{ $course->intakes }}</td>
                         <td>{{ $course->moi_requirement }}</td>
+                        <td>{{ $course->scholarships }} </td>
+
                     </tr>
                     @endforeach
                 </tbody>

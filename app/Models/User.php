@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-
+use Illuminate\Support\Facades\Notification;
 
 class User extends Authenticatable
 {
@@ -71,7 +71,11 @@ class User extends Authenticatable
                 $messageText = "📌 Application status updated: " . ($notification->data['application_number'] ?? 'N/A');
                 break;
             case 'application_message':
-                $messageText = "💬 New message received for Application #" . ($notification->data['application_number'] ?? 'N/A');
+                $messageText = "💬 New message for "
+                    . ($notification->data['student_name'] ?? 'Unknown Student')
+                    . " by "
+                    . ($notification->data['user_name'] ?? 'Unknown User')
+                    . "\"";
                 break;
             case 'application_withdrawn':
                 $messageText = "⚠️ Application withdrawn: " . ($notification->data['application_number'] ?? 'N/A');
@@ -89,5 +93,11 @@ class User extends Authenticatable
                 $messageText = $notification->data['message'] ?? 'New Notification';
         }
         return $messageText;
+    }
+
+    public static function notifyAdmins($notification)
+    {
+        $admins = self::where('is_admin', 1)->get();
+        Notification::send($admins, $notification);
     }
 }

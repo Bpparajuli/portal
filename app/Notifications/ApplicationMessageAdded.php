@@ -41,9 +41,11 @@ class ApplicationMessageAdded extends Notification
         return [
             'application_id' => $this->application->id,
             'application_number' => $this->application->application_number ?? null,
-            'message' => $this->message->message,
             'type' => 'application_message',
             'added_by' => $this->message->type,
+            'student_name'       => ($this->application->student->first_name ?? 'Unknown') . ' ' . ($this->application->student->last_name ?? 'Unknown'), // student name
+            'user_name'          => $this->message->user->name ?? 'Unknown',
+            'message' => $this->message->message,
             'link' => $this->getApplicationUrl($notifiable),
         ];
     }

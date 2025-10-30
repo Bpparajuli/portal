@@ -10,6 +10,8 @@ use App\Models\University;
 use App\Models\Course;
 use App\Models\Document;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Notification;
+
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
@@ -150,23 +152,24 @@ class ApplicationController extends Controller
         $user = Auth::user();
         $userType = $user->is_admin ? 'admin' : 'agent';
 
+        // Create the message
         $message = $application->messages()->create([
             'user_id' => $user->id,
-            'type' => $userType,
+            'type'    => $userType,
             'message' => $request->message,
         ]);
 
-        // Notify the opposite role
-        if ($userType === 'admin' && $application->agent) {
-            $application->agent->notify(new ApplicationMessageAdded($application, $message));
-        } elseif ($userType === 'agent') {
-            $admins = User::where('is_admin', true)->get();
-            Notification::send($admins, new ApplicationMessageAdded($application, $message));
+        // Notify opposite role
+        if ($userType === 'agent') {
+            // Notify all admins using helper
+            User::notifyAdmins(new ApplicationMessageAdded($application, $message));
+        } else {
+            // Notify the assigned agent of this application
+            $application->agent?->notify(new ApplicationMessageAdded($application, $message));
         }
 
         return back()->with('success', 'Message added and notification sent.');
     }
-
 
     public function destroy(Application $application)
     {

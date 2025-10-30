@@ -25,7 +25,7 @@
                 </h3>
                 <p class="uni-card-subtitle">
                     <a href="{{ route('guest.universities.show', $uni->id) }}">
-                        {{ $uni->short_name ?? 'N/A' }}
+                        {{ $uni->short_name ?? 'N/A' }} ({{ $uni->id ?? 'N/A' }})
                     </a>
                 </p>
                 <p class="uni-card-location">{{ $uni->city ?? 'N/A' }}, {{ $uni->country }}</p>

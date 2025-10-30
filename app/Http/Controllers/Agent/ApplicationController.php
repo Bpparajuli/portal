@@ -114,9 +114,7 @@ class ApplicationController extends Controller
             'document_type' => 'SOP'
         ]);
 
-        // Notify admin (ID=1)
-        $admin = User::find(1);
-        Notification::send($admin, new ApplicationSubmitted($application));
+        User::notifyAdmins(new ApplicationSubmitted($application));
 
         return redirect()->route('agent.applications.index')->with('success', 'Application created successfully.');
     }
@@ -206,8 +204,7 @@ class ApplicationController extends Controller
             'application_status' => 'Withdrawn'
         ]);
 
-        $admin = User::find(1);
-        Notification::send($admin, new ApplicationWithdrawn($application));
+        User::notifyAdmins(new ApplicationWithdrawn($application));
 
         return redirect()->route('agent.applications.index')->with('success', 'Application withdrawn successfully.');
     }
@@ -221,22 +218,28 @@ class ApplicationController extends Controller
         $user = Auth::user();
         $userType = $user->is_admin ? 'admin' : 'agent';
 
+        // Create the message
         $message = $application->messages()->create([
             'user_id' => $user->id,
             'type'    => $userType,
             'message' => $request->message,
         ]);
 
+        $application->load('student'); // make sure student relation is loaded
+        $message->load('user');         // make sure the user relation is loaded
+
         // Notify opposite role
         if ($userType === 'agent') {
-            $admins = User::where('is_admin', true)->get();
-            Notification::send($admins, new ApplicationMessageAdded($application, $message));
+            // Notify all admins using helper
+            User::notifyAdmins(new ApplicationMessageAdded($application, $message));
         } else {
+            // Notify the assigned agent of this application
             $application->agent?->notify(new ApplicationMessageAdded($application, $message));
         }
 
         return back()->with('success', 'Message added and notification sent.');
     }
+
 
     protected function authorizeAgent(Application $application)
     {
