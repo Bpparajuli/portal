@@ -51,53 +51,118 @@ class User extends Authenticatable
     }
     public function formatNotification($notification)
     {
-        $type = $notification->data['type'] ?? 'unknown';
-        $messageText = $notification->data['message'] ?? 'New Notification';
+        // Ensure $data is always an associative array
+        $data = json_decode(json_encode($notification->data), true);
+        $type = $data['type'] ?? 'unknown';
 
         switch ($type) {
+            // 🧍 Student added
             case 'student_added':
-                $messageText = "👤 New student added: " . ($notification->data['student_name'] ?? 'Unknown');
-                break;
-            case 'student_deleted':
-                $messageText = "❌ Student deleted: " . ($notification->data['student_name'] ?? 'Unknown');
-                break;
-            case 'student_status':
-                $messageText = "📌 Student status updated: " . ($notification->data['student_name'] ?? 'Unknown');
-                break;
-            case 'application_submitted':
-                $messageText = "📝 Application submitted: " . ($notification->data['student_name'] ?? 'Unknown');
-                break;
-            case 'application_status':
-                $messageText = "📌 Application status updated: " . ($notification->data['application_number'] ?? 'N/A');
-                break;
-            case 'application_message':
-                $messageText = "💬 New message for "
-                    . ($notification->data['student_name'] ?? 'Unknown Student')
+                $messageText = "👤 New student added: "
+                    . ($data['student']['name'] ?? 'Unknown Student')
                     . " by "
-                    . ($notification->data['user_name'] ?? 'Unknown User')
-                    . "\"";
+                    . ($data['added_by']['name'] ?? 'Unknown Agent');
                 break;
+
+            // ❌ Student deleted
+            case 'student_deleted':
+                $messageText = "❌ Student deleted: "
+                    . ($data['student_name'] ?? 'Unknown Student')
+                    . " by "
+                    . ($data['deleted_by']['name'] ?? 'Unknown User');
+                break;
+
+            // 📌 Student status updated
+            case 'student_status':
+                $messageText = "📌 Status of student "
+                    . ($data['student']['name'] ?? 'Unknown Student')
+                    . " updated to "
+                    . ($data['student']['status'] ?? 'Unknown Status')
+                    . " by "
+                    . ($data['updated_by']['name'] ?? 'Unknown User');
+                break;
+
+            // 📝 Application submitted
+            case 'application_submitted':
+                $messageText = "📝 Application submitted for "
+                    . ($data['student']['name'] ?? 'Unknown Student')
+                    . " to "
+                    . ($data['university']['name'] ?? 'Unknown University')
+                    . " by "
+                    . ($data['submitted_by']['name'] ?? 'Unknown Agent');
+                break;
+
+            // 📌 Application status updated
+            case 'application_status':
+                $messageText = "📌 Application status updated for "
+                    . ($data['student']['name'] ?? 'Unknown Student')
+                    . " to "
+                    . ($data['application']['status'] ?? 'Unknown Status')
+                    . " by "
+                    . ($data['updated_by']['name'] ?? 'Unknown User');
+                break;
+
+            // 💬 New message on application
+            case 'application_message_added':
+                $messageText = "💬 New message for "
+                    . ($data['student']['name'] ?? 'Unknown Student')
+                    . " by "
+                    . ($data['added_by']['name'] ?? 'Unknown User');
+                break;
+
+            // ⚠️ Application withdrawn
             case 'application_withdrawn':
-                $messageText = "⚠️ Application withdrawn: " . ($notification->data['application_number'] ?? 'N/A');
+                $messageText = "⚠️ Application withdrawn for "
+                    . ($data['student']['name'] ?? 'Unknown Student')
+                    . " (" . ($data['application']['number'] ?? 'N/A') . ")";
                 break;
+
+            // 📤 Document uploaded
             case 'document_uploaded':
-                $messageText = "📁 Document uploaded for " . ($notification->data['student_name'] ?? 'Unknown');
+                $messageText = "📤 "
+                    . ucfirst($data['document_type'] ?? 'Document')
+                    . " uploaded for "
+                    . ($data['student']['name'] ?? 'Unknown Student')
+                    . " by "
+                    . ($data['uploaded_by']['name'] ?? 'Unknown User');
                 break;
+
+            // 🗑️ Document deleted
             case 'document_deleted':
-                $messageText = "🗑 Document deleted for " . ($notification->data['student_name'] ?? 'Unknown');
+                $messageText = "🗑️ "
+                    . ucfirst($data['document_type'] ?? 'Document')
+                    . " deleted for "
+                    . ($data['student']['name'] ?? 'Unknown Student')
+                    . " by "
+                    . ($data['deleted_by']['name'] ?? 'Unknown User');
                 break;
+
+            // 🆕 New user registered
             case 'user_registered':
-                $messageText = "🆕 New user registered: " . ($notification->data['user_name'] ?? 'Unknown');
+                $messageText = "🆕 New user registered: "
+                    . ($data['user_name'] ?? 'Unknown User');
                 break;
+
             default:
-                $messageText = $notification->data['message'] ?? 'New Notification';
+                $messageText = $data['message'] ?? '🔔 New Notification';
         }
+
         return $messageText;
     }
-
     public static function notifyAdmins($notification)
     {
         $admins = self::where('is_admin', 1)->get();
         Notification::send($admins, $notification);
+    }
+    public static function notifyAgent($agentId, $notification)
+    {
+        $agent = self::where('id', $agentId)
+            ->where('is_agent', 1)
+            ->where('active', 1)
+            ->first();
+
+        if ($agent) {
+            $agent->notify($notification);
+        }
     }
 }

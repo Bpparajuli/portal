@@ -3,6 +3,7 @@
 namespace App\Notifications;
 
 use App\Models\Application;
+use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -12,51 +13,88 @@ class ApplicationSubmitted extends Notification
 {
     use Queueable;
 
-    protected $application;
+    public $application;
 
+    /**
+     * Create a new notification instance.
+     */
     public function __construct(Application $application)
     {
         $this->application = $application;
-
-        ActivityLogger::log(
-            'application_submitted', // type
-            "Submitted new application for student {$this->application->student->first_name} {$this->application->student->last_name}", // description
-            $this->application->id, // notifiable_id
-            route('agent.applications.show', $this->application->id), // optional link to view
-            $this->application->agent_id // optional user_id
-        );
     }
 
+    /**
+     * Get the notification delivery channels.
+     */
     public function via($notifiable)
     {
-        return ['mail', 'database'];
+        return ['database', 'mail'];
     }
 
+    /**
+     * Get the mail representation of the notification.
+     */
     public function toMail($notifiable)
     {
+        $app = $this->application;
+        $student = $app->student;
+        $agent = $app->agent;
+        $university = $app->university;
+
+        $submittedBy = $agent->business_name ?? $agent->username ?? $agent->name;
+
         return (new MailMessage)
             ->subject('New Application Submitted')
-            ->line('Agent ' . $this->application->agent->username . ' has submitted a new application.')
-            ->line('Student: ' . $this->application->student->first_name . ' ' . $this->application->student->last_name)
-            ->line('University: ' . $this->application->university->name)
-            ->action('View Application', url(route('admin.applications.show', $this->application->id)))
-            ->line('Please review the application.');
+            ->greeting('Hello!')
+            ->line("Agent **{$submittedBy}** has submitted a new application.")
+            ->line("**Student:** {$student->first_name} {$student->last_name}")
+            ->line("**University:** {$university->name}")
+            ->action('View Application', url(route('admin.applications.show', $app->id)))
+            ->line('Please review the application details.');
     }
 
-    public function toDatabase($notifiable)
+    /**
+     * Get the array representation of the notification (for database).
+     */
+    public function toArray($notifiable)
     {
+        $app = $this->application;
+        $student = $app->student;
+        $agent = $app->agent;
+        $university = $app->university;
+
+        $link = route($notifiable->is_admin ? 'admin.applications.show' : 'agent.applications.show', $app->id);
+
+        // Log activity
+        ActivityLogger::log(
+            'application_submitted',
+            "📨 Application submitted for {$student->first_name} {$student->last_name} to {$university->name} by {$agent->name}",
+            $app->id,
+            $link,
+            $agent->id
+        );
 
         return [
-            'agent_id' => $this->application->agent_id,
-            'agent_name' => $this->application->agent->name,
-            'student_id' => $this->application->student_id,
-            'student_name' => $this->application->student->first_name . ' ' . $this->application->student->last_name,
-            'university_id' => $this->application->university_id,
-            'university_name' => $this->application->university->name,
-            'application_id' => $this->application->id,
-            'message' => 'Application submitted for ' . $this->application->student->first_name . ' ' . $this->application->student->last_name . ' to ' . $this->application->university->name . ' by ' . $this->application->agent->name,
             'type' => 'application_submitted',
-            'link' => url(route('admin.applications.index', $this->application->id)),
+            'message' => "New application submitted for {$student->first_name} {$student->last_name} to {$university->name} by " .
+                ($agent->business_name ?? $agent->username ?? $agent->name) . ".",
+            'application' => [
+                'id' => $app->id,
+                'number' => $app->application_number ?? null,
+            ],
+            'student' => [
+                'id' => $student->id,
+                'name' => "{$student->first_name} {$student->last_name}",
+            ],
+            'university' => [
+                'id' => $university->id,
+                'name' => $university->name,
+            ],
+            'submitted_by' => [
+                'id' => $agent->id,
+                'name' => $agent->business_name ?? $agent->username ?? $agent->name,
+            ],
+            'link' => $link,
         ];
     }
 }

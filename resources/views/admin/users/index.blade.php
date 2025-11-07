@@ -23,6 +23,7 @@
     </form>
 
     {{-- === Admins Table === --}}
+    @if(auth()->id() === 1)
     @if($admins->count())
     <div class="card-section">
         <h4>Admins</h4>
@@ -84,6 +85,7 @@
         </div>
         {{ $admins->links() }}
     </div>
+    @endif
     @endif
 
     {{-- === Agents Table === --}}

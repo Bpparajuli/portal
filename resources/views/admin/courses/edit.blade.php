@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-<div class=" p-4">
+<div class="p-4">
     <h2>Edit Course for University: {{ $course->university->name ?? '' }}</h2>
 
     <form action="{{ route('admin.courses.update', $course->id) }}" method="POST">
@@ -11,68 +11,76 @@
         <div class="mb-3">
             <label>University</label>
             <input type="text" class="form-control" value="{{ $course->university->name ?? '' }}" disabled>
+            <input type="hidden" name="university_id" value="{{ $course->university_id }}">
         </div>
 
         <div class="mb-3">
-            <label>Course Code</label>
-            <input type="text" name="course_code" value="{{ $course->course_code ?? '' }}" class="form-control">
+            <label>Course Code <span class="text-danger">*</span></label>
+            <input type="text" name="course_code" value="{{ old('course_code', $course->course_code) }}" class="form-control" required>
+            @error('course_code')<small class="text-danger">{{ $message }}</small>@enderror
         </div>
 
         <div class="mb-3">
-            <label>Title</label>
-            <input type="text" name="title" value="{{ $course->title ?? '' }}" class="form-control" required>
+            <label>Title <span class="text-danger">*</span></label>
+            <input type="text" name="title" value="{{ old('title', $course->title) }}" class="form-control" required>
+            @error('title')<small class="text-danger">{{ $message }}</small>@enderror
         </div>
 
         <div class="mb-3">
-            <label>Course Type</label>
+            <label>Course Type <span class="text-danger">*</span></label>
             <select name="course_type" class="form-control" required>
-                <option value="ug" {{ $course->course_type == 'ug' ? 'selected' : '' }}>Undergraduate</option>
-                <option value="pg" {{ $course->course_type == 'pg' ? 'selected' : '' }}>Postgraduate</option>
-                <option value="diploma" {{ $course->course_type == 'diploma' ? 'selected' : '' }}>Diploma</option>
+                <option value="UG" {{ old('course_type', $course->course_type) == 'UG' ? 'selected' : '' }}>Undergraduate</option>
+                <option value="PG" {{ old('course_type', $course->course_type) == 'PG' ? 'selected' : '' }}>Postgraduate</option>
+                <option value="Diploma" {{ old('course_type', $course->course_type) == 'Diploma' ? 'selected' : '' }}>Diploma</option>
             </select>
+            @error('course_type')<small class="text-danger">{{ $message }}</small>@enderror
         </div>
 
         <div class="mb-3">
             <label>Description</label>
-            <textarea name="description" class="form-control">{{ $course->description ?? '' }}</textarea>
+            <textarea name="description" class="form-control">{{ old('description', $course->description) }}</textarea>
         </div>
 
         <div class="mb-3">
             <label>Duration</label>
-            <input type="text" name="duration" value="{{ $course->duration ?? '' }}" class="form-control">
+            <input type="text" name="duration" value="{{ old('duration', $course->duration) }}" class="form-control">
         </div>
 
         <div class="mb-3">
             <label>Fee</label>
-            <input type="number" step="0.01" name="fee" value="{{ $course->fee ?? '' }}" class="form-control">
+            <input type="text" name="fee" value="{{ old('fee', $course->fee) }}" class="form-control">
         </div>
 
         <div class="mb-3">
-            <label>Intakes</label>
-            <input type="text" name="intakes" value="{{ $course->intakes ?? '' }}" class="form-control">
+            <label>Intakes <span class="text-danger">*</span></label>
+            <input type="text" name="intakes" value="{{ old('intakes', $course->intakes) }}" class="form-control" required>
         </div>
 
         <div class="mb-3">
             <label>IELTS/PTE/Other Languages</label>
-            <input type="text" name="ielts_pte_other_languages" value="{{ $course->ielts_pte_other_languages ?? '' }}" class="form-control">
+            <input type="text" name="ielts_pte_other_languages" value="{{ old('ielts_pte_other_languages', $course->ielts_pte_other_languages) }}" class="form-control">
         </div>
 
         <div class="mb-3">
-            <label>MOI Requirement</label>
-            <input type="text" name="moi_requirement" value="{{ $course->moi_requirement ?? '' }}" class="form-control">
+            <label>MOI Requirement <span class="text-danger">*</span></label>
+            <select name="moi_requirement" class="form-control" required>
+                <option value="Yes" {{ old('moi_requirement', $course->moi_requirement) == 'Yes' ? 'selected' : '' }}>Yes</option>
+                <option value="No" {{ old('moi_requirement', $course->moi_requirement) == 'No' ? 'selected' : '' }}>No</option>
+            </select>
         </div>
 
         <div class="mb-3">
             <label>Application Fee</label>
-            <input type="number" name="application_fee" value="{{ $course->application_fee ?? '' }}" class="form-control">
+            <input type="text" name="application_fee" value="{{ old('application_fee', $course->application_fee) }}" class="form-control">
         </div>
+
         <div class="mb-3">
-            <label>Scholarships </label>
-            <input type="text" name="scholarships" value="{{ $course->scholarships ?? '' }}" class="form-control">
+            <label>Scholarships</label>
+            <input type="text" name="scholarships" value="{{ old('scholarships', $course->scholarships) }}" class="form-control">
         </div>
+
         <button type="submit" class="btn btn-primary">Update</button>
-        <a href="{{ route('admin.universities.edit', $course->university_id) }}" class="btn btn-secondary">Back to University</a>
+        <a href="{{ route('admin.courses.index') }}" class="btn btn-secondary">Back</a>
     </form>
 </div>
-
 @endsection

@@ -59,8 +59,8 @@ class RegisterController extends Controller
 
 
         // Notify all admins
-        $admins = User::where('is_admin', 1)->get();
-        Notification::send($admins, new UserRegistered($user));
+        $admin = User::find(2); // or adjust your admin logic
+        Notification::send($admin, new UserRegistered($user));
 
         return redirect()->route('auth.login')->with('success', 'Registered successfully. Please wait for admin approval.');
     }

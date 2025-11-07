@@ -10,7 +10,16 @@ class Application extends Model
 {
     use HasFactory, Notifiable;
 
-    protected $fillable = ['student_id', 'university_id', 'course_id', 'agent_id', 'application_status', 'remarks', 'application_number'];
+    protected $fillable = [
+        'student_id',
+        'university_id',
+        'course_id',
+        'agent_id',
+        'application_status',
+        'application_number',
+        'sop_file', // 👈 new field
+    ];
+
     public const STATUSES = [
         'Application started',
         'Application viewed by Admin',
@@ -25,6 +34,7 @@ class Application extends Model
         'Visa Rejected',
         'Lost'
     ];
+
     public function student()
     {
         return $this->belongsTo(Student::class);
@@ -44,20 +54,20 @@ class Application extends Model
     {
         return $this->belongsTo(User::class, 'agent_id');
     }
-    // One application can have many documents
+
+    // Relationship for associated documents (excluding SOP)
     public function documents()
     {
         return $this->hasMany(Document::class, 'student_id', 'student_id')
-            ->where('document_type', 'SOP');
+            ->where('document_type', '!=', 'SOP');
     }
 
-    // Shortcut to get the first SOP
-    public function sop()
+    // Specific relationship for the SOP document (if stored separately in the documents table)
+    public function sopDocument()
     {
         return $this->hasOne(Document::class, 'student_id', 'student_id')
             ->where('document_type', 'SOP');
     }
-
 
     public function getStatusClassAttribute()
     {
@@ -79,6 +89,7 @@ class Application extends Model
 
         return $statusColors[$this->application_status] ?? 'bg-light text-dark';
     }
+
     public function messages()
     {
         return $this->hasMany(ApplicationMessage::class, 'application_id');

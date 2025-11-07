@@ -3,277 +3,8 @@
 @section('admin-content')
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<style>
-    /* General Styling */
-    .card {
-        border: none;
-        border-radius: 1.25rem;
-        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.04), 0 2px 6px rgba(0, 0, 0, 0.02);
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
+<link rel="stylesheet" href="{{ asset('css/admindashboard.css') }}">
 
-    .card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.08), 0 3px 10px rgba(0, 0, 0, 0.04);
-    }
-
-    .card-body {
-        padding: 2rem;
-    }
-
-    .section-title {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: var(--dark);
-        margin-bottom: 2rem;
-    }
-
-    /* Dashboard Widgets */
-    .widget-card {
-        background: linear-gradient(135deg, var(--gray) 0%, #f9f9ff 100%);
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        height: 100%;
-        transition: all 0.3s ease-in-out;
-    }
-
-    .widget-card .icon-and-link {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        width: 100%;
-    }
-
-    .widget-icon {
-        background-color: var(--secondary);
-        color: white;
-        border-radius: 0.75rem;
-        width: 60px;
-        height: 60px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        font-size: 1.75rem;
-        box-shadow: 0 4px 8px rgba(74, 69, 255, 0.2);
-    }
-
-    .widget-icon.bg-secondary-theme {
-        background-color: #64748b;
-        box-shadow: 0 4px 8px rgba(100, 116, 139, 0.2);
-    }
-
-    .widget-icon.bg-success-theme {
-        background-color: #10b981;
-        box-shadow: 0 4px 8px rgba(16, 185, 129, 0.2);
-    }
-
-    .widget-title {
-        font-size: 1rem;
-        font-weight: 500;
-        color: var(--text-color);
-        margin: 0;
-    }
-
-    .widget-value {
-        font-size: 2.25rem;
-        font-weight: 700;
-        color: var(--dark);
-    }
-
-    . {
-        font-size: 0.875rem;
-        color: var(--primary);
-        font-weight: 600;
-        text-decoration: none;
-        transition: all 0.2s ease-in-out;
-    }
-
-    .:hover {
-        text-decoration: underline;
-        color: #3b37d4;
-    }
-
-    /* Chart Cards */
-    .chart-card {
-        min-height: 300px;
-    }
-
-    /* Activity Feed & Top Agents */
-    .activity-feed,
-    .top-agents {
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-    }
-
-    .activity-list,
-    .agent-list {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-        flex-grow: 1;
-        overflow-y: auto;
-    }
-
-    .activity-item,
-    .agent-item {
-        display: flex;
-        align-items: center;
-        gap: 1.25rem;
-        padding: 1rem 0;
-        border-bottom: 1px solid #e2e8f0;
-        opacity: 0;
-        /* Initial state for animation */
-        animation: fadeIn 0.5s ease-in-out forwards;
-    }
-
-    .activity-item:last-child,
-    .agent-item:last-child {
-        border-bottom: none;
-    }
-
-    .activity-icon {
-        width: 45px;
-        height: 45px;
-        border-radius: 50%;
-        background-color: var(--secondary);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        color: var(--primary);
-        font-size: 1.1rem;
-        flex-shrink: 0;
-    }
-
-    .agent-avatar {
-        width: 45px;
-        height: 45px;
-        border-radius: 50%;
-        object-fit: cover;
-        border: 2px solid var(--primary);
-        flex-shrink: 0;
-    }
-
-    .activity-item-content,
-    .agent-item-content {
-        flex-grow: 1;
-    }
-
-    .activity-text {
-        font-size: 0.95rem;
-        color: var(--text-color);
-        line-height: 1.4;
-    }
-
-    .activity-text strong {
-        color: var(--dark);
-        font-weight: 600;
-    }
-
-    .activity-timestamp,
-    .agent-location {
-        font-size: 0.8rem;
-        color: #94a3b8;
-        margin-top: 0.25rem;
-    }
-
-    /* Tables */
-    .table-responsive {
-        overflow-x: auto;
-    }
-
-    .table {
-        min-width: 800px;
-    }
-
-    .table th,
-    .table td {
-        white-space: nowrap;
-        vertical-align: middle;
-        padding: 1rem;
-    }
-
-    .table thead th {
-        border-bottom: 2px solid #e2e8f0;
-        font-weight: 600;
-        color: var(--dark);
-        text-transform: uppercase;
-        font-size: 0.85rem;
-        letter-spacing: 0.05em;
-        background-color: #f1f5f9;
-    }
-
-    .table tbody tr {
-        transition: background-color 0.2s ease-in-out;
-    }
-
-    .table tbody tr:hover {
-        background-color: #fafbfd;
-    }
-
-    .badge {
-        font-weight: 600;
-        padding: 0.5em 1em;
-        border-radius: 1rem;
-        font-size: 0.8rem;
-        text-transform: capitalize;
-    }
-
-    /* Quick Actions */
-    .action-card {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: 1.5rem;
-        text-align: center;
-        background: #ffffff;
-        border: 2px solid #e2e8f0;
-        border-radius: 1rem;
-        transition: all 0.2s ease-in-out;
-    }
-
-    .action-card:hover {
-        transform: translateY(-3px);
-        border-color: var(--primary);
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
-    }
-
-    .action-icon {
-        font-size: 2rem;
-        color: var(--primary);
-        margin-bottom: 0.75rem;
-    }
-
-    /* Keyframes for animations */
-    @keyframes fadeIn {
-        from {
-            opacity: 0;
-            transform: translateY(10px);
-        }
-
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    @keyframes pulse {
-        0% {
-            transform: scale(1);
-        }
-
-        50% {
-            transform: scale(1.02);
-        }
-
-        100% {
-            transform: scale(1);
-        }
-    }
-
-</style>
 
 <div class="dashboard-container p-2">
     <div class="row g-3 mb-2">
@@ -315,12 +46,12 @@
                 <div class="card-body">
                     <h5 class="card-title chart-header">Quick Actions</h5>
                     <div class="d-flex flex-wrap gap-2">
-                        <a href="{{ route('admin.students.create') ?? '#' }}" class="btn btn-success btn-sm me-2 mb-2"><i class="fas fa-users"></i>+ Add Student</a>
                         <a href="{{ route('admin.universities.create') ?? '#' }}" class="btn btn-success btn-sm me-2 mb-2"><i class="fas fa-university"></i>+ Add University</a>
+                        <a href="{{ route('admin.universities.index') ?? '#' }}" class="btn btn-gray btn-sm me-2 mb-2"><i class="fas fa-tools"></i> Manage Universities</a>
+                        <a href="{{ route('admin.courses.create') ?? '#' }}" class="btn btn-success btn-sm me-2 mb-2"><i class="fas fa-book-open"></i>+ Add Courses</a>
+                        <a href="{{ route('admin.applications.index') ?? '#' }}" class="btn btn-warning text-dark btn-sm me-2 mb-2"><i class="fas fa-tools"></i> Manage Applications</a>
                         <a href="{{ route('admin.users.create') ?? '#' }}" class="btn btn-success btn-sm me-2 mb-2"><i class="fas fa-user"></i>+ Add Users</a>
-                        <a href="{{ route('admin.applications.create') ?? '#' }}" class="btn btn-primary btn-sm me-2 mb-2"><i class="fas fa-file-signature"></i> Create Application</a>
-                        <a href="{{ route('admin.users.index') ?? '#' }}" class="btn btn-dark btn-sm me-2 mb-2"><i class="fas fa-tools"></i> Manage Users</a>
-                        <a href="{{ route('admin.users.waiting') ?? '#' }}" class="btn btn-warning btn-sm me-2 mb-2"><i class="fas fa-bell"></i> Review New Users</a>
+                        <a href="{{ route('admin.users.index') ?? '#' }}" class="btn btn-gray btn-sm me-2 mb-2"><i class="fas fa-tools"></i> Manage Users</a>
                     </div>
                 </div>
             </div>
@@ -404,7 +135,13 @@
                     <ul class="agent-list">
                         @forelse($latestAgents as $agent)
                         <li class="agent-item" style="animation-delay: {{ $loop->index * 0.1 }}s;">
-                            <img src="{{ $agent->profile_photo_url ?? 'https://placehold.co/45x45/64748b/ffffff?text=U' }}" alt="{{ $agent->name }}'s avatar" class="agent-avatar">
+                            <a href="{{ route('admin.users.show', $agent->id) }}">
+                                @if($agent->business_logo)
+                                <img src="{{ Storage::url($agent->business_logo) }}" alt="Logo" width="45" height="45" class="rounded-3">
+                                @else
+                                <span class="text-muted">No Logo</span>
+                                @endif
+                            </a>
                             <div class="agent-item-content">
                                 <h6 class="mb-1">{{ $agent->name }}</h6>
                                 <p class="agent-location">{{ $agent->city ?? 'City not specified' }}, {{ $agent->country ?? 'Country not specified' }}</p>

@@ -1,0 +1,215 @@
+/* notifications.css */
+:root {
+    --primary: #0d6efd;
+    --primary-light: rgba(13, 110, 253, 0.08);
+    --border: #e5e7eb;
+    --text: #1f2937;
+    --text-muted: #6b7280;
+    --bg: #ffffff;
+    --shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+    --radius: 12px;
+}
+
+[data-theme="dark"] {
+    --text: #f3f4f6;
+    --text-muted: #9ca3af;
+    --bg: #1f2937;
+    --border: #374151;
+    --primary-light: rgba(13, 110, 253, 0.2);
+    --shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+}
+
+body {
+    background: #f9fafb;
+    color: var(--text);
+}
+
+.notifications-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 1.5rem;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.page-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin: 0;
+    color: var(--text);
+}
+
+.notifications-grid {
+    display: grid;
+    grid-template-columns: 1fr 400px;
+    gap: 2rem;
+}
+
+@media (max-width: 992px) {
+    .notifications-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.section-card {
+    background: var(--bg);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+}
+
+.section-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text);
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border);
+    margin: 0 0 1rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* CLICKABLE CARD */
+.notification-link {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    border-radius: 10px;
+    overflow: hidden;
+    position: relative;
+    transition: all 0.15s ease;
+}
+
+.notification-link:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+.notification-card {
+    background: var(--bg);
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+    border: 1px solid transparent;
+    position: relative;
+    z-index: 1;
+}
+
+.notification-card.unread {
+    border-left: 5px solid var(--primary);
+    background: linear-gradient(90deg, var(--primary-light), transparent 30%);
+    border-color: rgba(13, 110, 253, 0.15);
+}
+
+.notification-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+    background: rgba(0, 0, 0, 0.05);
+    color: #555;
+}
+
+.notification-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.notification-title {
+    margin: 0 0 0.35rem 0;
+    font-weight: 600;
+    font-size: 0.98rem;
+    color: var(--text);
+    word-break: break-word;
+}
+
+.notification-text {
+    margin: 0.35rem 0 0.6rem 0;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.notification-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+}
+
+.badge-new {
+    background: var(--primary);
+    color: white;
+    font-size: 0.7rem;
+    padding: 0.15rem 0.45rem;
+    border-radius: 6px;
+    font-weight: 600;
+}
+
+.notification-actions {
+    display: flex;
+    gap: 0.4rem;
+    align-items: center;
+    position: relative;
+    z-index: 10;
+}
+
+.btn-icon {
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text-muted);
+    transition: all 0.15s ease;
+}
+
+.btn-icon:hover {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem 1.5rem;
+    color: var(--text-muted);
+}
+
+.empty-state i {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.messages-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.sender-name {
+    font-weight: 600;
+    color: var(--primary);
+}

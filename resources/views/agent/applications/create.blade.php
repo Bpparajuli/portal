@@ -2,7 +2,12 @@
 
 @section('agent-content')
 <div class="container p-4">
-    <h3>➕ Create Application</h3>
+    <div class="d-flex justify-content-between align-items-center p-2">
+        <h3>➕ Create Application</h3>
+        <a href="{{ route('agent.students.create') }}" class="btn btn-primary">
+            <i class="fa fa-user"></i> + Add Student
+        </a>
+    </div>
 
     <form action="{{ route('agent.applications.store') }}" method="POST" enctype="multipart/form-data">
         @csrf
@@ -14,67 +19,66 @@
         @else
         <x-form.select name="student_id" label="Select Student" required>
             <option value="">-- Select Student --</option>
-            @foreach($students as $s)
-            <option value="{{ $s->id }}">{{ $s->first_name }} {{ $s->last_name }}</option>
-            @endforeach
+            @forelse($students as $s)
+            <option value="{{ $s->id }}" {{ old('student_id') == $s->id ? 'selected' : '' }}>
+                {{ $s->first_name }} {{ $s->last_name }}
+            </option>
+            @empty
+            <option value="" disabled>No students with all documents uploaded</option>
+            @endforelse
         </x-form.select>
         @endif
 
         {{-- UNIVERSITY --}}
-        @if(isset($selectedUniversityId))
         @php
-        $selectedUniversity = $universities->firstWhere('id', $selectedUniversityId);
+        $uniDisabled = isset($selectedUniversityId);
+        $selectedUni = old('university_id', $selectedUniversityId ?? $application->university_id ?? '');
         @endphp
-        <div class="form-group mb-3">
-            <label>Selected University</label>
-            <input type="hidden" name="university_id" value="{{ $selectedUniversityId }}">
-            <input type="text" class="form-control" value="{{ $selectedUniversity?->name ?? 'Unknown University' }}" readonly>
-        </div>
-        @else
-        <x-form.select name="university_id" label="University" required id="university_select">
+        <x-form.select name="university_id" label="University" required id="university_select" :disabled="$uniDisabled">
             <option value="">-- Select University --</option>
             @foreach($universities as $uni)
-            <option value="{{ $uni->id }}">{{ $uni->name }} - {{ $uni->city }}</option>
+            <option value="{{ $uni->id }}" {{ $selectedUni == $uni->id ? 'selected' : '' }}>
+                {{ $uni->name }} - {{ $uni->city }}
+            </option>
             @endforeach
         </x-form.select>
+        @if(isset($selectedUniversityId))
+        <input type="hidden" name="university_id" value="{{ $selectedUniversityId }}">
         @endif
 
         {{-- COURSE --}}
-        @if(isset($selectedCourseId))
         @php
-        $selectedCourse = isset($selectedUniversity)
-        ? $selectedUniversity->courses->firstWhere('id', $selectedCourseId)
-        : null;
+        $courseDisabled = isset($selectedCourseId);
+        $selectedCourse = old('course_id', $selectedCourseId ?? $application->course_id ?? '');
         @endphp
-        <div class="form-group mb-3">
-            <label>Selected Course</label>
-            <input type="hidden" name="course_id" value="{{ $selectedCourseId }}">
-            <input type="text" class="form-control" value="{{ $selectedCourse?->title ?? 'Unknown Course' }}" readonly>
-        </div>
-        @else
-        <x-form.select name="course_id" label="Course" id="course_select">
+        <x-form.select name="course_id" label="Course" required id="course_select" :disabled="$courseDisabled">
             <option value="">-- Select Course --</option>
+            @foreach($courses as $course)
+            <option value="{{ $course->id }}" {{ $selectedCourse == $course->id ? 'selected' : '' }}>
+                {{ $course->title }}
+            </option>
+            @endforeach
         </x-form.select>
+        @if(isset($selectedCourseId))
+        <input type="hidden" name="course_id" value="{{ $selectedCourseId }}">
         @endif
 
-        {{-- SOP --}}
-        <x-form.file name="sop" label="Upload SOP (PDF/DOC)" required />
-
-        {{-- REMARKS --}}
-        <x-form.textarea name="remarks" label="Remarks" />
+        {{-- SOP FILE (Auto Preview handled by global JS) --}}
+        <x-form.file name="sop_file" label="Upload SOP (PDF/DOC/Image)" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" required />
 
         <button type="submit" class="btn btn-success mt-3">Submit Application</button>
     </form>
 </div>
 
-{{-- DYNAMIC COURSES --}}
-@if(!isset($selectedCourseId))
+{{-- Dynamic Courses --}}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const uniSelect = document.getElementById('university_select');
         const courseSelect = document.getElementById('course_select');
 
-        uniSelect ? .addEventListener('change', function() {
+        if (!uniSelect || !courseSelect) return;
+
+        uniSelect.addEventListener('change', function() {
             const uniId = this.value;
             courseSelect.innerHTML = '<option value="">Loading...</option>';
 
@@ -84,21 +88,21 @@
             }
 
             fetch(`/agent/applications/get-courses/${uniId}`)
-                .then(response => response.json())
+                .then(res => res.ok ? res.json() : [])
                 .then(data => {
                     let options = '<option value="">-- Select Course --</option>';
-                    data.forEach(course => {
-                        options += `<option value="${course.id}">${course.name}</option>`;
-                    });
+                    if (Array.isArray(data)) {
+                        data.forEach(course => {
+                            options += `<option value="${course.id}">${course.title}</option>`;
+                        });
+                    }
                     courseSelect.innerHTML = options;
                 })
-                .catch(err => {
-                    console.error('Error fetching courses:', err);
+                .catch(() => {
                     courseSelect.innerHTML = '<option value="">-- Select Course --</option>';
                 });
         });
     });
 
 </script>
-@endif
 @endsection

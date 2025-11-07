@@ -74,6 +74,7 @@
                         <a href="{{ route('admin.courses.edit', $course->id) }}" class="btn btn-sm btn-outline-info me-1">
                             <i class="fas fa-edit"></i>
                         </a>
+                        @if(auth()->id() === 1)
 
                         <form action="{{ route('admin.courses.destroy', $course->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this course?');">
                             @csrf
@@ -82,7 +83,7 @@
                                 <i class="fas fa-trash"></i>
                             </button>
                         </form>
-                    </td>
+                        @endif </td>
                 </tr>
                 @endforeach
             </tbody>

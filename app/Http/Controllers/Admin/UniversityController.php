@@ -93,10 +93,10 @@ class UniversityController extends Controller
             'short_name'      => 'nullable|string|max:100',
             'country'         => 'required|string|max:100',
             'city'            => 'nullable|string|max:100',
-            'website'         => 'nullable|url|max:255',
-            'contact_email'   => 'nullable|email|max:255',
+            'website'         => 'nullable|string|max:255',
+            'contact_email'   => 'nullable|string|max:255',
             'description'     => 'nullable|string',
-            'university_logo' => 'nullable|mimetypes:image/jpeg,image/png,image/gif,image/webp|max:5120',
+            'university_logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp,bmp,svg|max:5120',
         ]);
 
         $university = new University($request->only([
@@ -148,10 +148,10 @@ class UniversityController extends Controller
             'short_name'      => 'nullable|string|max:100',
             'country'         => 'required|string|max:100',
             'city'            => 'nullable|string|max:100',
-            'website'         => 'nullable|url|max:255',
-            'contact_email'   => 'nullable|email|max:255',
+            'website'         => 'nullable|string|max:255',
+            'contact_email'   => 'nullable|string|max:255',
             'description'     => 'nullable|string',
-            'university_logo' => 'nullable|mimetypes:image/jpeg,image/png,image/gif,image/webp|max:5120',
+            'university_logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp,bmp,svg|max:5120',
         ]);
 
         $university = University::findOrFail($id);

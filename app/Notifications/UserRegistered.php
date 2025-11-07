@@ -12,48 +12,68 @@ class UserRegistered extends Notification
 {
     use Queueable;
 
-    protected $newUser;
+    public $newUser;
 
+    /**
+     * Create a new notification instance.
+     */
     public function __construct(User $newUser)
     {
         $this->newUser = $newUser;
     }
 
-    public function via(object $notifiable): array
+    /**
+     * Get the notification delivery channels.
+     */
+    public function via($notifiable)
     {
-        return ['mail', 'database'];
+        return ['database', 'mail'];
     }
 
-    public function toMail(object $notifiable): MailMessage
+    /**
+     * Get the mail representation of the notification.
+     */
+    public function toMail($notifiable)
     {
+        $user = $this->newUser;
+        $displayName = $user->business_name ?? $user->username ?? $user->name;
+
         return (new MailMessage)
             ->subject('New User Registration Pending Approval')
-            ->line('A new user has registered and is awaiting approval.')
-            ->line('Name: ' . $this->newUser->name)
-            ->line('Email: ' . $this->newUser->email)
+            ->greeting('Hello Admin!')
+            ->line("A new user **{$displayName}** has registered and is awaiting approval.")
+            ->line("**Email:** {$user->email}")
             ->action('View Pending Users', route('admin.users.waiting'))
-            ->line('Please approve the user to activate their account.');
+            ->line('Please review and approve the user to activate their account.');
     }
 
-    public function toDatabase(object $notifiable): array
+    /**
+     * Get the array representation of the notification (for database).
+     */
+    public function toArray($notifiable)
     {
-        // Log activity safely, user_id null is allowed
+        $user = $this->newUser;
+        $displayName = $user->business_name ?? $user->username ?? $user->name;
+        $link = route('admin.users.waiting');
+
+        // Log activity
         ActivityLogger::log(
-            'user_registered', // type
-            "New user registered: {$this->newUser->business_name}", // description
-            null,               // notifiable_id (optional)
-            route('admin.users.waiting'), // link (optional)
-            null                // user_id (optional; defaults to Auth::id())
+            'user_registered',
+            "🧾 New user registered: {$displayName}",
+            $user->id,
+            $link,
+            $user->id
         );
 
-
         return [
-            'user_id' => $this->newUser->id,
-            'name'    => $this->newUser->name,
-            'email'   => $this->newUser->email,
-            'message' => 'New user registered and awaiting approval.',
             'type' => 'user_registered',
-            'link' => route('admin.users.waiting'),
+            'message' => "New user **{$displayName}** registered and is awaiting admin approval.",
+            'user' => [
+                'id' => $user->id,
+                'name' => $displayName,
+                'email' => $user->email,
+            ],
+            'link' => $link,
         ];
     }
 }

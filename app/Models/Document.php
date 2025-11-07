@@ -32,4 +32,10 @@ class Document extends Model
     {
         return $this->belongsTo(User::class, 'uploaded_by');
     }
+    public static function getSopForStudent(int $studentId): ?self
+    {
+        return static::where('student_id', $studentId)
+            ->where('document_type', 'SOP')
+            ->first();
+    }
 }

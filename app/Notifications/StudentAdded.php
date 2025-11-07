@@ -5,12 +5,11 @@ namespace App\Notifications;
 use App\Models\Student;
 use App\Models\User;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use Illuminate\Notifications\Messages\MailMessage;
 use App\Helpers\ActivityLogger;
 
-class StudentAdded extends Notification // implements ShouldQueue
+class StudentAdded extends Notification
 {
     use Queueable;
 
@@ -29,7 +28,7 @@ class StudentAdded extends Notification // implements ShouldQueue
 
     public function toMail($notifiable)
     {
-        $addedBy = $this->agent->business_name ?? $this->agent->username;
+        $addedBy = $this->agent->business_name ?? $this->agent->username ?? $this->agent->name;
         return (new MailMessage)
             ->subject('New Student Added')
             ->greeting('Hello!')
@@ -40,29 +39,26 @@ class StudentAdded extends Notification // implements ShouldQueue
     public function toArray($notifiable)
     {
         ActivityLogger::log(
-            'student_added', // ✅ proper type
+            'student_added',
             "👤 Student added: {$this->student->first_name} {$this->student->last_name}",
             $this->student->id,
-            route($notifiable->is_admin ? 'admin.students.show' : 'agent.students.show', $this->student->id),
+            route('admin.students.show', $this->student->id),
             $this->agent->id
         );
 
         return [
-            'type'      => 'student_added',
-            'message'   => "New student added: {$this->student->first_name} {$this->student->last_name} by " .
+            'type' => 'student_added',
+            'message' => "New student added: {$this->student->first_name} {$this->student->last_name} by " .
                 ($this->agent->business_name ?? $this->agent->username ?? $this->agent->name) . ".",
-            'student'   => [
+            'student' => [
                 'id' => $this->student->id,
                 'name' => $this->student->first_name . ' ' . $this->student->last_name,
             ],
-            'added_by'  => [
+            'added_by' => [
                 'id' => $this->agent->id,
                 'name' => $this->agent->business_name ?? $this->agent->username ?? $this->agent->name,
             ],
-            'link' => route(
-                $notifiable->is_admin ? 'admin.students.show' : 'agent.students.show',
-                $this->student->id
-            ),
+            'link' => route('admin.students.show', $this->student->id),
         ];
     }
 }

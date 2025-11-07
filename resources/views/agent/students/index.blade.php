@@ -1,5 +1,4 @@
 @extends('layouts.app')
-<link rel="stylesheet" href="{{ asset('css/student-index.css') }}">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
 @section('content')
@@ -27,7 +26,8 @@
                         @endforeach
                     </select>
                 </div>
-                {{-- university --}}
+
+                {{-- University --}}
                 <div class="col-md-2">
                     <label for="university">University</label>
                     <select name="university" id="university" class="form-select">
@@ -89,7 +89,7 @@
                     <th>Profile</th>
                     <th>Name</th>
                     <th>Email / Contact</th>
-                    <th>Application Status</th>
+                    <th>Latest Application Status</th>
                     <th>No of Applications</th>
                     <th>Preferred Country</th>
                     <th>Qualification</th>
@@ -100,24 +100,41 @@
             <tbody>
                 @forelse($students as $student)
                 @php
-                // Document status calculation
-                $requiredDocumentTypes = ['passport','id','transcript','financial','other'];
-                $uploadedTypes = $student->documents->pluck('document_type')
-                ->map(fn($t) => strtolower(str_replace(' ', '', $t)))
-                ->toArray();
-                $allDocumentsUploaded = count(array_diff($requiredDocumentTypes, $uploadedTypes)) === 0;
-                $completedDocsCount = $student->documents->where('status','completed')->count();
+                // ----------------- Document Status -----------------
+                $predefinedDocuments = [
+                'passport',
+                '10th_certificate',
+                '10th_transcript',
+                '11th_transcript',
+                '12th_certificate',
+                '12th_transcript',
+                'cv',
+                'moi',
+                'lor',
+                'ielts_pte_language_certificate',
+                'sop',
+                ];
 
-                $documentStatus = ($allDocumentsUploaded && $completedDocsCount == count($requiredDocumentTypes))
+                // Normalize uploaded document types
+                $uploadedTypes = $student->documents->pluck('document_type')
+                ->map(fn($t) => strtolower($t))
+                ->toArray();
+
+                // Check if all predefined documents are uploaded
+                $allDocumentsUploaded = count(array_diff($predefinedDocuments, $uploadedTypes)) === 0;
+
+                // Document status
+                $documentStatus = $allDocumentsUploaded
                 ? 'Completed'
                 : (count($uploadedTypes) == 0 ? 'Not Uploaded' : 'Incomplete');
 
-                // Application status
+                // Latest application
                 $latestApplication = $student->applications->sortByDesc('created_at')->first();
                 @endphp
 
                 <tr>
                     <td>{{ $student->id }}</td>
+
                     {{-- Profile --}}
                     <td class="text-center">
                         <a href="{{ route('agent.students.show', $student->id) }}">
@@ -130,7 +147,6 @@
                             @endif
                         </a>
                     </td>
-
 
                     {{-- Name --}}
                     <td>
@@ -149,28 +165,26 @@
                     <td>
                         @if($latestApplication)
                         <a href="{{ route('agent.applications.show', $latestApplication->id) }}">
-                            @else
-                            <a href="#">
-                                @endif
-                                <div class="px-2 py-1 rounded text-xs">
-                                    @if($latestApplication)
-                                    <span class="badge {{ $latestApplication->status_class }}">
-                                        {{ $latestApplication->application_status }}
-                                    </span>
-                                    @else
-                                    <span class="badge bg-light text-muted">No Application</span>
-                                    @endif
-                                </div>
-                            </a>
-
+                            <div class="px-2 py-1 rounded text-xs">
+                                <span class="badge {{ $latestApplication->status_class }}">
+                                    {{ $latestApplication->application_status }}
+                                </span>
+                            </div>
+                        </a>
+                        @else
+                        <div class="px-2 py-1 rounded text-xs bg-light text-muted">No Application</div>
+                        @endif
                     </td>
-
 
                     {{-- No of Applications --}}
                     <td>
-                        <a href="{{ route('agent.students.show', $student->id) }}#application">
+                        @if($student->applications->count() > 0)
+                        <a href="{{ route('agent.students.applications', $student->id) }}">
                             {{ $student->applications->count() }}
                         </a>
+                        @else
+                        0
+                        @endif
                     </td>
 
                     {{-- Preferred Country --}}
@@ -207,7 +221,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="9" class="text-center text-gray-500">No students found.</td>
+                    <td colspan="10" class="text-center text-gray-500">No students found.</td>
                 </tr>
                 @endforelse
             </tbody>

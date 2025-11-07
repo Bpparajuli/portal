@@ -19,19 +19,15 @@ class DashboardController extends Controller
 
         // ---------- METRICS ----------
         $totalStudents = Student::where('agent_id', $agentId)->count();
-        $totalApplications = Application::where('agent_id', $agentId)->count();
+        $applications = Application::where('agent_id', $agentId)->get();
+        $totalApplications = $applications->count();
 
-        $totalApproved = Application::where('agent_id', $agentId)
-            ->whereIn('application_status', ['Accepted by the University', 'Visa Approved'])
-            ->count();
+        // Visa Approved count & percentage
+        $visaApproved = $applications->where('application_status', 'Visa Approved')->count();
+        $visaConversionPercent = $totalApplications > 0 ? round(($visaApproved / $totalApplications) * 100, 1) : 0;
 
-        $visaApproved = Application::where('agent_id', $agentId)
-            ->where('application_status', 'Visa Approved')
-            ->count();
-
-        $totalRejected = Application::where('agent_id', $agentId)
-            ->whereIn('application_status', ['Rejected by the University', 'Visa Rejected', 'Lost'])
-            ->count();
+        $totalApproved = $applications->whereIn('application_status', ['Accepted by the University', 'Visa Approved'])->count();
+        $totalRejected = $applications->whereIn('application_status', ['Rejected by the University', 'Visa Rejected', 'Lost'])->count();
         $totalUniversities = University::count();
 
         // ---------- FILTER: universities (for filter UI) ----------
@@ -45,27 +41,22 @@ class DashboardController extends Controller
                     ->orWhereHas('courses', fn($qc) => $qc->where('title', 'like', "%{$keyword}%"));
             });
         }
-
         if ($request->filled('country')) {
             $query->where('country', $request->country);
         }
-
         if ($request->filled('city')) {
             $query->where('city', $request->city);
         }
-
         if ($request->filled('university_id')) {
             $query->where('id', $request->university_id);
         }
-
         if ($request->filled('course_id')) {
             $query->whereHas('courses', fn($q) => $q->where('id', $request->course_id));
         }
 
         $universities = $query->paginate(10)->withQueryString();
 
-        // ---------- ACTIVITIES (use 'type' column) ----------
-        // you said activities table has `user_id` and `type`
+        // ---------- ACTIVITIES ----------
         $studentActivities = Activity::where('user_id', $agentId)
             ->whereIn('type', ['student_added', 'student_deleted'])
             ->latest()
@@ -78,27 +69,23 @@ class DashboardController extends Controller
             ->take(5)
             ->get();
 
-
-
         $applicationActivities = Activity::where('user_id', $agentId)
             ->whereIn('type', ['application_submitted', 'application_withdrawn'])
             ->latest()
             ->take(5)
             ->get();
-        // ---------- APPLICATION STATUS COUNTS (for pie) ----------
-        $applicationStatusCounts = Application::where('agent_id', $agentId)
-            ->selectRaw('application_status, COUNT(*) as count')
+
+        // ---------- APPLICATION STATUS COUNTS ----------
+        $applicationStatusCounts = $applications
             ->groupBy('application_status')
-            ->pluck('count', 'application_status');
+            ->map(fn($group) => $group->count());
 
         // ---------- MONTHLY AGGREGATES ----------
-        // total applications per month
         $monthlyApplications = Application::where('agent_id', $agentId)
             ->selectRaw('MONTH(created_at) as month, COUNT(*) as count')
             ->groupBy('month')
             ->pluck('count', 'month');
 
-        // per-month accepted / rejected / other (stacked chart)
         $acceptedStatuses = ['Accepted by the University', 'Visa Approved'];
         $rejectedStatuses = ['Rejected by the University', 'Visa Rejected', 'Lost'];
 
@@ -120,6 +107,18 @@ class DashboardController extends Controller
             ->groupBy('month')
             ->pluck('count', 'month');
 
+        // ---------- COUNTRY-WISE APPLICATION COUNTS ----------
+        $countryLabels = University::select('country')->distinct()->pluck('country')->toArray();
+        $countryCounts = [];
+
+        foreach ($countryLabels as $c) {
+            $countryCounts[] = Application::where('agent_id', $agentId)
+                ->whereHas('university', function ($q) use ($c) {
+                    $q->where('country', $c);
+                })->count();
+        }
+
+
         return view('agent.dashboard', compact(
             'countries',
             'universities',
@@ -128,6 +127,7 @@ class DashboardController extends Controller
             'totalApplications',
             'totalApproved',
             'visaApproved',
+            'visaConversionPercent',
             'totalRejected',
             'studentActivities',
             'documentActivities',
@@ -136,10 +136,13 @@ class DashboardController extends Controller
             'monthlyApplications',
             'acceptedMonthly',
             'rejectedMonthly',
-            'otherMonthly'
+            'otherMonthly',
+            'countryLabels',
+            'countryCounts'
         ));
     }
 
+    // City / University / Course AJAX
     public function getCities($country)
     {
         $cities = University::where('country', $country)->select('city')->distinct()->pluck('city');

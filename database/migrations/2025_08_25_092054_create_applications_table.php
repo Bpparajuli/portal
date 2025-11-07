@@ -29,12 +29,15 @@ return new class extends Migration {
             ])->default('Application created');
             $table->string('application_number')->nullable()->unique();
             $table->text('remarks')->nullable();
+
+            // 👇 Added column for SOP file (specific to each application)
+            $table->string('sop_file')->nullable();
+
             $table->timestamps();
             $table->timestamp('withdrawn_at')->nullable();
             $table->string('withdraw_reason')->nullable();
-        });
 
-        Schema::table('applications', function (Blueprint $table) {
+            // Foreign Keys
             $table->foreign('student_id')->references('id')->on('students')->onDelete('cascade');
             $table->foreign('university_id')->references('id')->on('universities')->onDelete('cascade');
             $table->foreign('course_id')->references('id')->on('courses')->onDelete('set null');

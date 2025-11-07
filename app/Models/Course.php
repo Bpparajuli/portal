@@ -24,9 +24,6 @@ class Course extends Model
         'scholarships',
     ];
 
-    /**
-     * Relationship: A course belongs to a university.
-     */
     public function university()
     {
         return $this->belongsTo(University::class);

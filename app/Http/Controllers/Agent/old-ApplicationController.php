@@ -16,10 +16,12 @@ use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 
 class ApplicationController extends Controller
 {
+    /**
+     * List of all document types (same as DocumentController)
+     */
     private function allDocumentTypes(): array
     {
         return [
@@ -36,7 +38,6 @@ class ApplicationController extends Controller
         ];
     }
 
-    /** Show all applications */
     public function index()
     {
         $applications = Application::where('agent_id', Auth::id())
@@ -47,14 +48,13 @@ class ApplicationController extends Controller
         return view('agent.applications.index', compact('applications'));
     }
 
-    /** Show create form */
     public function create(Request $request)
     {
         $universities = University::with('courses')->get();
-        $courses = Course::all();
         $selectedUniversityId = $request->query('university_id');
         $selectedCourseId = $request->query('course_id');
 
+        // If student_id provided via query
         if ($request->has('student_id')) {
             $student = Student::where('id', $request->student_id)
                 ->where('agent_id', Auth::id())
@@ -63,12 +63,12 @@ class ApplicationController extends Controller
             return view('agent.applications.create', compact(
                 'student',
                 'universities',
-                'courses',
                 'selectedUniversityId',
                 'selectedCourseId'
             ));
         }
 
+        // ✅ Only students who have all required document types uploaded
         $requiredTypes = $this->allDocumentTypes();
 
         $students = Student::where('agent_id', Auth::id())
@@ -83,32 +83,31 @@ class ApplicationController extends Controller
 
         return view('agent.applications.create', compact(
             'students',
-            'courses',
             'universities',
             'selectedUniversityId',
             'selectedCourseId'
         ));
     }
 
-    /** Store new application */
     public function store(Request $request)
     {
         $request->validate([
             'student_id'    => 'required|exists:students,id',
             'university_id' => 'required|exists:universities,id',
-            'course_id'     => 'required|exists:courses,id',
-            'sop_file'      => 'required|file|mimes:jpeg,jpg,png,pdf,doc,docx|max:15360',
+            'course_id'     => 'nullable|exists:courses,id',
+            'sop'           => 'required|file|mimes:jpeg,jpg,png,pdf,doc,docx,txt,xls,xlsx,ppt,pptx,zip,rar|max:15360',
         ]);
 
         $student = Student::where('agent_id', Auth::id())->findOrFail($request->student_id);
 
+        // Prevent duplicate applications
         if (Application::where('student_id', $student->id)
             ->where('university_id', $request->university_id)
             ->where('course_id', $request->course_id)
             ->exists()
         ) {
             return back()->withErrors([
-                'course_id' => 'This student has already applied to this course.'
+                'course_id' => 'This student has already applied to the selected university and course.'
             ])->withInput();
         }
 
@@ -121,23 +120,29 @@ class ApplicationController extends Controller
         ]);
 
         $application->application_number = Auth::id() . '-' . $student->id . '-' . $request->university_id . '-' . ($request->course_id ?? 0) . '-' . $application->id;
-
-        // ✅ Handle SOP upload
-        if ($request->hasFile('sop_file')) {
-            $sopPath = $this->getSopStoragePath($request->file('sop_file'), $student, 'sop_file');
-            $application->sop_file = $sopPath;
-        }
-
         $application->save();
 
-        // Notify admin(s)
-        $admin = User::find(4);
-        Notification::send($admin, new ApplicationSubmitted($application));
+        // Store SOP
+        $file = $request->file('sop');
+        $folder = "agents/" . Auth::id() . "/{$student->id}/applications/{$application->id}";
+        $filename = 'sop_' . time() . '.' . $file->getClientOriginalExtension();
+        $path = $file->storeAs($folder, $filename, 'public');
+
+        Document::create([
+            'student_id' => $student->id,
+            'uploaded_by' => Auth::id(),
+            'file_name' => $file->getClientOriginalName(),
+            'file_path' => $path,
+            'file_type' => $file->getClientMimeType(),
+            'file_size' => $file->getSize(),
+            'document_type' => 'SOP'
+        ]);
+
+        User::notifyAdmins(new ApplicationSubmitted($application));
 
         return redirect()->route('agent.applications.index')->with('success', 'Application created successfully.');
     }
 
-    /** Show single application */
     public function show(Application $application)
     {
         $this->authorizeAgent($application);
@@ -145,71 +150,67 @@ class ApplicationController extends Controller
         return view('agent.applications.show', compact('application'));
     }
 
-    /** Edit application */
     public function edit($id)
     {
         $application = Application::where('agent_id', Auth::id())
             ->with(['student', 'university', 'course', 'documents'])
             ->findOrFail($id);
 
-        $universities = University::with('courses')->get();
-        $students = Student::where('agent_id', Auth::id())->get();
-
-        $selectedUniversityId = $application->university_id;
-        $courses = $selectedUniversityId ? Course::where('university_id', $selectedUniversityId)->select('id', 'title')->get() : collect();
-
-        return view('agent.applications.edit', compact(
-            'application',
-            'universities',
-            'students',
-            'courses',
-            'selectedUniversityId'
-        ));
+        return view('agent.applications.edit', compact('application'));
     }
 
-    /** Update application (SOP optional) */
     public function update(Request $request, $id)
     {
         $application = Application::where('agent_id', Auth::id())->findOrFail($id);
 
         $request->validate([
-            'student_id'    => 'required|exists:students,id',
-            'university_id' => 'required|exists:universities,id',
-            'course_id'     => 'required|exists:courses,id',
-            'sop_file'      => 'nullable|file|mimes:jpeg,jpg,png,pdf,doc,docx|max:15360',
+            'sop' => 'nullable|file|mimes:jpeg,jpg,png,pdf,doc,docx,txt,xls,xlsx,ppt,pptx,zip,rar|max:15360',
         ]);
 
-        if ($request->hasFile('sop_file')) {
-            if ($application->sop_file && Storage::disk('public')->exists($application->sop_file)) {
-                Storage::disk('public')->delete($application->sop_file);
+        if ($request->hasFile('sop')) {
+            $student = $application->student;
+            $file = $request->file('sop');
+            $folder = "agents/" . Auth::id() . "/{$student->id}/applications/{$application->id}";
+            $filename = "sop_" . time() . '.' . $file->getClientOriginalExtension();
+            $path = $file->storeAs($folder, $filename, 'public');
+
+            $document = Document::where('student_id', $student->id)
+                ->where('document_type', 'SOP')
+                ->first();
+
+            if ($document) {
+                $document->update([
+                    'file_name' => $file->getClientOriginalName(),
+                    'file_path' => $path,
+                    'file_type' => $file->getClientMimeType(),
+                    'file_size' => $file->getSize(),
+                ]);
+            } else {
+                Document::create([
+                    'student_id' => $student->id,
+                    'uploaded_by' => Auth::id(),
+                    'file_name' => $file->getClientOriginalName(),
+                    'file_path' => $path,
+                    'file_type' => $file->getClientMimeType(),
+                    'file_size' => $file->getSize(),
+                    'document_type' => 'SOP'
+                ]);
             }
-
-            $sopPath = $this->getSopStoragePath($request->file('sop_file'), $application->student, 'sop_file');
-            $application->sop_file = $sopPath;
         }
-
-        $application->update([
-            'student_id' => $request->student_id,
-            'university_id' => $request->university_id,
-            'course_id' => $request->course_id,
-        ]);
-
-        $application->save();
 
         return redirect()->route('agent.applications.index')->with('success', 'Application updated successfully.');
     }
 
-    /** Get courses by university (AJAX) */
     public function getCourses($universityId)
     {
         $courses = Course::where('university_id', $universityId)
             ->select('id', 'title')
-            ->get();
+            ->get()
+            ->map(fn($course) => ['id' => $course->id, 'name' => $course->title]);
 
         return response()->json($courses);
     }
 
-    /** Withdraw application */
     public function withdraw(Request $request, Application $application)
     {
         $request->validate([
@@ -227,16 +228,16 @@ class ApplicationController extends Controller
             'application_status' => 'Withdrawn'
         ]);
 
-        $admin = User::find(4);
-        Notification::send($admin, new ApplicationWithdrawn($application));
+        User::notifyAdmins(new ApplicationWithdrawn($application));
 
         return redirect()->route('agent.applications.index')->with('success', 'Application withdrawn successfully.');
     }
 
-    /** Add message to application */
     public function addMessage(Request $request, Application $application)
     {
-        $request->validate(['message' => 'required|string|max:2000']);
+        $request->validate([
+            'message' => 'required|string|max:2000',
+        ]);
 
         $user = Auth::user();
         $userType = $user->is_admin ? 'admin' : 'agent';
@@ -259,37 +260,10 @@ class ApplicationController extends Controller
         return back()->with('success', 'Message added and notification sent.');
     }
 
-    /** Authorization check */
     protected function authorizeAgent(Application $application)
     {
         if ($application->agent_id !== Auth::id()) {
             abort(403, 'Unauthorized action.');
         }
-    }
-
-    /** Generate SOP file path */
-    private function getSopStoragePath($file, $student, $documentType = 'sop_file')
-    {
-        $agent = Auth::user();
-        $safeAgent = preg_replace('/[^A-Za-z0-9_\-]/', '_', strtolower($agent->business_name ?? 'agent'));
-        $rawStudentName = trim(($student->first_name ?? '') . '_' . ($student->last_name ?? ''));
-        $safeStudent = empty($rawStudentName) || $rawStudentName === '_'
-            ? 'student_' . $student->id
-            : preg_replace('/[^A-Za-z0-9_\-]/', '_', strtolower($rawStudentName));
-
-        $fileName = $documentType . '.' . $file->getClientOriginalExtension();
-        $folderPath = "agents/{$safeAgent}/{$safeStudent}";
-
-        return $file->storeAs($folderPath, $fileName, 'public');
-    }
-
-    /** Applications FOr student */
-    public function forStudent($studentId)
-    {
-        $student = Student::with(['applications.university', 'applications.course'])
-            ->where('agent_id', Auth::id())
-            ->findOrFail($studentId);
-
-        return view('agent.applications.for_student', compact('student'));
     }
 }

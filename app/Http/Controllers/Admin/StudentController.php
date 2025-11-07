@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Notification;
 use App\Notifications\StudentAdded;
 use App\Notifications\StudentStatusUpdated;
+use App\Notifications\StudentDeleted;
 
 class StudentController extends Controller
 {
@@ -61,7 +62,6 @@ class StudentController extends Controller
     public function store(Request $request)
     {
         $data = $this->validateStudent($request);
-
         $student = Student::create($data);
 
         if ($request->hasFile('students_photo')) {
@@ -70,8 +70,8 @@ class StudentController extends Controller
         }
 
         // Notify agent if assigned
-        if ($student->agent_id) {
-            Notification::send(User::find($student->agent_id), new StudentAdded($agent, $student));
+        if ($student->agent_id && $agent = User::find($student->agent_id)) {
+            Notification::send($agent, new StudentAdded($agent, $student));
         }
 
         return redirect()->route('admin.students.index')->with('success', 'Student created successfully.');
@@ -100,7 +100,6 @@ class StudentController extends Controller
     public function update(Request $request, Student $student)
     {
         $data = $this->validateStudent($request, $student->id);
-
         $student->update($data);
 
         if ($request->hasFile('students_photo')) {
@@ -119,12 +118,18 @@ class StudentController extends Controller
     // Delete student
     public function destroy(Student $student)
     {
+        // Notify agent before deletion
+        if ($student->agent) {
+            Notification::send($student->agent, new StudentDeleted($student));
+        }
+
         // Delete student photo
         if ($student->students_photo && file_exists(public_path($student->students_photo))) {
             unlink(public_path($student->students_photo));
         }
 
         $student->delete();
+
         return redirect()->route('admin.students.index')->with('success', 'Student deleted successfully.');
     }
 
@@ -135,6 +140,9 @@ class StudentController extends Controller
         $agent_name = $agent ? ($agent->username ?? $agent->business_name) : 'unknown_agent';
         $student_name = $student->first_name . '_' . $student->last_name;
         $path = 'images/agents/' . $agent_name . '/' . $student_name;
+        if (!file_exists(public_path($path))) {
+            mkdir(public_path($path), 0755, true);
+        }
         $filename = $student_name . '_photo.' . $file->getClientOriginalExtension();
         $file->move(public_path($path), $filename);
         return $path . '/' . $filename;

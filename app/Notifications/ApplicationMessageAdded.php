@@ -2,65 +2,107 @@
 
 namespace App\Notifications;
 
+use App\Models\Application;
+use App\Models\ApplicationMessage;
+use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 use Illuminate\Notifications\Messages\MailMessage;
-use App\Models\Application;
-use App\Models\ApplicationMessage;
+use App\Helpers\ActivityLogger;
 
 class ApplicationMessageAdded extends Notification
 {
     use Queueable;
 
-    protected $application;
-    protected $message;
+    public $application;
+    public $message;
 
+    /**
+     * Create a new notification instance.
+     */
     public function __construct(Application $application, ApplicationMessage $message)
     {
         $this->application = $application;
         $this->message = $message;
     }
 
-    public function via(object $notifiable): array
+    /**
+     * Get the notification delivery channels.
+     */
+    public function via($notifiable)
     {
-        return ['database', 'mail']; // Both in-app + email
+        return ['database', 'mail'];
     }
 
-    public function toMail(object $notifiable): MailMessage
+    /**
+     * Get the mail representation of the notification.
+     */
+    public function toMail($notifiable)
     {
+        $app = $this->application;
+        $msg = $this->message;
+        $addedBy = $msg->user->business_name ?? $msg->user->username ?? $msg->user->name;
+        $link = $this->getApplicationUrl($notifiable);
+
         return (new MailMessage)
-            ->subject('New Message on Application #' . $this->application->application_number)
-            ->line('A new message has been added to an application.')
-            ->line('Message: "' . $this->message->message . '"')
-            ->action('View Application', $this->getApplicationUrl($notifiable))
-            ->line('Please review it.');
+            ->subject('New Message on Application #' . $app->application_number)
+            ->greeting('Hello!')
+            ->line("A new message has been added to application **#{$app->application_number}** by {$addedBy}.")
+            ->line("Message: \"{$msg->message}\"")
+            ->action('View Application', $link)
+            ->line('Please review and respond if needed.');
     }
 
-    public function toArray(object $notifiable): array
+    /**
+     * Get the array representation of the notification (for database).
+     */
+    public function toArray($notifiable)
     {
+        $app = $this->application;
+        $msg = $this->message;
+        $student = $app->student;
+        $addedBy = $msg->user;
+
+        $link = $this->getApplicationUrl($notifiable);
+
+        // Log activity
+        ActivityLogger::log(
+            'application_message_added',
+            "💬 New message added to application #{$app->application_number} by {$addedBy->name}",
+            $app->id,
+            $link,
+            $addedBy->id
+        );
+
         return [
-            'application_id' => $this->application->id,
-            'application_number' => $this->application->application_number ?? null,
-            'type' => 'application_message',
-            'added_by' => $this->message->type,
-            'student_name'       => ($this->application->student->first_name ?? 'Unknown') . ' ' . ($this->application->student->last_name ?? 'Unknown'), // student name
-            'user_name'          => $this->message->user->name ?? 'Unknown',
-            'message' => $this->message->message,
-            'link' => $this->getApplicationUrl($notifiable),
+            'type' => 'application_message_added',
+            'message' => "New message added to application #{$app->application_number} for {$student->first_name} {$student->last_name} by " .
+                ($addedBy->business_name ?? $addedBy->username ?? $addedBy->name) . ".",
+            'application' => [
+                'id' => $app->id,
+                'number' => $app->application_number,
+            ],
+            'student' => [
+                'id' => $student->id,
+                'name' => "{$student->first_name} {$student->last_name}",
+            ],
+            'added_by' => [
+                'id' => $addedBy->id,
+                'name' => $addedBy->business_name ?? $addedBy->username ?? $addedBy->name,
+                'type' => $msg->type, // 'admin' or 'agent'
+            ],
+            'message_text' => $msg->message,
+            'link' => $link,
         ];
     }
 
     /**
-     * Determine the correct route based on the recipient type.
+     * Determine the correct application route based on the recipient type.
      */
     protected function getApplicationUrl($notifiable)
     {
-        // If the recipient is an admin
-        if ($notifiable->is_admin) {
-            return route('admin.applications.show', $this->application->id);
-        }
-
-        // Otherwise, assume agent
-        return route('agent.applications.show', $this->application->id);
+        return $notifiable->is_admin
+            ? route('admin.applications.show', $this->application->id)
+            : route('agent.applications.show', $this->application->id);
     }
 }

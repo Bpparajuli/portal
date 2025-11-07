@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Notification;
 use App\Notifications\StudentAdded;
-use App\Notifications\StudentStatusChanged;
+use App\Notifications\StudentDeleted;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 class StudentController extends Controller
@@ -134,12 +134,11 @@ class StudentController extends Controller
             $student->save();
         }
 
+        // Notify Admin (ID=6)
+        $admin = User::find(6);
+        Notification::send($admin, new StudentAdded(Auth::user(), $student));
 
-        $admin = User::find(1);
-        $agent = Auth::user();
-        if ($admin) {
-            Notification::send($admin, new StudentAdded($agent, $student));
-        }
+
         return redirect()->route('agent.students.index')->with('success', 'Student created successfully.');
     }
 
@@ -193,20 +192,16 @@ class StudentController extends Controller
     {
         $this->authorizeStudent($student);
 
-        // Target only admin with ID = 1
-        $admin = User::find(1);
-        $agent = Auth::user();
+        // Notify Admin about deletion
+        $admin = User::find(6);
+        Notification::send($admin, new StudentDeleted(Auth::user(), $student));
 
-        if ($admin) {
-            Notification::send($admin, new \App\Notifications\StudentDeleted($agent, $student));
-        }
-
-        // Delete photo if exists
         if ($student->students_photo && Storage::disk('public')->exists($student->students_photo)) {
             Storage::disk('public')->delete($student->students_photo);
         }
 
         $student->delete();
+
         return redirect()->route('agent.students.index')->with('success', 'Student deleted successfully.');
     }
 

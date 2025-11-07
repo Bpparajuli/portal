@@ -2,86 +2,152 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Models\University; // Make sure you have this line
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use App\Models\Course;
+use App\Models\University;
 
 class CourseController extends Controller
 {
-    // Only admin access is handled by middleware in web.php
-
-    public function index()
+    /**
+     * Display a listing of courses with optional filters.
+     */
+    public function index(Request $request)
     {
-        $courses = Course::all();
-        return view('admin.courses.index', compact('courses'));
+        $query = Course::with('university');
+
+        // Search filters
+        if ($request->filled('search')) {
+            $query->where('title', 'like', '%' . $request->search . '%')
+                ->orWhere('course_code', 'like', '%' . $request->search . '%');
+        }
+
+        if ($request->filled('country')) {
+            $query->whereHas('university', function ($q) use ($request) {
+                $q->where('country', 'like', '%' . $request->country . '%');
+            });
+        }
+
+        if ($request->filled('city')) {
+            $query->whereHas('university', function ($q) use ($request) {
+                $q->where('city', 'like', '%' . $request->city . '%');
+            });
+        }
+
+        if ($request->filled('university_id')) {
+            $query->where('university_id', $request->university_id);
+        }
+
+        $courses = $query->orderBy('created_at', 'desc')->paginate(25);
+        $universities = University::orderBy('name')->get();
+
+        return view('admin.courses.index', compact('courses', 'universities'));
     }
 
-    // Show create course form
-
-    public function create()
+    /**
+     * Show the form for creating a new course.
+     */
+    public function create($university_id = null)
     {
-        // Fetch all universities from the database
-        $universities = University::all();
+        $universities = University::orderBy('name')->get();
+        $selectedUniversity = $university_id ? University::find($university_id) : null;
 
-        // Pass the $universities variable to the view
-        return view('admin.courses.create', compact('universities'));
+        return view('admin.courses.create', compact('universities', 'selectedUniversity'));
     }
 
-    // Store new course
+    /**
+     * Store a newly created course in the database.
+     */
     public function store(Request $request)
     {
         $request->validate([
-            'name' => 'required|unique:courses,name',
+            'university_id' => 'required|exists:universities,id',
+            'course_code' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('courses')->where(function ($query) use ($request) {
+                    return $query->where('university_id', $request->university_id);
+                }),
+            ],
+            'title' => 'required|string|max:255',
+            'course_type' => 'required|in:UG,PG,Diploma',
             'description' => 'nullable|string',
+            'duration' => 'nullable|string|max:255',
+            'fee' => 'nullable|string|max:255',
+            'intakes' => 'required|string|max:255',
+            'ielts_pte_other_languages' => 'nullable|string|max:255',
+            'moi_requirement' => 'required|in:Yes,No',
+            'application_fee' => 'nullable|string|max:255',
+            'scholarships' => 'nullable|string|max:255',
         ]);
 
-        Course::create([
-            'name' => $request->name,
-            'description' => $request->description,
-        ]);
+        Course::create($request->all());
 
-        return redirect()->route('admin.admin.courses.index')->with('success', 'Course created successfully.');
+        return redirect()->route('admin.courses.index')->with('success', 'Course created successfully.');
     }
 
-    // Show a single course
-    public function show($id)
-    {
-        $course = Course::findOrFail($id);
-        return view('admin.courses.show', compact('course'));
-    }
-
-    // Show edit form
+    /**
+     * Show the form for editing a course.
+     */
     public function edit($id)
     {
-        $course = Course::findOrFail($id);
+        $course = Course::with('university')->findOrFail($id);
         return view('admin.courses.edit', compact('course'));
     }
 
-    // Update course
+    /**
+     * Update the specified course in the database.
+     */
     public function update(Request $request, $id)
     {
         $course = Course::findOrFail($id);
 
         $request->validate([
-            'name' => 'required|unique:courses,name,' . $id,
+            'university_id' => 'required|exists:universities,id',
+            'course_code' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('courses')
+                    ->where(function ($query) use ($request) {
+                        return $query->where('university_id', $request->university_id);
+                    })
+                    ->ignore($id),
+            ],
+            'title' => 'required|string|max:255',
+            'course_type' => 'required|in:UG,PG,Diploma',
             'description' => 'nullable|string',
+            'duration' => 'nullable|string|max:255',
+            'fee' => 'nullable|string|max:255',
+            'intakes' => 'required|string|max:255',
+            'ielts_pte_other_languages' => 'nullable|string|max:255',
+            'moi_requirement' => 'required|in:Yes,No',
+            'application_fee' => 'nullable|string|max:255',
+            'scholarships' => 'nullable|string|max:255',
         ]);
 
-        $course->update([
-            'name' => $request->name,
-            'description' => $request->description,
-        ]);
+        $course->update($request->all());
 
-        return redirect()->route('admin.admin.courses.index')->with('success', 'Course updated successfully.');
+        return redirect()->route('admin.courses.index')->with('success', 'Course updated successfully.');
     }
 
-    // Delete course
+    /**
+     * Remove the specified course from storage.
+     */
     public function destroy($id)
     {
         $course = Course::findOrFail($id);
         $course->delete();
 
-        return redirect()->route('admin.admin.courses.index')->with('success', 'Course deleted successfully.');
+        return redirect()->route('admin.courses.index')->with('success', 'Course deleted successfully.');
+    }
+    public function show($id)
+    {
+        $course = Course::with('university')->findOrFail($id);
+        $university = $course->university;
+
+        return view('admin.courses.show', compact('course', 'university'));
     }
 }

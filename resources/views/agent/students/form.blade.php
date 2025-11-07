@@ -12,8 +12,8 @@
     </div>
     {{-- DOB & Gender --}}
     <div class="col-md-6 mb-3">
-        <label for="dob">Date of Birth</label>
-        <input type="date" name="dob" id="dob" class="form-control" value="{{ old('dob', $student->dob ?? '') }}">
+        <label for="dob">Date of Birth *</label>
+        <input type="date" name="dob" id="dob" class="form-control" value="{{ old('dob', $student->dob ?? '') }}" required>
     </div>
     <div class="col-md-6 mb-3">
         <label for="gender">Gender</label>
@@ -31,14 +31,14 @@
         <input type="email" name="email" id="email" class="form-control" value="{{ old('email', $student->email ?? '') }}" required>
     </div>
     <div class="col-md-6 mb-3">
-        <label for="phone_number">Phone Number</label>
-        <input type="text" name="phone_number" id="phone_number" class="form-control" value="{{ old('phone_number', $student->phone_number ?? '') }}">
+        <label for="phone_number">Phone Number *</label>
+        <input type="text" name="phone_number" id="phone_number" class="form-control" value="{{ old('phone_number', $student->phone_number ?? '') }}" required>
     </div>
 
     {{-- Permanent & Temporary Address --}}
     <div class="col-md-6 mb-3">
-        <label for="permanent_address">Permanent Address</label>
-        <input type="text" name="permanent_address" id="permanent_address" class="form-control" value="{{ old('permanent_address', $student->permanent_address ?? '') }}">
+        <label for="permanent_address">Permanent Address *</label>
+        <input type="text" name="permanent_address" id="permanent_address" class="form-control" value="{{ old('permanent_address', $student->permanent_address ?? '') }}" required>
     </div>
     <div class="col-md-6 mb-3">
         <label for="temporary_address">Temporary Address</label>
@@ -61,12 +61,16 @@
 
     {{-- Passport Number & Expiry --}}
     <div class="col-md-6 mb-3">
-        <label for="passport_number">Passport Number</label>
+        <label for="passport_number">Passport Number *</label>
         <input type="text" name="passport_number" id="passport_number" class="form-control" value="{{ old('passport_number', $student->passport_number ?? '') }}">
     </div>
     <div class="col-md-6 mb-3">
-        <label for="passport_expiry">Passport Expiry</label>
-        <input type="date" name="passport_expiry" id="passport_expiry" class="form-control" value="{{ old('passport_expiry', $student->passport_expiry ?? '') }}">
+        <label for="passport_number">Citizenship Number </label>
+        <input type="text" name="citizenship_number" id="citizenship_number" class="form-control" value="{{ old('citizenship_number', $student->citizenship_number ?? '') }}">
+    </div>
+    <div class="col-md-6 mb-3">
+        <label for="passport_expiry">Passport Expiry *</label>
+        <input type="date" name="passport_expiry" id="passport_expiry" class="form-control" value="{{ old('passport_expiry', $student->passport_expiry ?? '') }}" required>
     </div>
 
     {{-- Education --}}
@@ -97,8 +101,8 @@
         <input type="text" name="preferred_country" id="preferred_country" class="form-control" value="{{ old('preferred_country', $student->preferred_country ?? '') }}">
     </div>
     <div class="col-md-6 mb-3">
-        <label for="preferred_course">Preferred Course</label>
-        <input type="text" name="preferred_course" id="preferred_course" class="form-control" value="{{ old('preferred_course', $student->preferred_course ?? '') }}">
+        <label for="preferred_course">Preferred City</label>
+        <input type="text" name="preferred_city" id="preferred_city" class="form-control" value="{{ old('preferred_course', $student->preferred_course ?? '') }}">
     </div>
 
     {{-- University & Course --}}

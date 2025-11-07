@@ -124,18 +124,38 @@
             <tbody>
                 @forelse($students as $student)
                 @php
+                // ----------------- Document Status -----------------
+                $predefinedDocuments = [
+                'passport',
+                '10th_certificate',
+                '10th_transcript',
+                '11th_transcript',
+                '12th_certificate',
+                '12th_transcript',
+                'cv',
+                'moi',
+                'lor',
+                'ielts_pte_language_certificate'
+                ];
+
+                // Normalize uploaded document types
+                $uploadedTypes = $student->documents->pluck('document_type')
+                ->map(fn($t) => strtolower($t))
+                ->toArray();
+
+                // Check if all predefined documents are uploaded
+                $allDocumentsUploaded = count(array_diff($predefinedDocuments, $uploadedTypes)) === 0;
+
                 // Document status
-                $requiredDocumentTypes = ['passport','id','transcript','financial','other'];
-                $uploadedTypes = $student->documents->pluck('document_type')->map(fn($t) => strtolower(str_replace(' ', '', $t)))->toArray();
-                $allDocumentsUploaded = count(array_diff($requiredDocumentTypes, $uploadedTypes)) === 0;
-                $completedDocsCount = $student->documents->where('status','completed')->count();
-                $documentStatus = ($allDocumentsUploaded && $completedDocsCount == count($requiredDocumentTypes))
+                $documentStatus = $allDocumentsUploaded
                 ? 'Completed'
                 : (count($uploadedTypes) == 0 ? 'Not Uploaded' : 'Incomplete');
 
                 // Latest application
                 $latestApplication = $student->applications->sortByDesc('created_at')->first();
                 @endphp
+
+
                 <tr>
                     <td>{{ $student->id }}</td>
                     {{-- Profile --}}
@@ -199,15 +219,13 @@
 
                     {{-- Actions --}}
                     <td class="d-flex flex-column gap-1">
-                        <a href="{{ route('admin.students.edit', $student->id) }}" class="btn btn-sm btn-primary">
-                            <i class="fa-solid fa-edit me-1"></i> Edit
-                        </a>
-                        <a href="{{ route('admin.documents.index', $student->id) }}" class="btn btn-sm btn-secondary">
-                            <i class="fa-solid fa-folder-open me-1"></i> Documents
-                        </a>
                         @if($allDocumentsUploaded)
-                        <a href="{{ route('agent.applications.create') }}?student_id={{ $student->id }}" class="btn btn-sm btn-success">
-                            <i class="fa-solid fa-paper-plane me-1"></i> Apply Now
+                        <a href="{{ route('admin.applications.show', $latestApplication->id) }}" class="btn btn-sm btn-light p-1">
+                            <i class="fa-solid fa-tools me-1"></i> Update Status
+                        </a>
+                        @else
+                        <a href="{{ route('admin.documents.index', $student->id) }}" class="btn btn-sm btn-outline-secondary mt-1">
+                            <i class="fa-solid fa-folder-open me-1"></i> Upload Docs
                         </a>
                         @endif
                     </td>

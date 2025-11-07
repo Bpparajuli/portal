@@ -5,19 +5,19 @@ namespace App\Notifications;
 use App\Models\Student;
 use App\Models\User;
 use Illuminate\Bus\Queueable;
-use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use Illuminate\Notifications\Messages\MailMessage;
 use App\Helpers\ActivityLogger;
 
 class StudentDeleted extends Notification
 {
     use Queueable;
 
-    public $agent, $student;
+    public $admin, $student;
 
-    public function __construct(User $agent, Student $student)
+    public function __construct(User $admin, Student $student)
     {
-        $this->agent = $agent;
+        $this->admin = $admin;
         $this->student = $student;
     }
 
@@ -28,40 +28,37 @@ class StudentDeleted extends Notification
 
     public function toMail($notifiable)
     {
+        $deletedBy = $this->admin->business_name ?? $this->admin->username ?? $this->admin->name;
         return (new MailMessage)
             ->subject('Student Deleted')
             ->greeting('Hello!')
-            ->line(
-                "The student {$this->student->first_name} {$this->student->last_name} was deleted by " .
-                    ($this->agent->business_name ?? $this->agent->username) . "."
-            )
-            ->action('View Students', url('/admin/students'));
+            ->line("The student {$this->student->first_name} {$this->student->last_name} was deleted by {$deletedBy}.")
+            ->action('View Students', url('/agent/students'));
     }
 
     public function toArray($notifiable)
     {
-        // Log activity properly
         ActivityLogger::log(
-            'student_deleted', // ✅ proper type
+            'student_deleted',
             "🗑️ Student deleted: {$this->student->first_name} {$this->student->last_name}",
-            $this->student->id, // optional: link to the student
-            route($notifiable->is_admin ? 'admin.users.show' : 'agent.students.show', $this->student->id),
-            $this->agent->id // user who performed the action
+            $this->student->id,
+            route('agent.students.show', $this->student->id),
+            $this->admin->id
         );
 
         return [
-            'type'    => 'student_deleted',
+            'type' => 'student_deleted',
             'message' => "Student deleted: {$this->student->first_name} {$this->student->last_name} by " .
-                ($this->agent->business_name ?? $this->agent->username ?? $this->agent->name) . ".",
+                ($this->admin->business_name ?? $this->admin->username ?? $this->admin->name) . ".",
             'student' => [
                 'id' => $this->student->id,
                 'name' => $this->student->first_name . ' ' . $this->student->last_name,
             ],
             'deleted_by' => [
-                'id' => $this->agent->id,
-                'name' => $this->agent->business_name ?? $this->agent->username ?? $this->agent->name,
+                'id' => $this->admin->id,
+                'name' => $this->admin->business_name ?? $this->admin->username ?? $this->admin->name,
             ],
-            'link' => route($notifiable->is_admin ? 'admin.users.show' : 'agent.students.show', $this->student->id),
+            'link' => route('agent.students.show', $this->student->id),
         ];
     }
 }

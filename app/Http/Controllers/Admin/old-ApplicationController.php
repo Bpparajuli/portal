@@ -8,102 +8,80 @@ use App\Models\Application;
 use App\Models\Student;
 use App\Models\University;
 use App\Models\Course;
+use App\Models\Document;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Auth;
 use App\Notifications\ApplicationMessageAdded;
 use App\Notifications\ApplicationStatusUpdated;
 use App\Helpers\ActivityLogger;
 
+
 class ApplicationController extends Controller
 {
-    /**
-     * Display a listing of the applications.
-     */
     public function index()
     {
-        $applications = Application::with(['student', 'university', 'course', 'agent'])
-            ->latest()
-            ->paginate(20);
-
+        $applications = Application::with(['student', 'university', 'course', 'agent'])->latest()->paginate(20);
         return view('admin.applications.index', compact('applications'));
     }
 
-    /**
-     * Show the form for creating a new application.
-     */
     public function create(Request $request)
     {
-        $selectedStudent = null;
-        $selectedUniversityId = $request->query('university_id');
-        $selectedCourseId = $request->query('course_id');
-
-        if ($request->has('student_id')) {
-            $selectedStudent = Student::find($request->student_id);
-        }
-
-        $students = Student::whereHas('documents')->get();
+        $students = Student::whereHas('documents')->get(); // only students with docs
         $universities = University::all();
         $courses = Course::all();
 
-        return view('admin.applications.create', compact(
-            'students',
-            'universities',
-            'courses',
-            'selectedStudent',
-            'selectedUniversityId',
-            'selectedCourseId'
-        ));
+        return view('admin.applications.create', compact('students', 'universities', 'courses'));
     }
 
-    /**
-     * Store a newly created application in storage.
-     */
     public function store(Request $request)
     {
         $request->validate([
             'student_id' => 'required|exists:students,id',
             'university_id' => 'required|exists:universities,id',
             'course_id' => 'nullable|exists:courses,id',
-            'sop_file' => 'required|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:15360',
+            'sop' => 'required|file|mimes:pdf,doc,docx|max:15360',
         ]);
 
         $student = Student::findOrFail($request->student_id);
 
-        $application = new Application();
-        $application->student_id = $student->id;
-        $application->agent_id = $student->agent_id;
-        $application->university_id = $request->university_id;
-        $application->course_id = $request->course_id;
-        $application->application_status = 'Application started';
+        $application = Application::create([
+            'student_id' => $student->id,
+            'university_id' => $request->university_id,
+            'course_id' => $request->course_id,
+            'agent_id' => $student->agent_id, // link to owning agent
+            'remarks' => $request->remarks,
+            'application_status' => 'Application started',
+        ]);
 
-        // Store SOP file
-        if ($request->hasFile('sop_file')) {
-            $file = $request->file('sop_file');
-            $folder = "agents/{$student->agent_id}/{$student->id}/applications";
-            $filename = 'sop_' . time() . '.' . $file->getClientOriginalExtension();
-            $path = $file->storeAs($folder, $filename, 'public');
-            $application->sop_file = $path;
-        }
+        // Store SOP
+        $file = $request->file('sop');
+        $folder = "agents/{$student->agent_id}/{$student->id}/applications/{$application->id}";
+        $filename = 'sop_' . time() . '.' . $file->getClientOriginalExtension();
+        $path = $file->storeAs($folder, $filename, 'public');
 
-        $application->save();
+        Document::create([
+            'student_id' => $student->id,
+            'file_name' => $filename,
+            'uploaded_by' => Auth::id(),
+            'file_path' => $path,
+            'file_type' => $file->getClientMimeType(),
+            'file_size' => $file->getSize(),
+            'document_type' => 'SOP',
+            'application_id' => $application->id,
+        ]);
 
-        return redirect()->route('admin.applications.index')
-            ->with('success', 'Application created successfully.');
+        return redirect()->route('admin.applications.index')->with('success', 'Application created successfully.');
     }
 
-    /**
-     * Display the specified application.
-     */
     public function show(Application $application)
     {
-        $application->load(['student', 'university', 'course', 'agent']);
+        $application->load(['student', 'university', 'course', 'sop', 'agent']);
         return view('admin.applications.show', compact('application'));
     }
 
-    /**
-     * Show the form for editing the specified application.
-     */
     public function edit($id)
     {
         $application = Application::with(['student', 'university', 'course'])->findOrFail($id);
@@ -113,9 +91,7 @@ class ApplicationController extends Controller
         return view('admin.applications.edit', compact('application', 'universities', 'courses'));
     }
 
-    /**
-     * Update the specified application.
-     */
+
     public function update(Request $request, $id)
     {
         $application = Application::findOrFail($id);
@@ -124,7 +100,7 @@ class ApplicationController extends Controller
             'university_id' => 'required|exists:universities,id',
             'course_id' => 'nullable|exists:courses,id',
             'application_status' => 'required|string|in:' . implode(',', Application::STATUSES),
-            'sop_file' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:15360',
+            'sop' => 'nullable|file|mimes:pdf,doc,docx|max:15360'
         ]);
 
         $oldStatus = $application->application_status;
@@ -135,34 +111,52 @@ class ApplicationController extends Controller
             'application_status' => $request->application_status,
         ]);
 
-        // Handle SOP file update
-        if ($request->hasFile('sop_file')) {
+        // ✅ Handle SOP Upload
+        if ($request->hasFile('sop')) {
             $student = $application->student;
-            $file = $request->file('sop_file');
-            $folder = "agents/{$student->agent_id}/{$student->id}/applications";
-            $filename = 'sop_' . time() . '.' . $file->getClientOriginalExtension();
+            $file = $request->file('sop');
+
+            $folder = "agents/" . $student->id . "/applications/" . $application->id;
+            $filename = "sop_" . time() . '.' . $file->getClientOriginalExtension();
             $path = $file->storeAs($folder, $filename, 'public');
 
-            if ($application->sop_file && Storage::disk('public')->exists($application->sop_file)) {
-                Storage::disk('public')->delete($application->sop_file);
-            }
+            $document = Document::where('application_id', $application->id)
+                ->where('document_type', 'SOP')
+                ->first();
 
-            $application->update(['sop_file' => $path]);
+            if ($document) {
+                $document->update([
+                    'file_name' => $file->getClientOriginalName(),
+                    'file_path' => $path,
+                    'file_type' => $file->getClientMimeType(),
+                    'file_size' => $file->getSize(),
+                ]);
+            } else {
+                Document::create([
+                    'student_id' => $student->id,
+                    'uploaded_by' => Auth::id(),
+                    'file_name' => $file->getClientOriginalName(),
+                    'file_path' => $path,
+                    'file_type' => $file->getClientMimeType(),
+                    'file_size' => $file->getSize(),
+                    'document_type' => 'SOP',
+                    'application_id' => $application->id
+                ]);
+            }
         }
 
-        // Log & Notify if status changed
+        // ✅ Log and Notify if Status Changed
         if ($oldStatus !== $request->application_status) {
             $student = $application->student;
+            $agent = $student->user ?? null; // the agent linked to the student
 
             ActivityLogger::log(
-                'application_status',
+                'application_status_updated',
                 "Application status updated from '{$oldStatus}' to '{$request->application_status}' for student {$student->first_name} {$student->last_name}",
-                $application->id,
-                route('admin.applications.show', $application->id),
-                Auth::id()
+                $application->id
             );
 
-            $agentId = $student->agent_id;
+            $agentId = $application->student->agent_id;
             User::notifyAgent($agentId, new ApplicationStatusUpdated($application, Auth::user()));
         }
 
@@ -170,9 +164,6 @@ class ApplicationController extends Controller
             ->with('success', 'Application updated successfully.');
     }
 
-    /**
-     * Add message to application (for communication).
-     */
     public function addMessage(Request $request, Application $application)
     {
         $request->validate([
@@ -182,33 +173,28 @@ class ApplicationController extends Controller
         $user = Auth::user();
         $userType = $user->is_admin ? 'admin' : 'agent';
 
+        // Create the message
         $message = $application->messages()->create([
             'user_id' => $user->id,
-            'type' => $userType,
+            'type'    => $userType,
             'message' => $request->message,
         ]);
 
+        // Notify opposite role
         if ($userType === 'agent') {
+            // Notify all admins using helper
             User::notifyAdmins(new ApplicationMessageAdded($application, $message));
         } else {
+            // Notify the assigned agent of this application
             $application->agent?->notify(new ApplicationMessageAdded($application, $message));
         }
 
         return back()->with('success', 'Message added and notification sent.');
     }
 
-    /**
-     * Remove the specified application from storage.
-     */
     public function destroy(Application $application)
     {
-        if ($application->sop_file && Storage::disk('public')->exists($application->sop_file)) {
-            Storage::disk('public')->delete($application->sop_file);
-        }
-
         $application->delete();
-
-        return redirect()->route('admin.applications.index')
-            ->with('success', 'Application deleted successfully.');
+        return redirect()->route('admin.applications.index')->with('success', 'Application deleted successfully.');
     }
 }

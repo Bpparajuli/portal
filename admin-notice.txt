@@ -1,3 +1,13 @@
+After deploy in live server 
+need to change the database username password in .env
 this is the code for storage must run in terminal for shortcut of storage to display image
 ln -s /home/bpparaju/portal/storage/app/public /home/bpparaju/portal/public/storage
-need to change the database username password and all in .env
+notification 
+user/registration send to admin with id 2
+document related send to admin with id 3
+application related send to admin with id 4
+SQL COLUMNS
+for university :
+id,name,university_logo,short_name,country,city,website,contact_email,description
+for courses : 
+id, university_id,course_code, title, course_type, description, duration, fee, intakes, ielts_pte_other_languages, moi_requirement, application_fee, scholarships

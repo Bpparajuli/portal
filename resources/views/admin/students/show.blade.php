@@ -33,8 +33,8 @@
                     <p><strong>Agent:</strong> {{ $student->agent?->business_name ?? $student->agent?->username ?? 'N/A' }}</p>
                 </div>
                 <hr>
-                <a href="{{ route('agent.students.edit', $student->id) }}" class="btn btn-warning w-100 mb-2">✏️ Edit</a>
-                <a href="{{ route('agent.documents.index', $student->id) }}" class="btn btn-primary w-100">📄 Upload Doc</a>
+                <a href="{{ route('admin.students.edit', $student->id) }}" class="btn btn-warning w-100 mb-2">✏️ Edit</a>
+                <a href="{{ route('admin.documents.index', $student->id) }}" class="btn btn-primary w-100">📄 Upload Doc</a>
             </div>
         </div>
 
@@ -88,7 +88,7 @@
                 <div class="tab-pane fade" id="application">
                     <div class="card shadow-sm p-3 rounded">
                         <h5>Application Details</h5>
-                        <p><strong>Agent:</strong> {{ $student->agent?->business_name ?? 'N/A' }}</p>
+                        <p><strong>admin:</strong> {{ $student->agent?->business_name ?? 'N/A' }}</p>
                         <p><strong>University:</strong> {{ $student->university?->name ?? 'N/A' }}</p>
                         <p><strong>Course:</strong> {{ $student->course?->title ?? 'N/A' }}</p>
                         <p><strong>Status:</strong> {{ ucfirst($student->student_status) ?? '-' }}</p>
@@ -102,7 +102,7 @@
                 <div class="tab-pane fade" id="documents">
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h5>📂 Documents</h5>
-                        <a href="{{ route('agent.documents.index', $student->id) }}" class="btn btn-primary btn-sm">
+                        <a href="{{ route('admin.documents.index', $student->id) }}" class="btn btn-primary btn-sm">
                             + Upload Document
                         </a>
                     </div>
@@ -132,13 +132,14 @@
                                 <div class="card-body">
                                     <h6 class="card-title">{{ $doc->document_type ?? '—' }}</h6>
                                     <p class="card-text text-truncate">{{ $doc->notes ?? '' }}</p>
-                                    <p class="text-muted mb-1"><small>Uploaded by: {{ $doc->uploader->username ?? $doc->uploader->business_name }}</small></p>
+                                    <p class="text-muted mb-1"> <small>Uploaded by: {{ $doc->uploader?->username ?? $doc->uploader?->business_name ?? 'Unknown' }}</small>
+                                    </p>
                                     <p class="text-muted mb-2"><small>{{ $doc->created_at->format('Y-m-d') }}</small></p>
                                     <div class="d-flex justify-content-between">
-                                        <a href="{{ route('agent.documents.download', ['student' => $student->id, 'document' => $doc->id]) }}" class="btn btn-sm btn-success">
+                                        <a href="{{ route('admin.documents.download', ['student' => $student->id, 'document' => $doc->id]) }}" class="btn btn-sm btn-success">
                                             ⬇ Download
                                         </a>
-                                        <form method="POST" action="{{ route('agent.documents.destroy', [$student->id, $doc->id]) }}" class="d-inline" onsubmit="return confirm('Delete this document?')">
+                                        <form method="POST" action="{{ route('admin.documents.destroy', [$student->id, $doc->id]) }}" class="d-inline" onsubmit="return confirm('Delete this document?')">
                                             @csrf @method('DELETE')
                                             <button class="btn btn-sm btn-outline-danger">🗑 Delete</button>
                                         </form>
@@ -189,11 +190,13 @@
                 <div class="tab-pane fade" id="settings">
                     <div class="card shadow-sm p-3 rounded">
                         <h5>Settings</h5>
-                        <form action="{{ route('agent.students.destroy', $student->id) }}" method="POST" onsubmit="return confirm('Are you sure?');">
+                        @if(auth()->id() === 1)
+                        <form action="{{ route('admin.students.destroy', $student->id) }}" method="POST" onsubmit="return confirm('Are you sure?');">
                             @csrf
                             @method('DELETE')
                             <button type="submit" class="btn btn-danger">🗑️ Delete Student</button>
                         </form>
+                        @endif
                     </div>
                 </div>
             </div>

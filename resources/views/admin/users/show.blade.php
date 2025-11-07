@@ -68,7 +68,7 @@
                     @foreach($students as $student)
                     <tr>
                         <td>
-                            <a href="{{ route('agent.students.show', $student->id) }}">
+                            <a href="{{ route('admin.students.show', $student->id) }}">
                                 {{ trim($student->first_name . ' ' . $student->last_name) }}
                             </a>
                         </td>
@@ -105,15 +105,15 @@
                 <tbody>
                     @foreach($applications as $app)
                     <tr>
-                        <td>{{ $app->student->first_name . ' ' . $app->student->last_name }}</td>
-                        <td>{{ $app->course->title }}</td>
-                        <td>{{ $app->course->university->name }}</td>
+                        <td><a href="{{ route('admin.applications.show', $app->id) }}">
+                                {{ $app->student->first_name . ' ' . $app->student->last_name }}
+                            </a></td>
+                        <td> {{ $app->course->title ?? $app->course->name ?? 'N/A' }}</td>
+                        <td>{{ $app->university->name ?? 'N/A'}}
+                        </td>
                         <td>
-                            <span class="badge 
-                                        @if($app->status === 'approved') bg-success 
-                                        @elseif($app->status === 'rejected') bg-danger 
-                                        @else bg-warning text-dark @endif">
-                                {{ ucfirst($app->status) }}
+                            <span class="badge {{ $app->status_class ?? 'bg-light text-muted' }}">
+                                {{ $app->application_status }}
                             </span>
                         </td>
                         <td>{{ $app->created_at->diffForHumans() }}</td>

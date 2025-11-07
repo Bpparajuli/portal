@@ -53,6 +53,7 @@
                         <a href="{{ route('admin.universities.edit', $uni->id) }}" class="btn btn-sm btn-outline-info" title="Edit">
                             <i class="fa fa-edit"></i>
                         </a>
+                        @if(auth()->id() === 1)
                         <form action="{{ route('admin.universities.destroy', $uni->id) }}" method="POST" onsubmit="return confirm('Delete this university?');">
                             @csrf
                             @method('DELETE')
@@ -60,6 +61,7 @@
                                 <i class="fa fa-trash"></i>
                             </button>
                         </form>
+                        @endif
                     </div>
                 </div>
             </div>

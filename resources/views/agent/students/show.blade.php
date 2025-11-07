@@ -115,10 +115,9 @@
                 {{-- Application --}}
                 <div class="tab-pane fade" id="application">
                     <h5 class="mb-3">📄 Applications List with Details</h5>
-
                     @if($student->applications && $student->applications->isNotEmpty())
                     @foreach($student->applications as $application)
-                    <div class="card shadow-sm mb-4 border-0 rounded-3">
+                    <div class="card shadow-sm bg-light mb-4 border-0 rounded-3">
                         <div class="card-body">
                             <div class="d-flex justify-content-between">
                                 <h6 class="mb-3 text-primary">
@@ -128,55 +127,76 @@
                                     Application Submitted On: {{ $application->created_at->format('Y-m-d') }}
                                 </h6>
                             </div>
-                            <div class="row g-4">
-                                {{-- University Info --}}
-                                <div class="col-md-8">
-                                    <div class="p-3 bg-light rounded-3 h-100">
-                                        <p><strong>University:</strong> {{ $application->university->name ?? 'N/A' }}</p>
-                                        <p><strong>Course:</strong> {{ $application->course->title ?? 'N/A' }}</p>
-                                        <p><strong>City:</strong> {{ $application->university->city ?? 'N/A' }}</p>
-                                        <p><strong>Duration:</strong> {{ $application->course->duration ?? 'N/A' }}</p>
-                                        <p><strong>Total Fee:</strong> {{ $application->course->fee ?? 'N/A' }}</p>
+                            {{-- University Info --}}
+                            <div class=" row">
+                                <div class="col-md-6 my-2"><strong>Country:</strong> {{ $application->university->country ?? 'N/A' }}</div>
+                                <div class="col-md-6 my-2"><strong>City:</strong> {{ $application->university->city ?? 'N/A' }}</div>
+                                <div class="col-md-6 my-2"><strong>University:</strong> {{ $application->university->name ?? 'N/A' }}</div>
+                                <div class="col-md-6 my-2"><strong>Course:</strong> {{ $application->course->title ?? 'N/A' }}</div>
+                                <div class="col-md-6 my-2"><strong>Duration:</strong> {{ $application->course->duration ?? 'N/A' }}</div>
+                                <div class="col-md-6 my-2"><strong>Fee:</strong> {{ $application->course->fee ?? 'N/A' }}</div>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                {{-- Application Staus  --}}
+                                <div class="p-3 bg-white border rounded-3">
+                                    <h6 class="fw-bold">📌 Application Status</h6>
+                                    <div class="m-2 p-3 rounded-2 badge {{ $application->status_class }}">
+                                        {{ $application->application_status }}
                                     </div>
                                 </div>
-                                <div class=" col-md-4">
-                                    <div class="p-3 bg-light rounded-3 h-100">
-                                        <h6 class="fw-bold">📌 Application Status</h6>
-                                        <div class="m-2 p-3 rounded-2 badge {{ $application->status_class }}">
-                                            {{ $application->application_status }}
-                                        </div>
-                                        {{-- SOP --}}
-                                        @if($application->sop)
-                                        {{-- For SOP --}}
-                                        <a href="{{ route('agent.documents.index', $application->student->id) }}" class="btn btn-sm rounded btn-secondary m-2">
-                                            📂 View All Documents
+                                {{-- SOP --}}
+                                <div class="p-3 bg-white border rounded-3">
+                                    <h6 class="fw-bold">📑 Statement of Purpose</h6>
+                                    <div class="m-2">
+                                        @if($application->sop_file)
+                                        <a href="#" data-preview="{{ Storage::url($application->sop_file) }}" target="_blank" class="btn btn-sm btn-primary">
+                                            👁️ SOP
                                         </a>
-                                        <a href="#" data-preview="{{ Storage::url($application->sop->file_path) }}" class="btn m-2 rounded-2 p-2 btn-sm">
-                                            👁️ View SOP
-                                        </a>
-
                                         @else
-                                        <span class="text-muted">Not uploaded</span>
+                                        <a href="{{ route('agent.applications.edit', $application->id) }}" class="btn btn-sm btn-secondary ms-2">
+                                            <p class="text-muted mb-0">Please Upload the SOP.</p>
+                                        </a>
                                         @endif
                                     </div>
                                 </div>
+                                {{-- All documents --}}
+                                <div class="p-3 bg-white border rounded-3">
+                                    <h6 class="fw-bold">Actions</h6>
+                                    <div class="m-2">
+                                        <a href="{{ route('agent.applications.edit', $application->id) }}" class="btn btn-sm btn-success ms-2">
+                                            📝 Edit
+                                        </a>
+                                    </div>
+                                    <div class="m-2">
+                                        <a href="{{ route('agent.applications.show', $application->id) }}" class="btn btn-sm m-1 btn-secondary">
+                                            👁️ View
+                                        </a>
+                                    </div>
+                                </div>
                             </div>
-
-                            {{-- Application Comments Section --}}
-
+                            {{-- Application Message Section --}}
                             <div class="mt-4 p-3 bg-white border rounded-3">
-                                <h5 class="fw-bold mb-3">💬 View Comments</h5>
-                                <div class="comments-thread rounded p-3 mb-3" style="max-height:400px; overflow:auto;">
-                                    @forelse($application->comments as $c)
-                                    <div class="mb-2">
-                                        <strong>{{ ucfirst($c->type) }} ({{ $c->user->name ?? 'Unknown' }}):</strong>
-                                        <span>{{ $c->comment }}</span>
-                                        <small class="text-muted d-block">{{ $c->created_at->format('d M Y, H:i') }}</small>
+                                <h5 class="fw-bold mb-3">💬 Messages</h5>
+                                <div class="border rounded p-3 mb-3" style="max-height: 400px; overflow-y: auto;">
+                                    @forelse($application->messages as $m)
+                                    <div class="d-flex mb-2 {{ $m->type === 'agent' ? 'justify-content-start' : 'justify-content-end' }}">
+                                        <div class="p-2 rounded" style="max-width:70%; background-color: {{ $m->type === 'agent' ? '#f1f1f1' : '#1a0262' }};
+                                       color: {{ $m->type === 'agent' ? '#000' : '#fff' }};">
+                                            <p class="mb-1 fw-semibold">{{ $m->message }}</p>
+                                            <small><b>{{ $m->user->name ?? 'Unknown' }}</b> • {{ $m->created_at->format('d M Y, H:i') }}</small>
+                                        </div>
                                     </div>
                                     @empty
-                                    <p class="text-muted">No comments yet.</p>
+                                    <p class="text-muted">No messages yet.</p>
                                     @endforelse
                                 </div>
+                                <form method="POST" action="{{ route('agent.applications.addMessage', $application) }}">
+                                    @csrf
+                                    <div class="d-flex">
+                                        <textarea name="message" class="form-control me-2" rows="2" placeholder="Add a message..." required></textarea>
+                                        <button type="submit" class="btn btn-primary btn-sm">Send</button>
+                                    </div>
+                                </form>
                             </div>
                             {{-- Actions --}}
                             <div class="mt-3">
@@ -186,12 +206,12 @@
                             </div>
                         </div>
                     </div>
+
                     @endforeach
                     @else
                     <p class="text-muted">Please Upload all necessary Documents and Add Application for this Student.</p>
                     @endif
                 </div>
-
 
                 {{-- Documents --}}
                 <div class="tab-pane fade" id="documents">
@@ -218,22 +238,19 @@
                         $isImage = in_array(strtolower($extension), ['jpg','jpeg','png','gif','webp']);
                         $filePath = asset('storage/' . $doc->file_path);
                         @endphp
-                        <div class="col-md-4 mb-3">
+                        <div class="col-md-4 mb-2">
                             <div class="card document-card shadow-sm">
                                 @if($isImage)
                                 <img src="{{ $filePath }}" class="card-img-top doc-preview" data-src="{{ $filePath }}" alt="Document Preview">
                                 @else
                                 <div class="doc-placeholder text-center p-4">
                                     <i class="fa fa-file fa-3x text-secondary"></i>
-                                    <p class="mt-2">{{ strtoupper($extension) }}</p>
+                                    <p class="mt-1">{{ strtoupper($extension) }}</p>
                                 </div>
                                 @endif
-
                                 <div class="card-body">
                                     <h6 class="card-title">{{ $doc->document_type ?? '—' }}</h6>
-                                    <p class="card-text text-truncate">{{ $doc->notes ?? '' }}</p>
-                                    <p class="text-muted mb-1"><small>Uploaded by: {{ $doc->uploader->username ?? $doc->uploader->business_name ?? 'N/A' }}</small></p>
-                                    <p class="text-muted mb-2"><small>{{ $doc->created_at->format('Y-m-d') }}</small></p>
+                                    <p class="text-muted mb-1"><small>{{ $doc->created_at->format('Y-m-d') }}</small></p>
                                     <div class="d-flex justify-content-between">
                                         <a href="{{ route('agent.documents.download', ['student'=>$student->id, 'document'=>$doc->id]) }}" class="btn btn-sm btn-success"><i class="fa fa-download"></i></a>
                                         <form method="POST" action="{{ route('agent.documents.destroy', [$student->id, $doc->id]) }}" class="d-inline" onsubmit="return confirm('Delete this document?')">
@@ -249,7 +266,6 @@
                     @endif
                 </div>
             </div>
-
             {{-- Row 2 Tabs --}}
             <ul class="nav nav-pills mb-3" id="row2Tabs" role="tablist">
                 <li class="nav-item"><button class="nav-link active" data-bs-toggle="pill" data-bs-target="#chat">💬 Chats</button></li>
@@ -354,8 +370,6 @@
             }
         }
     });
-
-</script>
 
 </script>
 

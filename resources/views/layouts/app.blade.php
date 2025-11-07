@@ -10,7 +10,6 @@
 
     <!-- Optional: FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
-    <link rel="stylesheet" href="path/to/font-awesome/css/font-awesome.min.css">
 
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ asset('css/students.css') }}">
@@ -21,6 +20,7 @@
     <link rel="stylesheet" href="{{asset('css/contact.css')}}">
     <link rel="stylesheet" href="{{asset('css/login.css')}}">
     <link rel="stylesheet" href="{{asset('css/application.css')}}">
+    <link rel="stylesheet" href="{{asset('css/notification.css')}}">
     <link rel="stylesheet" href="{{asset('css/user.css')}}">
 
 </head>
@@ -28,7 +28,7 @@
 
     @include('partials.header')
     @include('partials.alerts')
-    @include('components.image-modal')
+    @include('components.file_modal')
 
     <div class="main-content">
         @yield('content')
@@ -51,10 +51,7 @@
     <script src="{{ asset('js/login.js') }}"></script>
     <script src="{{ asset('js/header.js') }}"></script>
     <script src="{{ asset('js/filter.js') }}"></script>
-
-    <script src="{{ asset('js/modal-preview.js') }}"></script>
-
-
+    <script src="{{ asset('js/file_modal.js') }}"></script>
     @stack('scripts')
 </body>
 </html>

@@ -100,6 +100,14 @@ body {
     display: flex;
     gap: 12px;
 }
+
+.stat-link {
+    flex: 1; /* ensures equal spacing */
+    text-decoration: none;
+    color: inherit;
+    display: flex; /* so the card fills the link area */
+}
+
 .stat-card {
     flex: 1;
     text-align: center;
@@ -109,32 +117,42 @@ body {
     flex-direction: column;
     gap: 10px;
     justify-content: center;
+    transition: 0.2s;
 }
+
 .stat-card > i {
     font-size: 50px;
 }
+
 .stat-card h6 {
     color: var(--muted);
     font-size: 13px;
     margin: 0;
 }
+
 .stat-card h2 {
     margin: 8px 0;
     font-size: 32px;
 }
+
 .stat-card.blue {
     border-bottom: 6px solid #1a0262;
 }
+
 .stat-card.green {
     border-bottom: 6px solid #006e4a;
 }
-.stat-card.big {
-    border-left: 6px solid #1a0262;
-    flex: 1;
-}
+
 .stat-card.maroon {
     border-bottom: 6px solid #820b5c;
 }
+
+.stat-link:hover .stat-card {
+    background: #f8f8f8;
+    transform: translateY(-2px);
+    cursor: pointer;
+}
+
 /* fix chart sizes */
 #conversionChart,
 #statusChart,
@@ -188,7 +206,7 @@ body {
 .charts-row {
     display: grid;
     gap: 12px;
-    grid-template-columns: 1fr 2fr;
+    grid-template-columns: 2fr 1fr;
 }
 .chart-card {
     flex: 1;

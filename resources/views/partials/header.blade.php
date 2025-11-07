@@ -11,6 +11,10 @@ $user = auth()->user();
             <div class="header-left">
                 <div class="header-logo">
                     <img src="{{ asset('images/main_logo.png') }}" alt="Idea Consultancy" />
+                    @auth
+                    <strong>{{ Auth::user()->business_name }}</strong>
+                    @endauth
+
                 </div>
             </div>
 
@@ -19,8 +23,7 @@ $user = auth()->user();
                 <div class="notice-bar">
                     <p class="notice-text">
                         <span class="marquee-text">
-                            Important Notice: Our office will be closed on December 25th and January 1st for the holidays.
-                            Wishing you a joyful season!
+                            📢 Notice: Dubai promotion started! 10+ direct college affiliations, high commissions, 100% visa success — bring good numbers & earn rewards, FAM trips for top performers!
                         </span>
                     </p>
                 </div>
@@ -44,9 +47,9 @@ $user = auth()->user();
                     <div class="notification-dropdown">
                         <button class="notification-toggle" aria-expanded="false" aria-controls="notif-menu">
                             <i class="fa fa-bell"></i>
-                            @if(auth()->user()->unreadNotifications->where('data.type', '!=', 'application_message')->count() > 0)
+                            @if(auth()->user()->unreadNotifications->where('data.type', '!=', 'application_message_added')->count() > 0)
                             <span class="notification-badge">
-                                {{ auth()->user()->unreadNotifications->where('data.type', '!=', 'application_message')->count() }}
+                                {{ auth()->user()->unreadNotifications->where('data.type', '!=', 'application_message_added')->count() }}
                             </span>
                             @endif
                         </button>
@@ -54,7 +57,7 @@ $user = auth()->user();
                         <div class="notification-menu" id="notif-menu">
                             @php
                             $otherNotifications = auth()->user()->unreadNotifications
-                            ->where('data.type', '!=', 'application_message');
+                            ->where('data.type', '!=', 'application_message_added');
                             @endphp
 
                             {{-- Regular Notifications --}}
@@ -73,7 +76,7 @@ $user = auth()->user();
                             <small class="text-muted ps-2">Earlier</small>
                             @endif
 
-                            @foreach(auth()->user()->readNotifications->where('data.type', '!=', 'application_message')->take(3) as $notification)
+                            @foreach(auth()->user()->readNotifications->where('data.type', '!=', 'application_message_added')->take(3) as $notification)
                             <a href="{{ $notification->data['link'] ?? '#' }}" class="notification-item">
                                 <div>{{ auth()->user()->formatNotification($notification) }}</div>
                                 <small class="text-muted">{{ $notification->created_at->diffForHumans() }}</small>
@@ -89,9 +92,9 @@ $user = auth()->user();
                     <div class="notification-dropdown">
                         <button class="notification-toggle" aria-expanded="false" aria-controls="message-menu">
                             <i class="fa fa-envelope"></i>
-                            @if(auth()->user()->unreadNotifications->where('data.type', 'application_message')->count() > 0)
+                            @if(auth()->user()->unreadNotifications->where('data.type', 'application_message_added')->count() > 0)
                             <span class="notification-badge">
-                                {{ auth()->user()->unreadNotifications->where('data.type', 'application_message')->count() }}
+                                {{ auth()->user()->unreadNotifications->where('data.type', 'application_message_added')->count() }}
                             </span>
                             @endif
                         </button>
@@ -99,7 +102,7 @@ $user = auth()->user();
                         <div class="notification-menu" id="message-menu">
                             @php
                             $messageNotifications = auth()->user()->unreadNotifications
-                            ->where('data.type', 'application_message');
+                            ->where('data.type', 'application_message_added');
                             @endphp
 
                             @forelse($messageNotifications->take(5) as $notification)
@@ -115,95 +118,95 @@ $user = auth()->user();
                         </div>
                     </div>
 
-                    {{-- Welcome Message & Avatar --}}
+                    {{-- Welcome Message & Avatar
                     <div class="welcome-message">
                         <strong>{{ $user->name }}</strong>
-                    </div>
-                    <div class="user-avatar">
-                        @if($user->business_logo)
-                        <img src="{{ Storage::url($user->business_logo) }}" alt="Logo" width="120" height="120" class="rounded border shadow-sm">
-                        @else
-                        <div class="no-logo">No Logo</div>
-                        @endif
-                    </div>
+                </div> --}}
+                <div class="user-avatar">
+                    @if($user->business_logo)
+                    <img src="{{ Storage::url($user->business_logo) }}" alt="Logo" width="120" height="120" class="rounded border shadow-sm">
+                    @else
+                    <div class="no-logo">No Logo</div>
+                    @endif
                 </div>
-                @endauth
-
-                {{-- Mobile Toggle Button --}}
-                <button class="menu-toggle" aria-label="Toggle navigation menu">
-                    <i class="fa fa-bars"></i>
-                </button>
             </div>
+            @endauth
+
+            {{-- Mobile Toggle Button --}}
+            <button class="menu-toggle" aria-label="Toggle navigation menu">
+                <i class="fa fa-bars"></i>
+            </button>
         </div>
+    </div>
 
-        {{-- Main Navigation Menu --}}
-        <nav class="header-nav">
-            <ul class="nav-list">
-                @if ($user?->is_admin)
-                <li class="nav-item {{ request()->is('admin/dashboard') ? 'active' : '' }}">
-                    <a href="{{ route('admin.dashboard') }}"><i class="fa fa-house"></i> Dashboard</a>
-                </li>
-                <li class="nav-item {{ request()->is('admin/students*') ? 'active' : '' }}">
-                    <a href="{{ route('admin.students.index') }}"><i class="fa fa-users"></i> Students</a>
-                </li>
-                <li class="nav-item {{ request()->is('admin/universities*') ? 'active' : '' }}">
-                    <a href="{{ route('admin.universities.index') }}"><i class="fa fa-university"></i> Universities</a>
-                </li>
-                <li class="nav-item {{ request()->is('admin/users*') ? 'active' : '' }}">
-                    <a href="{{ route('admin.users.index') }}"><i class="fa fa-user"></i> Users</a>
-                </li>
-                <li class="nav-item {{ request()->is('admin/applications*') ? 'active' : '' }}">
-                    <a href="{{ route('admin.applications.index') }}"><i class="fa fa-file-text"></i> Applications</a>
-                </li>
+    {{-- Main Navigation Menu --}}
+    <nav class="header-nav">
+        <ul class="nav-list">
+            @if ($user?->is_admin)
+            <li class="nav-item {{ request()->is('admin/dashboard') ? 'active' : '' }}">
+                <a href="{{ route('admin.dashboard') }}"><i class="fa fa-house"></i> Dashboard</a>
+            </li>
+            <li class="nav-item {{ request()->is('admin/students*') ? 'active' : '' }}">
+                <a href="{{ route('admin.students.index') }}"><i class="fa fa-users"></i> Students</a>
+            </li>
+            <li class="nav-item {{ request()->is('admin/universities*') ? 'active' : '' }}">
+                <a href="{{ route('admin.universities.index') }}"><i class="fa fa-university"></i> Universities</a>
+            </li>
+            <li class="nav-item {{ request()->is('admin/users*') ? 'active' : '' }}">
+                <a href="{{ route('admin.users.index') }}"><i class="fa fa-user"></i> Users</a>
+            </li>
+            <li class="nav-item {{ request()->is('admin/applications*') ? 'active' : '' }}">
+                <a href="{{ route('admin.applications.index') }}"><i class="fa fa-file-text"></i> Applications</a>
+            </li>
 
-                @elseif ($user?->is_agent)
-                <li class="nav-item {{ request()->is('agent/dashboard') ? 'active' : '' }}">
-                    <a href="{{ route('agent.dashboard') }}"><i class="fa fa-house"></i> Dashboard</a>
-                </li>
-                <li class="nav-item {{ request()->is('agent/students*') ? 'active' : '' }}">
-                    <a href="{{ route('agent.students.index') }}"><i class="fa fa-users"></i> Students</a>
-                </li>
-                <li class="nav-item {{ request()->is('agent/universities*') ? 'active' : '' }}">
-                    <a href="{{ route('agent.universities.index') }}"><i class="fa fa-university"></i> Universities</a>
-                </li>
-                <li class="nav-item {{ request()->is('agent/applications*') ? 'active' : '' }}">
-                    <a href="{{ route('agent.applications.index') }}"><i class="fa fa-book"></i> Applied List</a>
-                </li>
+            @elseif ($user?->is_agent)
+            <li class="nav-item {{ request()->is('agent/dashboard') ? 'active' : '' }}">
+                <a href="{{ route('agent.dashboard') }}"><i class="fa fa-house"></i> Dashboard</a>
+            </li>
+            <li class="nav-item {{ request()->is('agent/students*') ? 'active' : '' }}">
+                <a href="{{ route('agent.students.index') }}"><i class="fa fa-users"></i> Students</a>
+            </li>
+            <li class="nav-item {{ request()->is('agent/universities*') ? 'active' : '' }}">
+                <a href="{{ route('agent.universities.index') }}"><i class="fa fa-university"></i> Universities</a>
+            </li>
+            <li class="nav-item {{ request()->is('agent/applications*') ? 'active' : '' }}">
+                <a href="{{ route('agent.applications.index') }}"><i class="fa fa-book"></i> Applied List</a>
+            </li>
 
-                @else
-                {{-- Guest Navigation --}}
-                <li class="nav-item {{ request()->is('/') ? 'active' : '' }}">
-                    <a href="{{ url('/') }}"><i class="fa fa-house"></i> Home</a>
-                </li>
-                <li class="nav-item">
-                    <a href="https://ideaconsultancyservices.com/"><i class="fa fa-globe"></i> Webpage</a>
-                </li>
-                <li class="nav-item {{ request()->is('guest/universities*') ? 'active' : '' }}">
-                    <a href="{{ route('guest.universities.index') }}"><i class="fa fa-calendar-check"></i> Universities</a>
-                </li>
-                <li class="nav-item {{ request()->is('auth/contact') ? 'active' : '' }}">
-                    <a href="{{ route('auth.contact') }}"><i class="fa fa-envelope"></i> Contact Us</a>
-                </li>
-                <li class="nav-item {{ request()->is('auth/login') ? 'active' : '' }}">
-                    <a href="{{ route('login') }}"><i class="fa fa-sign-in"></i> Login</a>
-                </li>
-                <li class="nav-item {{ request()->is('auth/register') ? 'active' : '' }}">
-                    <a href="{{ route('register') }}"><i class="fa fa-user-plus"></i> Register</a>
-                </li>
-                @endif
+            @else
+            {{-- Guest Navigation --}}
+            <li class="nav-item {{ request()->is('/') ? 'active' : '' }}">
+                <a href="{{ url('/') }}"><i class="fa fa-house"></i> Home</a>
+            </li>
+            <li class="nav-item">
+                <a href="https://ideaconsultancyservices.com/"><i class="fa fa-globe"></i> Webpage</a>
+            </li>
+            <li class="nav-item {{ request()->is('guest/universities*') ? 'active' : '' }}">
+                <a href="{{ route('guest.universities.index') }}"><i class="fa fa-calendar-check"></i> Universities</a>
+            </li>
+            <li class="nav-item {{ request()->is('auth/contact') ? 'active' : '' }}">
+                <a href="{{ route('auth.contact') }}"><i class="fa fa-envelope"></i> Contact Us</a>
+            </li>
+            <li class="nav-item {{ request()->is('auth/login') ? 'active' : '' }}">
+                <a href="{{ route('login') }}"><i class="fa fa-sign-in"></i> Login</a>
+            </li>
+            <li class="nav-item {{ request()->is('auth/register') ? 'active' : '' }}">
+                <a href="{{ route('register') }}"><i class="fa fa-user-plus"></i> Register</a>
+            </li>
+            @endif
 
-                {{-- Logout --}}
-                @auth
-                <li class="nav-item logout-link">
-                    <form method="POST" action="{{ route('logout') }}">
-                        @csrf
-                        <a href="{{ route('logout') }}" onclick="event.preventDefault(); this.closest('form').submit();">
-                            <i class="fa-solid fa-right-from-bracket"></i> Logout
-                        </a>
-                    </form>
-                </li>
-                @endauth
-            </ul>
-        </nav>
+            {{-- Logout --}}
+            @auth
+            <li class="nav-item logout-link">
+                <form method="POST" action="{{ route('logout') }}">
+                    @csrf
+                    <a href="{{ route('logout') }}" onclick="event.preventDefault(); this.closest('form').submit();">
+                        <i class="fa-solid fa-right-from-bracket"></i> Logout
+                    </a>
+                </form>
+            </li>
+            @endauth
+        </ul>
+    </nav>
     </div>
 </header>

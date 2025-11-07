@@ -44,23 +44,29 @@ class DocumentDeleted extends Notification // implements ShouldQueue
     {
         $doc = $this->document;
         $student = $doc->student;
-        $uploader = $doc->uploader;
         $agent = $this->agent;
-        ActivityLogger::log("Deleted document: {$this->document->title}", $this->document->deleted_by);
+
+        ActivityLogger::log(
+            'document_deleted',
+            "Document deleted: {$doc->document_type} ({$doc->file_name}) for {$student->first_name} {$student->last_name} by {$agent->business_name}",
+            $doc->id,
+            route('agent.documents.index', $student->id),
+            $agent->id
+        );
 
         return [
-            'type'        => 'document_deleted',
-            'message'     => "{$doc->document_type} document deleted for {$student->first_name} {$student->last_name} by {$agent->name}",
+            'type' => 'document_deleted',
+            'message' => "{$doc->document_type} document deleted for {$student->first_name} {$student->last_name} by {$agent->owner_name}",
             'document_id' => $doc->id,
-            'file_name'   => $doc->file_name,
+            'file_name' => $doc->file_name,
             'document_type' => $doc->document_type,
-            'student'     => [
+            'student' => [
                 'id' => $student->id,
                 'name' => $student->first_name . ' ' . $student->last_name,
             ],
             'deleted_by' => [
-                'id' => $uploader->id,
-                'name' => $uploader->business_name ?? $uploader->username ?? $uploader->name,
+                'id' => $agent->id,
+                'name' => $agent->owner_name,
             ],
             'link' => route(
                 $notifiable->is_admin ? 'admin.students.show' : 'agent.documents.index',

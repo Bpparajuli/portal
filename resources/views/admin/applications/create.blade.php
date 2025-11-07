@@ -36,9 +36,6 @@
         {{-- SOP --}}
         <x-form.file name="sop" label="Upload SOP (PDF/DOC)" required />
 
-        {{-- REMARKS --}}
-        <x-form.textarea name="remarks" label="Remarks" />
-
         <button type="submit" class="btn btn-success mt-3">Submit Application</button>
     </form>
 </div>

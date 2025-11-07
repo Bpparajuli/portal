@@ -6,34 +6,43 @@ use App\Http\Controllers\Controller;
 use App\Models\Document;
 use App\Models\Student;
 use App\Models\User;
-use App\Notifications\DocumentUploaded;
 use App\Notifications\DocumentDeleted;
+use App\Notifications\DocumentUploaded;
+use App\Helpers\ActivityLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Notification;
-use App\Helpers\ActivityLogger;
 
 class DocumentController extends Controller
 {
-    // Master list of document types (same as agent)
     private function allDocumentTypes(): array
     {
-        return ['passport', 'id', 'transcript', 'financial', 'other'];
+        return [
+            'passport',
+            '10th_certificate',
+            '10th_transcript',
+            '11th_transcript',
+            '12th_certificate',
+            '12th_transcript',
+            'cv',
+            'moi',
+            'lor',
+            'ielts_pte_language_certificate',
+            'sop',
+        ];
     }
 
     public function index(Student $student)
     {
         $documents = $student->documents()->latest()->get();
 
-        $uploadedTypes = $documents->pluck('document_type')
-            ->map(fn($t) => is_null($t) ? null : strtolower($t))
-            ->filter()
-            ->toArray();
+        $allDocumentTypes = $this->allDocumentTypes();
 
-        $availableTypes = array_values(array_diff($this->allDocumentTypes(), $uploadedTypes));
+        $predefinedDocs = $documents->filter(fn($doc) => in_array(strtolower($doc->document_type), $allDocumentTypes));
+        $otherDocs = $documents->filter(fn($doc) => !in_array(strtolower($doc->document_type), $allDocumentTypes));
 
-        return view('admin.documents.index', compact('student', 'documents', 'availableTypes'));
+        return view('admin.documents.index', compact('student', 'predefinedDocs', 'otherDocs', 'allDocumentTypes'));
     }
 
     public function store(Request $request, Student $student)
@@ -48,31 +57,43 @@ class DocumentController extends Controller
                         return $fail("Invalid document type selected.");
                     }
                     if ($student->documents()->whereRaw('LOWER(document_type) = ?', [$value])->exists()) {
-                        return $fail("A document of type '{$value}' has already been uploaded for this student.");
+                        return $fail("A document of type '{$value}' already exists for this student.");
                     }
                 },
             ],
-            'file' => 'required|mimes:jpg,jpeg,png,pdf|max:51200', // 50MB
+            'file' => 'required|mimes:jpg,jpeg,png,pdf|max:51200',
         ]);
 
+        $this->saveDocument($request->file('file'), $request->document_type, $student);
+
+        return redirect()->route('admin.documents.index', $student->id)
+            ->with('success', 'Document uploaded successfully.');
+    }
+
+    public function storeOther(Request $request, Student $student)
+    {
+        $request->validate([
+            'custom_name' => 'required|string|max:255',
+            'file' => 'required|mimes:jpg,jpeg,png,pdf|max:51200',
+        ]);
+
+        $this->saveDocument($request->file('file'), $request->custom_name, $student);
+
+        return redirect()->route('admin.documents.index', $student->id)
+            ->with('success', 'Other document uploaded successfully.');
+    }
+
+    private function saveDocument($file, $documentType, Student $student)
+    {
         $admin = Auth::user();
 
-        // Clean student name
         $rawStudentName = trim(($student->first_name ?? '') . '_' . ($student->last_name ?? ''));
-        if (empty($rawStudentName) || $rawStudentName === '_') {
-            $rawStudentName = 'student_' . $student->id;
-        }
-        $safeStudent = preg_replace('/[^A-Za-z0-9_\-]/', '_', strtolower($rawStudentName));
+        $safeStudent = empty($rawStudentName) ? 'student_' . $student->id : preg_replace('/[^A-Za-z0-9_\-]/', '_', strtolower($rawStudentName));
 
-        $file = $request->file('file');
-        $documentType = strtolower($request->document_type);
-        $fileName = $documentType . '.' . $file->getClientOriginalExtension();
-
-        // Store inside "admin_uploads/student_name/"
+        $fileName = preg_replace('/[^A-Za-z0-9_\-]/', '_', strtolower($documentType)) . '.' . $file->getClientOriginalExtension();
         $folderPath = "admin_uploads/{$safeStudent}";
         $filePath = $file->storeAs($folderPath, $fileName, 'public');
 
-        // Create record
         $document = Document::create([
             'student_id' => $student->id,
             'uploaded_by' => $admin->id,
@@ -83,7 +104,7 @@ class DocumentController extends Controller
             'status' => 'uploaded',
         ]);
 
-        // Notify agent if assigned to this student
+        // Notify assigned agent if any
         if ($student->agent_id) {
             $agent = User::find($student->agent_id);
             if ($agent) {
@@ -93,30 +114,30 @@ class DocumentController extends Controller
 
         ActivityLogger::log(
             'document_uploaded_admin',
-            "📄 Admin uploaded document: {$documentType}",
+            "📄 Admin uploaded document: {$documentType} for {$student->first_name} {$student->last_name}",
             $document->id,
             route('admin.documents.index', $student->id)
         );
-
-        return redirect()->route('admin.documents.index', $student->id)
-            ->with('success', 'Document uploaded successfully.');
     }
 
     public function destroy(Student $student, Document $document)
     {
         $admin = Auth::user();
 
+        // Extra safeguard for mismatched student-document
         if ($document->student_id !== $student->id) {
-            abort(403);
+            abort(403, 'Unauthorized document access.');
         }
 
+        // Delete from storage if exists
         if ($document->file_path && Storage::disk('public')->exists($document->file_path)) {
             Storage::disk('public')->delete($document->file_path);
         }
 
+        $documentType = $document->document_type;
         $document->delete();
 
-        // Notify agent if assigned
+        // Notify assigned agent if exists
         if ($student->agent_id) {
             $agent = User::find($student->agent_id);
             if ($agent) {
@@ -124,27 +145,24 @@ class DocumentController extends Controller
             }
         }
 
+        // Log the deletion
         ActivityLogger::log(
             'document_deleted_admin',
-            "❌ Admin deleted document: {$document->document_type}",
+            "❌ Admin deleted document: {$documentType} for {$student->first_name} {$student->last_name}",
             $document->id,
             route('admin.documents.index', $student->id)
         );
 
-        return back()->with('success', 'Document deleted successfully.');
+        return redirect()->route('admin.documents.index', $student->id)
+            ->with('success', 'Document deleted successfully.');
     }
+
 
     public function download(Student $student, Document $document)
     {
-        if ($document->student_id !== $student->id) {
-            abort(403, 'Unauthorized access.');
-        }
+        if ($document->student_id !== $student->id) abort(403);
+        if (!Storage::disk('public')->exists($document->file_path)) abort(404);
 
-        if (!Storage::disk('public')->exists($document->file_path)) {
-            abort(404, 'File not found.');
-        }
-
-        $absolutePath = Storage::disk('public')->path($document->file_path);
-        return response()->download($absolutePath, $document->file_name);
+        return response()->download(Storage::disk('public')->path($document->file_path), $document->file_name);
     }
 }

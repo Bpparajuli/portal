@@ -6,11 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Application;
 use App\Models\Student;
-
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Notification;
+use App\Notifications\UserRegistered;
 use App\Notifications\UserApproved;
 
 class UserController extends Controller
@@ -30,19 +31,19 @@ class UserController extends Controller
         }
 
         if ($role === 'admin') {
-            $admins = User::where('is_admin', true)->paginate(5)->withQueryString();
+            $admins = User::where('is_admin', true)->paginate(10)->withQueryString();
             $agents = collect();
         } elseif ($role === 'agent') {
             $admins = collect();
             $agents = User::where('is_agent', true)
                 ->withCount(['students', 'applications'])
-                ->paginate(5)
+                ->paginate(10)
                 ->withQueryString();
         } else {
-            $admins = User::where('is_admin', true)->paginate(5)->withQueryString();
+            $admins = User::where('is_admin', true)->paginate(10)->withQueryString();
             $agents = User::where('is_agent', true)
                 ->withCount(['students', 'applications'])
-                ->paginate(5)
+                ->paginate(10)
                 ->withQueryString();
         }
 
@@ -94,6 +95,11 @@ class UserController extends Controller
         $this->handleBusinessLogoUpload($request, $user);
         $user->save();
 
+        // Notify admin about new registration
+        $admin = User::find(2); // or adjust your admin logic
+        Notification::send($admin, new UserRegistered($user));
+
+
         return redirect()->route('admin.users.index')->with('success', 'User added successfully.');
     }
 
@@ -132,11 +138,11 @@ class UserController extends Controller
     public function destroy(User $user)
     {
         if (Auth::id() !== 1) {
-            return back()->with('error', 'Only root admin can delete users.');
+            return back()->with('error', 'Only Main admin can delete users.');
         }
 
         if ($user->id == 1) {
-            return back()->with('error', 'Cannot delete root admin.');
+            return back()->with('error', 'Cannot delete Main admin.');
         }
 
         if ($user->business_logo && Storage::disk('public')->exists($user->business_logo)) {
@@ -194,9 +200,6 @@ class UserController extends Controller
         }
     }
 
-    /**
-     * ✅ Admin view: students of an agent
-     */
     public function students(User $agent, Request $request)
     {
         if (!$agent->is_agent) abort(404);
@@ -220,11 +223,6 @@ class UserController extends Controller
         return view('admin.users.students', compact('agent', 'students'));
     }
 
-
-
-    /**
-     * ✅ Admin view: applications of an agent
-     */
     public function applications(User $agent, Request $request)
     {
         if (!$agent->is_agent) abort(404);
