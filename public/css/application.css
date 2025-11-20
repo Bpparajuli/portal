@@ -1,13 +1,8 @@
-/* application-status.css */
-:root {
-    --completed-color: #28a745;
-    --current-color: #ffc107;
-    --muted-color: #e9ecef;
-    --muted-text: #777;
-    --label-color: #333;
-}
+/* =========================
+   Progress Tracker Component
+   ========================= */
 
-/* container */
+/* Container */
 .app-progress {
     width: 100%;
     max-width: 1000px;
@@ -15,37 +10,50 @@
     padding: 16px;
     box-sizing: border-box;
 }
-
-/* bar wrapper */
+.status-card {
+    margin-bottom: 16px;
+    text-align: center;
+}
+.status-pill {
+    display: inline-block;
+    background: linear-gradient(90deg, var(--primary), var(--secondary));
+    color: #fff;
+    font-weight: 700;
+    padding: 10px 20px;
+    border-radius: var(--radius);
+    font-size: 16px;
+}
+/* Progress Bar Wrapper */
 .progress-bar {
     position: relative;
     height: 8px;
-    background: var(--muted-color);
+    background: var(--muted);
     border-radius: 6px;
     margin-top: 36px;
     overflow: visible;
 }
 
-/* fill (completed area) - width controlled by inline style var --progress */
+/* Fill (Percentage Controlled) */
 .progress-fill {
     position: absolute;
     left: 0;
     top: 0;
     height: 100%;
-    width: var(--progress); /* example: "36%" */
+    width: var(--progress);
     background: linear-gradient(90deg, #28a745 0%, #2ecc71 100%);
     border-radius: 6px;
     transition: width 600ms ease;
     z-index: 1;
 }
 
-/* center box above the bar showing current step */
+/* Floating Step Info Box */
 .progress-box {
     position: absolute;
     left: var(--progress);
     top: -62px;
     transform: translateX(-50%);
     background: #fff;
+    color: black;
     padding: 8px 12px;
     border-radius: 10px;
     box-shadow: 0 8px 20px rgba(11, 22, 40, 0.06);
@@ -53,77 +61,67 @@
     max-width: 260px;
     text-align: center;
     z-index: 4;
-    pointer-events: none; /* display-only */
+    pointer-events: none;
 }
 
 .progress-box-title {
-    display: block;
     font-size: 14px;
-    color: var(--label-color);
+    color: var(--dark);
+    display: block;
     white-space: nowrap;
-    overflow: hidden;
     text-overflow: ellipsis;
+    overflow: hidden;
 }
 
 .progress-box-sub {
     font-size: 12px;
-    color: #666;
+    color: #323232;
     margin-top: 4px;
+    font-weight: 600;
 }
 
-/* step list under the bar */
-/* step list under the bar */
-.steps-list {
+/* status Row */
+.status-list {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    margin: 12px 0 0 0;
-    padding: 0;
     list-style: none;
-    gap: 0; /* no gap, flex distributes evenly */
-    overflow-x: hidden; /* no scroll */
+    margin-top: 12px;
+    padding: 0;
     width: 100%;
+    gap: 0;
+    overflow-x: hidden;
 }
 
-/* each step evenly distributed */
+/* Step Item */
 .step-item {
-    flex: 1 1 auto; /* allow equal growth/shrink */
-    text-align: center;
-    padding: 4px;
-    cursor: default;
-    box-sizing: border-box;
-}
-
-/* each step */
-.step-item {
-    flex: 1 1 0;
+    flex: 1 1 auto;
     text-align: center;
     min-width: 80px;
     box-sizing: border-box;
-    padding: 4px;
     cursor: default;
+    padding: 4px;
 }
 
-/* dot (circle) */
+/* Step Dot */
 .step-dot {
-    display: inline-block;
     width: 30px;
     height: 30px;
-    line-height: 30px;
     border-radius: 50%;
-    background: #fff;
     border: 2px solid #ddd;
-    font-weight: 800;
+    background: #fff;
+    line-height: 30px;
     font-size: 13px;
+    font-weight: 800;
     color: #555;
-    box-sizing: border-box;
+    display: inline-block;
 }
 
-/* label text */
+/* Step Label */
 .step-label {
     margin-top: 8px;
     font-size: 12px;
-    color: var(--muted-text);
+    color: var(--muted-2);
     max-width: 100px;
     margin-left: auto;
     margin-right: auto;
@@ -132,20 +130,20 @@
     white-space: nowrap;
 }
 
-/* completed step styles */
+/* Completed Step */
 .step-item.completed .step-dot {
-    background: var(--completed-color);
-    border-color: var(--completed-color);
+    background: var(--success);
+    border-color: var(--success);
     color: #fff;
 }
 .step-item.completed .step-label {
-    color: var(--completed-color);
+    color: var(--success);
     font-weight: 700;
 }
 
-/* current step styles */
+/* Current Step */
 .step-item.current .step-dot {
-    background: var(--current-color);
+    background: var(--warning);
     border-color: #d4a800;
     color: #222;
 }
@@ -154,7 +152,7 @@
     font-weight: 800;
 }
 
-/* upcoming step styles */
+/* Upcoming Step */
 .step-item.upcoming .step-dot {
     background: #fff;
     border-color: #ddd;
@@ -165,16 +163,47 @@
     font-weight: 500;
 }
 
-/* responsive tweaks */
+/* =========================
+   Mobile Responsive Design
+   ========================= */
 @media (max-width: 720px) {
     .step-label {
-        display: none;
-    } /* hide long labels on small screens */
-    .step-item {
-        min-width: 64px;
+        display: none; /* Hide long labels */
     }
+
+    .step-item {
+        min-width: 55px; /* Better compact sizing */
+    }
+
     .progress-box {
-        min-width: 120px;
-        font-size: 13px;
+        min-width: 110px;
+        font-size: 12px;
+        padding: 6px 10px;
+    }
+
+    .progress-box-sub {
+        font-size: 11px;
+    }
+
+    .progress-dot {
+        width: 26px;
+        height: 26px;
+        font-size: 12px;
+        line-height: 26px;
+    }
+}
+
+@media (max-width: 480px) {
+    .progress-box {
+        top: -54px;
+        min-width: 100px;
+    }
+
+    .app-progress {
+        padding: 8px;
+    }
+
+    .progress-bar {
+        margin-top: 28px;
     }
 }

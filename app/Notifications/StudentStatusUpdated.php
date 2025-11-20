@@ -6,37 +6,31 @@ use App\Models\Student;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 use App\Helpers\ActivityLogger;
+use App\Helpers\HasActivityLink;
 
 class StudentStatusUpdated extends Notification
 {
-    use Queueable;
+    use Queueable, HasActivityLink;
 
     protected $student;
 
-    /**
-     * Create a new notification instance.
-     */
     public function __construct(Student $student)
     {
         $this->student = $student;
     }
 
-    /**
-     * Define delivery channels.
-     */
     public function via($notifiable)
     {
         return ['database'];
     }
 
-    /**
-     * Store notification in the database.
-     */
-    public function toDatabase($notifiable)
+    public function toArray($notifiable)
     {
         $studentName = trim($this->student->first_name . ' ' . $this->student->last_name);
         $status = ucfirst($this->student->status);
-        $link = route('agent.students.show', $this->student->id);
+
+        // Get dynamic link based on notifiable
+        $link = $this->getActivityLink($notifiable, 'student_status_updated', $this->student);
 
         // Log the activity
         ActivityLogger::log(

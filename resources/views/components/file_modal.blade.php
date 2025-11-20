@@ -9,6 +9,10 @@
                 <button type="button" id="zoomInBtn" class="btn btn-outline-primary btn-sm me-2">➕ Zoom In</button>
                 <button type="button" id="zoomOutBtn" class="btn btn-outline-primary btn-sm me-2">➖ Zoom Out</button>
                 <button type="button" id="resetZoomBtn" class="btn btn-outline-secondary btn-sm me-2">🔄 Reset</button>
+                @php
+                $student = $student ?? null;
+                $doc = $doc ?? null;
+                @endphp
                 <button type="button" class="btn btn-danger btn-sm" data-bs-dismiss="modal">Close</button>
             </div>
         </div>

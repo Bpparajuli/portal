@@ -27,9 +27,9 @@
     @if($admins->count())
     <div class="card-section">
         <h4>Admins</h4>
-        <div class="table-wrapper">
-            <table class="table table-hover table-striped align-middle shadow-sm rounded text-center">
-                <thead>
+        <div class="table-responsive">
+            <table class=" table table-striped align-middle">
+                <thead class="table-primary">
                     <tr>
                         <th>ID</th>
                         <th>Logo</th>
@@ -92,9 +92,9 @@
     @if($agents->count())
     <div class="card-section">
         <h4>Agents</h4>
-        <div class="table-wrapper">
-            <table class="table table-hover table-striped align-middle shadow-sm rounded text-center">
-                <thead>
+        <div class="table-responsive">
+            <table class=" table table-striped align-middle">
+                <thead class="table-primary">
                     <tr>
                         <th>ID</th>
                         <th>Logo</th>

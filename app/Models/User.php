@@ -93,7 +93,7 @@ class User extends Authenticatable
                 break;
 
             // 📌 Application status updated
-            case 'application_status':
+            case 'application_status_updated':
                 $messageText = "📌 Application status updated for "
                     . ($data['student']['name'] ?? 'Unknown Student')
                     . " to "

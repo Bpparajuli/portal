@@ -3,17 +3,17 @@
 namespace App\Notifications;
 
 use App\Models\Document;
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue; // optional if you use queues
-use Illuminate\Notifications\Messages\MailMessage;
-use Illuminate\Notifications\Notification;
-use App\Helpers\ActivityLogger;
 use App\Models\Student;
 use App\Models\User;
+use Illuminate\Bus\Queueable;
+use Illuminate\Notifications\Notification;
+use Illuminate\Notifications\Messages\MailMessage;
+use App\Helpers\ActivityLogger;
+use App\Helpers\HasActivityLink;
 
-class DocumentDeleted extends Notification // implements ShouldQueue
+class DocumentDeleted extends Notification
 {
-    use Queueable;
+    use Queueable, HasActivityLink;
 
     public $agent, $student, $document;
 
@@ -23,6 +23,7 @@ class DocumentDeleted extends Notification // implements ShouldQueue
         $this->student = $student;
         $this->document = $document;
     }
+
     public function via($notifiable)
     {
         return ['database', 'mail'];
@@ -31,47 +32,40 @@ class DocumentDeleted extends Notification // implements ShouldQueue
     public function toMail($notifiable)
     {
         $doc = $this->document;
-        $student = $doc->student;
-
         return (new MailMessage)
-            ->subject('New Document Deleted')
+            ->subject('Document Deleted')
             ->greeting('Hello!')
-            ->line("A new document ({$doc->file_name}) was deleted for student {$student->first_name} {$student->last_name}.")
-            ->action('View Documents', url("/admin/students/{$this->student->id}/documents"));
+            ->line("A document ({$doc->file_name}) was deleted for student {$this->student->first_name} {$this->student->last_name}.")
+            ->action('View Documents', $this->getActivityLink($notifiable, 'document_deleted', $this->student));
     }
 
     public function toArray($notifiable)
     {
         $doc = $this->document;
-        $student = $doc->student;
-        $agent = $this->agent;
+        $link = $this->getActivityLink($notifiable, 'document_deleted', $this->student);
 
         ActivityLogger::log(
             'document_deleted',
-            "Document deleted: {$doc->document_type} ({$doc->file_name}) for {$student->first_name} {$student->last_name} by {$agent->business_name}",
-            $doc->id,
-            route('agent.documents.index', $student->id),
-            $agent->id
+            "🚮 {$doc->document_type} deleted for {$this->student->first_name} {$this->student->last_name}",
+            $this->student->id,
+            $link,
+            $this->agent->id
         );
 
         return [
             'type' => 'document_deleted',
-            'message' => "{$doc->document_type} document deleted for {$student->first_name} {$student->last_name} by {$agent->owner_name}",
+            'message' => "{$doc->document_type} deleted for {$this->student->first_name} {$this->student->last_name} by " .
+                ($this->agent->business_name ?? $this->agent->username ?? $this->agent->name),
             'document_id' => $doc->id,
-            'file_name' => $doc->file_name,
-            'document_type' => $doc->document_type,
             'student' => [
-                'id' => $student->id,
-                'name' => $student->first_name . ' ' . $student->last_name,
+                'id' => $this->student->id,
+                'name' => "{$this->student->first_name} {$this->student->last_name}",
             ],
             'deleted_by' => [
-                'id' => $agent->id,
-                'name' => $agent->owner_name,
+                'id' => $this->agent->id,
+                'name' => $this->agent->business_name ?? $this->agent->username ?? $this->agent->name,
             ],
-            'link' => route(
-                $notifiable->is_admin ? 'admin.students.show' : 'agent.documents.index',
-                $student->id
-            ),
+            'link' => $link,
         ];
     }
 }

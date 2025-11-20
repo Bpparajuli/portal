@@ -137,8 +137,9 @@ Route::middleware(['auth', \App\Http\Middleware\IsAdmin::class])
         // Notifications
         Route::get('notifications', [AdminNotificationController::class, 'index'])->name('notifications');
         Route::post('notifications/mark-all', [AdminNotificationController::class, 'markAll'])->name('notifications.markAll');
-        Route::post('notifications/{id}/read', [AdminNotificationController::class, 'markRead'])->name('notifications.markRead');
-        Route::post('notifications/{id}/unread', [AdminNotificationController::class, 'markUnread'])->name('notifications.markUnread');
+        Route::post('notifications/{id}/read', [AdminNotificationController::class, 'markAsRead'])->name('notifications.markRead');
+        Route::post('notifications/{id}/unread', [AdminNotificationController::class, 'markAsUnread'])->name('notifications.markUnread');
+        Route::get('notifications/{id}/redirect', [AdminNotificationController::class, 'readAndRedirect'])->name('notifications.readAndRedirect');
 
         // Dynamic Data
         Route::get('get-cities/{country}', [AdminUniversityController::class, 'getCities'])->name('get-cities');
@@ -167,11 +168,14 @@ Route::middleware(['auth', \App\Http\Middleware\IsAdmin::class])
             Route::post('documents', [AdminDocumentController::class, 'store'])->name('documents.store');
             Route::delete('documents/{document}/destroy', [AdminDocumentController::class, 'destroy'])->name('documents.destroy');
             Route::get('documents/{document}/download', [AdminDocumentController::class, 'download'])->name('documents.download');
+            Route::get('documents/download-all', [AdminDocumentController::class, 'downloadAll'])->name('documents.downloadAll');
         });
 
+
         // Applications
+        Route::get('students/{student}/applications', [AdminApplicationController::class, 'forStudent'])->name('students.applications');
         Route::patch('applications/{application}/withdraw', [AdminApplicationController::class, 'withdraw'])->name('applications.withdraw');
-        Route::post('applications/{application}/addmessage', [AdminApplicationController::class, 'addMessage'])->name('applications.addmessage');
+        Route::post('applications/{application}/add-message', [AdminApplicationController::class, 'addMessage'])->name('applications.addMessage');
         Route::resource('applications', AdminApplicationController::class);
     });
 
@@ -191,9 +195,11 @@ Route::middleware(['auth', \App\Http\Middleware\IsAgent::class])
 
         // Notifications
         Route::get('notifications', [AgentNotificationController::class, 'index'])->name('notifications');
-        Route::get('notifications/mark-as-read/{id}', [AgentNotificationController::class, 'markAsRead'])->name('notifications.markAsRead');
-        Route::get('notifications/mark-all-as-read', [AgentNotificationController::class, 'markAllAsRead'])->name('notifications.markAllAsRead');
-        Route::get('notifications/read/{id}', [AgentNotificationController::class, 'readAndRedirect'])->name('notifications.readAndRedirect');
+        Route::post('notifications/mark-all', [AgentNotificationController::class, 'markAll'])->name('notifications.markAll');
+        Route::post('notifications/{id}/read', [AgentNotificationController::class, 'markAsRead'])->name('notifications.markRead');
+        Route::post('notifications/{id}/unread', [AgentNotificationController::class, 'markAsUnread'])->name('notifications.markUnread');
+        Route::get('notifications/{id}/redirect', [AgentNotificationController::class, 'readAndRedirect'])->name('notifications.readAndRedirect');
+
 
         // Filters
         Route::get('get-cities/{country}', [AgentUniversityController::class, 'getCities'])->name('get-cities');

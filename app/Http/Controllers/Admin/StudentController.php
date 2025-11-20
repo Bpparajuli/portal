@@ -120,7 +120,7 @@ class StudentController extends Controller
     {
         // Notify agent before deletion
         if ($student->agent) {
-            Notification::send($student->agent, new StudentDeleted($student));
+            Notification::send($student->agent, new StudentDeleted(Auth::user(), $student));
         }
 
         // Delete student photo

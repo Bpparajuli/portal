@@ -8,9 +8,9 @@ use App\Models\Student;
 use App\Models\User;
 use App\Notifications\DocumentDeleted;
 use App\Notifications\DocumentUploaded;
-use App\Helpers\ActivityLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 
@@ -28,8 +28,7 @@ class DocumentController extends Controller
             'cv',
             'moi',
             'lor',
-            'ielts_pte_language_certificate',
-            'sop',
+            'ielts_pte_language_certificate'
         ];
     }
 
@@ -115,13 +114,6 @@ class DocumentController extends Controller
 
         $admin = User::find(3); // or adjust your admin logic
         Notification::send($admin, new DocumentUploaded($agent, $student, $document));
-
-        ActivityLogger::log(
-            'document_uploaded',
-            "📄 Document uploaded: {$documentType}",
-            $document->id,
-            route('agent.documents.index', $student->id)
-        );
     }
 
     public function destroy(Student $student, Document $document)

@@ -15,46 +15,64 @@ class CourseController extends Controller
      */
     public function index(Request $request)
     {
+        // Search filters
+        $search  = $request->input('search');
+        $country = $request->input('country');
+        $city    = $request->input('city');
+
+        // Query
         $query = Course::with('university');
 
-        // Search filters
-        if ($request->filled('search')) {
-            $query->where('title', 'like', '%' . $request->search . '%')
-                ->orWhere('course_code', 'like', '%' . $request->search . '%');
-        }
-
-        if ($request->filled('country')) {
-            $query->whereHas('university', function ($q) use ($request) {
-                $q->where('country', 'like', '%' . $request->country . '%');
+        // Apply Search Filter
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                // Search in courses table
+                $q->where('title', 'LIKE', '%' . $search . '%')
+                    ->orWhere('course_code', 'LIKE', '%' . $search . '%')
+                    // Search in universities table
+                    ->orWhereHas('university', function ($u) use ($search) {
+                        $u->where('name', 'LIKE', '%' . $search . '%')
+                            ->orWhere('short_name', 'LIKE', '%' . $search . '%');
+                    });
             });
         }
 
-        if ($request->filled('city')) {
-            $query->whereHas('university', function ($q) use ($request) {
-                $q->where('city', 'like', '%' . $request->city . '%');
+        // Filter by Country
+        if ($country) {
+            $query->whereHas('university', function ($q) use ($country) {
+                $q->where('country', $country);
             });
         }
 
-        if ($request->filled('university_id')) {
-            $query->where('university_id', $request->university_id);
+        // Filter by City
+        if ($city) {
+            $query->whereHas('university', function ($q) use ($city) {
+                $q->where('city', $city);
+            });
         }
 
-        $courses = $query->orderBy('created_at', 'desc')->paginate(25);
-        $universities = University::orderBy('name')->get();
+        // IMPORTANT: must use paginate() to fix firstItem() error
+        $courses = $query->orderBy('id', 'ASC')->paginate(50);
 
-        return view('admin.courses.index', compact('courses', 'universities'));
+        return view('admin.courses.index', compact('courses'));
     }
+
 
     /**
      * Show the form for creating a new course.
      */
-    public function create($university_id = null)
+    public function create(Request $request)
     {
         $universities = University::orderBy('name')->get();
-        $selectedUniversity = $university_id ? University::find($university_id) : null;
+
+        $selectedUniversity = $request->university_id
+            ? University::find($request->university_id)
+            : null;
 
         return view('admin.courses.create', compact('universities', 'selectedUniversity'));
     }
+
+
 
     /**
      * Store a newly created course in the database.
@@ -72,7 +90,9 @@ class CourseController extends Controller
                 }),
             ],
             'title' => 'required|string|max:255',
+            'course_link' => 'nullable|string',
             'course_type' => 'required|in:UG,PG,Diploma',
+            'academic_requirement' => 'nullable|string',
             'description' => 'nullable|string',
             'duration' => 'nullable|string|max:255',
             'fee' => 'nullable|string|max:255',
@@ -117,7 +137,9 @@ class CourseController extends Controller
                     ->ignore($id),
             ],
             'title' => 'required|string|max:255',
+            'course_link' => 'nullable|string',
             'course_type' => 'required|in:UG,PG,Diploma',
+            'academic_requirement' => 'nullable|string',
             'description' => 'nullable|string',
             'duration' => 'nullable|string|max:255',
             'fee' => 'nullable|string|max:255',

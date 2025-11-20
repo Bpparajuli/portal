@@ -10,11 +10,14 @@
     <form action="{{ route('admin.students.update', $student->id) }}" method="POST" enctype="multipart/form-data" class="student-form">
         @csrf @method('PUT')
         @include('admin.students.form')
-
-        <div class="form-actions mt-3">
-            <a href="{{ route('admin.documents.create', $student->id) }}" class="btn btn-warning">📄 Upload Document</a>
-            <button type="submit" class="btn btn-success">💾 Save Changes</button>
-        </div>
     </form>
-</div>
-@endsection
+    <div class="form-actions d-flex justify-content-between m-2">
+        <button type="submit" class="btn btn-success">💾 Save Changes</button>
+        <a href="{{ route('admin.documents.create', $student->id) }}" class="btn btn-warning">📄 Upload Document</a>
+        <form action="{{ route('admin.students.destroy', $student->id) }}" method="POST" onsubmit="return confirm('Are you sure?');" style="display: inline;">
+            @csrf
+            @method('DELETE')
+            <button type="submit" class="btn btn-danger">🗑️ Delete Student</button>
+        </form>
+    </div>
+    @endsection

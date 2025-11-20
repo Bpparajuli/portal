@@ -8,7 +8,7 @@
     <section class="dash-hero">
         <div class="dash-hero-text" data-aos="fade-right">
             <h1>Welcome to Idea Consultancy Agent Portal</h1>
-            <p class="dash-lead">Manage students, agents, and applications easily. Login or register to get started.</p>
+            <p class="dash-lead">Stay updated with the application status, manage students, find universities and search courses easily. Login or register to get started.</p>
             <div class="dash-hero-buttons">
                 <a href="{{ route('auth.register') }}" class="dash-btn dash-btn-register"> <i class="fa fa-user-plus"></i>
                     Register</a>
@@ -24,15 +24,12 @@
                     <input type="email" name="email" id="email" value="{{ old('email') }}" required autofocus>
                     @error('email')<span class="dash-error">{{ $message }}</span>@enderror
                 </div>
-
                 <div class="dash-form-group">
                     <label for="password">Password</label>
                     <input type="password" name="password" id="password" required>
                     @error('password')<span class="dash-error">{{ $message }}</span>@enderror
                 </div>
-
                 <button type="submit" class="dash-btn-login-submit">Login</button>
-
                 <p class="dash-register-link">
                     Don't have an account? <a href="{{ route('register') }}">Register here</a>
                 </p>
@@ -54,6 +51,11 @@
         </div>
         <div class="dash-feature-card">
             <i class="fa fa-university dash-icon"></i>
+            <h3>Find University & Courses</h3>
+            <p>Easy university search and course finding options.</p>
+        </div>
+        <div class="dash-feature-card">
+            <i class="fa fa-edit dash-icon"></i>
             <h3>University Applications</h3>
             <p>Connect with top universities and handle applications seamlessly.</p>
         </div>
@@ -117,22 +119,21 @@
         <div class="dash-programs-grid">
             <div class="dash-program-card">
                 <h3>Student Management Training</h3>
-                <p>Date: 2025-09-15</p>
+                <p>Date: 2025-11-15</p>
                 <a href="#" class="dash-btn-blue">Register</a>
             </div>
             <div class="dash-program-card">
                 <h3>University Applications Webinar</h3>
-                <p>Date: 2025-09-20</p>
+                <p>Date: 2025-11-15</p>
                 <a href="#" class="dash-btn-blue">Register</a>
             </div>
             <div class="dash-program-card">
                 <h3>Visa Process Guidance For Germany</h3>
-                <p>Date: 2025-09-25</p>
+                <p>Date: 2025-12-2</p>
                 <a href="#" class="dash-btn-blue">Register</a>
             </div>
         </div>
     </section>
-
 
     {{-- ⭐ Testimonials --}}
     <section class="dash-testimonials">
@@ -145,12 +146,12 @@
                     <h4>- Ramesh Kumar Thapa, Kathmandu, Nepal</h4>
                 </div>
                 <div class="dash-testimonial-card">
-                    <p>"Finding courses and program details is really simple. The portal makes it easy to compare universities and options without any confusion."</p>
+                    <p>"Finding courses and university details is really simple. The portal makes it easy to find universities and available courses without any confusion."</p>
                     <h4>- Anisha Gurung, Pokhara, Nepal</h4>
                 </div>
                 <div class="dash-testimonial-card">
                     <p>"The IDEA team members are very supportive. They guide us at every step and are always available to answer questions."</p>
-                    <h4>- Bipin Shrestha, Lalitpur, Nepal</h4>
+                    <h4>- Suman Shah, Biratnagar, Nepal</h4>
                 </div>
                 <div class="dash-testimonial-card">
                     <p>"The training sessions organized by IDEA were extremely helpful. They gave practical insights and prepared us well for the application and visa process."</p>
@@ -206,7 +207,6 @@
             </div>
         </div>
     </section>
-
     {{-- 🎓 University Logo Slider --}}
     <section class="dash-universities">
         <h2 class="section-title">Our Partner Universities</h2>
@@ -220,7 +220,6 @@
                 <img src="{{ asset('storage/uni_logo/' . $fileName) }}" alt="{{ ucfirst($alt) }}">
             </div>
             @endforeach
-
         </div>
     </section>
 

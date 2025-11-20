@@ -9,20 +9,14 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 use Illuminate\Notifications\Messages\MailMessage;
 use App\Helpers\ActivityLogger;
+use App\Helpers\HasActivityLink;
 
 class DocumentUploaded extends Notification
 {
-    use Queueable;
+    use Queueable, HasActivityLink;
 
-    public $agent;
-    public $student;
-    public $document;
+    public $agent, $student, $document;
 
-    /**
-     * @param User $agent
-     * @param Student $student
-     * @param Document $document
-     */
     public function __construct(User $agent, Student $student, Document $document)
     {
         $this->agent = $agent;
@@ -30,67 +24,50 @@ class DocumentUploaded extends Notification
         $this->document = $document;
     }
 
-    /**
-     * Notification channels
-     */
     public function via($notifiable)
     {
         return ['database', 'mail'];
     }
 
-    /**
-     * Email representation
-     */
     public function toMail($notifiable)
     {
         $doc = $this->document;
-        $student = $this->student;
         $uploadedBy = $this->agent->business_name ?? $this->agent->username ?? $this->agent->name;
 
         return (new MailMessage)
-            ->subject('New Document Uploaded')
+            ->subject('Document Uploaded')
             ->greeting('Hello!')
-            ->line("A new document ({$doc->document_type}: {$doc->file_name}) was uploaded for student {$student->first_name} {$student->last_name} by {$uploadedBy}.")
-            ->action('View Documents', url("/admin/students/{$student->id}/documents"));
+            ->line("A new document ({$doc->document_type}: {$doc->file_name}) was uploaded for student {$this->student->first_name} {$this->student->last_name} by {$uploadedBy}.")
+            ->action('View Documents', $this->getActivityLink($notifiable, 'document_uploaded', $this->student));
     }
 
-    /**
-     * Database representation
-     */
     public function toArray($notifiable)
     {
         $doc = $this->document;
-        $student = $this->student;
-        $uploadedBy = $this->agent;
+        $link = $this->getActivityLink($notifiable, 'document_uploaded', $this->student);
 
-        // Log activity
         ActivityLogger::log(
             'document_uploaded',
-            "Document uploaded: {$doc->document_type} ({$doc->file_name}) for student {$student->first_name} {$student->last_name}",
-            $doc->id,
-            route($notifiable->is_admin ? 'admin.students.show' : 'agent.documents.index', $student->id),
-            $uploadedBy->id
+            "📤 {$doc->document_type} uploaded for {$this->student->first_name} {$this->student->last_name}",
+            $this->student->id,
+            $link,
+            $this->agent->id
         );
 
         return [
-            'type'          => 'document_uploaded',
-            'message'       => "{$doc->document_type} document uploaded for {$student->first_name} {$student->last_name} by " .
-                ($uploadedBy->business_name ?? $uploadedBy->username ?? $uploadedBy->name),
-            'document_id'   => $doc->id,
-            'file_name'     => $doc->file_name,
-            'document_type' => $doc->document_type,
-            'student'       => [
-                'id'   => $student->id,
-                'name' => $student->first_name . ' ' . $student->last_name,
+            'type' => 'document_uploaded',
+            'message' => "{$doc->document_type} uploaded for {$this->student->first_name} {$this->student->last_name} by " .
+                ($this->agent->business_name ?? $this->agent->username ?? $this->agent->name),
+            'document_id' => $doc->id,
+            'student' => [
+                'id' => $this->student->id,
+                'name' => "{$this->student->first_name} {$this->student->last_name}",
             ],
-            'uploaded_by'   => [
-                'id'   => $uploadedBy->id,
-                'name' => $uploadedBy->business_name ?? $uploadedBy->username ?? $uploadedBy->name,
+            'uploaded_by' => [
+                'id' => $this->agent->id,
+                'name' => $this->agent->business_name ?? $this->agent->username ?? $this->agent->name,
             ],
-            'link' => route(
-                $notifiable->is_admin ? 'admin.students.show' : 'agent.documents.index',
-                $student->id
-            ),
+            'link' => $link,
         ];
     }
 }

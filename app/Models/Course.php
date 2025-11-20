@@ -13,7 +13,9 @@ class Course extends Model
         'university_id',
         'course_code',
         'title',
+        'course_link',
         'course_type',
+        'academic_requirement',
         'description',
         'duration',
         'fee',
@@ -27,5 +29,9 @@ class Course extends Model
     public function university()
     {
         return $this->belongsTo(University::class);
+    }
+    public function applications()
+    {
+        return $this->hasMany(Application::class, 'course_id');
     }
 }

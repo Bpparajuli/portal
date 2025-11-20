@@ -27,4 +27,10 @@ class University extends Model
     {
         return $this->hasMany(Course::class);
     }
+
+    // app/Models/Course.php
+    public function applications()
+    {
+        return $this->hasMany(Application::class, 'university_id');
+    }
 }

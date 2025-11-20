@@ -138,7 +138,6 @@ class StudentController extends Controller
         $admin = User::find(6);
         Notification::send($admin, new StudentAdded(Auth::user(), $student));
 
-
         return redirect()->route('agent.students.index')->with('success', 'Student created successfully.');
     }
 

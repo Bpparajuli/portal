@@ -76,156 +76,155 @@
     {{-- Students Table --}}
     <div class="table-card rounded shadow-sm p-3 bg-white">
         <div class="d-flex justify-content-between align-items-center mb-3">
-            <h2 class="h5">My Students</h2>
+            <h2 class="h5">All Students</h2>
             <a href="{{ route('agent.students.create') }}" class="btn btn-primary">
                 <i class="fa-solid fa-plus me-1"></i> Add Student
             </a>
         </div>
+        <div class="table-responsive">
+            <table class="table table-striped align-middle">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Profile</th>
+                        <th>Name</th>
+                        <th>Email / Contact</th>
+                        <th>Latest <br>Application Status</th>
+                        <th>No of <br>Applications</th>
+                        <th>Preferred Country</th>
+                        {{-- <th>Qualification</th> --}}
+                        <th>Document Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($students as $student)
+                    @php
+                    // ----------------- Document Status -----------------
+                    $predefinedDocuments = [
+                    'passport',
+                    '10th_certificate',
+                    '10th_transcript',
+                    '11th_transcript',
+                    '12th_certificate',
+                    '12th_transcript',
+                    'cv',
+                    'moi',
+                    'lor',
+                    'ielts_pte_language_certificate' ];
 
-        <table class="table table-striped align-middle">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Profile</th>
-                    <th>Name</th>
-                    <th>Email / Contact</th>
-                    <th>Latest Application Status</th>
-                    <th>No of Applications</th>
-                    <th>Preferred Country</th>
-                    <th>Qualification</th>
-                    <th>Document Status</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse($students as $student)
-                @php
-                // ----------------- Document Status -----------------
-                $predefinedDocuments = [
-                'passport',
-                '10th_certificate',
-                '10th_transcript',
-                '11th_transcript',
-                '12th_certificate',
-                '12th_transcript',
-                'cv',
-                'moi',
-                'lor',
-                'ielts_pte_language_certificate',
-                'sop',
-                ];
+                    // Normalize uploaded document types
+                    $uploadedTypes = $student->documents->pluck('document_type')
+                    ->map(fn($t) => strtolower($t))
+                    ->toArray();
 
-                // Normalize uploaded document types
-                $uploadedTypes = $student->documents->pluck('document_type')
-                ->map(fn($t) => strtolower($t))
-                ->toArray();
+                    // Check if all predefined documents are uploaded
+                    $allDocumentsUploaded = count(array_diff($predefinedDocuments, $uploadedTypes)) === 0;
 
-                // Check if all predefined documents are uploaded
-                $allDocumentsUploaded = count(array_diff($predefinedDocuments, $uploadedTypes)) === 0;
+                    // Document status
+                    $documentStatus = $allDocumentsUploaded
+                    ? 'Completed'
+                    : (count($uploadedTypes) == 0 ? 'Not Uploaded' : 'Incomplete');
 
-                // Document status
-                $documentStatus = $allDocumentsUploaded
-                ? 'Completed'
-                : (count($uploadedTypes) == 0 ? 'Not Uploaded' : 'Incomplete');
+                    // Latest application
+                    $latestApplication = $student->applications->sortByDesc('created_at')->first();
+                    @endphp
 
-                // Latest application
-                $latestApplication = $student->applications->sortByDesc('created_at')->first();
-                @endphp
+                    <tr>
+                        <td>{{ $student->id }}</td>
 
-                <tr>
-                    <td>{{ $student->id }}</td>
+                        {{-- Profile --}}
+                        <td class="text-center">
+                            <a href="{{ route('agent.students.show', $student->id) }}">
+                                @if ($student->students_photo && Storage::disk('public')->exists($student->students_photo))
+                                <img src="{{ Storage::url($student->students_photo) }}" alt="Profile" class="rounded-circle border" style="width:50px; height:50px; object-fit:cover;">
+                                @else
+                                <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center border" style="width:50px; height:50px;">
+                                    <i class="fa fa-user-circle text-white" style="font-size:24px;"></i>
+                                </div>
+                                @endif
+                            </a>
+                        </td>
 
-                    {{-- Profile --}}
-                    <td class="text-center">
-                        <a href="{{ route('agent.students.show', $student->id) }}">
-                            @if ($student->students_photo && Storage::disk('public')->exists($student->students_photo))
-                            <img src="{{ Storage::url($student->students_photo) }}" alt="Profile" class="rounded-circle border" style="width:50px; height:50px; object-fit:cover;">
+                        {{-- Name --}}
+                        <td>
+                            <a href="{{ route('agent.students.show', $student->id) }}">
+                                {{ $student->first_name }} {{ $student->last_name }}
+                            </a>
+                        </td>
+
+                        {{-- Email / Contact --}}
+                        <td>
+                            <div>{{ $student->email }}</div>
+                            <div class="text-sm text-gray-500">{{ $student->phone_number }}</div>
+                        </td>
+
+                        {{-- Application Status --}}
+                        <td>
+                            @if($latestApplication)
+                            <a href="{{ route('agent.applications.show', $latestApplication->id) }}">
+                                <div class="px-2 py-1 rounded text-xs">
+                                    <span class="badge {{ $latestApplication->status_class }}">
+                                        {{ $latestApplication->application_status }}
+                                    </span>
+                                </div>
+                            </a>
                             @else
-                            <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center border" style="width:50px; height:50px;">
-                                <i class="fa fa-user-circle text-white" style="font-size:24px;"></i>
-                            </div>
+                            <div class="px-2 py-1 rounded text-xs bg-light text-muted">No Application</div>
                             @endif
-                        </a>
-                    </td>
+                        </td>
 
-                    {{-- Name --}}
-                    <td>
-                        <a href="{{ route('agent.students.show', $student->id) }}">
-                            {{ $student->first_name }} {{ $student->last_name }}
-                        </a>
-                    </td>
-
-                    {{-- Email / Contact --}}
-                    <td>
-                        <div>{{ $student->email }}</div>
-                        <div class="text-sm text-gray-500">{{ $student->phone_number }}</div>
-                    </td>
-
-                    {{-- Application Status --}}
-                    <td>
-                        @if($latestApplication)
-                        <a href="{{ route('agent.applications.show', $latestApplication->id) }}">
-                            <div class="px-2 py-1 rounded text-xs">
-                                <span class="badge {{ $latestApplication->status_class }}">
-                                    {{ $latestApplication->application_status }}
-                                </span>
-                            </div>
-                        </a>
-                        @else
-                        <div class="px-2 py-1 rounded text-xs bg-light text-muted">No Application</div>
-                        @endif
-                    </td>
-
-                    {{-- No of Applications --}}
-                    <td>
-                        @if($student->applications->count() > 0)
-                        <a href="{{ route('agent.students.applications', $student->id) }}">
-                            {{ $student->applications->count() }}
-                        </a>
-                        @else
-                        0
-                        @endif
-                    </td>
-
-                    {{-- Preferred Country --}}
-                    <td>{{ $student->preferred_country ?? 'N/A' }}</td>
-
-                    {{-- Qualification --}}
-                    <td>{{ $student->qualification ?? 'N/A' }}</td>
-
-                    {{-- Document Status --}}
-                    <td>
-                        <a href="{{ route('agent.documents.index', $student->id) }}">
-                            @if($documentStatus == 'Not Uploaded')
-                            <div class="px-2 py-1 rounded text-xs bg-danger text-white">Not Uploaded</div>
-                            @elseif($allDocumentsUploaded)
-                            <div class="px-2 py-1 rounded text-xs bg-success text-white">Completed</div>
+                        {{-- No of Applications --}}
+                        <td>
+                            @if($student->applications->count() > 0)
+                            <a href="{{ route('agent.students.applications', $student->id) }}">
+                                {{ $student->applications->count() }}
+                            </a>
                             @else
-                            <div class="px-2 py-1 rounded text-xs bg-warning text-dark">Incomplete</div>
+                            0
                             @endif
-                        </a>
-                    </td>
+                        </td>
 
-                    {{-- Actions --}}
-                    <td class="d-flex flex-column gap-1">
-                        @if($allDocumentsUploaded)
-                        <a href="{{ route('agent.applications.create') }}?student_id={{ $student->id }}" class="btn btn-sm btn-success mt-1">
-                            <i class="fa-solid fa-paper-plane me-1"></i> Apply Now
-                        </a>
-                        @else
-                        <a href="{{ route('agent.documents.index', $student->id) }}" class="btn btn-sm btn-outline-secondary mt-1">
-                            <i class="fa-solid fa-folder-open me-1"></i> Upload Docs
-                        </a>
-                        @endif
-                    </td>
-                </tr>
-                @empty
-                <tr>
-                    <td colspan="10" class="text-center text-gray-500">No students found.</td>
-                </tr>
-                @endforelse
-            </tbody>
-        </table>
+                        {{-- Preferred Country --}}
+                        <td>{{ $student->preferred_country ?? 'N/A' }}</td>
+
+                        {{-- Qualification
+                        <td>{{ $student->qualification ?? 'N/A' }}</td> --}}
+
+                        {{-- Document Status --}}
+                        <td>
+                            <a href="{{ route('agent.documents.index', $student->id) }}">
+                                @if($documentStatus == 'Not Uploaded')
+                                <div class="px-2 py-1 rounded text-xs bg-danger text-white">Not Uploaded</div>
+                                @elseif($allDocumentsUploaded)
+                                <div class="px-2 py-1 rounded text-xs bg-success text-white">Completed</div>
+                                @else
+                                <div class="px-2 py-1 rounded text-xs bg-warning text-dark">Incomplete</div>
+                                @endif
+                            </a>
+                        </td>
+
+                        {{-- Actions --}}
+                        <td>
+                            @if($allDocumentsUploaded)
+                            <a href="{{ route('agent.applications.create') }}?student_id={{ $student->id }}" class="btn btn-sm btn-success p-1">
+                                <i class="fa-solid fa-paper-plane "></i> Apply Now
+                            </a>
+                            @else
+                            <a href="{{ route('agent.documents.index', $student->id) }}" class="btn btn-sm btn-outline-secondary p-2">
+                                <i class="fa-solid fa-folder-open "></i> Upload Docs
+                            </a>
+                            @endif
+                        </td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="10" class="text-center text-gray-500">No students found.</td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
 
         <div class="mt-3">
             {{ $students->links() }}

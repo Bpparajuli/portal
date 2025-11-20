@@ -17,7 +17,9 @@ return new class extends Migration
             $table->string('course_code', 255);
             $table->string('title');
             $table->enum('course_type', ['UG', 'PG', 'Diploma']);
+            $table->text('course_link')->nullable();
             $table->text('description')->nullable();
+            $table->text('academic_requirement')->nullable();
             $table->string('duration', 255)->nullable();
             $table->string('fee', 255)->nullable(); // keep as string if it includes text
             $table->string('intakes');

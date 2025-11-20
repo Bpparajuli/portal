@@ -8,8 +8,8 @@
         @csrf
         @include('admin.students.form')
 
-        <div class="form-actions">
-            <button type="submit" class="btn-main">💾 Save Student</button>
+        <div class="form-actions d-flex justify-content-between mt-3">
+            <button type="submit" class="btn-main">➕ Add Student</button>
             <a href="{{ route('admin.students.index') }}" class="btn-secondary">Cancel</a>
         </div>
     </form>

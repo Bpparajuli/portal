@@ -17,9 +17,10 @@ class Application extends Model
         'agent_id',
         'application_status',
         'application_number',
-        'sop_file', // 👈 new field
+        'sop_file', // SOP file path
     ];
 
+    // All possible application statuses
     public const STATUSES = [
         'Application started',
         'Application viewed by Admin',
@@ -32,8 +33,29 @@ class Application extends Model
         'Is on waiting list on Embassy',
         'Visa Approved',
         'Visa Rejected',
-        'Lost'
+        'Lost',
+        'Withdrawn', // optional
     ];
+
+    // Status colors (for badges or display)
+    public const STATUS_COLORS = [
+        'Application started'              => 'bg-info text-dark',
+        'Application viewed by Admin'      => 'bg-primary text-white',
+        'Applied to University'            => 'bg-warning text-dark',
+        'Need to give the test'            => 'bg-secondary text-white',
+        'Accepted by the University'       => 'bg-success text-white',
+        'Rejected by the University'       => 'bg-danger text-white',
+        'Applied to another university'    => 'bg-warning text-dark',
+        'Application forwarded to embassy' => 'bg-primary text-white',
+        'Is on waiting list on Embassy'    => 'bg-info text-dark',
+        'Visa Approved'                     => 'bg-success text-white',
+        'Visa Rejected'                     => 'bg-danger text-white',
+        'Lost'                              => 'bg-dark text-white',
+        'Withdrawn'                         => 'bg-light text-muted',
+        'No Application'                    => 'bg-light text-muted',
+    ];
+
+    /** Relationships */
 
     public function student()
     {
@@ -55,43 +77,37 @@ class Application extends Model
         return $this->belongsTo(User::class, 'agent_id');
     }
 
-    // Relationship for associated documents (excluding SOP)
+    /**
+     * All documents except SOP
+     */
     public function documents()
     {
         return $this->hasMany(Document::class, 'student_id', 'student_id')
             ->where('document_type', '!=', 'SOP');
     }
 
-    // Specific relationship for the SOP document (if stored separately in the documents table)
+    /**
+     * SOP document if stored in documents table
+     */
     public function sopDocument()
     {
         return $this->hasOne(Document::class, 'student_id', 'student_id')
             ->where('document_type', 'SOP');
     }
 
-    public function getStatusClassAttribute()
-    {
-        $statusColors = [
-            'Application started' => 'bg-info text-dark',
-            'Application viewed by Admin' => 'bg-primary text-white',
-            'Applied to University' => 'bg-warning text-dark',
-            'Need to give the test' => 'bg-secondary text-white',
-            'Accepted by the University' => 'bg-success text-white',
-            'Rejected by the University' => 'bg-danger text-white',
-            'Applied to another university' => 'bg-warning text-dark',
-            'Application forwarded to embassy' => 'bg-primary text-white',
-            'Is on waiting list on Embassy' => 'bg-info text-dark',
-            'Visa Approved' => 'bg-success text-white',
-            'Visa Rejected' => 'bg-danger text-white',
-            'Lost' => 'bg-dark text-white',
-            'No Application' => 'bg-light text-muted',
-        ];
-
-        return $statusColors[$this->application_status] ?? 'bg-light text-dark';
-    }
-
+    /**
+     * Application messages
+     */
     public function messages()
     {
         return $this->hasMany(ApplicationMessage::class, 'application_id');
+    }
+
+    /**
+     * Get CSS class for status (for badges)
+     */
+    public function getStatusClassAttribute(): string
+    {
+        return self::STATUS_COLORS[$this->application_status] ?? 'bg-light text-dark';
     }
 }

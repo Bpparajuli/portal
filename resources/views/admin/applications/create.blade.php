@@ -6,7 +6,6 @@
 
     <form action="{{ route('admin.applications.store') }}" method="POST" enctype="multipart/form-data">
         @csrf
-
         {{-- STUDENT --}}
         @if(isset($student))
         <x-form.input name="student_name" label="Student" :value="$student->first_name . ' ' . $student->last_name" readonly />
@@ -14,9 +13,13 @@
         @else
         <x-form.select name="student_id" label="Select Student" required>
             <option value="">-- Select Student --</option>
-            @foreach($students as $s)
-            <option value="{{ $s->id }}">{{ $s->first_name }} {{ $s->last_name }}</option>
-            @endforeach
+            @forelse($students as $s)
+            <option value="{{ $s->id }}" {{ old('student_id') == $s->id ? 'selected' : '' }}>
+                {{ $s->first_name }} {{ $s->last_name }}
+            </option>
+            @empty
+            <option value="" disabled>No students with all documents uploaded</option>
+            @endforelse
         </x-form.select>
         @endif
 

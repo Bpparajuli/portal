@@ -1,40 +1,6 @@
-/* ============================
-    COMMON STYLES (ALL PAGES)
-=============================== */
-body,
-.student-page,
-.create-form-wrapper,
-.profile-card,
-.card,
-.table-card {
-    font-family: "Segoe UI", sans-serif;
-    color: #333;
-}
-
-a {
-    text-decoration: none;
-}
-
-h2,
-h3,
-h5,
-h6 {
-    margin: 0;
-}
-
-.btn {
-    border: none;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.btn:hover {
-    opacity: 0.9;
-}
-
-/* ============================
-    FILTER & SEARCH (INDEX PAGE)
-=============================== */
+/* =========================
+INDEX PAGE - FILTER & SEARCH
+========================= */
 .filter-card {
     background: #f8f9fa;
     border-radius: 8px;
@@ -50,63 +16,7 @@ h6 {
     min-width: 80px;
 }
 
-/* ============================
-    STUDENT TABLE (INDEX PAGE)
-=============================== */
-.table-card {
-    background: #fff;
-    border-radius: 12px;
-    padding: 15px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-}
-
-.student-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.student-table th,
-.student-table td {
-    padding: 12px;
-    border-bottom: 1px solid #eee;
-    vertical-align: middle;
-    font-size: 14px;
-}
-
-.student-table th {
-    background: #f3f4f6;
-    font-weight: 600;
-}
-
-.student-photo {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    object-fit: cover;
-}
-
-.no-photo {
-    width: 50px;
-    height: 50px;
-    background: #f1f1f1;
-    color: #777;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 12px;
-    border-radius: 50%;
-}
-
-.student-link {
-    font-weight: 600;
-    color: #1a0262;
-}
-
-.student-link:hover {
-    text-decoration: underline;
-}
-
-/* Status badges (application / document) */
+/* Status badges */
 .status-badge {
     display: inline-block;
     padding: 4px 10px;
@@ -145,7 +55,7 @@ h6 {
     color: #333;
 }
 
-/* Action Buttons */
+/* Action buttons */
 .action-buttons {
     display: flex;
     flex-direction: column;
@@ -178,9 +88,9 @@ h6 {
     justify-content: center;
 }
 
-/* ============================
-    FORM PAGE (CREATE/EDIT)
-=============================== */
+/* =========================
+FORM PAGE (CREATE / EDIT)
+========================= */
 .create-form-wrapper {
     background: #fff;
     padding: 40px;
@@ -198,7 +108,6 @@ h6 {
     font-weight: 500;
     margin-bottom: 6px;
 }
-
 .student-form .form-control,
 .student-form .form-select {
     border-radius: 8px;
@@ -221,9 +130,9 @@ h6 {
 }
 .btn-secondary {
     background: #e9ecef;
+    color: #333;
     padding: 8px 16px;
     border-radius: 8px;
-    color: #333;
 }
 .btn-warning {
     background: #f4a261;
@@ -238,10 +147,9 @@ h6 {
     border-radius: 8px;
 }
 
-/* ============================
-    STUDENT SHOW / PROFILE
-=============================== */
-
+/* =========================
+STUDENT SHOW / PROFILE
+========================= */
 .custom-tabs .nav-link {
     font-weight: 500;
     padding: 10px 20px;
@@ -259,7 +167,7 @@ h6 {
 
 .custom-tabs .nav-link.active {
     color: #0d6efd;
-    background-color: #ffffff;
+    background-color: #fff;
     border-bottom: 3px solid #0d6efd;
     border-radius: 8px 8px 0 0;
     font-weight: 600;
@@ -305,7 +213,6 @@ h6 {
     overflow: hidden;
     margin-bottom: 15px;
 }
-
 .card-avatar {
     width: 100%;
     height: 250px;
@@ -313,7 +220,6 @@ h6 {
     object-fit: cover;
     border: 4px solid #fff;
 }
-
 .card-fullname {
     text-align: center;
     font-size: 1.5rem;
@@ -335,9 +241,9 @@ h6 {
     justify-content: center;
 }
 
-/* ============================
-    DOCUMENT / UPLOAD SECTION
-=============================== */
+/* =========================
+DOCUMENT / UPLOAD SECTION
+========================= */
 .document-card {
     border-radius: 12px;
     transition: transform 0.2s, box-shadow 0.2s;
@@ -350,15 +256,14 @@ h6 {
 
 .doc-preview {
     width: 100%;
-    height: 150px;
+    height: 100px;
     object-fit: cover;
     border-radius: 6px;
     margin-bottom: 10px;
 }
-
 .doc-placeholder {
     width: 100%;
-    height: 140px;
+    height: 100px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -385,7 +290,6 @@ h6 {
     font-size: 16px;
     cursor: pointer;
 }
-
 .upload-box:hover {
     background-color: #e9f0ff;
     border-color: #0056b3;
@@ -397,7 +301,6 @@ h6 {
     flex-direction: column;
     align-items: center;
 }
-
 #file-preview img {
     max-width: 180px;
     max-height: 180px;
@@ -406,7 +309,6 @@ h6 {
     object-fit: cover;
     transition: transform 0.2s ease;
 }
-
 #file-preview img:hover {
     transform: scale(1.05);
 }
@@ -426,7 +328,6 @@ h6 {
     text-align: center;
     transition: box-shadow 0.3s ease, transform 0.2s ease;
 }
-
 .uploaded-file:hover {
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
     transform: translateY(-3px);
@@ -437,7 +338,6 @@ h6 {
     justify-content: center;
     gap: 6px;
 }
-
 .file-actions a.btn-view {
     background: #17a2b8;
     color: #fff;
@@ -457,17 +357,12 @@ h6 {
     border-radius: 6px;
 }
 
-/* ============================
-    RESPONSIVE
-=============================== */
+/* =========================
+RESPONSIVE
+========================= */
 @media (max-width: 768px) {
     .filter-card .row > div {
         margin-bottom: 10px;
-    }
-    .student-table th,
-    .student-table td {
-        font-size: 0.85rem;
-        padding: 8px;
     }
     .btn {
         font-size: 0.75rem;

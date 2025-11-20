@@ -1,74 +1,133 @@
 @extends('layouts.agent')
 
 @section('agent-content')
+
+<style>
+    .app-card {
+        border-radius: 14px;
+        padding: 22px;
+        border: 1px solid #e5e7eb;
+        background: #ffffff;
+        transition: 0.2s ease;
+    }
+
+    .app-card:hover {
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+    }
+
+    .sop-preview-box {
+        width: auto;
+        height: 300px;
+        overflow: hidden;
+        border-radius: 8px;
+        border: 1px solid #ddd;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #fafafa;
+    }
+
+</style>
+
 <div class="container py-4">
+
     {{-- Header --}}
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h4 class="fw-bold mb-0">🎓 Applications for {{ $student->first_name }} {{ $student->last_name }}</h4>
+        <div>
+            <h4 class="fw-bold mb-1">🎓 List of applications</h4>
+            <p class="text-muted mb-0">
+                For <strong>{{ $student->first_name }} {{ $student->last_name }}</strong>
+            </p>
+        </div>
+
         <a href="{{ route('agent.students.index') }}" class="btn btn-outline-secondary btn-sm">
             ← Back to Students
         </a>
     </div>
 
     @if($student->applications->count())
-    <div class="d-flex flex-column gap-4">
+
+    <div class="row g-3">
         @foreach($student->applications as $application)
-        <div class="card shadow-sm border-0 rounded-3 p-3">
-            <div class="row align-items-start g-3">
-                {{-- University / Course Info --}}
-                <div class="col-md-3">
-                    <h6 class="fw-bold text-primary mb-1">{{ $application->university->name ?? 'N/A' }}</h6>
-                    <p class="mb-1 small">{{ $application->course->title ?? 'N/A' }}</p>
-                    <span class="badge bg-info text-dark">{{ ucfirst($application->application_status ?? 'N/A') }}</span>
+        <div class="col-lg-6">
+            <div class="app-card">
+                {{-- University + Course --}}
+                <div class="p-3">
+                    <h5 class="fw-bold mb-1 text-primary">
+                        {{ $application->university->name ?? 'N/A' }}
+                    </h5>
+                    <p>
+                        <span class="text-mute fw-semibold"> {{ $application->university->city ?? 'N/A' }}</span> -
+                        <span class="text-mute fw-semibold"> {{ $application->university->country ?? 'N/A' }}</span>
+
+                    </p>
+                    <p class="mb-0">
+                        <span class="text-dark fw-semibold">{{ $application->course->title ?? 'N/A' }}</span>
+                    </p>
+                    <span class="badge bg-info text-dark p-3 mt-2">
+                        {{ ucfirst($application->application_status ?? 'N/A') }}
+                    </span>
                 </div>
+
+                <hr>
 
                 {{-- SOP --}}
-                <div class="col-md-4">
-                    <label class="fw-semibold mb-2">📑 SOP (Statement of Purpose)</label>
+                <div class="">
+                    <label class="fw-semibold">📑 SOP</label>
 
                     @if($application->sop_file)
-                    <div class="d-flex align-items-center gap-3 border rounded p-2 bg-light">
-                        <a href="#" data-preview="{{ asset('storage/' . $application->sop_file) }}" target="_blank" class="d-flex gap-3 align-items-center w-100">
-                            <div style="width:90px; height:110px; overflow:hidden; border-radius:6px; border:1px solid #ddd; display:flex; align-items:center; justify-content:center;">
-                                <iframe src="{{ asset('storage/' . $application->sop_file) }}" style="width:100%; height:100%; border:none;" loading="lazy">
-                                    <p class="small text-muted">Preview not available</p>
-                                </iframe>
+                    <div class="gap-3 mt-2 align-items-center">
+                        <div class="sop-preview-box">
+                            <iframe src="{{ asset('storage/' . $application->sop_file) }}" style="width:100%; height:100%; border:none;" loading="lazy"></iframe>
+                        </div>
+
+                        @php
+                        $ext = strtoupper(pathinfo($application->sop_file, PATHINFO_EXTENSION));
+                        @endphp
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <p class="fw-semibold mb-1">{{ basename($application->sop_file) }}</p>
+                                <p class="small text-muted mb-1">{{ $ext }}</p>
                             </div>
-                            @php
-                            $ext = strtoupper(pathinfo($application->sop_file, PATHINFO_EXTENSION));
-                            @endphp
-                            <div class="flex-grow-1">
-                                <p class="mb-1"><strong>{{ basename($application->sop_file) }}</strong></p>
-                                <p class="small text-muted mb-2">{{ $ext }}</p>
+                            {{-- Submitted Info --}}
+                            <div>
+                                <p class="fw-semibold mb-1">📅 Application Submitted on</p>
+                                <p class="small text-muted mb-1"> {{ $application->created_at->format('d M, Y') }}
+                                </p>
                             </div>
-                        </a>
+                        </div>
+                        <div class="text-center">
+                            <a href="#" data-preview="{{ asset('storage/' . $application->sop_file) }}" target="_blank" class="small border border-primary p-2 rounded text-primary">Open File →</a>
+                        </div>
                     </div>
                     @else
-                    <span class="text-danger small">⚠️ SOP not uploaded</span>
+                    <p class="text-danger small mt-2">⚠️ SOP not uploaded</p>
                     @endif
                 </div>
-
-                {{-- Submitted Info --}}
-                <div class="col-md-2">
-                    <small class="text-muted d-block">Submitted On</small>
-                    <span>{{ $application->created_at->format('d M, Y') }}</span>
-                </div>
+                <hr>
 
                 {{-- Actions --}}
-                <div class="col-md-3 d-flex flex-column align-items-end gap-2">
-                    <a href="{{ route('agent.applications.show', $application->id) }}" class="btn btn-sm btn-primary w-100">
-                        <i class="fa-solid fa-eye me-1"></i> View Details
-                    </a>
-                    @if(!$application->sop_file)
-                    <span class="text-danger small">⚠️ SOP Missing</span>
-                    @endif
+                <div class="p-3 d-flex justify-content-between">
+                    <div>
+                        <a href="{{ route('agent.applications.edit', $application->id) }}" class="p-2 btn btn-sm btn-dark p-1">
+                            <i class="fa-solid fa-pencil me-1"></i> edit Application
+                        </a>
+                    </div>
+                    <div>
+                        <a href="{{ route('agent.applications.show', $application->id) }}" class="btn btn-sm btn-primary">
+                            <i class="fa-solid fa-eye me-1"></i> View Details
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
         @endforeach
     </div>
+
     @else
     <div class="alert alert-info">No applications found for this student.</div>
     @endif
+
 </div>
+
 @endsection

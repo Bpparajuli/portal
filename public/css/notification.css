@@ -1,29 +1,8 @@
-/* notifications.css */
-:root {
-    --primary: #0d6efd;
-    --primary-light: rgba(13, 110, 253, 0.08);
-    --border: #e5e7eb;
-    --text: #1f2937;
-    --text-muted: #6b7280;
-    --bg: #ffffff;
-    --shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
-    --radius: 12px;
-}
+/* =========================
+   Notifications Page - Component Styles
+========================= */
 
-[data-theme="dark"] {
-    --text: #f3f4f6;
-    --text-muted: #9ca3af;
-    --bg: #1f2937;
-    --border: #374151;
-    --primary-light: rgba(13, 110, 253, 0.2);
-    --shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
-}
-
-body {
-    background: #f9fafb;
-    color: var(--text);
-}
-
+/* ---------- Container & Header ---------- */
 .notifications-container {
     max-width: 1400px;
     margin: 0 auto;
@@ -46,6 +25,7 @@ body {
     color: var(--text);
 }
 
+/* ---------- Grid Layout ---------- */
 .notifications-grid {
     display: grid;
     grid-template-columns: 1fr 400px;
@@ -58,6 +38,7 @@ body {
     }
 }
 
+/* ---------- Section Card ---------- */
 .section-card {
     background: var(--bg);
     border-radius: var(--radius);
@@ -68,24 +49,22 @@ body {
 
 .section-title {
     font-size: 1.1rem;
-    font-weight: 600;
-    color: var(--text);
-    padding-bottom: 0.75rem;
-    border-bottom: 1px solid var(--border);
-    margin: 0 0 1rem 0;
     display: flex;
-    align-items: center;
-    gap: 0.5rem;
+    font-weight: bold;
+    padding: 1rem;
+    text-align: start;
+    max-width: 500px;
+    border-radius: 6px;
+    color: var(--light);
 }
 
-/* CLICKABLE CARD */
+/* ---------- Notification Link Wrapper ---------- */
 .notification-link {
     display: block;
     text-decoration: none;
     color: inherit;
     border-radius: 10px;
     overflow: hidden;
-    position: relative;
     transition: all 0.15s ease;
 }
 
@@ -94,24 +73,38 @@ body {
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
 }
 
+/* ---------- Notification Card ---------- */
 .notification-card {
-    background: var(--bg);
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
     padding: 1rem;
-    margin-bottom: 0.75rem;
-    display: flex;
-    gap: 0.75rem;
-    align-items: flex-start;
-    border: 1px solid transparent;
+    transition: all 0.2s ease;
     position: relative;
-    z-index: 1;
+}
+
+.notification-card:hover {
+    background: #f8fafc;
+    transform: translateY(-1px);
 }
 
 .notification-card.unread {
-    border-left: 5px solid var(--primary);
-    background: linear-gradient(90deg, var(--primary-light), transparent 30%);
-    border-color: rgba(13, 110, 253, 0.15);
+    border-left: 4px solid var(--primary);
+    background: linear-gradient(90deg, rgba(13, 110, 253, 0.08), #d3e2fc 70%);
 }
 
+/* Text inside card */
+.notification-card p {
+    margin: 0;
+    font-size: 0.92rem;
+}
+
+.notification-card .meta {
+    font-size: 0.78rem;
+    color: #6b7280;
+}
+
+/* ---------- Notification Icon & Body ---------- */
 .notification-icon {
     width: 44px;
     height: 44px;
@@ -153,9 +146,10 @@ body {
     color: var(--text-muted);
 }
 
+/* ---------- Badges & Actions ---------- */
 .badge-new {
     background: var(--primary);
-    color: white;
+    color: #fff;
     font-size: 0.7rem;
     padding: 0.15rem 0.45rem;
     border-radius: 6px;
@@ -187,10 +181,11 @@ body {
 
 .btn-icon:hover {
     background: var(--primary);
-    color: white;
+    color: #fff;
     border-color: var(--primary);
 }
 
+/* ---------- Empty State ---------- */
 .empty-state {
     text-align: center;
     padding: 3rem 1.5rem;
@@ -203,10 +198,11 @@ body {
     opacity: 0.5;
 }
 
+/* ---------- Messages List ---------- */
 .messages-list {
     list-style: none;
-    padding: 0;
     margin: 0;
+    padding: 0;
 }
 
 .sender-name {

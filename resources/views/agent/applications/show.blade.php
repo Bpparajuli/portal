@@ -12,101 +12,91 @@
 
     <div class="card shadow-lg border-0 rounded-3">
         <div class="card-body">
+
             {{-- Application Summary --}}
             <div class="d-flex justify-content-between mb-3">
-                <h6 class="text-primary">
-                    <strong>Application No:</strong> {{ $application->application_number ?? 'N/A' }}
-                </h6>
-                <h6 class="text-primary">
-                    <strong>Submitted On:</strong> {{ $application->created_at->format('Y-m-d') }}
-                </h6>
+                <h6 class="text-primary"><strong>Application No:</strong> {{ $application->application_number ?? 'N/A' }}</h6>
+                <h6 class="text-primary"><strong>Submitted On:</strong> {{ $application->created_at->format('Y-m-d') }}</h6>
+            </div>
+
+            {{-- Status Badge --}}
+            <div class="status-card mb-3">
+                <span class="badge {{ $application->statusClass }}">{{ $application->application_status }}</span>
             </div>
 
             {{-- Student & University Info --}}
             <div class="row g-4">
                 <div class="col-md-6">
-                    <div class="p-3 bg-light rounded-3">
-                        <h5 class="fw-bold">👤 Student Information</h5>
-                        <p><strong>Name:</strong> {{ $application->student->first_name }} {{ $application->student->last_name }}</p>
-                        <p><strong>Email:</strong> {{ $application->student->email }}</p>
-                        <p><strong>Phone:</strong> {{ $application->student->phone_number }}</p>
-                        <p><strong>Address:</strong> {{ $application->student->permanent_address }}</p>
+                    <div class="d-flex p-3 gap-2 bg-light justify-content-between rounded-3">
+                        <div>
+                            @if ($application->student->students_photo && Storage::disk('public')->exists($application->student->students_photo))
+                            <img src="{{ Storage::url($application->student->students_photo) }}" alt="Profile" class="rounded border" style="width:150px; height:150px; object-fit:cover;">
+                            @else
+                            <div class="rounded bg-secondary d-flex align-items-center justify-content-center border" style="width:150px; height:150px;">
+                                <i class="fa fa-user text-white" style="font-size:24px;"></i>
+                            </div>
+                            @endif
+                        </div>
+                        <div>
+                            <h5 class="fw-bold">Student Info</h5>
+                            <p><strong>Name:</strong> {{ $application->student->first_name ?? 'N/A' }} {{ $application->student->last_name ?? '' }}</p>
+                            <p><strong>Email:</strong> {{ $application->student->email ?? 'N/A' }}</p>
+                            <p><strong>Contact:</strong> {{ $application->student->phone_number ?? 'N/A' }}</p>
+                            <p><strong>Permanent Address:</strong> {{ $application->student->permanent_address ?? 'N/A' }}</p>
+                        </div>
                     </div>
                 </div>
 
                 <div class="col-md-6">
-                    <div class="p-3 bg-light rounded-3">
-                        <h5 class="fw-bold">🏛 University Information</h5>
-                        <p><strong>Country:</strong> {{ $application->university->Country ?? 'N/A' }}</p>
-                        <p><strong>City:</strong> {{ $application->university->city ?? 'N/A' }}</p>
-                        <p><strong>University:</strong> {{ $application->university->name ?? 'N/A' }}</p>
-                        <p><strong>Course:</strong> {{ $application->course->title ?? 'N/A' }}</p>
+                    <div class="p-3 bg-light rounded-3 h-100">
+                        <h5 class="fw-bold">🏛 University Info</h5>
+                        <p><strong>University:</strong> {{ $application->university->name ?? 'N/A' }} </p>
+                        <p><strong>Course:</strong> {{ $application->course->title ?? $application->course->name ?? 'N/A' }}</p>
+                        <p><strong>Country:</strong> {{ $application->university->country ?? 'N/A' }}</p>
+                        <p><strong>City:</strong> {{ $application->university->city ?? 'N/A' }} </p>
+                        <p><strong>Agent Name:</strong> {{ $application->student->agent?->business_name ?? $application->student->agent?->username ?? 'N/A' }}</p>
                     </div>
                 </div>
             </div>
 
             {{-- Application Progress --}}
             @php
-            // ordered steps (same as your model)
-            $steps = [
-            'Application started',
-            'Application viewed by Admin',
-            'Applied to University',
-            'Need to give the test',
-            'Accepted by the University',
-            'Rejected by the University',
-            'Applied to another university',
-            'Application forwarded to embassy',
-            'Is on waiting list on Embassy',
-            'Visa Approved',
-            'Visa Rejected',
-            'Lost',
-            ];
-
-            // current index from DB (0-based). fallback to 0 if not found.
-            $currentIndex = array_search($application->application_status, $steps);
-            if ($currentIndex === false) $currentIndex = 0;
-
-            $totalSteps = count($steps);
-            // compute progress percent (0..100). Avoid division by zero.
-            $progressPercent = $totalSteps > 1
-            ? round(($currentIndex / ($totalSteps - 1)) * 100, 2)
-            : 100;
+            $currentIndex = array_search($application->application_status, $status);
+            $currentIndex = $currentIndex !== false ? $currentIndex : 0;
+            $totalStatus = count($status);
+            $progressPercent = $totalStatus > 1 ? round(($currentIndex / ($totalStatus - 1)) * 100, 2) : 100;
             @endphp
 
-            <div class="app-progress mt-4" style="--steps: {{ $totalSteps }}; --progress: {{ $progressPercent }}%;">
+            <div class="app-progress mt-4" style="--status: {{ $totalStatus }}; --progress: {{ $progressPercent }}%;">
                 <div class="progress-bar-wrap">
-                    <!-- Horizontal bar + fill -->
-                    <div class="progress-bar " role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ $progressPercent }}">
+                    <div class="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ $progressPercent }}">
                         <div class="progress-fill" aria-hidden="true"></div>
 
-                        <!-- Center box showing current step title -->
-                        <div class="progress-box bg-warning" aria-hidden="false">
-                            <strong class="progress-box-title">{{ $steps[$currentIndex] }}</strong>
-                            <div class="progress-box-sub">Step {{ $currentIndex + 1 }} of {{ $totalSteps }}</div>
+                        {{-- Current Step Box --}}
+                        <div class="progress-box" style="background-color: {{ $application->statusClass ? '' : '#ffc107' }}">
+                            <strong class="progress-box-title">{{ $status[$currentIndex] }}</strong>
+                            <div class="progress-box-sub">Step {{ $currentIndex + 1 }} of {{ $totalStatus }}</div>
                         </div>
                     </div>
 
-                    <!-- Step markers (labels under the bar) -->
-                    <ul class="steps-list" aria-hidden="false">
-                        @foreach($steps as $i => $step)
+                    {{-- Step markers --}}
+                    <ul class="status-list">
+                        @foreach($status as $i => $step)
                         @php
-                        $state = $i < $currentIndex ? 'completed' : ($i===$currentIndex ? 'current' : 'upcoming' ); @endphp <li class="step-item {{ $state }}" data-step="{{ $i + 1 }}">
-                            <span class="step-dot" aria-hidden="true">
-                                @if($i < $currentIndex) &#10003; {{-- check mark for completed --}} @else {{ $i + 1 }} @endif </span>
+                        $state = $i < $currentIndex ? 'completed' : ($i===$currentIndex ? 'current' : 'upcoming' ); $colorClass=$statusColors[$step] ?? 'bg-light text-dark' ; @endphp <li class="step-item {{ $state }}" data-step="{{ $i + 1 }}">
+                            <span class="step-dot {{ $colorClass }}">
+                                @if($i < $currentIndex) &#10003; @else {{ $i + 1 }} @endif </span>
                                     </li>
                                     @endforeach
                     </ul>
-
                 </div>
             </div>
-
 
             {{-- SOP --}}
             <div class="mt-4 p-3 bg-white border rounded-3">
                 <h5 class="fw-bold">📑 Statement of Purpose (SOP)</h5>
                 @if($application->sop_file)
-                <a href="#" data-preview="{{ Storage::url($application->sop_file) }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                <a href="{{ Storage::url($application->sop_file) }}" target="_blank" class="btn btn-sm btn-outline-primary">
                     👁️ SOP
                 </a>
                 @else
@@ -120,7 +110,6 @@
             {{-- Messages --}}
             <div class="mt-4 p-3 bg-white border rounded-3">
                 <h5 class="fw-bold mb-3">💬 Messages</h5>
-
                 <div class="border rounded p-3 mb-3" style="max-height: 400px; overflow-y: auto;">
                     @forelse($application->messages as $m)
                     <div class="d-flex mb-2 {{ $m->type === 'agent' ? 'justify-content-start' : 'justify-content-end' }}">

@@ -126,5 +126,68 @@
             @endif
         </div>
     </div>
+    <div class="activities-row">
+        <div class="activity-card card">
+            <h6>Students Activities</h6>
+            <ul>
+                @forelse($studentActivities as $act)
+                <li>
+                    <div>
+                        @if($act->notifiable_id)
+                        <a href="{{ route('agent.students.show', $act->notifiable_id) }}">{{ $act->description }}</a>
+                        @else
+                        {{ $act->description }}
+                        @endif
+                        <div class="time-text">{{ $act->created_at->diffForHumans() }}</div>
+                    </div>
+                </li>
+                @empty
+                <li>No students activities</li>
+                @endforelse
+            </ul>
+        </div>
+
+        <div class="activity-card card">
+            <h6>Documents</h6>
+            <ul>
+                @forelse($documentActivities as $act)
+                <li>
+                    <div>
+                        @if($act->notifiable_id)
+                        <a href="{{ route('agent.documents.index', $act->notifiable_id) }}">
+                            {{ $act->description }}
+                        </a>
+                        @else
+                        {{ $act->description }}
+                        @endif
+                        <div class="time-text">{{ $act->created_at->diffForHumans() }}</div>
+                    </div>
+                </li>
+                @empty
+                <li>No document activities</li>
+                @endforelse
+            </ul>
+        </div>
+
+        <div class="activity-card card">
+            <h6>Applications</h6>
+            <ul>
+                @forelse($applicationActivities as $act)
+                <li>
+                    <div>
+                        @if($act->notifiable_id)
+                        <a href="{{ route('agent.applications.show', $act->notifiable_id) }}">{{ $act->description }}</a>
+                        @else
+                        {{ $act->description }}
+                        @endif
+                        <div class="time-text">{{ $act->created_at->diffForHumans() }}</div>
+                    </div>
+                </li>
+                @empty
+                <li>No applications yet</li>
+                @endforelse
+            </ul>
+        </div>
+    </div>
 </div>
 @endsection

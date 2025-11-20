@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
+
 class ApplicationController extends Controller
 {
     private function allDocumentTypes(): array
@@ -142,8 +143,13 @@ class ApplicationController extends Controller
     {
         $this->authorizeAgent($application);
         $application->load(['student', 'university', 'course', 'documents', 'messages.user']);
-        return view('agent.applications.show', compact('application'));
+
+        $status = Application::STATUSES;
+        $statusColors = Application::STATUS_COLORS;
+
+        return view('agent.applications.show', compact('application', 'status', 'statusColors'));
     }
+
 
     /** Edit application */
     public function edit($id)

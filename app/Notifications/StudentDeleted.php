@@ -8,10 +8,11 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 use Illuminate\Notifications\Messages\MailMessage;
 use App\Helpers\ActivityLogger;
+use App\Helpers\HasActivityLink;
 
 class StudentDeleted extends Notification
 {
-    use Queueable;
+    use Queueable, HasActivityLink;
 
     public $admin, $student;
 
@@ -29,36 +30,39 @@ class StudentDeleted extends Notification
     public function toMail($notifiable)
     {
         $deletedBy = $this->admin->business_name ?? $this->admin->username ?? $this->admin->name;
+
         return (new MailMessage)
             ->subject('Student Deleted')
             ->greeting('Hello!')
             ->line("The student {$this->student->first_name} {$this->student->last_name} was deleted by {$deletedBy}.")
-            ->action('View Students', url('/agent/students'));
+            ->action('View Students', $this->getActivityLink($notifiable, 'student_deleted', $this->student));
     }
 
     public function toArray($notifiable)
     {
+        $link = $this->getActivityLink($notifiable, 'student_deleted', $this->student);
+
         ActivityLogger::log(
             'student_deleted',
             "🗑️ Student deleted: {$this->student->first_name} {$this->student->last_name}",
             $this->student->id,
-            route('agent.students.show', $this->student->id),
+            $link,
             $this->admin->id
         );
 
         return [
             'type' => 'student_deleted',
             'message' => "Student deleted: {$this->student->first_name} {$this->student->last_name} by " .
-                ($this->admin->business_name ?? $this->admin->username ?? $this->admin->name) . ".",
+                ($this->admin->business_name ?? $this->admin->username ?? $this->admin->name),
             'student' => [
                 'id' => $this->student->id,
-                'name' => $this->student->first_name . ' ' . $this->student->last_name,
+                'name' => "{$this->student->first_name} {$this->student->last_name}",
             ],
             'deleted_by' => [
                 'id' => $this->admin->id,
                 'name' => $this->admin->business_name ?? $this->admin->username ?? $this->admin->name,
             ],
-            'link' => route('agent.students.show', $this->student->id),
+            'link' => $link,
         ];
     }
 }

@@ -11,17 +11,11 @@ class UserApproved extends Notification
 {
     use Queueable;
 
-    /**
-     * Get the delivery channels for the notification.
-     */
     public function via($notifiable)
     {
         return ['database', 'mail'];
     }
 
-    /**
-     * Get the mail representation of the notification.
-     */
     public function toMail($notifiable)
     {
         $displayName = $notifiable->business_name ?? $notifiable->username ?? $notifiable->name;
@@ -35,15 +29,11 @@ class UserApproved extends Notification
             ->line('Thank you for registering with us — we’re excited to have you onboard!');
     }
 
-    /**
-     * Get the array representation of the notification for database storage.
-     */
     public function toArray($notifiable)
     {
         $displayName = $notifiable->business_name ?? $notifiable->username ?? $notifiable->name;
         $link = route('auth.login');
 
-        // Log activity
         ActivityLogger::log(
             'user_approved',
             "✅ User approved: {$displayName}",

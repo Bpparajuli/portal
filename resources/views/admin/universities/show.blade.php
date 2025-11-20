@@ -34,89 +34,71 @@
     </div>
 
     {{-- Admin Actions --}}
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h3 class="fw-bold text-secondary mb-0">
-            <i class="fas fa-book-open me-2"></i> Courses Offered
-        </h3>
+    <div class="card shadow-lg border-0 mb-5">
 
-        <a href="{{ route('admin.courses.create', ['university_id' => $university->id]) }}" class="btn btn-primary shadow-sm">
-            <i class="fas fa-plus me-2"></i> Add New Course
-        </a>
-    </div>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3 class="fw-bold text-secondary mb-0">
+                <i class="fas fa-book-open me-2"></i> Courses Offered
+            </h3>
+            <a href="{{ route('admin.courses.create', ['university_id' => $university->id]) }}" class="btn btn-primary shadow-sm">
+                <i class="fas fa-plus me-2"></i> Add New Course
+            </a>
+        </div>
 
-    {{-- Courses Table --}}
-    @if($university->courses->count())
-    <div class="table-responsive">
-        <table class="table table-hover table-striped align-middle shadow-sm">
-            <thead class="table-dark text-center">
-                <tr>
-                    <th><i class="fas fa-hashtag me-1"></i> Code</th>
-                    <th><i class="fas fa-book me-1"></i> Title</th>
-                    <th><i class="fas fa-clock me-1"></i> Duration</th>
-                    <th><i class="fas fa-dollar-sign me-1"></i> Fee</th>
-                    <th><i class="fas fa-calendar-alt me-1"></i> Intakes</th>
-                    <th><i class="fas fa-language me-1"></i> MOI</th>
-                    <th><i class="fas fa-graduation-cap me-1"></i> Scholarships</th>
-                    <th><i class="fas fa-cogs me-1"></i> Actions</th>
-                </tr>
-            </thead>
-            <tbody class="text-center">
-                @foreach($university->courses as $course)
-                <tr>
-                    <td>{{ $course->course_code }}</td>
-                    <td class="fw-semibold">{{ $course->title }}</td>
-                    <td>{{ $course->duration }}</td>
-                    <td>{{ $course->fee }}</td>
-                    <td>{{ $course->intakes }}</td>
-                    <td>{{ $course->moi_requirement }}</td>
-                    <td>{{ $course->scholarships ?? '-' }}</td>
-                    <td>
-                        <a href="{{ route('admin.courses.edit', $course->id) }}" class="btn btn-sm btn-outline-info me-1">
-                            <i class="fas fa-edit"></i>
-                        </a>
-                        @if(auth()->id() === 1)
+        {{-- Courses Table --}}
+        @if($university->courses->count())
+        <div class="table-responsive">
+            <table class="table table-hover table-striped align-middle shadow-sm">
+                <thead class="table-dark text-center">
+                    <tr>
+                        <th><i class="fas fa-hashtag me-1"></i> Code</th>
+                        <th><i class="fas fa-book me-1"></i> Title</th>
+                        <th><i class="fas fa-clock me-1"></i> Duration</th>
+                        <th><i class="fas fa-dollar-sign me-1"></i> Fee</th>
+                        <th><i class="fas fa-calendar-alt me-1"></i> Intakes</th>
+                        <th><i class="fas fa-language me-1"></i> MOI</th>
+                        <th><i class="fas fa-graduation-cap me-1"></i> Scholarships</th>
+                        <th><i class="fas fa-cogs me-1"></i> Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="text-center">
+                    @foreach($university->courses as $course)
+                    <tr>
+                        <td>{{ $course->course_code }}</td>
+                        <td class="fw-semibold">{{ $course->title }}</td>
+                        <td>{{ $course->duration }}</td>
+                        <td>{{ $course->fee }}</td>
+                        <td>{{ $course->intakes }}</td>
+                        <td>{{ $course->moi_requirement }}</td>
+                        <td>{{ $course->scholarships ?? '-' }}</td>
+                        <td>
+                            <div class="d-flex gap-1 ">
+                                <a href="{{ route('admin.courses.edit', $course->id) }}" class="btn btn-sm tetx-primary me-1">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                @if(auth()->id() === 1)
 
-                        <form action="{{ route('admin.courses.destroy', $course->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this course?');">
-                            @csrf
-                            @method('DELETE')
-                            <button class="btn btn-sm btn-outline-danger">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </form>
-                        @endif </td>
-                </tr>
-                @endforeach
-            </tbody>
-        </table>
+                                <form action="{{ route('admin.courses.destroy', $course->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this course?');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button class="btn btn-sm text-danger">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                                @endif
+                            </div>
+                        </td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+        @else
+        <div class="alert alert-info shadow-sm">
+            <i class="fas fa-exclamation-circle me-2"></i> No courses found for this university.
+        </div>
+        @endif
     </div>
-    @else
-    <div class="alert alert-info shadow-sm">
-        <i class="fas fa-exclamation-circle me-2"></i> No courses found for this university.
-    </div>
-    @endif
 </div>
 
-{{-- Optional Styling --}}
-<style>
-    .table th,
-    .table td {
-        vertical-align: middle;
-    }
-
-    .table-hover tbody tr:hover {
-        background-color: #f1f3f5;
-        transition: 0.2s;
-    }
-
-    .btn-outline-info:hover {
-        background-color: #17a2b8;
-        color: #fff;
-    }
-
-    .btn-outline-danger:hover {
-        background-color: #dc3545;
-        color: #fff;
-    }
-
-</style>
 @endsection

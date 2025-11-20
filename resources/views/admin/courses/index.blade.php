@@ -27,13 +27,13 @@
                     <label class="form-label">Country</label>
                     <input type="text" name="country" value="{{ request('country') }}" class="form-control" placeholder="e.g. UK">
                 </div>
-                <div class="col-md-2 d-flex gap-2">
-                    <button type="submit" class="btn btn-success w-100">
-                        <i class="fas fa-search"></i> Filter
-                    </button>
+                <div class="col-md-2 d-flex gap-1">
                     <a href="{{ route('admin.courses.index') }}" class="btn btn-secondary w-100">
                         <i class="fas fa-undo"></i> Reset
-                    </a>
+                    </a> <button type="submit" class="btn btn-success w-100">
+                        <i class="fas fa-search"></i> Filter
+                    </button>
+
                 </div>
             </form>
         </div>
@@ -41,61 +41,49 @@
 
     {{-- Courses Table --}}
     <div class="card shadow-sm">
-        <div class="card-body table-responsive">
-            <table class="table table-bordered table-hover align-middle">
-                <thead class="table-light">
+        <div class="table-responsive">
+            <table class=" table table-striped align-middle">
+                <thead class="table-primary">
                     <tr>
-                        <th>#</th>
+                        <th>ID</th>
                         <th>Course Title</th>
-                        <th>Course Code</th>
                         <th>University</th>
                         <th>City</th>
                         <th>Country</th>
                         <th>Duration</th>
                         <th>Tuition Fee</th>
-                        <th>Created At</th>
                         <th class="text-center" style="width: 180px;">Action</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($courses as $index => $course)
                     <tr>
-                        <td>{{ $courses->firstItem() + $index }}</td>
-                        <td>{{ $course->title }}</td>
-                        <td>{{ $course->course_code }}</td>
-                        <td>{{ $course->university->name ?? 'N/A' }}</td>
+                        <td>{{ $course->id}}</td>
+                        <td>
+                            <a href="{{ route('admin.courses.show', $course->id) }}">
+                                {{ $course->title }}
+                            </a>
+                        </td>
+                        <td>
+                            <a href="{{ route('admin.universities.show', $course->university->id) }}" class="text-blue-600 hover:underline">
+                                {{ $course->university->name ?? 'N/A' }}
+                            </a>
+                        </td>
                         <td>{{ $course->university->city ?? 'N/A' }}</td>
                         <td>{{ $course->university->country ?? 'N/A' }}</td>
                         <td>{{ $course->duration ?? 'N/A' }}</td>
-                        <td>
-                            @if($course->tuition_fee)
-                            ${{ number_format($course->tuition_fee, 2) }}
-                            @else
-                            N/A
-                            @endif
-                        </td>
-                        <td>{{ $course->created_at->format('Y-m-d') }}</td>
+                        <td> {{ $course->fee }}</td>
                         <td class="text-center">
                             {{-- View Button --}}
-                            <a href="{{ route('admin.courses.show', $course->id) }}" class="btn btn-sm btn-info text-white">
+                            <a href="{{ route('admin.courses.show', $course->id) }}" class="btn btn-sm btn-primary text-white">
                                 <i class="fas fa-eye"></i>
                             </a>
 
                             {{-- Edit Button --}}
-                            <a href="{{ route('admin.courses.edit', $course->id) }}" class="btn btn-sm btn-warning">
+                            <a href="{{ route('admin.courses.edit', $course->id) }}" class="btn btn-sm btn-dark text-white">
                                 <i class="fas fa-edit"></i>
                             </a>
 
-                            {{-- Delete Button (Admin ID = 1 only) --}}
-                            @if(Auth::id() === 1)
-                            <form action="{{ route('admin.courses.destroy', $course->id) }}" method="POST" class="d-inline-block" onsubmit="return confirm('Are you sure you want to delete this course?');">
-                                @csrf
-                                @method('DELETE')
-                                <button class="btn btn-sm btn-danger">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </form>
-                            @endif
                         </td>
                     </tr>
                     @empty

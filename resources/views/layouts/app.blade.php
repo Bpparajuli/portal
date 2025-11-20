@@ -11,17 +11,26 @@
     <!-- Optional: FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
 
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ asset('css/students.css') }}">
-    <link rel="stylesheet" href="{{ asset('css/styles.css') }}">
     <link rel="stylesheet" href="{{ asset('css/dashboard.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/admin-dashboard.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/agent-dashboard.css') }}">
     <link rel="stylesheet" href="{{ asset('css/header.css') }}">
     <link rel="stylesheet" href="{{ asset('css/university.css') }}">
-    <link rel="stylesheet" href="{{asset('css/contact.css')}}">
-    <link rel="stylesheet" href="{{asset('css/login.css')}}">
-    <link rel="stylesheet" href="{{asset('css/application.css')}}">
-    <link rel="stylesheet" href="{{asset('css/notification.css')}}">
-    <link rel="stylesheet" href="{{asset('css/user.css')}}">
+    <link rel="stylesheet" href="{{ asset('css/contact.css')}}">
+    <link rel="stylesheet" href="{{ asset('css/login.css')}}">
+    <link rel="stylesheet" href="{{ asset('css/application.css')}}">
+    <link rel="stylesheet" href="{{ asset('css/notification.css')}}">
+    <link rel="stylesheet" href="{{ asset('css/user.css')}}">
+    <link rel="stylesheet" href="{{ asset('css/styles.css') }}">
+
+
+
+    {{-- Fav icon  --}}
+    <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
 
 </head>
 <body class="font-roboto">
@@ -41,9 +50,6 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-
-    <!-- MDB JS (optional, only if using MDB components) -->
-    {{-- <script src="{{ asset('js/mdb.min.js') }}"></script> --}}
 
     <!-- Your custom JS -->
     <script src="{{ asset('js/app.js') }}"></script>

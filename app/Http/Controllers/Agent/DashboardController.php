@@ -9,6 +9,7 @@ use App\Models\Course;
 use App\Models\Student;
 use App\Models\Activity;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
@@ -21,8 +22,16 @@ class DashboardController extends Controller
         $totalStudents = Student::where('agent_id', $agentId)->count();
         $applications = Application::where('agent_id', $agentId)->get();
         $totalApplications = $applications->count();
+        // Get the start and end of current month
+        $startOfMonth = Carbon::now()->startOfMonth();
+        $endOfMonth = Carbon::now()->endOfMonth();
 
-        // Visa Approved count & percentage
+        // Fetch applications created this month
+        // Only this user's applications this month
+        $recentApplications = Application::where('agent_id', $agentId)
+            ->whereBetween('created_at', [$startOfMonth, $endOfMonth])
+            ->get();
+
         $visaApproved = $applications->where('application_status', 'Visa Approved')->count();
         $visaConversionPercent = $totalApplications > 0 ? round(($visaApproved / $totalApplications) * 100, 1) : 0;
 
@@ -30,55 +39,46 @@ class DashboardController extends Controller
         $totalRejected = $applications->whereIn('application_status', ['Rejected by the University', 'Visa Rejected', 'Lost'])->count();
         $totalUniversities = University::count();
 
-        // ---------- FILTER: universities (for filter UI) ----------
-        $countries = University::select('country')->distinct()->pluck('country');
-        $query = University::with('courses');
-
-        if ($request->filled('search')) {
-            $keyword = $request->search;
-            $query->where(function ($q) use ($keyword) {
-                $q->where('name', 'like', "%{$keyword}%")
-                    ->orWhereHas('courses', fn($qc) => $qc->where('title', 'like', "%{$keyword}%"));
-            });
-        }
-        if ($request->filled('country')) {
-            $query->where('country', $request->country);
-        }
-        if ($request->filled('city')) {
-            $query->where('city', $request->city);
-        }
-        if ($request->filled('university_id')) {
-            $query->where('id', $request->university_id);
-        }
-        if ($request->filled('course_id')) {
-            $query->whereHas('courses', fn($q) => $q->where('id', $request->course_id));
-        }
-
-        $universities = $query->paginate(10)->withQueryString();
-
-        // ---------- ACTIVITIES ----------
-        $studentActivities = Activity::where('user_id', $agentId)
-            ->whereIn('type', ['student_added', 'student_deleted'])
-            ->latest()
-            ->take(5)
-            ->get();
-
-        $documentActivities = Activity::where('user_id', $agentId)
-            ->whereIn('type', ['document_uploaded', 'document_deleted'])
-            ->latest()
-            ->take(5)
-            ->get();
-
-        $applicationActivities = Activity::where('user_id', $agentId)
-            ->whereIn('type', ['application_submitted', 'application_withdrawn'])
-            ->latest()
-            ->take(5)
-            ->get();
-
         // ---------- APPLICATION STATUS COUNTS ----------
+        $statuses = [
+            'Application started',
+            'Application viewed by Admin',
+            'Applied to University',
+            'Need to give the test',
+            'Accepted by the University',
+            'Rejected by the University',
+            'Applied to another university',
+            'Application forwarded to embassy',
+            'Is on waiting list on Embassy',
+            'Visa Approved',
+            'Visa Rejected',
+            'Lost'
+        ];
+
         $applicationStatusCounts = $applications
             ->groupBy('application_status')
             ->map(fn($group) => $group->count());
+
+        $statusCounts = [];
+        foreach ($statuses as $s) {
+            $statusCounts[] = $applicationStatusCounts->get($s, 0);
+        }
+
+        $statusColors = [
+            '#3b82f6', // Application started - Blue
+            '#60a5fa', // Viewed by Admin - Light Blue
+            '#818cf8', // Applied to University - Indigo
+            '#facc15', // Need to give the test - Yellow
+            '#22c55e', // Accepted by University - Green
+            '#ef4444', // Rejected by University - Red
+            '#8b5cf6', // Applied to another university - Purple
+            '#f97316', // Forwarded to embassy - Orange
+            '#0ea5e9', // On waiting list at embassy - Sky Blue
+            '#16a34a', // Visa Approved - Dark Green
+            '#b91c1c', // Visa Rejected - Dark Red
+            '#6b7280'  // Lost - Gray
+        ];
+
 
         // ---------- MONTHLY AGGREGATES ----------
         $monthlyApplications = Application::where('agent_id', $agentId)
@@ -86,31 +86,14 @@ class DashboardController extends Controller
             ->groupBy('month')
             ->pluck('count', 'month');
 
-        $acceptedStatuses = ['Accepted by the University', 'Visa Approved'];
-        $rejectedStatuses = ['Rejected by the University', 'Visa Rejected', 'Lost'];
+        $monthlyArr = [];
+        for ($m = 1; $m <= 12; $m++) {
+            $monthlyArr[] = $monthlyApplications->get($m, 0);
+        }
 
-        $acceptedMonthly = Application::where('agent_id', $agentId)
-            ->whereIn('application_status', $acceptedStatuses)
-            ->selectRaw('MONTH(created_at) as month, COUNT(*) as count')
-            ->groupBy('month')
-            ->pluck('count', 'month');
-
-        $rejectedMonthly = Application::where('agent_id', $agentId)
-            ->whereIn('application_status', $rejectedStatuses)
-            ->selectRaw('MONTH(created_at) as month, COUNT(*) as count')
-            ->groupBy('month')
-            ->pluck('count', 'month');
-
-        $otherMonthly = Application::where('agent_id', $agentId)
-            ->whereNotIn('application_status', array_merge($acceptedStatuses, $rejectedStatuses))
-            ->selectRaw('MONTH(created_at) as month, COUNT(*) as count')
-            ->groupBy('month')
-            ->pluck('count', 'month');
-
-        // ---------- COUNTRY-WISE APPLICATION COUNTS ----------
+        // ---------- COUNTRY-WISE APPLICATIONS ----------
         $countryLabels = University::select('country')->distinct()->pluck('country')->toArray();
         $countryCounts = [];
-
         foreach ($countryLabels as $c) {
             $countryCounts[] = Application::where('agent_id', $agentId)
                 ->whereHas('university', function ($q) use ($c) {
@@ -118,31 +101,79 @@ class DashboardController extends Controller
                 })->count();
         }
 
+        // ---------- RECENT ACTIVITIES ----------
+        $studentActivities = Activity::where('user_id', $agentId)
+            ->whereIn('type', ['student_added', 'student_deleted'])
+            ->latest()->take(5)->get();
+
+        $documentActivities = Activity::where('user_id', $agentId)
+            ->whereIn('type', ['document_uploaded', 'document_deleted'])
+            ->latest()->take(5)->get();
+
+        $applicationActivities = Activity::where('user_id', $agentId)
+            ->whereIn('type', ['application_submitted', 'application_withdrawn'])
+            ->latest()->take(5)->get();
+
+        $today = Carbon::today();
+
+        $todayStudentCount = Activity::where('user_id', $agentId)
+            ->whereIn('type', ['student_added', 'student_deleted'])
+            ->whereDate('created_at', $today)
+            ->count();
+
+        $todayDocumentCount = Activity::where('user_id', $agentId)
+            ->whereIn('type', ['document_uploaded', 'document_deleted'])
+            ->whereDate('created_at', $today)
+            ->count();
+
+        $todayApplicationCount = Activity::where('user_id', $agentId)
+            ->whereIn('type', ['application_submitted', 'application_withdrawn'])
+            ->whereDate('created_at', $today)
+            ->count();
+
+        $todayActivitiesCount = $todayStudentCount + $todayDocumentCount + $todayApplicationCount;
+        // ---------- FILTER DATA ----------
+        $countries = University::select('country')->distinct()->pluck('country');
+        $query = University::with('courses');
+        if ($request->filled('search')) {
+            $keyword = $request->search;
+            $query->where(function ($q) use ($keyword) {
+                $q->where('name', 'like', "%{$keyword}%")
+                    ->orWhereHas('courses', fn($qc) => $qc->where('title', 'like', "%{$keyword}%"));
+            });
+        }
+        if ($request->filled('country')) $query->where('country', $request->country);
+        if ($request->filled('city')) $query->where('city', $request->city);
+        if ($request->filled('university_id')) $query->where('id', $request->university_id);
+        if ($request->filled('course_id')) $query->whereHas('courses', fn($q) => $q->where('id', $request->course_id));
+        $universities = $query->paginate(10)->withQueryString();
 
         return view('agent.dashboard', compact(
-            'countries',
-            'universities',
             'totalStudents',
-            'totalUniversities',
             'totalApplications',
-            'totalApproved',
+            'totalUniversities',
+            'recentApplications',
             'visaApproved',
             'visaConversionPercent',
+            'totalApproved',
             'totalRejected',
+            'statuses',
+            'applicationStatusCounts',
+            'statusCounts',
+            'statusColors',
+            'monthlyArr',
+            'countryLabels',
+            'countryCounts',
             'studentActivities',
             'documentActivities',
             'applicationActivities',
-            'applicationStatusCounts',
-            'monthlyApplications',
-            'acceptedMonthly',
-            'rejectedMonthly',
-            'otherMonthly',
-            'countryLabels',
-            'countryCounts'
+            'todayActivitiesCount',
+            'countries',
+            'universities'
         ));
     }
 
-    // City / University / Course AJAX
+    // ---------- AJAX FILTERS ----------
     public function getCities($country)
     {
         $cities = University::where('country', $country)->select('city')->distinct()->pluck('city');

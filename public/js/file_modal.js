@@ -111,7 +111,12 @@ document.addEventListener("DOMContentLoaded", function () {
                 }
             });
         } else if (fileType === "pdf") {
-            modalContent.innerHTML = `<iframe src="${fileUrl}" class="preview-iframe"></iframe>`;
+            modalContent.innerHTML = `
+    <iframe 
+        src="${fileUrl}#toolbar=0&navpanes=0&scrollbar=1&view=FitH" 
+        class="preview-iframe"
+        allow="autoplay"
+    ></iframe>`;
         } else if (fileType === "office") {
             const encoded = encodeURIComponent(fileUrl);
             modalContent.innerHTML = `

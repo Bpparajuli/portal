@@ -47,47 +47,56 @@ $user = auth()->user();
                     <div class="notification-dropdown">
                         <button class="notification-toggle" aria-expanded="false" aria-controls="notif-menu">
                             <i class="fa fa-bell"></i>
-                            @if(auth()->user()->unreadNotifications->where('data.type', '!=', 'application_message_added')->count() > 0)
-                            <span class="notification-badge">
-                                {{ auth()->user()->unreadNotifications->where('data.type', '!=', 'application_message_added')->count() }}
-                            </span>
+                            @php
+                            $unreadCount = auth()->user()->unreadNotifications
+                            ->where('data.type', '!=', 'application_message_added')
+                            ->count();
+                            @endphp
+                            @if($unreadCount > 0)
+                            <span class="notification-badge">{{ $unreadCount }}</span>
                             @endif
                         </button>
 
                         <div class="notification-menu" id="notif-menu">
+
+                            {{-- Unread Notifications --}}
                             @php
-                            $otherNotifications = auth()->user()->unreadNotifications
+                            $unreadNotifications = auth()->user()->unreadNotifications
                             ->where('data.type', '!=', 'application_message_added');
                             @endphp
-
-                            {{-- Regular Notifications --}}
-                            @forelse($otherNotifications->take(5) as $notification)
-                            <a href="{{ $notification->data['link'] ?? '#' }}" class="notification-item unread">
+                            @forelse($unreadNotifications->take(5) as $notification)
+                            <a href="{{ $user->is_admin 
+                        ? route('admin.notifications.readAndRedirect', $notification->id)
+                        : route('agent.notifications.readAndRedirect', $notification->id) }}" class="notification-item unread">
                                 <div>{{ auth()->user()->formatNotification($notification) }}</div>
                                 <small class="text-muted">{{ $notification->created_at->diffForHumans() }}</small>
                             </a>
                             @empty
                             <span class="notification-item-text">No new notifications</span>
                             @endforelse
-
-                            {{-- Older notifications --}}
-                            @if(auth()->user()->readNotifications->count() > 0)
+                            {{-- Actions --}}
                             <hr class="my-1">
-                            <small class="text-muted ps-2">Earlier</small>
-                            @endif
+                            <div class="d-flex justify-content-between align-items-center px-3 py-2 border-top">
+                                <form action="{{ $user->is_admin 
+        ? route('admin.notifications.markAll')
+        : route('agent.notifications.markAll') }}" method="POST" class="d-inline">
+                                    @csrf
+                                    <button type="submit" class="text-decoration-none text-dark btn btn-link p-0">
+                                        <i class="fa fa-check-double me-1"></i> Mark All
+                                    </button>
+                                </form>
 
-                            @foreach(auth()->user()->readNotifications->where('data.type', '!=', 'application_message_added')->take(3) as $notification)
-                            <a href="{{ $notification->data['link'] ?? '#' }}" class="notification-item">
-                                <div>{{ auth()->user()->formatNotification($notification) }}</div>
-                                <small class="text-muted">{{ $notification->created_at->diffForHumans() }}</small>
-                            </a>
-                            @endforeach
 
-                            <a href="{{ $user->is_admin ? route('admin.notifications') : route('agent.notifications') }}" class="notification-view-all">View All</a>
+                                <a href="{{ $user->is_admin 
+                                ? route('admin.notifications')
+                                : route('agent.notifications') }}" class="text-decoration-none text-primary">
+                                    View All
+                                </a>
+                            </div>
+
                         </div>
                     </div>
                     @endif
-
                     {{-- ✉️ Application Message Notifications Dropdown --}}
                     <div class="notification-dropdown">
                         <button class="notification-toggle" aria-expanded="false" aria-controls="message-menu">
@@ -106,13 +115,16 @@ $user = auth()->user();
                             @endphp
 
                             @forelse($messageNotifications->take(5) as $notification)
-                            <a href="{{ $notification->data['link'] ?? '#' }}" class="notification-item unread bg-light border-start border-primary ps-3">
+                            <a href="{{ $user->is_admin 
+                                ? route('admin.notifications.readAndRedirect', $notification->id)
+                                : route('agent.notifications.readAndRedirect', $notification->id) }}" class="notification-item unread bg-light border-start border-primary ps-3">
                                 <div>{{ auth()->user()->formatNotification($notification) }}</div>
                                 <small class="text-muted">{{ $notification->created_at->diffForHumans() }}</small>
                             </a>
                             @empty
                             <span class="notification-item-text">No new messages</span>
                             @endforelse
+
 
                             <a href="{{ $user->is_admin ? route('admin.notifications') : route('agent.notifications') }}" class="notification-view-all">View All Messages</a>
                         </div>

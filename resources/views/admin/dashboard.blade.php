@@ -1,37 +1,38 @@
 @extends('layouts.admin')
 
 @section('admin-content')
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<link rel="stylesheet" href="{{ asset('css/admindashboard.css') }}">
+<div class="dashboard-container p-3">
 
-
-<div class="dashboard-container p-2">
-    <div class="row g-3 mb-2">
+    {{-- KPI CARDS WITH ACTION LINKS --}}
+    <div class="row g-3 mb-4">
         @php
-        // Card data array remains the same, ensuring all data links are available
-        $card_data = [
-        ['title' => 'Agents', 'count' => $totalAgents, 'icon' => 'fas fa-users', 'bg' => 'bg-primary', 'text' => 'text-white', 'link' => route('admin.users.index') ?? '#'],
-        ['title' => 'Students', 'count' => $totalStudents, 'icon' => 'fas fa-graduation-cap', 'bg' => 'bg-info', 'text' => 'text-dark', 'link' => route('admin.students.index') ?? '#'],
-        ['title' => 'Universities', 'count' => $totalUniversities, 'icon' => 'fas fa-building', 'bg' => 'bg-success', 'text' => 'text-white', 'link' => route('admin.universities.index') ?? '#'],
-        ['title' => 'Courses', 'count' => $totalCourses, 'icon' => 'fas fa-book-open', 'bg' => 'bg-warning', 'text' => 'text-dark', 'link' => route('admin.courses.index') ?? '#'],
-        ['title' => 'Applications', 'count' => $totalApplications, 'icon' => 'fas fa-file-alt', 'bg' => 'bg-danger', 'text' => 'text-white', 'link' => route('admin.applications.index') ?? '#'],
-        ['title' => 'Waiting Users', 'count' => $totalWaitingUsers, 'icon' => 'fas fa-clock', 'bg' => 'bg-dark', 'text' => 'text-white', 'link' => route('admin.users.waiting') ?? '#'],
+        $cards = [
+        ['title'=>'Agents', 'count'=>$totalAgents, 'icon'=>'fas fa-users', 'theme'=>'bg-primary-theme', 'link'=>route('admin.users.index')],
+        ['title'=>'Students', 'count'=>$totalStudents, 'icon'=>'fas fa-graduation-cap', 'theme'=>'bg-secondary-theme', 'link'=>route('admin.students.index')],
+        ['title'=>'Universities', 'count'=>$totalUniversities, 'icon'=>'fas fa-building', 'theme'=>'bg-success-theme', 'link'=>route('admin.universities.index')],
+        ['title'=>'Courses', 'count'=>$totalCourses, 'icon'=>'fas fa-book-open', 'theme'=>'bg-primary-theme', 'link'=>route('admin.courses.index')],
+        ['title'=>'Applications', 'count'=>$totalApplications, 'icon'=>'fas fa-file-alt', 'theme'=>'bg-success-theme', 'link'=>route('admin.applications.index')],
+        ['title'=>'Waiting Users', 'count'=>$totalWaitingUsers, 'icon'=>'fas fa-clock', 'theme'=>'bg-secondary-theme', 'link'=>route('admin.users.waiting')],
         ];
         @endphp
 
-        @foreach($card_data as $card)
-        <div class="col-md-6 col-lg-3 col-xl-2">
-            <a href="{{ $card['link'] }}" class="count-card-link">
-                <div class="card {{ $card['bg'] }} {{ $card['text'] }} shadow-sm">
-                    <div class="card-body d-flex flex-column justify-content-between align-items-center">
+        @foreach($cards as $card)
+        <div class="col-6 col-md-4 col-xl-2">
+            <a href="{{ $card['link'] }}" class="text-decoration-none">
+                <div class="widget-card p-3 hover-scale">
+                    <div class="icon-and-link mb-2">
                         <div>
-                            <p class="mb-0 text-opacity-75">{{ $card['title'] }}</p>
+                            <p class="widget-title mb-1">{{ $card['title'] }}</p>
+                            <div class="widget-value">{{ number_format($card['count']) }}</div>
                         </div>
-                        <div class="d-flex gap-3 justify-content-between align-items-center">
-                            <i class="{{ $card['icon'] }} fa-2x opacity-50"></i>
-                            <h4 class="card-title font-weight-bold mt-1">{{ number_format($card['count']) }}</h4>
+                        <div class="widget-icon {{ $card['theme'] }}">
+                            <i class="{{ $card['icon'] }}"></i>
                         </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center mt-2">
+                        <small class="text-muted">View details</small>
+                        <i class="fas fa-arrow-right"></i>
                     </div>
                 </div>
             </a>
@@ -39,117 +40,76 @@
         @endforeach
     </div>
 
-    {{-- 2. QUICK ACTIONS ROW --}}
-    <div class="row g-4 ">
+    {{-- QUICK ACTIONS --}}
+    <div class="row mb-4">
         <div class="col-12">
-            <div class="card shadow-sm dashboard-card p-3">
-                <div class="card-body">
-                    <h5 class="card-title chart-header">Quick Actions</h5>
-                    <div class="d-flex flex-wrap gap-2">
-                        <a href="{{ route('admin.universities.create') ?? '#' }}" class="btn btn-success btn-sm me-2 mb-2"><i class="fas fa-university"></i>+ Add University</a>
-                        <a href="{{ route('admin.universities.index') ?? '#' }}" class="btn btn-gray btn-sm me-2 mb-2"><i class="fas fa-tools"></i> Manage Universities</a>
-                        <a href="{{ route('admin.courses.create') ?? '#' }}" class="btn btn-success btn-sm me-2 mb-2"><i class="fas fa-book-open"></i>+ Add Courses</a>
-                        <a href="{{ route('admin.applications.index') ?? '#' }}" class="btn btn-warning text-dark btn-sm me-2 mb-2"><i class="fas fa-tools"></i> Manage Applications</a>
-                        <a href="{{ route('admin.users.create') ?? '#' }}" class="btn btn-success btn-sm me-2 mb-2"><i class="fas fa-user"></i>+ Add Users</a>
-                        <a href="{{ route('admin.users.index') ?? '#' }}" class="btn btn-gray btn-sm me-2 mb-2"><i class="fas fa-tools"></i> Manage Users</a>
-                    </div>
+            <div class="action-card d-flex align-items-center justify-content-between">
+                <div>
+                    <h5 class="mb-0">Quick Actions</h5>
+                    <small class="text-muted">Create or manage core items quickly</small>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="{{ route('admin.universities.create') }}" class="btn btn-success btn-sm"><i class="fas fa-university me-1"></i> Add University</a>
+                    <a href="{{ route('admin.courses.create') }}" class="btn btn-success btn-sm"><i class="fas fa-book-open me-1"></i> Add Course</a>
+                    <a href="{{ route('admin.users.create') }}" class="btn btn-success btn-sm"><i class="fas fa-user me-1"></i> Add User</a>
+                    <a href="{{ route('admin.applications.index') }}" class="btn btn-warning btn-sm"><i class="fas fa-tools me-1"></i> Manage Applications</a>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="row g-4 mb-5">
-        <div class="col-lg-6 d-flex flex-column gap-4">
-            {{-- Monthly Applications --}}
-            <div class="card chart-card flex-fill">
+    {{-- CHARTS & STATS --}}
+    <div class="row g-4 mb-4">
+        {{-- LEFT: Charts --}}
+        <div class="col-lg-8 d-flex flex-column gap-4">
+            <div class="card chart-card flex-fill shadow-sm">
                 <div class="card-body">
-                    <h5 class="section-title">📅 Monthly Applications</h5>
+                    <h5>Monthly Applications</h5>
                     <canvas id="applicationsChart"></canvas>
                 </div>
             </div>
-
-            {{-- Applications by Country --}}
-            <div class="card chart-card flex-fill">
+            <div class="card chart-card flex-fill shadow-sm">
                 <div class="card-body">
-                    <h5 class="section-title">🌍 Applications by Country</h5>
+                    <h5>Applications by Country</h5>
                     <canvas id="countryChart"></canvas>
                 </div>
             </div>
         </div>
 
-        {{-- Right Column: Applications by Status --}}
-        <div class="col-lg-6">
-            <div class="card chart-card h-40">
+        {{-- RIGHT: Applications by Status + Top Agents --}}
+        <div class="col-lg-4 d-flex flex-column gap-4">
+            <div class="card chart-card flex-fill shadow-sm">
                 <div class="card-body">
-                    <h5 class="section-title">📊 Applications by Status</h5>
-
-                    {{-- Doughnut Chart --}}
+                    <h5>Applications by Status</h5>
                     <canvas id="statusChart"></canvas>
-
-                    {{-- Custom Legend --}}
-                    <div class="status-legend mt-3 d-flex flex-wrap gap-3 justify-content-between">
-                        @foreach($statusChartData['labels'] as $index => $label)
-                        <div class="legend-item d-flex align-items-center" style="width: 48%;">
-                            <span class="badge me-2" style="background-color: {{ $statusChartData['datasets'][0]['backgroundColor'][$index] }};">
-                                &nbsp;</span>
-                            <span>{{ $label }} ({{ $statusChartData['datasets'][0]['data'][$index] }})</span>
+                    <div class="progress-stats grid-two-columns mt-3">
+                        @foreach($statusChartData['labels'] as $i => $s)
+                        <div class="stat" style="background-color: {{ $statusChartData['datasets'][0]['backgroundColor'][$i] }}; color: #fff; font-weight: bold;">
+                            {{ $s }}
                         </div>
                         @endforeach
+
                     </div>
-
                 </div>
             </div>
-        </div>
-    </div>
 
-    <div class="row g-4 mb-5">
-        <div class="col-lg-6">
-            <div class="card activity-feed">
+            {{-- Top Agents --}}
+            <div class="card top-agents-card flex-fill shadow-sm">
                 <div class="card-body">
-                    <h5 class="section-title">Recent Activity</h5>
-                    <ul class="activity-list">
-                        @forelse($activities as $activity)
-                        <li class="activity-item" style="animation-delay: {{ $loop->index * 0.1 }}s;">
-                            <div class="activity-icon">
-                                <i class="fas fa-user-plus"></i>
-                            </div>
-                            <div class="activity-item-content">
-                                <p class="activity-text">
-                                    <strong>{{ $activity->user->name ?? 'Unknown User' }}</strong>
-                                    {{ $activity->description }}
-                                </p>
-                                <span class="activity-timestamp">{{ $activity->created_at->diffForHumans() }}</span>
-                            </div>
-                        </li>
-                        @empty
-                        <li class="text-center text-muted py-5">No recent activity.</li>
-                        @endforelse
-                    </ul>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-6">
-            <div class="card top-agents">
-                <div class="card-body">
-                    <h5 class="section-title">Latest Agents</h5>
-                    <ul class="agent-list">
-                        @forelse($latestAgents as $agent)
-                        <li class="agent-item" style="animation-delay: {{ $loop->index * 0.1 }}s;">
-                            <a href="{{ route('admin.users.show', $agent->id) }}">
+                    <h5>🏆 Top Agents</h5>
+                    <ul class="list-group list-group-flush">
+                        @forelse($topAgents as $agent)
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center gap-2">
                                 @if($agent->business_logo)
-                                <img src="{{ Storage::url($agent->business_logo) }}" alt="Logo" width="45" height="45" class="rounded-3">
-                                @else
-                                <span class="text-muted">No Logo</span>
+                                <img src="{{ Storage::url($agent->business_logo) }}" class="rounded-circle" width="40" height="40">
                                 @endif
-                            </a>
-                            <div class="agent-item-content">
-                                <h6 class="mb-1">{{ $agent->name }}</h6>
-                                <p class="agent-location">{{ $agent->city ?? 'City not specified' }}, {{ $agent->country ?? 'Country not specified' }}</p>
+                                <span>{{ $agent->name }}</span>
                             </div>
-                            <span class="badge bg-primary rounded-pill">{{ $agent->applications_count ?? 0 }} Apps</span>
+                            <span class="badge bg-primary rounded-pill">{{ $agent->applications_count }} Apps</span>
                         </li>
                         @empty
-                        <li class="text-center text-muted py-5">No agents found.</li>
+                        <li class="list-group-item text-center text-muted">No top agents yet</li>
                         @endforelse
                     </ul>
                 </div>
@@ -157,58 +117,166 @@
         </div>
     </div>
 
-    <div class="row g-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="section-title">Recent Applications</h5>
-                    <div class="table-responsive">
-                        <table class="table table-striped table-borderless table-rounded">
-                            <thead>
-                                <tr>
-                                    <th>Applicant</th>
-                                    <th>Course</th>
-                                    <th>University</th>
-                                    <th>Status</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse($latestApplications as $application)
-                                <tr>
-                                    <td>{{ $application->student->first_name ?? 'N/A' }} {{ $application->student->last_name ?? 'N/A' }}</td>
-                                    <td>{{ $application->course->title ?? 'N/A' }}</td>
-                                    <td>{{ $application->university->name ?? 'N/A' }}</td>
-                                    <td>
-                                        {{-- Uses the Status Class accessor from Application Model (e.g., bg-success, bg-danger) --}}
-                                        <span class="badge badge-status {{ $application->status_class }}">
-                                            {{ $application->application_status }}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <a href="{{ route('admin.applications.show', $application->id) }}" class="btn btn-sm btn-primary rounded-pill"><i class="fas fa-eye"></i></a>
-                                        <button class="btn btn-sm btn-danger rounded-pill"><i class="fas fa-trash-alt"></i></button>
-                                    </td>
-                                </tr>
-                                @empty
-                                <tr>
-                                    <td colspan="5" class="text-center text-muted py-5">No recent applications found.</td>
-                                </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+    {{-- RECENT APPLICATIONS --}}
+    <div class="card mb-4 shadow-sm">
+        <div class="card-body">
+            <h5>Recent Applications</h5>
+            <div class="table-responsive">
+                <table class="table table-striped table-hover table-borderless align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Applicant</th>
+                            <th>Agent</th>
+                            <th>Course</th>
+                            <th>University</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($latestApplications as $app)
+                        <tr>
+                            <td>
+                                <a href="{{ route('admin.students.show', $app->student->id) }}">
+                                    {{ $app->student->first_name ?? 'N/A' }} {{ $app->student->last_name ?? 'N/A' }}
+                                </a>
+                            </td>
+                            <td>
+                                <a href="{{ route('admin.users.show', $app->agent->id) }}">
+                                    {{ $app->agent->name ?? 'N/A' }}
+                                </a>
+                            </td>
+                            <td>{{ $app->course->title ?? 'N/A' }}</td>
+                            <td>{{ $app->university->name ?? 'N/A' }}</td>
+                            <td>
+                                <a href="{{ route('admin.applications.show', $app->id) }}">
+                                    <span class="badge {{ $app->status_class }}">
+                                        {{ $app->application_status }}
+                                    </span>
+                                </a> </td>
+                            <td>
+                                <div class="d-flex gap-1">
+                                    <a href="{{ route('admin.applications.show', $app->id) }}" class="p-2 btn btn-sm btn-primary">View</a>
+                                    <button class="p-2 btn btn-sm btn-secondary">Delete</button>
+                                </div>
+                            </td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="5" class="text-center text-muted">No recent applications</td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
-</div>
 
+    {{-- RECENT ACTIVITIES --}}
+    <div class="row g-3">
+
+        {{-- Students --}}
+        <div class="col-md-4">
+            <div class="card p-3 h-100">
+                <h6 class="mb-3">Student Activities</h6>
+
+                <ul class="list-unstyled m-0">
+
+                    @forelse ($studentActivities as $act)
+                    <a href="{{ $act->link }}" class="activity-link d-flex justify-content-between align-items-center">
+                        <li class="mb-3">
+
+                            {{-- Row 1: Full description --}}
+                            <div class="fw-semibold">
+                                {!! $act->description !!}
+                            </div>
+
+                            {{-- Row 2: Agent + Time --}}
+                            <div class="d-flex justify-content-between text-muted small mt-1">
+                                <span>{{ $act->user->business_name }}</span>
+                                <span>{{ $act->created_at->diffForHumans() }}</span>
+                            </div>
+
+                        </li>
+                        @empty
+                        <li>No student activities</li>
+                        @endforelse
+                    </a>
+                </ul>
+
+            </div>
+        </div>
+
+
+        {{-- Applications --}}
+        <div class="col-md-4">
+            <div class="card p-3 h-100">
+                <h6 class="mb-3">Application Activities</h6>
+
+                <ul class="list-unstyled m-0">
+                    @forelse ($applicationActivities as $act)
+                    <a href="{{ $act->link }}" class="activity-link d-flex justify-content-between align-items-center">
+                        <li class="mb-3">
+
+                            {{-- Row 1 --}}
+                            <div class="fw-semibold">
+                                {!! $act->description !!}
+                            </div>
+
+                            {{-- Row 2 --}}
+                            <div class="d-flex justify-content-between text-muted small mt-1">
+                                <span>{{ $act->user->business_name }}</span>
+                                <span>{{ $act->created_at->diffForHumans() }}</span>
+                            </div>
+
+                        </li>
+                        @empty
+                        <li>No application activities</li>
+                        @endforelse
+                    </a>
+                </ul>
+            </div>
+        </div>
+
+
+        {{-- Documents --}}
+        <div class="col-md-4">
+            <div class="card p-3 h-100">
+                <h6 class="mb-3">Document Activities</h6>
+
+                <ul class="list-unstyled m-0">
+                    @forelse ($documentActivities as $act)
+                    <a href="{{ $act->link }}" class="activity-link d-flex justify-content-between align-items-center">
+                        <li class="mb-3">
+
+                            {{-- Row 1 --}}
+                            <div class="fw-semibold">
+                                {!! $act->description !!}
+                            </div>
+
+                            {{-- Row 2 --}}
+                            <div class="d-flex justify-content-between text-muted small mt-1">
+                                <span>{{ $act->user->business_name }}</span>
+                                <span>{{ $act->created_at->diffForHumans() }}</span>
+                            </div>
+
+                        </li>
+                        @empty
+                        <li>No document activities</li>
+                        @endforelse
+                    </a>
+                </ul>
+
+            </div>
+        </div>
+
+    </div>
+
+</div>
 {{-- Chart.js --}}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    document.addEventListener("DOMContentLoaded", function() {
-        // Applications Trend
+    document.addEventListener('DOMContentLoaded', function() {
         new Chart(document.getElementById('applicationsChart'), {
             type: 'line'
             , data: @json($applicationsChartData)
@@ -228,7 +296,6 @@
             }
         });
 
-        // Applications by Status
         new Chart(document.getElementById('statusChart'), {
             type: 'doughnut'
             , data: @json($statusChartData)
@@ -241,7 +308,6 @@
             }
         });
 
-        // Applications by Country
         new Chart(document.getElementById('countryChart'), {
             type: 'bar'
             , data: @json($countryChartData)
@@ -262,4 +328,5 @@
     });
 
 </script>
+
 @endsection

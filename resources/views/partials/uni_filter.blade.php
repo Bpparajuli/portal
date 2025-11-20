@@ -2,7 +2,7 @@
 
 <div class="card shadow-sm">
     <div class="card-body">
-        <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="d-flex justify-content-between align-items-center">
             <h5 class="card-title fw-bold mb-0">Find Your University</h5>
             @auth
             @if(auth()->user()->is_admin)
@@ -77,9 +77,9 @@
             </div>
 
             {{-- Buttons --}}
-            <div class="mt-4 d-flex justify-content-end gap-2">
+            <div class="mt-2 d-flex justify-content-end gap-2">
                 <a href="{{ route('guest.universities.index') }}" class="btn btn-secondary">Clear</a>
-                <button type="submit" class="btn btn-primary">Find</button>
+                <button type="submit" class="btn btn-success">Find</button>
             </div>
         </form>
     </div>

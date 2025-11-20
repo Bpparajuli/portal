@@ -7,11 +7,11 @@
 
 <div class="notifications-container">
     <!-- Header -->
-    <div class="page-header">
+    <div class="page-header d-flex justify-content-between align-items-center mb-4">
         <h1 class="page-title">
-            <i class="fa fa-bell me-2"></i> Agent Notifications
+            All Notifications
         </h1>
-        <form action="{{ route('agent.notifications.markAllAsRead') }}" method="POST" class="d-inline">
+        <form action="{{ route('agent.notifications.markAll') }}" method="POST" class="d-inline">
             @csrf
             <button class="btn btn-outline-primary btn-sm d-flex align-items-center gap-2">
                 <i class="fa fa-check-double"></i> Mark All as Read
@@ -46,176 +46,139 @@
     $grouped = collect($otherNotifications)->groupBy(fn($n) => ($n->data['type'] ?? 'other'));
     @endphp
 
-    <div class="notifications-grid">
+    <div class="notifications-grid d-flex gap-4">
         <!-- Main Notifications (Left) -->
-        <div>
-            <div class="section-card">
-                @forelse($grouped as $type => $notificationsOfType)
-                <div class="mb-5">
-                    <h4 class="section-title">
-                        <i class="fa {{ 
-                                    match(true) {
-                                        $type === 'application_status' => 'fa-file-circle-check',
-                                        $type === 'student_status' => 'fa-user-check',
-                                        default => 'fa-bell'
-                                    }
-                                }}"></i>
-                        {{ $typeTitles[$type] ?? ucfirst(str_replace('_', ' ', $type)) }}
-                        <span class="text-muted ms-auto">({{ $notificationsOfType->count() }})</span>
-                    </h4>
+        <div class="flex-grow-1">
+            @forelse($grouped as $type => $notificationsOfType)
+            <div class="mb-5">
 
-                    @foreach($notificationsOfType as $notification)
-                    @php
-                    $isUnread = is_null($notification->read_at);
-                    $data = (array) ($notification->data ?? []);
-                    $message = $data['message'] ?? $data['title'] ?? $data['body'] ?? 'Notification';
-                    $created = $notification->created_at?->diffForHumans();
-                    $short = $data['short'] ?? $data['details'] ?? null;
+                <h4 class="section-title d-flex gradient">
+                    <i class="fa {{ match($type) {
+                                'application_status' => 'fa-file-circle-check',
+                                'student_status' => 'fa-user-check',
+                                default => 'fa-bell',
+                            } }} me-2"></i>
+                    {{ $typeTitles[$type] ?? ucfirst(str_replace('_', ' ', $type)) }}
+                    <span class="text-muted ms-auto">({{ $notificationsOfType->count() }})</span>
+                </h4>
 
-                    $url = $data['link'] ?? $data['url'] ?? null;
-                    if (!$url && !empty($data['application_id'])) {
-                    $url = route('agent.applications.show', $data['application_id']);
-                    if (!empty($data['comment_id'])) {
-                    $url .= '#comment-' . $data['comment_id'];
-                    }
-                    } elseif (!$url && !empty($data['student_id'])) {
-                    $url = route('agent.students.show', $data['student_id']);
-                    }
+                @foreach($notificationsOfType as $notification)
+                @php
+                $isUnread = is_null($notification->read_at);
+                $data = (array) ($notification->data ?? []);
+                $message = $data['message'] ?? $data['title'] ?? $data['body'] ?? 'Notification';
+                $created = $notification->created_at?->diffForHumans();
+                $short = $data['short'] ?? $data['details'] ?? null;
 
-                    $icon = match(true) {
-                    $type === 'application_status' => 'fa-file-circle-check',
-                    $type === 'student_status' => 'fa-user-check',
-                    default => 'fa-bell'
-                    };
-                    @endphp
+                $url = $data['link'] ?? $data['url'] ?? null;
+                if (!$url && !empty($data['application_id'])) {
+                $url = route('agent.applications.show', $data['application_id']);
+                if (!empty($data['comment_id'])) {
+                $url .= '#comment-' . $data['comment_id'];
+                }
+                } elseif (!$url && !empty($data['student_id'])) {
+                $url = route('agent.students.show', $data['student_id']);
+                }
 
-                    @if($url)
-                    <a href="{{ $url }}" class="notification-link">
+                $icon = match($type) {
+                'application_status' => 'fa-file-circle-check',
+                'student_status' => 'fa-user-check',
+                default => 'fa-bell',
+                };
+                @endphp
+
+                <div class="notification-card mb-2 p-3 d-flex align-items-start border rounded {{ $isUnread ? 'unread' : '' }}">
+                    <div class="notification-icon me-3">
+                        <i class="fa {{ $icon }} fa-2x"></i>
+                    </div>
+
+                    <div class="notification-body flex-grow-1">
+                        <p class="notification-title mb-1">{!! $message !!}</p>
+                        @if($short)
+                        <p class="notification-text">{{ Str::limit($short, 130) }}</p>
                         @endif
+                        <small class="text-muted">
+                            <i class="fa fa-clock me-1"></i>{{ $created }}
+                            @if($isUnread)<span class="badge bg-primary ms-2">New</span>@endif
+                        </small>
+                    </div>
 
-                        <div class="notification-card {{ $isUnread ? 'unread' : '' }}">
-                            <div class="notification-icon">
-                                <i class="fa {{ $icon }}"></i>
-                            </div>
-
-                            <div class="notification-body">
-                                <p class="notification-title">{!! $message !!}</p>
-                                @if($short)
-                                <p class="notification-text">{{ Str::limit($short, 130) }}</p>
-                                @endif
-                                <div class="notification-meta">
-                                    <small><i class="fa fa-clock me-1"></i> {{ $created }}</small>
-                                    @if($isUnread)
-                                    <span class="badge-new">New</span>
-                                    @endif
-                                </div>
-                            </div>
-
-                            <div class="notification-actions" onclick="event.stopPropagation();">
-                                @if($isUnread)
-                                <form action="{{ route('agent.notifications.markAsRead', $notification->id) }}" method="POST" class="d-inline">
-                                    @csrf
-                                    <button type="submit" class="btn-icon" title="Mark as read">
-                                        <i class="fa fa-check"></i>
-                                    </button>
-                                </form>
-                                @else
-                                <form action="{{ route('agent.notifications.markUnread', $notification->id) }}" method="POST" class="d-inline">
-                                    @csrf
-                                    <button type="submit" class="btn-icon" title="Mark as unread">
-                                        <i class="fa fa-undo"></i>
-                                    </button>
-                                </form>
-                                @endif
-                            </div>
-                        </div>
-
-                        @if($url)
-                    </a>
-                    @endif
-                    @endforeach
+                    <div class="notification-actions ms-3" onclick="event.stopPropagation();">
+                        @if($isUnread)
+                        <form action="{{ route('agent.notifications.markRead', $notification->id) }}" method="POST" class="d-inline">
+                            @csrf
+                            <button type="submit" class="btn btn-sm btn-outline-success" title="Mark as read">
+                                <i class="fa fa-check"></i>
+                            </button>
+                        </form>
+                        @else
+                        <form action="{{ route('agent.notifications.markUnread', $notification->id) }}" method="POST" class="d-inline">
+                            @csrf
+                            <button type="submit" class="btn btn-sm btn-outline-secondary" title="Mark as unread">
+                                <i class="fa fa-undo"></i>
+                            </button>
+                        </form>
+                        @endif
+                    </div>
                 </div>
-                @empty
-                <div class="empty-state">
-                    <i class="fa fa-bell-slash"></i>
-                    <p>No notifications in this category.</p>
-                </div>
-                @endforelse
+                @endforeach
             </div>
+            @empty
+            <div class="empty-state text-center py-4">
+                <i class="fa fa-bell-slash fa-2x mb-2"></i>
+                <p>No notifications in this category.</p>
+            </div>
+            @endforelse
         </div>
 
         <!-- Messages Sidebar (Right) -->
-        <div>
-            <div class="section-card">
-                <h4 class="section-title">
-                    <i class="fa fa-envelope"></i> Messages
-                    @if(count($messages))
-                    <span class="text-muted ms-auto">({{ count($messages) }})</span>
-                    @endif
-                </h4>
-
+        <div style="width: 300px;">
+            <h4 class="mb-3"><i class="fa fa-envelope me-1"></i> Messages
                 @if(count($messages))
-                <ul class="messages-list">
-                    @foreach($messages as $notification)
-                    @php
-                    $isUnread = is_null($notification->read_at);
-                    $data = (array) ($notification->data ?? []);
-                    $senderName = $data['added_by']['name'] ?? 'Unknown User';
-                    $message = $data['message'] ?? 'No message';
-                    $created = $notification->created_at?->diffForHumans();
-                    $url = $data['link'] ?? null;
-                    @endphp
-
-                    @if($url)
-                    <a href="{{ $url }}" class="notification-link">
-                        @endif
-
-                        <li class="notification-card {{ $isUnread ? 'unread' : '' }} p-3">
-                            <div class="d-flex justify-content-between align-items-start">
-                                <div class="flex-grow-1 me-3">
-                                    <p class="notification-title mb-1">{!! $message !!}</p>
-                                    <small class="text-muted">
-                                        <i class="fa fa-clock"></i> {{ $created }}
-                                        @if($isUnread)
-                                        <span class="badge-new ms-2">New</span>
-                                        <span class="text-muted">By:</span>
-                                        <span class="sender-name">{{ $senderName }}</span>
-                                        @endif
-                                    </small>
-                                </div>
-
-                                <div class="notification-actions" onclick="event.stopPropagation();">
-                                    @if($isUnread)
-                                    <form action="{{ route('agent.notifications.markAsRead', $notification->id) }}" method="POST" class="d-inline">
-                                        @csrf
-                                        <button type="submit" class="btn-icon" title="Mark as read">
-                                            <i class="fa fa-check"></i>
-                                        </button>
-                                    </form>
-                                    @else
-                                    <form action="{{ route('agent.notifications.markUnread', $notification->id) }}" method="POST" class="d-inline">
-                                        @csrf
-                                        <button type="submit" class="btn-icon" title="Mark as unread">
-                                            <i class="fa fa-undo"></i>
-                                        </button>
-                                    </form>
-                                    @endif
-                                </div>
-                            </div>
-                        </li>
-
-                        @if($url)
-                    </a>
-                    @endif
-                    @endforeach
-                </ul>
-                @else
-                <div class="empty-state">
-                    <i class="fa fa-envelope-open"></i>
-                    <p>No messages yet.</p>
-                </div>
+                <span class="text-muted ms-auto">({{ count($messages) }})</span>
                 @endif
+            </h4>
+
+            @if(count($messages))
+            @foreach($messages as $notification)
+            @php
+            $isUnread = is_null($notification->read_at);
+            $data = (array) $notification->data;
+            $sender = $data['added_by']['name'] ?? 'Unknown';
+            $message = $data['message'] ?? 'No message';
+            $created = $notification->created_at?->diffForHumans();
+            $url = $data['link'] ?? null;
+            @endphp
+            <div class="notification-card mb-2 p-2 border rounded {{ $isUnread ? 'unread' : '' }}">
+                <p class="mb-1">{!! $message !!}</p>
+                <div class="d-flex justify-content-between align-items-center">
+                    <p class="text-muted">{{ $created }} | By: {{ $sender }}</p>
+                    <div>
+                        @if($isUnread)
+                        <form action="{{ route('agent.notifications.markRead', $notification->id) }}" method="POST" class="d-inline">
+                            @csrf
+                            <button type="submit" class="btn btn-sm btn-outline-success">
+                                <i class="fa fa-check"></i>
+                            </button>
+                        </form>
+                        @else
+                        <form action="{{ route('agent.notifications.markUnread', $notification->id) }}" method="POST" class="d-inline">
+                            @csrf
+                            <button type="submit" class="btn btn-sm btn-outline-secondary">
+                                <i class="fa fa-undo"></i>
+                            </button>
+                        </form>
+                        @endif
+                    </div>
+                </div>
             </div>
+            @endforeach
+            @else
+            <div class="empty-state text-center py-4">
+                <i class="fa fa-envelope-open fa-2x mb-2"></i>
+                <p>No messages yet.</p>
+            </div>
+            @endif
         </div>
     </div>
 
@@ -223,7 +186,6 @@
     <div class="mt-5 d-flex justify-content-center">
         {{ $notifications->links() }}
     </div>
-
     @else
     <div class="section-card text-center py-6">
         <div class="empty-state">

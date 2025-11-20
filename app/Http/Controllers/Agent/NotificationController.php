@@ -3,71 +3,56 @@
 namespace App\Http\Controllers\Agent;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Notifications\DatabaseNotification;
 
 class NotificationController extends Controller
 {
-    /**
-     * Display a listing of notifications for the authenticated agent.
-     */
+    // List all notifications
     public function index()
     {
-        $agent = Auth::user();
-
-        // Use property (not method)
-        $notifications = $agent->notifications()->paginate(10);
-        $unreadCount = $agent->unreadNotifications->count();
+        $user = Auth::user();
+        $notifications = $user->notifications()->latest()->paginate(12);
+        $unreadCount = $user->unreadNotifications()->count();
 
         return view('agent.notifications', compact('notifications', 'unreadCount'));
     }
 
-    /**
-     * Mark a single notification as read.
-     */
+    // Mark a single notification as read
     public function markAsRead($id)
     {
-        $agent = Auth::user();
+        $notification = Auth::user()->notifications()->findOrFail($id);
+        $notification->markAsRead();
 
-        $notification = $agent->notifications()->where('id', $id)->first();
+        return redirect()->back()->with('status', 'Notification marked as read.');
+    }
 
-        if ($notification) {
-            $notification->markAsRead();
+    // Mark a single notification as unread
+    public function markAsUnread($id)
+    {
+        $notification = DatabaseNotification::findOrFail($id);
+        if ($notification->notifiable_id === Auth::id()) {
+            $notification->forceFill(['read_at' => null])->save();
+            return redirect()->back()->with('status', 'Notification marked as unread.');
         }
 
-        return back()->with('success', 'Notification marked as read.');
+        return redirect()->back()->with('status', 'Notification not found.');
     }
 
-    /**
-     * Mark all notifications as read.
-     */
-    public function markAllAsRead()
+    // Mark all notifications as read
+    public function markAll()
     {
-        $agent = Auth::user();
-
-        $agent->unreadNotifications->markAsRead();
-
-        return back()->with('success', 'All notifications marked as read.');
+        Auth::user()->unreadNotifications->markAsRead();
+        return redirect()->back()->with('status', 'All notifications marked as read.');
     }
 
-    /**
-     * Read and redirect if notification has a URL.
-     */
+    // Optional: mark as read and redirect to notification link
     public function readAndRedirect($id)
     {
-        $agent = Auth::user();
+        $notification = Auth::user()->notifications()->findOrFail($id);
+        $notification->markAsRead();
 
-        $notification = $agent->notifications()->where('id', $id)->first();
-
-        if ($notification) {
-            $notification->markAsRead();
-
-            $data = $notification->data;
-            if (isset($data['url'])) {
-                return redirect($data['url']);
-            }
-        }
-
-        return back();
+        $link = $notification->data['link'] ?? route('agent.notifications');
+        return redirect($link);
     }
 }

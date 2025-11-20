@@ -5,12 +5,12 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h3 class="fw-bold"><i class="fa fa-file-alt text-success me-2"></i>Applications of {{ $agent->business_name }}</h3>
         <form method="GET" class="d-flex gap-2">
-            <input type="text" name="search" value="{{ request('search') }}" class="form-control" placeholder="Search by student...">
+            <input type="text" name="search" value="{{ request('search') }}" class="form-control" placeholder="Search by uni,student...">
             <button class="btn btn-success"><i class="fa fa-search me-1"></i>Search</button>
         </form>
     </div>
     @if($applications->count())
-    <div class="table-responsive">
+    <div class="table-wrapper">
         <table class="table table-hover table-striped align-middle shadow-sm rounded text-center">
             <thead class="table-dark">
                 <tr>

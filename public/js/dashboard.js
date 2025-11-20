@@ -87,3 +87,9 @@ document.addEventListener("DOMContentLoaded", function () {
         setInterval(autoSlide, 10);
     }
 });
+
+// ===========================
+// ===========================
+// ===========================
+// ===========================
+// End of dashboard.js file

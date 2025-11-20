@@ -90,9 +90,9 @@ class UniversityController extends Controller
     {
         $request->validate([
             'name'            => 'required|string|max:255',
-            'short_name'      => 'nullable|string|max:100',
-            'country'         => 'required|string|max:100',
-            'city'            => 'nullable|string|max:100',
+            'short_name'      => 'nullable|string|max:255',
+            'country'         => 'required|string|max:255',
+            'city'            => 'nullable|string|max:255',
             'website'         => 'nullable|string|max:255',
             'contact_email'   => 'nullable|string|max:255',
             'description'     => 'nullable|string',
@@ -145,9 +145,9 @@ class UniversityController extends Controller
     {
         $request->validate([
             'name'            => 'required|string|max:255',
-            'short_name'      => 'nullable|string|max:100',
-            'country'         => 'required|string|max:100',
-            'city'            => 'nullable|string|max:100',
+            'short_name'      => 'nullable|string|max:255',
+            'country'         => 'required|string|max:255',
+            'city'            => 'nullable|string|max:255',
             'website'         => 'nullable|string|max:255',
             'contact_email'   => 'nullable|string|max:255',
             'description'     => 'nullable|string',

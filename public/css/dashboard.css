@@ -1,14 +1,18 @@
-.dash-dashboard section {
-    padding: 80px 30px;
-    text-align: center;
+.dash-dashboard {
+    display: flex;
+    flex-direction: column;
+    gap: 40px; /* vertical spacing between child sections */
+    padding: 40px 0; /* top & bottom padding for the whole container */
 }
 
-/* Hero */
+/* =========================
+   Hero Section
+========================= */
 .dash-hero {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: linear-gradient(135deg, #1a0262, #820b5c);
+    background: linear-gradient(135deg, var(--secondary), var(--primary));
     color: #fff;
     padding: 80px 40px;
     flex-wrap: wrap;
@@ -16,36 +20,36 @@
 }
 .dash-hero-text {
     flex: 3;
-    text-align: left;
     display: flex;
     flex-direction: column;
-    gap: 1rem; /* adjust as needed */
+    gap: 1rem;
+    text-align: left;
 }
 .dash-hero-text h1 {
     font-size: 2.5rem;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5); /* x-offset, y-offset, blur, color */
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
 }
 .dash-hero-buttons {
     display: flex;
-    gap: 1rem; /* Adjust the gap size as needed */
+    gap: 1rem;
 }
 .dash-hero-buttons .dash-btn {
     padding: 12px 24px;
     border-radius: 8px;
     text-decoration: none;
 }
-.dash-btn-register:hover {
-    background-color: var(--secondary-color);
-    color: var(--text-light);
-}
-.dash-btn-login:hover {
-    background-color: var(--primary-color);
-    color: var(--text-light);
-}
 .dash-btn-login,
 .dash-btn-register {
     background-color: var(--background-light);
     color: var(--text-dark);
+}
+.dash-btn-login:hover {
+    background-color: var(--primary);
+    color: var(--text-light);
+}
+.dash-btn-register:hover {
+    background-color: var(--secondary);
+    color: var(--text-light);
 }
 
 .dash-login-form {
@@ -62,7 +66,7 @@
 .dash-form-group label {
     display: block;
     font-weight: bold;
-    margin: 10px 0px;
+    margin: 10px 0;
 }
 .dash-form-group input {
     width: 100%;
@@ -82,38 +86,46 @@
     cursor: pointer;
 }
 
-/* Features */
+/* =========================
+   Features Section
+========================= */
 .dash-features {
     display: flex;
     gap: 20px;
     justify-content: center;
-    flex-wrap: wrap;
+    align-items: stretch;
+    overflow-x: auto;
+    padding: 10px;
 }
 .dash-feature-card {
     background: #fff;
     padding: 25px;
     border-radius: 12px;
-    width: 280px;
     box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+    flex: 0 0 250px;
+    text-align: center;
 }
 .dash-icon {
     font-size: 2rem;
-    color: var(--primary-color);
+    color: var(--primary);
     margin-bottom: 10px;
 }
 
-/* Countries */
+/* =========================
+   Countries Section
+========================= */
 .countries-section {
-    padding: 1rem 1rem;
+    padding: 1rem;
     background: var(--light);
 }
-
-.section-title {
-    background: #ffffff;
-    color: var(--primary-color);
+.countries-section .section-title,
+.dash-programs-section .section-title,
+.dash-universities .section-title {
+    background: #fff;
+    color: var(--primary);
     font-weight: bold;
     padding: 1rem;
-    margin: 0 auto 2rem auto;
+    margin: 0 auto 2rem;
     text-align: center;
     max-width: 500px;
     border-radius: 6px;
@@ -124,15 +136,6 @@
     grid-template-columns: repeat(4, 1fr);
     gap: 1rem;
 }
-
-.country-card.single {
-    grid-column: span 1;
-}
-
-.country-card.double {
-    grid-column: span 2;
-}
-
 .country-card {
     position: relative;
     overflow: hidden;
@@ -141,18 +144,15 @@
     text-decoration: none;
     transition: transform 0.3s ease;
 }
-
 .country-card:hover {
     transform: scale(1.05);
 }
-
 .country-card img {
     width: 100%;
     height: 220px;
     object-fit: cover;
     display: block;
 }
-
 .country-card .overlay {
     position: absolute;
     inset: 0;
@@ -163,29 +163,25 @@
     opacity: 0;
     transition: opacity 0.4s ease;
 }
-
 .country-card:hover .overlay {
     opacity: 1;
 }
-
 .country-card .overlay h3 {
     color: #fff;
     font-size: 1.4rem;
     font-weight: bold;
     margin: 0;
 }
-
-/* 📱 Responsive */
-@media (max-width: 768px) {
-    .countries-custom-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    .country-card.double {
-        grid-column: span 2;
-    }
+.country-card.single {
+    grid-column: span 1;
+}
+.country-card.double {
+    grid-column: span 2;
 }
 
-/* Programs */
+/* =========================
+   Programs Section
+========================= */
 .dash-programs-section h2 {
     margin-bottom: 20px;
 }
@@ -202,7 +198,7 @@
 }
 .dash-btn-blue {
     display: inline-block;
-    background: var(--primary-color);
+    background: var(--primary);
     color: #fff;
     padding: 10px 20px;
     border-radius: 8px;
@@ -210,74 +206,40 @@
     margin-top: 15px;
 }
 .dash-btn-blue:hover {
-    background: var(--secondary-color);
-    color: #fff;
-}
-/* Testimonials */
-.dash-testimonials {
-    padding: 4rem 2rem;
-    background: linear-gradient(135deg, #f0f4ff, #e8f0fe);
-    text-align: center;
-    font-family: "Poppins", sans-serif;
+    background: var(--secondary);
 }
 
-.dash-testimonials h2 {
-    font-size: 2.2rem;
-    margin-bottom: 2rem;
-    color: #1a1a1a;
-    font-weight: 600;
-}
-
-/* Slider Container */
-.testimonial-slider-container {
-    position: relative;
-    max-width: 800px;
-    margin: 0 auto;
-    overflow: hidden;
-}
-
-/* Slider Track */
-.dash-testimonial-slider {
-    display: flex;
-    gap: 2rem;
-    transition: transform 0.5s ease-in-out;
-}
-
-/* Testimonials Section */
+/* =========================
+   Testimonials Section
+========================= */
 .dash-testimonials {
     padding: 4rem 2rem;
     background: #f0f4ff;
     text-align: center;
     font-family: "Poppins", sans-serif;
 }
-
 .dash-testimonials h2 {
     font-size: 2.2rem;
     margin-bottom: 2rem;
     color: #1a1a1a;
     font-weight: 600;
 }
-
-/* Slider Container */
 .testimonial-slider-container {
     position: relative;
     max-width: 800px;
     margin: 0 auto;
     overflow: hidden;
 }
-
-/* Slider Track */
 .dash-testimonial-slider {
     display: flex;
-    gap: 2rem; /* spacing between cards */
-    overflow-x: hidden; /* hide scrollbar */
+    gap: 2rem;
+    transition: transform 0.5s ease-in-out;
+    overflow-x: hidden;
     scroll-behavior: smooth;
 }
-
-/* Slider Card */
 .dash-testimonial-card {
-    flex: 0 0 100%; /* One card per view */
-    background: #ffffff;
+    flex: 0 0 100%;
+    background: #fff;
     padding: 2.5rem 2rem;
     border-radius: 16px;
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
@@ -287,26 +249,22 @@
     flex-direction: column;
     justify-content: center;
 }
-
 .dash-testimonial-card p {
     font-size: 1.05rem;
     line-height: 1.6;
     color: #333;
     margin-bottom: 1.5rem;
 }
-
 .dash-testimonial-card h4 {
     font-size: 1rem;
     color: #555;
     font-weight: 500;
 }
-
-/* Slider Buttons */
 .slider-btn {
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
-    background: var(--secondary-color);
+    background: var(--secondary);
     color: #fff;
     border: none;
     padding: 12px 16px;
@@ -316,11 +274,9 @@
     z-index: 2;
     transition: background 0.3s;
 }
-
 .slider-btn:hover {
-    background: var(--primary-color);
+    background: var(--primary);
 }
-
 .slider-btn.prev {
     left: -10px;
 }
@@ -328,25 +284,14 @@
     right: -10px;
 }
 
-/* Responsive */
-@media (max-width: 768px) {
-    .dash-testimonial-card {
-        padding: 2rem 1.5rem;
-        min-height: 200px;
-    }
-    .dash-testimonials h2 {
-        font-size: 1.8rem;
-    }
-}
-
-/* CTA Section */
+/* =========================
+   CTA Section
+========================= */
 .dash-cta {
     background: linear-gradient(135deg, #820b5c, #1a0262);
     color: #fff;
-    border-radius: 12px;
-    padding: 0px !important;
+    padding: 0 !important;
 }
-
 .cta-container {
     display: flex;
     flex-wrap: wrap;
@@ -354,33 +299,28 @@
     justify-content: center;
     gap: 30px;
 }
-
 .cta-left-section,
 .cta-right-section {
-    flex: 1 1 300px; /* responsive flex items */
+    flex: 1 1 300px;
 }
-
 .cta-left-section .cta-image {
     width: 100%;
     height: auto;
     display: block;
-    margin: 0; /* remove any default margin */
-    padding: 0; /* remove padding */
-    border-radius: 12px; /* optional: match section style */
+    margin: 0;
+    padding: 0;
+    border-radius: 12px;
 }
-
 .cta-right-section h2 {
     font-size: 2rem;
     margin-bottom: 15px;
 }
-
 .cta-right-section p {
     font-size: 1.1rem;
     margin-bottom: 20px;
 }
-
 .dash-btn-cta {
-    background: white;
+    background: #fff;
     color: #1a0262;
     padding: 12px 28px;
     border-radius: 10px;
@@ -388,53 +328,36 @@
     font-weight: bold;
     transition: 0.3s;
 }
-
 .dash-btn-cta:hover {
     background: #f0f0f0;
     color: #820b5c;
 }
 
-/* Responsive */
-@media (max-width: 768px) {
-    .cta-container {
-        flex-direction: column;
-    }
-    .cta-left-section,
-    .cta-right-section {
-        text-align: center;
-    }
-}
-
-/* Universities */
+/* =========================
+   Universities Section
+========================= */
 .dash-universities {
-    padding: 2rem;
+    padding: 1rem;
     text-align: center;
     background: #f9f9f9;
 }
-
 .dash-universities h2 {
     margin-bottom: 1rem;
     font-size: 1.5rem;
     font-weight: 600;
     background-color: var(--light);
 }
-
 .dash-university-slider {
     display: flex;
     gap: 2rem;
-    overflow-x: auto; /* ✅ makes horizontal scroll possible */
+    overflow-x: auto;
     scroll-behavior: smooth;
 }
 .dash-university-slider::-webkit-scrollbar {
-    display: none; /* hide scrollbar for Chrome/Safari/Edge */
+    display: none;
 }
-
-.dash-university-slider::-webkit-scrollbar {
-    display: none; /* hide scrollbar for Chrome/Safari */
-}
-
 .dash-university-logo {
-    flex: 0 0 auto; /* ✅ keep logos side by side */
+    flex: 0 0 auto;
     width: 150px;
     height: 100px;
     display: flex;
@@ -444,160 +367,122 @@
     border-radius: 12px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
-
 .dash-university-logo img {
     max-width: 100%;
     max-height: 80%;
     object-fit: contain;
 }
 
-/* ========================= */
-/* Mobile Responsiveness     */
-/* ========================= */
-
-/* Hero Section */
+/* =========================
+   Responsive Media Queries
+========================= */
 @media (max-width: 768px) {
+    /* Hero */
     .dash-hero {
         flex-direction: column;
         padding: 50px 20px;
         text-align: center;
         gap: 30px;
     }
-
     .dash-hero-text {
         text-align: center;
         align-items: center;
     }
-
     .dash-hero-buttons {
         justify-content: center;
         flex-wrap: wrap;
     }
-
     .dash-login-form {
         width: 100%;
         max-width: 400px;
         margin: 0 auto;
     }
-}
 
-/* Features Section */
-@media (max-width: 768px) {
+    /* Features */
     .dash-features {
         flex-direction: column;
         gap: 20px;
         align-items: center;
     }
-
     .dash-feature-card {
         width: 90%;
         max-width: 350px;
     }
-}
 
-/* Countries Section */
-@media (max-width: 768px) {
+    /* Countries */
     .countries-custom-grid {
         grid-template-columns: repeat(2, 1fr);
         gap: 1rem;
     }
-
     .country-card.double {
         grid-column: span 2;
     }
-}
 
-@media (max-width: 480px) {
-    .countries-custom-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .country-card.double {
-        grid-column: span 1;
-    }
-}
-
-/* Programs Section */
-@media (max-width: 768px) {
+    /* Programs */
     .dash-programs-grid {
         grid-template-columns: 1fr;
         gap: 20px;
     }
-}
 
-/* CTA Section */
-@media (max-width: 768px) {
+    /* CTA */
     .cta-container {
         flex-direction: column;
         gap: 20px;
     }
-
     .cta-left-section,
     .cta-right-section {
         width: 100%;
+        text-align: center;
     }
-}
 
-/* Testimonials */
-@media (max-width: 768px) {
+    /* Testimonials */
     .dash-testimonial-slider {
         gap: 1rem;
     }
-
     .dash-testimonial-card {
         flex: 0 0 90%;
         margin: 0 auto;
     }
-
     .slider-btn {
         padding: 8px;
         font-size: 1.2rem;
     }
-}
 
-/* University Logos */
-@media (max-width: 768px) {
+    /* University Logos */
     .dash-university-logo {
         width: 120px;
         height: 80px;
     }
 }
-
 @media (max-width: 480px) {
+    .countries-custom-grid {
+        grid-template-columns: 1fr;
+    }
+    .country-card.double {
+        grid-column: span 1;
+    }
     .dash-university-logo {
         width: 100px;
         height: 60px;
     }
-
     .dash-university-slider {
         gap: 1rem;
     }
-}
 
-/* General Text Resizing */
-@media (max-width: 480px) {
+    /* Text resizing */
     .dash-hero-text h1 {
         font-size: 1.8rem;
     }
-
     .cta-right-section h2 {
         font-size: 1.5rem;
     }
-
     .cta-right-section p {
         font-size: 1rem;
     }
-
     .dash-program-card h3 {
         font-size: 1.2rem;
     }
-
     .dash-testimonial-card h4 {
         font-size: 1rem;
     }
 }
-/* ========================= 
-
-Agent dashboard styles starts from here 
-agentdashboard.css - custom styles for agent dashboard
- ========================= */

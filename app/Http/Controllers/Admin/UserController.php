@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Activity;
 use App\Models\User;
 use App\Models\Application;
 use App\Models\Student;
@@ -55,6 +56,29 @@ class UserController extends Controller
         if (!Auth::user()->is_admin && Auth::id() !== $user->id) {
             abort(403, 'Unauthorized');
         }
+        // ---------- RECENT ACTIVITIES ----------
+        // Last 5 student activities (added/deleted) across all users
+        $studentActivities = Activity::with('student', 'user')
+            ->whereIn('type', ['student_added', 'student_deleted'])
+            ->where('user_id', $user->id)       // <-- filter by selected user
+            ->latest()
+            ->take(7)
+            ->get();
+
+        $documentActivities = Activity::with('student', 'document', 'user')
+            ->whereIn('type', ['document_uploaded', 'document_deleted'])
+            ->where('user_id', $user->id)       // <-- filter by selected user
+            ->latest()
+            ->take(5)
+            ->get();
+
+        $applicationActivities = Activity::with('application', 'user')
+            ->whereIn('type', ['application_submitted', 'application_withdrawn'])
+            ->where('user_id', $user->id)       // <-- filter by selected user
+            ->latest()
+            ->take(5)
+            ->get();
+
 
         $notifications = $user->notifications()->latest()->get();
         $students = $user->students()->withCount('applications')->get();
@@ -66,7 +90,7 @@ class UserController extends Controller
         $user->applications_count = $applications->count();
         $user->pending_applications = $applications->where('status', 'pending')->count();
 
-        return view('admin.users.show', compact('user', 'notifications', 'students', 'applications'));
+        return view('admin.users.show', compact('user', 'notifications', 'students', 'applications', 'documentActivities', 'studentActivities', 'applicationActivities'));
     }
 
     public function create()
@@ -234,9 +258,20 @@ class UserController extends Controller
 
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->whereHas('student', function ($q) use ($search) {
-                $q->where('first_name', 'like', "%{$search}%")
-                    ->orWhere('last_name', 'like', "%{$search}%");
+
+            $query->where(function ($q) use ($search) {
+                // Search by student first name or last name
+                $q->whereHas('student', function ($q2) use ($search) {
+                    $q2->where('first_name', 'like', "%{$search}%")
+                        ->orWhere('last_name', 'like', "%{$search}%");
+                })
+                    // Search by course uniersity_name
+                    ->orWhereHas('course', function ($q3) use ($search) {
+                        $q3->where('title', 'like', "%{$search}%"); // use actual column
+                    })
+                    ->orWhereHas('course.university', function ($q4) use ($search) {
+                        $q4->where('name', 'like', "%{$search}%"); // use actual column
+                    });
             });
         }
 
