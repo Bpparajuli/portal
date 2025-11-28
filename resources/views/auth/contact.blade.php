@@ -71,22 +71,6 @@
                     We’ll get back to you within 24 hours. Your thoughts and feedback are important to us.
                 </p>
 
-                {{-- Flash Success --}}
-                @if(session('success'))
-                <div class="alert alert-success">{{ session('success') }}</div>
-                @endif
-
-                {{-- Validation Errors --}}
-                @if($errors->any())
-                <div class="alert alert-danger">
-                    <ul class="mb-0">
-                        @foreach($errors->all() as $err)
-                        <li>{{ $err }}</li>
-                        @endforeach
-                    </ul>
-                </div>
-                @endif
-
                 <form action="{{ route('auth.contact.submit') }}" method="POST" novalidate>
                     @csrf
                     <div class="row g-3">

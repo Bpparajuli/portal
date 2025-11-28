@@ -7,7 +7,7 @@
     <div class="row g-3 mb-4">
         @php
         $cards = [
-        ['title'=>'Agents', 'count'=>$totalAgents, 'icon'=>'fas fa-users', 'theme'=>'bg-primary-theme', 'link'=>route('admin.users.index')],
+        ['title'=>'Active Agents', 'count'=>$activeAgents, 'icon'=>'fas fa-users', 'theme'=>'bg-primary-theme', 'link'=>route('admin.users.index')],
         ['title'=>'Students', 'count'=>$totalStudents, 'icon'=>'fas fa-graduation-cap', 'theme'=>'bg-secondary-theme', 'link'=>route('admin.students.index')],
         ['title'=>'Universities', 'count'=>$totalUniversities, 'icon'=>'fas fa-building', 'theme'=>'bg-success-theme', 'link'=>route('admin.universities.index')],
         ['title'=>'Courses', 'count'=>$totalCourses, 'icon'=>'fas fa-book-open', 'theme'=>'bg-primary-theme', 'link'=>route('admin.courses.index')],
@@ -19,7 +19,7 @@
         @foreach($cards as $card)
         <div class="col-6 col-md-4 col-xl-2">
             <a href="{{ $card['link'] }}" class="text-decoration-none">
-                <div class="widget-card p-3 hover-scale">
+                <div class="widget-card rounded p-3 hover-scale">
                     <div class="icon-and-link mb-2">
                         <div>
                             <p class="widget-title mb-1">{{ $card['title'] }}</p>
@@ -49,10 +49,10 @@
                     <small class="text-muted">Create or manage core items quickly</small>
                 </div>
                 <div class="d-flex gap-2">
-                    <a href="{{ route('admin.universities.create') }}" class="btn btn-success btn-sm"><i class="fas fa-university me-1"></i> Add University</a>
-                    <a href="{{ route('admin.courses.create') }}" class="btn btn-success btn-sm"><i class="fas fa-book-open me-1"></i> Add Course</a>
-                    <a href="{{ route('admin.users.create') }}" class="btn btn-success btn-sm"><i class="fas fa-user me-1"></i> Add User</a>
-                    <a href="{{ route('admin.applications.index') }}" class="btn btn-warning btn-sm"><i class="fas fa-tools me-1"></i> Manage Applications</a>
+                    <a href="{{ route('admin.universities.create') }}" class="btn primary btn-sm"><i class="fas fa-university me-1"></i> Add University</a>
+                    <a href="{{ route('admin.courses.create') }}" class="btn secondary btn-sm"><i class="fas fa-book-open me-1"></i> Add Course</a>
+                    <a href="{{ route('admin.users.create') }}" class="btn success btn-sm"><i class="fas fa-user me-1"></i> Add User</a>
+                    <a href="{{ route('admin.applications.index') }}" class="btn warning btn-sm"><i class="fas fa-tools me-1"></i> Manage Applications</a>
                 </div>
             </div>
         </div>
@@ -76,7 +76,7 @@
             </div>
         </div>
 
-        {{-- RIGHT: Applications by Status + Top Agents --}}
+        {{-- RIGHT: Applications by Status --}}
         <div class="col-lg-4 d-flex flex-column gap-4">
             <div class="card chart-card flex-fill shadow-sm">
                 <div class="card-body">
@@ -88,7 +88,6 @@
                             {{ $s }}
                         </div>
                         @endforeach
-
                     </div>
                 </div>
             </div>
@@ -156,8 +155,8 @@
                                 </a> </td>
                             <td>
                                 <div class="d-flex gap-1">
-                                    <a href="{{ route('admin.applications.show', $app->id) }}" class="p-2 btn btn-sm btn-primary">View</a>
-                                    <button class="p-2 btn btn-sm btn-secondary">Delete</button>
+                                    <a href="{{ route('admin.applications.show', $app->id) }}" class="p-2 btn btn-sm primary">View</a>
+                                    <a href="{{ route('admin.applications.edit', $app->id) }}" class="p-2 btn btn-sm secondary">Edit</a>
                                 </div>
                             </td>
                         </tr>
@@ -277,56 +276,64 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        new Chart(document.getElementById('applicationsChart'), {
-            type: 'line'
-            , data: @json($applicationsChartData)
-            , options: {
-                responsive: true
-                , tension: 0.3
-                , plugins: {
-                    legend: {
-                        display: false
+        const applicationsChart = new Chart(
+            document.getElementById('applicationsChart'), {
+                type: 'line'
+                , data: @json($applicationsChartData)
+                , options: {
+                    responsive: true
+                    , tension: 0.3
+                    , plugins: {
+                        legend: {
+                            display: false
+                        }
                     }
-                }
-                , scales: {
-                    y: {
-                        beginAtZero: true
+                    , scales: {
+                        y: {
+                            beginAtZero: true
+                        }
                     }
                 }
             }
-        });
+        );
 
-        new Chart(document.getElementById('statusChart'), {
-            type: 'doughnut'
-            , data: @json($statusChartData)
-            , options: {
-                plugins: {
-                    legend: {
-                        display: false
+        const statusChart = new Chart(
+            document.getElementById('statusChart'), {
+                type: 'doughnut'
+                , data: @json($statusChartData)
+                , options: {
+                    responsive: true
+                    , plugins: {
+                        legend: {
+                            display: false
+                        }
                     }
                 }
             }
-        });
+        );
 
-        new Chart(document.getElementById('countryChart'), {
-            type: 'bar'
-            , data: @json($countryChartData)
-            , options: {
-                responsive: true
-                , plugins: {
-                    legend: {
-                        display: false
+        const countryChart = new Chart(
+            document.getElementById('countryChart'), {
+                type: 'bar'
+                , data: @json($countryChartData)
+                , options: {
+                    responsive: true
+                    , plugins: {
+                        legend: {
+                            display: false
+                        }
                     }
-                }
-                , scales: {
-                    y: {
-                        beginAtZero: true
+                    , scales: {
+                        y: {
+                            beginAtZero: true
+                        }
                     }
                 }
             }
-        });
+        );
     });
 
 </script>
+
 
 @endsection

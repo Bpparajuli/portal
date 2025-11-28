@@ -8,7 +8,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
 use App\Notifications\UserRegistered;
-use Illuminate\Support\Facades\Storage;
 
 class RegisterController extends Controller
 {
@@ -19,49 +18,77 @@ class RegisterController extends Controller
 
     public function register(Request $request)
     {
+        // VALIDATION
         $request->validate([
             'business_name' => 'nullable|string|max:255',
-            'owner_name' => 'nullable|string|max:255',
-            'name' => 'required|string|max:255',
-            'contact' => 'nullable|string|max:20',
-            'address' => 'nullable|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:6|confirmed',
-            'business_logo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'owner_name'    => 'nullable|string|max:255',
+            'name'          => 'required|string|max:255',
+            'contact'       => 'nullable|string|max:20',
+            'address'       => 'nullable|string|max:255',
+            'email'         => 'required|string|email|max:255|unique:users',
+            'password'      => 'required|string|min:6|confirmed',
+            'business_logo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10280',
+            // any file type
+            'agreement_file' => 'nullable|file',
         ]);
 
+        // MAKE SAFE FOLDER NAME
+        $safeBusinessName = preg_replace('/[^A-Za-z0-9_\-]/', '_', strtolower($request->business_name ?? 'agent'));
+        // LOGO UPLOAD
         $logoPath = null;
-        $safeBusinessName = str_replace(' ', '_', strtolower($request->business_name ?? 'agent'));
 
         if ($request->hasFile('business_logo')) {
-            // Store in storage/app/public/agents/{business_name}/
             $logoPath = $request->file('business_logo')
                 ->storeAs(
-                    'agents/' . $safeBusinessName,       // folder inside storage/app/public
-                    $safeBusinessName . '_logo.png',    // file name
-                    'public'                            // disk = public
+                    'agents/' . $safeBusinessName,
+                    $safeBusinessName . '_logo.' . $request->file('business_logo')->getClientOriginalExtension(),
+                    'public'
                 );
         }
 
+        // AGREEMENT FILE UPLOAD (same folder)
+        $agreementFilePath = null;
+        if ($request->hasFile('agreement_file')) {
+
+            $agreementFileName = $safeBusinessName . '_agreement.' .
+                $request->file('agreement_file')->getClientOriginalExtension();
+
+            $agreementFilePath = $request->file('agreement_file')
+                ->storeAs(
+                    'agents/' . $safeBusinessName,
+                    $agreementFileName,
+                    'public'
+                );
+        }
+
+        // CREATE USER
         $user = User::create([
-            'business_name' => $request->business_name,
-            'owner_name' => $request->owner_name,
-            'name' => $request->name,
-            'contact' => $request->contact,
-            'address' => $request->address,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'business_logo' => $logoPath, // stored as storage path like "agents/acme/acme_logo.png"
-            'is_admin' => $request->input('is_admin', 0),
-            'is_agent' => $request->input('is_agent', 1),
-            'active' => $request->input('active', 0),
+            'business_name'    => $request->business_name,
+            'owner_name'       => $request->owner_name,
+            'name'             => $request->name,
+            'contact'          => $request->contact,
+            'address'          => $request->address,
+            'email'            => $request->email,
+            'password'         => Hash::make($request->password),
+            'business_logo'    => $logoPath,
+            // agreement
+            'agreement_file'   => $agreementFilePath,
+            'agreement_status' => $agreementFilePath ? 'uploaded' : 'not_uploaded',
+
+            'is_admin' => 0,
+            'is_agent' => 1,
+            'active'   => 1,
         ]);
+        auth()->login($user);
 
 
-        // Notify all admins
-        $admin = User::find(2); // or adjust your admin logic
-        Notification::send($admin, new UserRegistered($user));
+        // SEND NOTIFICATION TO ADMIN (id=2)
+        $admin = User::find(2);
+        if ($admin) {
+            Notification::send($admin, new UserRegistered($user));
+        }
 
-        return redirect()->route('auth.login')->with('success', 'Registered successfully. Please wait for admin approval.');
+        return redirect()->route('auth.waiting-dash')
+            ->with('success', 'Registered successfully. Please wait for admin approval.');
     }
 }

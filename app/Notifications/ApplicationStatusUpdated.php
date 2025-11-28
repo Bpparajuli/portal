@@ -33,14 +33,22 @@ class ApplicationStatusUpdated extends Notification
         $student = $app->student;
         $updatedByName = $this->updatedBy->business_name ?? $this->updatedBy->username ?? $this->updatedBy->name;
 
-        return (new MailMessage)
-            ->subject('Application Status Updated')
-            ->greeting('Hello!')
-            ->line("The application for student {$student->first_name} {$student->last_name} has been updated by {$updatedByName}.")
-            ->line("New Status: **{$app->application_status}**")
-            ->action('View Application', $this->getActivityLink($notifiable, 'application_status_updated', $app));
-    }
+        $introLines = [
+            "The application for student <strong>{$student->first_name} {$student->last_name}</strong> has been updated by <strong>{$updatedByName}</strong>.",
+            "New Status: <strong>{$app->application_status}</strong>"
+        ];
 
+        return (new MailMessage)
+            ->subject("Application #{$app->application_number} Status Updated")
+            ->view('emails.layout', [
+                'subject'    => "Application Status Updated",
+                'greeting'   => "Hello {$notifiable->name},",
+                'introLines' => $introLines,
+                'actionText' => 'View Application',
+                'actionUrl'  => $this->getActivityLink($notifiable, 'application_status_updated', $app),
+                'outroLines' => ['Please review the updated status and take any necessary actions.']
+            ]);
+    }
     public function toArray($notifiable)
     {
         $app = $this->application;

@@ -24,19 +24,31 @@ class StudentDeleted extends Notification
 
     public function via($notifiable)
     {
-        return ['database', 'mail'];
+        return ['database'];
     }
 
     public function toMail($notifiable)
     {
+        $student = $this->student;
         $deletedBy = $this->admin->business_name ?? $this->admin->username ?? $this->admin->name;
+
+        $introLines = [
+            "The student <strong>{$student->first_name} {$student->last_name}</strong> has been deleted.",
+            "Deleted by: <strong>{$deletedBy}</strong>"
+        ];
 
         return (new MailMessage)
             ->subject('Student Deleted')
-            ->greeting('Hello!')
-            ->line("The student {$this->student->first_name} {$this->student->last_name} was deleted by {$deletedBy}.")
-            ->action('View Students', $this->getActivityLink($notifiable, 'student_deleted', $this->student));
+            ->view('emails.layout', [
+                'subject'    => 'Student Deleted',
+                'greeting'   => "Hello {$notifiable->name},",
+                'introLines' => $introLines,
+                'actionText' => 'View Students',
+                'actionUrl'  => $this->getActivityLink($notifiable, 'student_deleted', $student),
+                'outroLines' => ['Please note that this student record has been removed from the system.']
+            ]);
     }
+
 
     public function toArray($notifiable)
     {

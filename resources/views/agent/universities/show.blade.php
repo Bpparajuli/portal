@@ -53,7 +53,7 @@
                         <th><i class="fas fa-clock me-1"></i> Duration</th>
                         <th><i class="fas fa-dollar-sign me-1"></i> Fee</th>
                         <th><i class="fas fa-calendar-alt me-1"></i> Intakes</th>
-                        <th><i class="fas fa-language me-1"></i> MOI</th>
+                        <th><i class="fas fa-language me-1"></i> IELTS/PTE</th>
                         <th><i class="fas fa-graduation-cap me-1"></i> Scholarships</th>
                         <th><i class="fas fa-cogs me-1"></i> Actions</th>
                     </tr>
@@ -61,12 +61,12 @@
                 <tbody class="text-center">
                     @foreach($university->courses as $course)
                     <tr>
-                        <td>{{ $course->course_code }}</td>
-                        <td class="fw-semibold">{{ $course->title }}</td>
+                        <td><a href="{{ route('agent.courses.show', $course->id) }}">{{ $course->course_code }}</a></td>
+                        <td class="fw-semibold"><a href="{{ route('agent.courses.show', $course->id) }}">{{ $course->title }}</a></td>
                         <td>{{ $course->duration }}</td>
                         <td>{{ $course->fee }}</td>
                         <td>{{ $course->intakes }}</td>
-                        <td>{{ $course->moi_requirement }}</td>
+                        <td>{{ $course->ielts_pte_other_languages ?? 'N/A' }}</td>
                         <td>{{ $course->scholarships ?? '-' }}</td>
                         <td>
                             <div class="d-flex gap-1 ">

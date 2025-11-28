@@ -1,5 +1,5 @@
 /* =========================
-INDEX PAGE - FILTER & SEARCH
+INDEX PAGE - FILTER & SEARCH Students.css
 ========================= */
 .filter-card {
     background: #f8f9fa;
@@ -12,7 +12,7 @@ INDEX PAGE - FILTER & SEARCH
     font-weight: 500;
 }
 
-.filter-form .btn {
+.filter-form {
     min-width: 80px;
 }
 
@@ -124,24 +124,6 @@ FORM PAGE (CREATE / EDIT)
 /* Buttons */
 .btn-main {
     background: #2a9d8f;
-    color: #fff;
-    padding: 8px 16px;
-    border-radius: 8px;
-}
-.btn-secondary {
-    background: #e9ecef;
-    color: #333;
-    padding: 8px 16px;
-    border-radius: 8px;
-}
-.btn-warning {
-    background: #f4a261;
-    color: #fff;
-    padding: 8px 16px;
-    border-radius: 8px;
-}
-.btn-danger {
-    background: #e63946;
     color: #fff;
     padding: 8px 16px;
     border-radius: 8px;
@@ -363,10 +345,6 @@ RESPONSIVE
 @media (max-width: 768px) {
     .filter-card .row > div {
         margin-bottom: 10px;
-    }
-    .btn {
-        font-size: 0.75rem;
-        padding: 5px 10px;
     }
     .uploaded-files-grid {
         grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));

@@ -64,8 +64,8 @@
                 <tbody class="text-center">
                     @foreach($university->courses as $course)
                     <tr>
-                        <td>{{ $course->course_code }}</td>
-                        <td class="fw-semibold">{{ $course->title }}</td>
+                        <td><a href="{{ route('admin.courses.show', $course->id) }}">{{ $course->course_code }}</a></td>
+                        <td><a href="{{ route('admin.courses.show', $course->id) }}">{{ $course->title }}</a></td>
                         <td>{{ $course->duration }}</td>
                         <td>{{ $course->fee }}</td>
                         <td>{{ $course->intakes }}</td>

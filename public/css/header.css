@@ -12,7 +12,6 @@ Header, Navigation & Notifications - Component Styles Only
 }
 
 .header-container {
-    max-width: 1200px;
     margin: 0 auto;
 }
 
@@ -24,7 +23,7 @@ Header, Navigation & Notifications - Component Styles Only
 }
 
 .header-logo img {
-    height: 70px;
+    height: 90px;
     width: auto;
 }
 
@@ -48,7 +47,7 @@ Header, Navigation & Notifications - Component Styles Only
 .header-title-text {
     font-size: 1.5rem;
     font-weight: 700;
-    color: var(--secondary);
+    color: var(--primary);
     line-height: 1.2;
     margin: 0;
     text-align: center;
@@ -154,7 +153,7 @@ Header, Navigation & Notifications - Component Styles Only
     gap: 0.5rem;
     padding: 1rem;
     text-decoration: none;
-    color: var(--light);
+    color: var(--white);
     font-weight: 500;
     transition: 0.2s ease, transform 0.2s ease;
 }
@@ -164,6 +163,7 @@ Header, Navigation & Notifications - Component Styles Only
     background: var(--active);
     border-radius: 10px;
     font-weight: 700;
+    color: var(--white) !important;
 }
 
 .nav-item i {
@@ -171,7 +171,6 @@ Header, Navigation & Notifications - Component Styles Only
 }
 
 /* Badges */
-
 .logout-link a {
     background: #e74c3c;
     color: var(--light);
@@ -210,7 +209,7 @@ Header, Navigation & Notifications - Component Styles Only
 }
 
 .notification-menu {
-    display: none;
+    display: none; /* hidden by default */
     position: absolute;
     top: 100%;
     right: 0;
@@ -223,7 +222,6 @@ Header, Navigation & Notifications - Component Styles Only
     margin-top: 0.5rem;
 }
 
-.notification-dropdown:hover .notification-menu,
 .notification-toggle[aria-expanded="true"] + .notification-menu {
     display: block;
 }
@@ -234,7 +232,7 @@ Header, Navigation & Notifications - Component Styles Only
     color: var(--text-dark);
     text-decoration: none;
     border-bottom: 1px solid var(--border);
-    transition: background 0.2s ease;
+    transition: 0.2s ease;
 }
 
 .notification-menu a:hover {
@@ -319,5 +317,11 @@ Header, Navigation & Notifications - Component Styles Only
     }
     .logout-link {
         width: 100%;
+    }
+
+    /* Center notifications in mobile */
+    .notification-menu {
+        top: -10%;
+        max-width: 300px;
     }
 }

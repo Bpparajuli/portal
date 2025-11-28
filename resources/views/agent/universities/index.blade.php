@@ -66,7 +66,8 @@
                 <span class="uni-modal-close" onclick="closeCourseModal({{ $uni->id }})">&times;</span>
 
                 <h4 class="uni-modal-title m-2">
-                    <i class="fas fa-book"></i> Courses at {{ $uni->name }}
+                    <i class="fas fa-book"></i> Courses at <a href="{{ route('agent.universities.show', $uni->id) }}" class="uni-name-link">
+                        {{ $uni->name }}- {{ $uni->city ?? 'N/A' }}</strong></a>
                 </h4>
 
                 <div class="uni-table-wrapper">
@@ -78,7 +79,7 @@
                                 <th>Duration</th>
                                 <th>Fee</th>
                                 <th>Intakes</th>
-                                <th>MOI</th>
+                                <th>Ielts/PTE</th>
                                 <th>Scholarships</th>
                                 <th>Action</th>
                             </tr>
@@ -91,7 +92,7 @@
                                 <td>{{ $course->duration ?? 'N/A' }}</td>
                                 <td>{{ $course->fee }}</td>
                                 <td>{{ $course->intakes ?? 'N/A' }}</td>
-                                <td>{{ $course->moi_requirement ?? 'N/A' }}</td>
+                                <td>{{ $course->ielts_pte_other_languages ?? 'N/A' }}</td>
                                 <td>{{ $course->scholarships ?? 'N/A' }}</td>
                                 <td>
                                     <a href="{{ route('agent.applications.create') }}?course_id={{ $course->id }}" class="uni-btn-success-small">

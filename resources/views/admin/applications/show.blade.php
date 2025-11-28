@@ -150,74 +150,94 @@
                 <a href="{{ route('admin.documents.index', $application->student->id) }}" class="btn btn-sm btn-outline-secondary mt-1">📁 View All Documents</a>
             </div>
 
-            {{-- Messages Thread --}}
             <div class="mt-4 p-3 bg-white border rounded-3">
                 <h5 class="fw-bold mb-3">💬 Messages</h5>
 
                 <div class="remarks-thread border rounded-1 p-3 m-2" style="max-height:400px; overflow:auto;">
-                    @forelse($application->messages as $m)
-                    <div class="d-flex mb-2 
-                        @if($m->type === 'agent') justify-content-start @else justify-content-end @endif">
 
-                        <div class="p-2 rounded" style="max-width:70%; 
-                            background-color: {{ $m->type === 'agent' ? '#f1f1f1' : '#1a0262' }};
-                            color: {{ $m->type === 'agent' ? '#000' : '#fff' }};">
-                            <strong>
-                                <p class="mb-1">{{ $m->message }}</p>
-                            </strong>
-                            <p><b>{{ $m->user->name ?? 'Unknown' }}</b>:{{ $m->created_at->format('d M Y, H:i') }}</p>
+                    @forelse($application->messages as $m)
+                    @php
+                    $isAgent = $m->type === 'agent';
+                    $bubbleBg = $isAgent ? '#f1f1f1' : '#1a0262';
+                    $bubbleClr = $isAgent ? '#000' : '#fff';
+                    @endphp
+
+                    <div class="d-flex mb-3 {{ $isAgent ? 'justify-content-start' : 'justify-content-end' }} align-items-center">
+
+                        {{-- 💬 MESSAGE BUBBLE --}}
+                        <div class="position-relative p-2 rounded" style="max-width:70%; background-color:{{ $bubbleBg }}; color:{{ $bubbleClr }};">
+
+                            <p class="mb-1">{{ $m->message }}</p>
+                            <small>
+                                <b>{{ $m->user->name ?? 'Unknown' }}</b> •
+                                {{ $m->created_at->format('d M Y, H:i') }}
+                            </small>
                         </div>
+
+                        {{-- 🗑 DELETE BUTTON (right for left bubbles, left for right bubbles) --}}
+                        @if(auth()->user()->is_admin || auth()->id() === $m->user_id)
+                        <form action="{{ route('admin.applications.messages.delete', [$application->id, $m->id]) }}" method="POST" onsubmit="return confirm('Delete this message?')" class="ms-2 me-2">
+                            @csrf
+                            @method('DELETE')
+
+                            <button type="submit" style="background:none; border:none; color:#ff4d4d; font-size:18px; cursor:pointer;">
+                                <i class="fa fa-trash"></i>
+                            </button>
+                        </form>
+                        @endif
+
                     </div>
                     @empty
                     <p class="text-muted">No messages yet.</p>
                     @endforelse
-                </div>
 
+                </div>{{-- Add new message --}}
                 <form method="POST" action="{{ route('admin.applications.addMessage', $application->id) }}">
                     @csrf
                     <div class="d-flex">
-                        <div class="m-2 w-100">
-                            <textarea name="message" class="form-control" rows="2" placeholder="Add a message..." required></textarea>
-                        </div>
-                        <button type="submit" class="btn btn-success m-2 btn-sm">Send</button>
+                        <textarea name="message" class="form-control me-2" rows="2" placeholder="Add a message..." required></textarea>
+                        <button type="submit" class="btn btn-success btn-sm">Send</button>
                     </div>
                 </form>
             </div>
 
-            {{-- Actions --}}
-            <div class="m-2 d-flex gap-2 justify-content-between">
-                <a href="{{ route('admin.applications.edit', $application->id) }}" class="btn btn-primary">✏️ Edit Application</a>
-
-                @if(!$application->withdrawn_at)
-                <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#withdrawModal">Withdraw Application</button>
-                @endif
-            </div>
         </div>
 
-        {{-- Withdraw Modal --}}
-        <div class="modal fade" id="withdrawModal" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog">
-                <form method="POST" action="{{ route('admin.applications.withdraw', $application) }}">
-                    @csrf
-                    @method('PATCH')
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title">Confirm Withdraw</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                        </div>
-                        <div class="modal-body">
-                            <p>Enter your password to confirm withdrawal:</p>
-                            <input type="password" name="password" class="form-control mb-2" required>
-                            <textarea name="reason" class="form-control" placeholder="Reason (optional)"></textarea>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                            <button type="submit" class="btn btn-danger">Withdraw</button>
-                        </div>
-                    </div>
-                </form>
-            </div>
+
+        {{-- Actions --}}
+        <div class="m-2 d-flex gap-2 justify-content-between">
+            <a href="{{ route('admin.applications.edit', $application->id) }}" class="btn btn-primary">✏️ Edit Application</a>
+
+            @if(!$application->withdrawn_at)
+            <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#withdrawModal">Withdraw Application</button>
+            @endif
         </div>
     </div>
+
+    {{-- Withdraw Modal --}}
+    <div class="modal fade" id="withdrawModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <form method="POST" action="{{ route('admin.applications.withdraw', $application) }}">
+                @csrf
+                @method('PATCH')
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Confirm Withdraw</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Enter your password to confirm withdrawal:</p>
+                        <input type="password" name="password" class="form-control mb-2" required>
+                        <textarea name="reason" class="form-control" placeholder="Reason (optional)"></textarea>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-danger">Withdraw</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 </div>
 @endsection

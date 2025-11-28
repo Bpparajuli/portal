@@ -83,7 +83,7 @@
         </div>
         <div class="table-responsive">
             <table class="table table-striped align-middle">
-                <thead>
+                <thead class="table-primary">
                     <tr>
                         <th>ID</th>
                         <th>Profile</th>

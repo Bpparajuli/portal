@@ -1,5 +1,5 @@
 /* =========================
-PAGE HEADER
+PAGE HEADER user.css
 ========================= */
 .page-header {
     display: flex;
@@ -17,7 +17,7 @@ PAGE HEADER
 
 /* Add Button */
 .add-btn {
-    background: #22c55e;
+    background: var(--success);
     color: white;
     border-radius: 6px;
     padding: 8px 16px;
@@ -27,7 +27,7 @@ PAGE HEADER
 }
 
 .add-btn:hover {
-    background: #16a34a;
+    background: var(--success-dark);
 }
 
 /* =========================
@@ -54,7 +54,7 @@ FILTER & SEARCH
     border-radius: 6px;
     padding: 8px 16px;
     font-size: 0.9rem;
-    background: #2563eb;
+    background: var(--secondary);
     color: white;
     border: none;
     transition: all 0.3s ease;
@@ -62,7 +62,7 @@ FILTER & SEARCH
 }
 
 .filter-bar button:hover {
-    background: #1e40af;
+    background: var(--secondary-dark);
 }
 
 /* =========================

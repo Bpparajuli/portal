@@ -17,6 +17,12 @@ return new class extends Migration {
             $table->string('address')->nullable();
             $table->string('email')->unique();
             $table->string('password');
+            $table->string('agreement_file')->nullable();
+            $table->enum('agreement_status', [
+                'not uploaded',
+                'uploaded',
+                'verified'
+            ])->default('not uploaded');
             $table->boolean('is_admin')->default(false);
             $table->boolean('is_agent')->default(false);
             $table->boolean('active')->default(true);

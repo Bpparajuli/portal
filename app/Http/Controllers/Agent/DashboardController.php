@@ -26,7 +26,7 @@ class DashboardController extends Controller
         $startOfMonth = Carbon::now()->startOfMonth();
         $endOfMonth = Carbon::now()->endOfMonth();
 
-        // Fetch applications created this month
+
         // Only this user's applications this month
         $recentApplications = Application::where('agent_id', $agentId)
             ->whereBetween('created_at', [$startOfMonth, $endOfMonth])
@@ -101,6 +101,19 @@ class DashboardController extends Controller
                 })->count();
         }
 
+        // ---------- COURSE TYPE CHART DATA ----------
+        $courseTypeCounts = Application::where('agent_id', $agentId)
+            ->with('course')
+            ->get()
+            ->groupBy(function ($app) {
+                return $app->course->course_type ?? 'Unknown';
+            })
+            ->map(fn($group) => $group->count());
+
+        $courseTypeLabels = $courseTypeCounts->keys()->toArray();
+        $courseTypeValues = $courseTypeCounts->values()->toArray();
+
+
         // ---------- RECENT ACTIVITIES ----------
         $studentActivities = Activity::where('user_id', $agentId)
             ->whereIn('type', ['student_added', 'student_deleted'])
@@ -169,7 +182,9 @@ class DashboardController extends Controller
             'applicationActivities',
             'todayActivitiesCount',
             'countries',
-            'universities'
+            'universities',
+            'courseTypeLabels',
+            'courseTypeValues'
         ));
     }
 

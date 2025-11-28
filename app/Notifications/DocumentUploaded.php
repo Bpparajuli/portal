@@ -26,20 +26,32 @@ class DocumentUploaded extends Notification
 
     public function via($notifiable)
     {
-        return ['database', 'mail'];
+        return ['database'];
     }
 
     public function toMail($notifiable)
     {
         $doc = $this->document;
+        $student = $this->student;
         $uploadedBy = $this->agent->business_name ?? $this->agent->username ?? $this->agent->name;
+
+        $introLines = [
+            "A new document (<strong>{$doc->document_type}: {$doc->file_name}</strong>) was uploaded for student <strong>{$student->first_name} {$student->last_name}</strong>.",
+            "Uploaded by: <strong>{$uploadedBy}</strong>"
+        ];
 
         return (new MailMessage)
             ->subject('Document Uploaded')
-            ->greeting('Hello!')
-            ->line("A new document ({$doc->document_type}: {$doc->file_name}) was uploaded for student {$this->student->first_name} {$this->student->last_name} by {$uploadedBy}.")
-            ->action('View Documents', $this->getActivityLink($notifiable, 'document_uploaded', $this->student));
+            ->view('emails.layout', [
+                'subject'    => 'Document Uploaded',
+                'greeting'   => "Hello {$notifiable->name},",
+                'introLines' => $introLines,
+                'actionText' => 'View Documents',
+                'actionUrl'  => $this->getActivityLink($notifiable, 'document_uploaded', $student),
+                'outroLines' => ['Please review the uploaded document for your records.']
+            ]);
     }
+
 
     public function toArray($notifiable)
     {

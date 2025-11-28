@@ -10,12 +10,14 @@ use App\Notifications\DocumentDeleted;
 use App\Notifications\DocumentUploaded;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 
 class DocumentController extends Controller
 {
+    /**
+     * List of all allowed document types
+     */
     private function allDocumentTypes(): array
     {
         return [
@@ -32,8 +34,13 @@ class DocumentController extends Controller
         ];
     }
 
+    /**
+     * Display all documents for a student
+     */
     public function index(Student $student)
     {
+        $this->authorizeStudentAccess($student);
+
         $documents = $student->documents()->latest()->get();
 
         $uploadedTypes = $documents->pluck('document_type')
@@ -47,11 +54,22 @@ class DocumentController extends Controller
         $predefinedDocs = $documents->filter(fn($doc) => in_array(strtolower($doc->document_type), $allDocumentTypes));
         $otherDocs = $documents->filter(fn($doc) => !in_array(strtolower($doc->document_type), $allDocumentTypes));
 
-        return view('agent.documents.index', compact('student', 'availableTypes', 'predefinedDocs', 'otherDocs', 'allDocumentTypes'));
+        return view('agent.documents.index', compact(
+            'student',
+            'availableTypes',
+            'predefinedDocs',
+            'otherDocs',
+            'allDocumentTypes'
+        ));
     }
 
+    /**
+     * Upload a predefined type document
+     */
     public function store(Request $request, Student $student)
     {
+        $this->authorizeStudentAccess($student);
+
         $request->validate([
             'document_type' => [
                 'required',
@@ -75,8 +93,13 @@ class DocumentController extends Controller
             ->with('success', 'Document uploaded successfully.');
     }
 
+    /**
+     * Upload a custom/other document
+     */
     public function storeOther(Request $request, Student $student)
     {
+        $this->authorizeStudentAccess($student);
+
         $request->validate([
             'custom_name' => 'required|string|max:255',
             'file' => 'required|mimes:jpg,jpeg,png,pdf|max:51200',
@@ -88,6 +111,9 @@ class DocumentController extends Controller
             ->with('success', 'Other document uploaded successfully.');
     }
 
+    /**
+     * Save the uploaded file to storage and database
+     */
     private function saveDocument($file, $documentType, Student $student)
     {
         $agent = Auth::user();
@@ -112,13 +138,17 @@ class DocumentController extends Controller
             'status' => 'uploaded',
         ]);
 
-        $admin = User::find(3); // or adjust your admin logic
+        // Notify admin (adjust admin logic if needed)
+        $admin = User::find(3);
         Notification::send($admin, new DocumentUploaded($agent, $student, $document));
     }
 
+    /**
+     * Delete a document
+     */
     public function destroy(Student $student, Document $document)
     {
-        $agent = Auth::user();
+        $this->authorizeStudentAccess($student);
 
         if ($document->student_id !== $student->id) abort(403);
 
@@ -129,16 +159,34 @@ class DocumentController extends Controller
         $document->delete();
 
         $admin = User::find(3);
-        Notification::send($admin, new DocumentDeleted($agent, $student, $document));
+        Notification::send($admin, new DocumentDeleted(Auth::user(), $student, $document));
 
         return back()->with('success', 'Document deleted.');
     }
 
+    /**
+     * Download a document
+     */
     public function download(Student $student, Document $document)
     {
+        $this->authorizeStudentAccess($student);
+
         if ($document->student_id !== $student->id) abort(403);
         if (!Storage::disk('public')->exists($document->file_path)) abort(404);
 
         return response()->download(Storage::disk('public')->path($document->file_path), $document->file_name);
+    }
+
+    /**
+     * Authorize access: agents can only access their own students
+     */
+    private function authorizeStudentAccess(Student $student)
+    {
+        $agent = Auth::user();
+
+        // If agent, check student ownership
+        if ($agent->is_agent && $student->agent_id != $agent->id) {
+            abort(403, 'Unauthorized access.');
+        }
     }
 }

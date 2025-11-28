@@ -13,16 +13,18 @@
 :root {
     /* Colors */
     --primary: #820b5c;
-    --primary-light: #4b2b97;
+    --primary-light: #c074a4;
     --secondary: #1a0262;
-    --secondary-light: #c074a4;
+    --secondary-light: #4b2b97;
     --accent: #5b21b6;
     --accent-solid: #4338ca;
     --success: rgb(0, 128, 43);
+    --success-dark: rgb(0, 59, 20);
     --white: #ffffff;
     --light: #eeeeee;
     --black: #000000;
     --bg-light: #f8fafc;
+    --light-blue: #e1f0ff;
     --card: #fff;
     --muted: #6b7280;
     --muted-2: #94a3b8;
@@ -34,14 +36,17 @@
     --text-color: #4b5563;
     --border: #e6e9ee;
     --warning: #f59e0b;
+    --warning-dark: #b45309;
+    --danger: #ef4444;
+    --danger-dark: #991b1b;
     --progress: #3b82f6;
-    --active: linear-gradient(180deg, #1a0262 0%, #1a0262 50%, #820b5c 100%);
+    --active: linear-gradient(135deg, var(--secondary), var(--primary));
 
     /* Layout */
     --radius: 14px;
     --sradius: 8px;
     --shadow: 0 10px 30px rgba(15, 23, 42, 0.4), 0 4px 8px rgba(15, 23, 42, 0.1);
-    --soft-shadow: 0 6px 18px rgba(15, 23, 42, 0.04);
+    --soft-shadow: 0 10px 20px rgba(15, 23, 42, 0.2);
 }
 /* -------------------------
    Reset & Base Styles
@@ -102,25 +107,35 @@ a:hover {
    Containers & Layout
 ------------------------- */
 .container {
-    max-width: 1200px;
     margin: 0 auto;
     padding: 0 16px;
 }
-
 .full-width {
+    width: 100%;
     display: flex;
     justify-content: space-between;
     align-items: center;
     gap: 16px;
     padding: 1.25rem;
-    max-width: 1200px;
     margin: 0 auto 18px;
+}
+.section-title {
+    font-size: 1.4rem;
+    display: flex;
+    font-weight: bold;
+    padding: 1rem;
+    margin: 1rem 0;
+    text-align: start;
+    max-width: 500px;
+    border-radius: var(--sradius);
+    color: var(--secondary);
+    background: var(--light-blue);
+    border-radius: 6px;
 }
 
 /* Flex & Grid Utilities */
 .stats-row,
 .activities-row,
-.widgets-row,
 .events-grid {
     display: flex;
     gap: 12px;
@@ -160,49 +175,129 @@ a:hover {
     }
 }
 
-/* -------------------------
-   Buttons
-------------------------- */
+/* =========================
+   Buttons Section
+========================= */
 .btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    padding: 10px 18px;
+    text-align: center;
+    padding: 8px 12px;
     border-radius: 8px;
     font-weight: 600;
     text-decoration: none;
-    border: none;
     cursor: pointer;
-    transition: 0.3s ease;
+    border: none;
+    transition: 0.25s ease;
 }
-/*  Button */
+.btn.primary {
+    background: var(--primary);
+    color: var(--white);
+}
+.btn.primary:hover {
+    background: var(--secondary);
+    color: var(--white);
+}
+
+.btn.secondary {
+    background: var(--secondary);
+    color: var(--white);
+}
+.btn.secondary:hover {
+    background: var(--primary);
+    color: var(--white);
+}
+
+.btn.success {
+    background: var(--success);
+    color: var(--white);
+}
+.btn.success:hover {
+    background: var(--success-dark);
+}
+
+.btn.warning {
+    background: var(--warning);
+    color: var(--dark);
+}
+.btn.warning:hover {
+    background: var(--warning-dark);
+}
+.btn.white-base {
+    background: var(--white);
+    color: var(--dark);
+    border: 1px solid var(--border);
+}
+.btn.light:hover {
+    background: var(--light-gray);
+}
+.btn.danger {
+    background: var(--danger);
+    color: var(--white);
+}
+.btn.danger:hover {
+    background: var(--danger-dark);
+}
+.btn.gray {
+    background: var(--gray);
+    color: var(--dark);
+}
+.btn.gray:hover {
+    background: var(--dark-gray);
+    color: var(--white);
+}
 .btn-primary {
-    background: linear-gradient(90deg, var(--primary), var(--secondary));
-    color: #fff !important;
-    border: none;
-    transition: 0.3s ease;
+    background: var(--primary);
+    color: var(--white);
 }
-
 .btn-primary:hover {
-    background: linear-gradient(90deg, var(--secondary), var(--primary));
+    background: var(--secondary);
+    color: var(--white);
 }
 
-/* Secondary Button */
 .btn-secondary {
-    background: linear-gradient(90deg, var(--secondary), var(--primary));
-    color: #fff !important;
-    border: none;
-    transition: 0.3s ease;
+    background: var(--secondary);
+    color: var(--white);
 }
-
 .btn-secondary:hover {
-    background: linear-gradient(90deg, var(--primary), var(--secondary));
+    background: var(--primary);
+    color: var(--white);
 }
 
+.btn-success {
+    background: var(--success);
+    color: var(--white);
+}
+.btn-success:hover {
+    background: var(--success-dark);
+}
+
+.btn-warning {
+    background: var(--warning);
+    color: var(--dark);
+}
+.btn-warning:hover {
+    background: var(--warning-dark);
+}
+
+.btn-light:hover {
+    background: var(--light-gray);
+}
+.btn-danger {
+    background: var(--danger);
+    color: var(--white);
+}
+.btn-danger:hover {
+    background: var(--danger-dark);
+}
+.btn-gray {
+    background: var(--gray);
+    color: var(--dark);
+}
 .btn-gray:hover {
-    color: #ededed;
-    background-color: #000;
+    background: var(--dark-gray);
+    color: var(--white);
 }
 
 /* -------------------------
@@ -231,7 +326,7 @@ input {
     background: var(--card);
     border-radius: var(--radius);
     box-shadow: var(--soft-shadow);
-    padding: 16px;
+    padding: 8px;
     border: 1px solid var(--border);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
 }

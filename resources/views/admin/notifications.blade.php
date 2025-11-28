@@ -123,6 +123,7 @@
     }
 
     $typeTitles = [
+    'agreement_submitted'=>'Agreement Submitted',
     'student_added' => 'Student Added',
     'student_deleted' => 'Student Deleted',
     'student_status' => 'Student Status Updated',

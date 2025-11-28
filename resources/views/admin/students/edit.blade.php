@@ -13,7 +13,7 @@
     </form>
     <div class="form-actions d-flex justify-content-between m-2">
         <button type="submit" class="btn btn-success">💾 Save Changes</button>
-        <a href="{{ route('admin.documents.create', $student->id) }}" class="btn btn-warning">📄 Upload Document</a>
+        <a href="{{ route('admin.documents.index', $student->id) }}" class="btn btn-warning">📄 Upload Document</a>
         <form action="{{ route('admin.students.destroy', $student->id) }}" method="POST" onsubmit="return confirm('Are you sure?');" style="display: inline;">
             @csrf
             @method('DELETE')

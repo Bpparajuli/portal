@@ -10,9 +10,9 @@
             <h1>Welcome to Idea Consultancy Agent Portal</h1>
             <p class="dash-lead">Stay updated with the application status, manage students, find universities and search courses easily. Login or register to get started.</p>
             <div class="dash-hero-buttons">
-                <a href="{{ route('auth.register') }}" class="dash-btn dash-btn-register"> <i class="fa fa-user-plus"></i>
+                <a href="{{ route('auth.register') }}" class="btn white-base primary"> <i class="fa fa-user-plus"></i>
                     Register</a>
-                <a href="{{ route('guest.universities.index') }}" class=" dash-btn dash-btn-login"> <i class="fa fa-university"></i>
+                <a href="{{ route('guest.universities.index') }}" class="btn white-base secondary"> <i class="fa fa-university"></i>
                     Find Universities</a>
             </div>
         </div>
@@ -29,8 +29,8 @@
                     <input type="password" name="password" id="password" required>
                     @error('password')<span class="dash-error">{{ $message }}</span>@enderror
                 </div>
-                <button type="submit" class="dash-btn-login-submit">Login</button>
-                <p class="dash-register-link">
+                <button type="submit" class="btn success w-100 p-2 mt-3 mb-3">Login</button>
+                <p class="dash-register-link mb-2">
                     Don't have an account? <a href="{{ route('register') }}">Register here</a>
                 </p>
                 <div><a href="{{ route('auth.contact') }}">Forgot Password?</a></div>
@@ -65,7 +65,11 @@
             <p>Monitor performance and gain insights into operations.</p>
         </div>
     </section>
-
+    <section>
+        <div class="card shadow-sm">
+            <img src="{{ asset('images/banner-3.png') }}" alt="banner-img" class="cta-image">
+        </div>
+    </section>
     <!-- Countries Section -->
     <section class="countries-section">
         <h3 class="section-title">Countries We Are Working For</h3>
@@ -120,24 +124,26 @@
             <div class="dash-program-card">
                 <h3>Student Management Training</h3>
                 <p>Date: 2025-11-15</p>
-                <a href="#" class="dash-btn-blue">Register</a>
+                <a href="#" class="btn secondary">Register</a>
             </div>
             <div class="dash-program-card">
                 <h3>University Applications Webinar</h3>
                 <p>Date: 2025-11-15</p>
-                <a href="#" class="dash-btn-blue">Register</a>
+                <a href="#" class="btn secondary">Register</a>
             </div>
             <div class="dash-program-card">
                 <h3>Visa Process Guidance For Germany</h3>
                 <p>Date: 2025-12-2</p>
-                <a href="#" class="dash-btn-blue">Register</a>
+                <a href="#" class="btn secondary">Register</a>
             </div>
         </div>
     </section>
 
     {{-- ⭐ Testimonials --}}
     <section class="dash-testimonials">
-        <h2>What Our Clients Say</h2>
+        <div class="d-flex justify-content-center mb-4">
+            <h2 class="section-title">What Our Clients Say</h2>
+        </div>
         <div class="testimonial-slider-container">
             <button class="slider-btn prev">&#10094;</button>
             <div class="dash-testimonial-slider" id="testimonial-slider">
@@ -203,7 +209,7 @@
             <div class="cta-right-section">
                 <h2>Partner With Us Today!</h2>
                 <p>Grow your business with our platform. Become an official agent and access all tools.</p>
-                <a href="#" class="dash-btn-cta">Become a Partner</a>
+                <a href="{{ route('register') }}" class="btn white-base primary">Become a Partner</a>
             </div>
         </div>
     </section>

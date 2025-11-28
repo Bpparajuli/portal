@@ -33,14 +33,24 @@ class ApplicationWithdrawn extends Notification
         $university = $app->university;
         $withdrawnBy = $agent->business_name ?? $agent->username ?? $agent->name;
 
+        $introLines = [
+            "Agent <strong>{$withdrawnBy}</strong> has withdrawn an application.",
+            "<strong>Student:</strong> {$student->first_name} {$student->last_name}",
+            "<strong>University:</strong> {$university->name}"
+        ];
+
         return (new MailMessage)
             ->subject('Application Withdrawn')
-            ->greeting('Hello!')
-            ->line("Agent **{$withdrawnBy}** has withdrawn an application.")
-            ->line("**Student:** {$student->first_name} {$student->last_name}")
-            ->line("**University:** {$university->name}")
-            ->action('View Application', $this->getActivityLink($notifiable, 'application_withdrawn', $app));
+            ->view('emails.layout', [
+                'subject'    => 'Application Withdrawn',
+                'greeting'   => "Hello {$notifiable->name},",
+                'introLines' => $introLines,
+                'actionText' => 'View Application',
+                'actionUrl'  => $this->getActivityLink($notifiable, 'application_withdrawn', $app),
+                'outroLines' => ['Please review the withdrawn application for your records.']
+            ]);
     }
+
 
     public function toArray($notifiable)
     {

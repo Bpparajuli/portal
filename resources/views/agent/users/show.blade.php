@@ -1,12 +1,15 @@
-@extends('layouts.admin')
+@extends('layouts.agent')
 
-@section('admin-content')
-<div class="container-fluid py-4">
+@section('content')
+
+<div class="container py-4">
+
     {{-- Profile Header --}}
     <div class="card mb-4 shadow-sm">
         <div class="card-body d-flex justify-content-between align-items-center">
+
             <div>
-                <h3 class=" bg-secondary text-white p-1 mb-1 rounded">{{ $user->business_name ?? $user->username }}</h3>
+                <h3 class="mb-1">{{ $user->business_name ?? $user->username }}</h3>
                 <p class="mb-0"><strong>Owner:</strong> {{ $user->owner_name ?? 'N/A' }}</p>
                 <p class="mb-0"><strong>Contact:</strong> {{ $user->contact ?? 'N/A' }}</p>
                 <p class="mb-0"><strong>Email:</strong> {{ $user->email }}</p>
@@ -22,9 +25,8 @@
 
                 @if($isImage)
                 {{-- Display image --}}
-                <a href="{{ $fileUrl }}" target="_blank" class="btn btn-sm btn-secondary mt-1" data-preview="{{ $fileUrl }}">
-                    <img src="{{ $fileUrl }}" alt="Agreement file" width="200px" height="auto" class="rounded border shadow-sm mb-2">
-                </a> @else
+                <img src="{{ $fileUrl }}" alt="Agreement file" width="200px" height="auto" class="rounded border shadow-sm mb-2">
+                @else
                 {{-- Display file icon or name --}}
                 <a href="{{ $fileUrl }}" target="_blank" class="btn btn-sm btn-secondary mt-1" data-preview="{{ $fileUrl }}">
                     <div class="file-preview p-2 mb-2 border rounded shadow-sm" style="width: 200px; text-align:center;">
@@ -43,15 +45,13 @@
                 <br>
                 {{-- Status Badge --}}
                 <a href="{{ route('admin.users.edit', $user->business_name_slug) }}" class="text-decoration-none">
-                    @if ($user->agreement_status === 'not_uploaded')
-                    <span class="badge bg-secondary">Not Uploaded</span>
-                    @elseif ($user->agreement_status === 'uploaded')
-                    <span class="badge bg-warning text-dark">Uploaded</span>
-                    @elseif ($user->agreement_status === 'verified')
-                    <span class="badge bg-success">Verified</span>
-                    @else
-                    <span class="badge bg-danger">Unknown</span>
-                    @endif
+                    <span class="badge 
+                                @if($user->agreement_status == 'verified') bg-success
+                                @elseif($user->agreement_status == 'not_uploaded') bg-warning
+                                @else bg-primary
+                                @endif">
+                        {{ ucfirst($user->agreement_status) }}
+                    </span>
                 </a>
             </div>
             <div>
@@ -69,7 +69,7 @@
         {{-- Stats Section --}}
         <div class="d-flex justify-content-between align-items-center">
             <div class="stats-row ">
-                <a href="{{ route('admin.users.students', $user->business_name_slug) }}" class="stat-link">
+                <a href="{{ route('agent.students.index') }}" class="stat-link">
                     <div class="stat-card">
                         <div class="stat-left">
                             <h6>Total Students</h6>
@@ -78,7 +78,7 @@
                         <div class="icon text-primary"><i class="fa fa-users"></i></div>
                     </div>
                 </a>
-                <a href="{{ route('admin.users.applications', $user->business_name_slug) }}" class="stat-link">
+                <a href="{{ route('agent.applications.index') }}" class="stat-link">
                     <div class="stat-card">
                         <div class="stat-left">
                             <h6>Applications Submitted</h6>
@@ -99,7 +99,7 @@
             </div>
             {{-- Edit Button --}}
             <div class="mt-2 align-right">
-                <a href="{{ route('admin.users.edit', $user->business_name_slug) }}" class="btn btn-primary btn-sm">✏️ Edit Profile</a>
+                <a href="{{ route('agent.users.edit', $user->business_name_slug) }}" class="btn btn-primary btn-sm">✏️ Edit Profile</a>
             </div>
         </div>
     </div>
@@ -124,7 +124,7 @@
                     @foreach($user->students as $student)
                     <tr>
                         <td>
-                            <a href="{{ route('admin.students.show', $student->id) }}">
+                            <a href="{{ route('agent.students.show', $student->id) }}">
                                 {{ trim($student->first_name . ' ' . $student->last_name) }}
                             </a>
                         </td>
@@ -141,11 +141,10 @@
         </div>
     </div>
 
-    {{-- Documents per Student (Accordion) --}}
+    {{-- Documents List --}}
     <div class="accordion card" id="studentDocumentsAccordion">
         <div class="card-header bg-secondary text-white">
-            List of Students Document Activities
-        </div>
+            List of Students document Activities </div>
         @foreach($user->students as $student)
         <div class="accordion-item">
             <h2 class="accordion-header" id="heading-{{ $student->id }}">
@@ -169,7 +168,7 @@
                             @foreach($student->documents as $doc)
                             <tr>
                                 <td>{{ ucfirst($doc->document_type) }}</td>
-                                <td><a href="{{ asset($doc->file_path) }}" target="_blank">{{ $doc->file_name }}</a></td>
+                                <td><a href="#" data-preview="{{ asset($doc->file_path) }}" target="_blank">{{ $doc->file_name }}</a></td>
                                 <td>{{ $doc->created_at->format('M d, Y') }}</td>
                             </tr>
                             @endforeach
@@ -182,6 +181,7 @@
             </div>
         </div>
         @endforeach
+
     </div>
 
     {{-- Applications List --}}
@@ -205,7 +205,7 @@
                 <tbody>
                     @foreach($apps as $app)
                     <tr>
-                        <td><a href="{{ route('admin.applications.show', $app->id) }}">
+                        <td><a href="{{ route('agent.applications.show', $app->id) }}">
                                 {{ $app->student->first_name . ' ' . $app->student->last_name ?? 'N/A' }}
                             </a></td>
                         <td>{{ $app->course->title ?? 'N/A' }}</td>
@@ -235,7 +235,7 @@
                 <li>
                     <div>
                         @if($act->notifiable_id)
-                        <a href="{{ route('admin.students.show', $act->notifiable_id) }}">{{ $act->description }}</a>
+                        <a href="{{ route('agent.students.show', $act->notifiable_id) }}">{{ $act->description }}</a>
                         @else
                         {{ $act->description }}
                         @endif
@@ -247,7 +247,6 @@
                 @endforelse
             </ul>
         </div>
-
         <div class="activity-card card">
             <h6>Documents</h6>
             <ul>
@@ -255,7 +254,7 @@
                 <li>
                     <div>
                         @if($act->notifiable_id)
-                        <a href="{{ route('admin.documents.index', $act->notifiable_id) }}">
+                        <a href="{{ route('agent.documents.index', $act->notifiable_id) }}">
                             {{ $act->description }}
                         </a>
                         @else
@@ -269,7 +268,6 @@
                 @endforelse
             </ul>
         </div>
-
         <div class="activity-card card">
             <h6>Applications</h6>
             <ul>
@@ -277,7 +275,7 @@
                 <li>
                     <div>
                         @if($act->notifiable_id)
-                        <a href="{{ route('admin.applications.show', $act->notifiable_id) }}">{{ $act->description }}</a>
+                        <a href="{{ route('agent.applications.show', $act->notifiable_id) }}">{{ $act->description }}</a>
                         @else
                         {{ $act->description }}
                         @endif

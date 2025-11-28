@@ -11,7 +11,6 @@
         @forelse($universities as $uni)
         <div class="uni-col">
             <div class="uni-card">
-
                 <div class="uni-card-header">
                     <a href="{{ route('admin.universities.show', $uni->id) }}">
                         @if($uni->university_logo)
@@ -24,7 +23,6 @@
                         @endif
                     </a>
                 </div>
-
                 <div class="uni-card-body">
                     <a href="{{ route('admin.universities.show', $uni->id) }}" class="uni-name-link">
                         <p class="uni-name">{{ $uni->name }}</p>
@@ -77,10 +75,10 @@
             <div class="uni-modal-content">
                 <span class="uni-modal-close" onclick="closeCourseModal({{ $uni->id }})">&times;</span>
 
-                <h4 class="modal-title">
-                    <i class="fas fa-book"></i> Courses at {{ $uni->name }}
+                <h4 class="uni-modal-title m-2">
+                    <i class="fas fa-book"></i> Courses at <a href="{{ route('admin.universities.show', $uni->id) }}" class="uni-name-link">
+                        {{ $uni->name }}- {{ $uni->city ?? 'N/A' }}</strong></a>
                 </h4>
-
                 <div class="uni-table-wrapper">
                     <table class="uni-table">
                         <thead>
@@ -90,7 +88,7 @@
                                 <th>Duration</th>
                                 <th>Fee</th>
                                 <th>Intakes</th>
-                                <th>MOI</th>
+                                <th>Ielts/PTE</th>
                                 <th>Scholarships</th>
                                 <th>Action</th>
                             </tr>
@@ -104,7 +102,7 @@
                                 <td>{{ $course->duration ?? 'N/A' }}</td>
                                 <td>{{ $course->fee }}</td>
                                 <td>{{ $course->intakes ?? 'N/A' }}</td>
-                                <td>{{ $course->moi_requirement ?? 'N/A' }}</td>
+                                <td>{{ $course->ielts_pte_other_languages ?? 'N/A' }}</td>
                                 <td>{{ $course->scholarships ?? 'N/A' }}</td>
                                 <td>
                                     <a href="{{ route('admin.courses.edit', $course->id) }}" class="uni-btn-small">Edit</a>

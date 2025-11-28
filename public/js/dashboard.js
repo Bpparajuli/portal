@@ -2,7 +2,7 @@ document.addEventListener("DOMContentLoaded", function () {
     "use strict";
 
     // ===========================
-    // 1️⃣ Navigation active toggle
+    // 1️⃣ Navigation Active Toggle
     // ===========================
     const navItems = document.querySelectorAll(".nav-item");
     if (navItems.length) {
@@ -15,7 +15,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     // ===========================
-    // 2️⃣ Bootstrap form validation
+    // 2️⃣ Bootstrap Form Validation
     // ===========================
     const forms = document.querySelectorAll(".needs-validation");
     if (forms.length) {
@@ -50,7 +50,7 @@ document.addEventListener("DOMContentLoaded", function () {
     if (slider && prevBtn && nextBtn) {
         let scrollAmount = 0;
         const card = slider.querySelector(".dash-testimonial-card");
-        const gap = parseInt(getComputedStyle(slider).gap);
+        const gap = parseInt(getComputedStyle(slider).gap || 16);
         const slideWidth = card.offsetWidth + gap;
 
         nextBtn.addEventListener("click", () => {
@@ -86,10 +86,69 @@ document.addEventListener("DOMContentLoaded", function () {
         }
         setInterval(autoSlide, 10);
     }
-});
 
-// ===========================
-// ===========================
-// ===========================
-// ===========================
-// End of dashboard.js file
+    // ===========================
+    // 6️⃣ ChartJS Initialization (Reusable)
+    // ===========================
+    if (typeof Chart !== "undefined") {
+        window.DashboardCharts = {
+            initLineChart: (id, labels, data, color = "#4f46e5") => {
+                const ctx = document.getElementById(id);
+                if (!ctx) return;
+                new Chart(ctx, {
+                    type: "line",
+                    data: {
+                        labels,
+                        datasets: [
+                            {
+                                data,
+                                borderColor: color,
+                                backgroundColor: "rgba(79,70,229,0.12)",
+                                fill: true,
+                                tension: 0.3,
+                                pointRadius: 3,
+                            },
+                        ],
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: { legend: { display: false } },
+                        scales: { y: { beginAtZero: true } },
+                    },
+                });
+            },
+            initBarChart: (id, labels, data, color = "#3b82f6") => {
+                const ctx = document.getElementById(id);
+                if (!ctx) return;
+                new Chart(ctx, {
+                    type: "bar",
+                    data: {
+                        labels,
+                        datasets: [{ data, backgroundColor: color }],
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: { legend: { display: false } },
+                        scales: { y: { beginAtZero: true } },
+                    },
+                });
+            },
+            initDoughnutChart: (id, labels, data, colors, cutout = "0%") => {
+                const ctx = document.getElementById(id);
+                if (!ctx) return;
+                new Chart(ctx, {
+                    type: "doughnut",
+                    data: {
+                        labels,
+                        datasets: [{ data, backgroundColor: colors }],
+                    },
+                    options: {
+                        responsive: true,
+                        cutout,
+                        plugins: { legend: { display: false } },
+                    },
+                });
+            },
+        };
+    }
+});

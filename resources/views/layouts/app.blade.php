@@ -16,8 +16,8 @@
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ asset('css/students.css') }}">
     <link rel="stylesheet" href="{{ asset('css/dashboard.css') }}">
-    <link rel="stylesheet" href="{{ asset('css/admin-dashboard.css') }}">
     <link rel="stylesheet" href="{{ asset('css/agent-dashboard.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/admin-dashboard.css') }}">
     <link rel="stylesheet" href="{{ asset('css/header.css') }}">
     <link rel="stylesheet" href="{{ asset('css/university.css') }}">
     <link rel="stylesheet" href="{{ asset('css/contact.css')}}">
@@ -26,9 +26,6 @@
     <link rel="stylesheet" href="{{ asset('css/notification.css')}}">
     <link rel="stylesheet" href="{{ asset('css/user.css')}}">
     <link rel="stylesheet" href="{{ asset('css/styles.css') }}">
-
-
-
     {{-- Fav icon  --}}
     <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
 
@@ -37,27 +34,24 @@
 
     @include('partials.header')
     @include('partials.alerts')
-    @include('components.file_modal')
+    @include('components.file-modal')
 
     <div class="main-content">
         @yield('content')
     </div>
 
     @include('partials.footer')
-
     <!-- Bootstrap JS Bundle (only once, includes Popper) -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-
     <!-- Your custom JS -->
     <script src="{{ asset('js/app.js') }}"></script>
     <script src="{{ asset('js/dashboard.js') }}"></script>
     <script src="{{ asset('js/login.js') }}"></script>
     <script src="{{ asset('js/header.js') }}"></script>
     <script src="{{ asset('js/filter.js') }}"></script>
-    <script src="{{ asset('js/file_modal.js') }}"></script>
+    <script src="{{ asset('js/file-modal.js') }}"></script>
     @stack('scripts')
 </body>
 </html>

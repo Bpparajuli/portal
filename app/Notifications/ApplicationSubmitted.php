@@ -33,14 +33,24 @@ class ApplicationSubmitted extends Notification
         $university = $app->university;
         $submittedBy = $agent->business_name ?? $agent->username ?? $agent->name;
 
+        $introLines = [
+            "Agent <strong>{$submittedBy}</strong> has submitted a new application.",
+            "<strong>Student:</strong> {$student->first_name} {$student->last_name}",
+            "<strong>University:</strong> {$university->name}"
+        ];
+
         return (new MailMessage)
             ->subject('New Application Submitted')
-            ->greeting('Hello!')
-            ->line("Agent **{$submittedBy}** has submitted a new application.")
-            ->line("**Student:** {$student->first_name} {$student->last_name}")
-            ->line("**University:** {$university->name}")
-            ->action('View Application', $this->getActivityLink($notifiable, 'application_submitted', $app));
+            ->view('emails.layout', [
+                'subject'    => 'New Application Submitted',
+                'greeting'   => "Hello {$notifiable->name},",
+                'introLines' => $introLines,
+                'actionText' => 'View Application',
+                'actionUrl'  => $this->getActivityLink($notifiable, 'application_submitted', $app),
+                'outroLines' => ['Please review the application and take necessary actions.']
+            ]);
     }
+
 
     public function toArray($notifiable)
     {

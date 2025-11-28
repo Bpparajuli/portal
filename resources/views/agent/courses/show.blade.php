@@ -5,7 +5,10 @@
 @section('content')
 <div class="container-fluid py-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <h4 class="mb-0">Course Details</h4>
+        <h4 class="uni-modal-title m-2">
+            <i class="fas fa-book"></i> Courses at <a href="{{ route('agent.universities.show', $course->university->id) }}" class="uni-name-link">
+                {{ $course->university->name }}- {{ $course->university->city ?? 'N/A' }}</strong></a>
+        </h4>
         <a href="{{ route('agent.courses.index') }}" class="btn btn-secondary btn-sm">
             <i class="fas fa-arrow-left"></i> Back to Courses
         </a>
@@ -61,7 +64,7 @@
                     <p class="text-muted fw-semibold">{{ $course->application_fee ? '$' . $course->application_fee : 'N/A' }}</p>
                 </div>
                 <div class="col-md-4">
-                    <h6 class="fw-bold">MOI Requirement</h6>
+                    <h6 class="fw-bold">MOI</h6>
                     <p class="text-muted fw-semibold">{{ $course->moi_requirement }}</p>
                 </div>
             </div>
@@ -86,16 +89,31 @@
                     <h6 class="fw-bold">IELTS / PTE / Other Language Requirements</h6>
                     <p class="text-muted fw-semibold">{{ $course->ielts_pte_other_languages ?? 'N/A' }}</p>
                 </div>
-                <div class="col-md-6">
-                    <h6 class="fw-bold">Course Link</h6>
-                    <p class="text-muted fw-semibold">{{ $course->course_link ?? 'N/A' }}</p>
+                <div class="col-md-6 mb-3">
+                    <h6 class="text-muted">Course Link</h6>
+                    @if($course->course_link)
+                    <a href="{{ $course->course_link }}" target="_blank" class="text-decoration-underline">{{ $course->course_link }}</a>
+                    @else
+                    N/A
+                    @endif
                 </div>
             </div>
             <hr>
-            <div class="mb-3">
-                <h6 class="fw-bold">Description</h6>
-                <p class="text-muted fw-semibold">{{ $course->description ?? 'No description available.' }}</p>
+            <div class="row justify-center align-items-center mb-3">
+                <div class="col-md-9">
+                    <h6 class="fw-bold">Description</h6>
+                    <p class="text-muted fw-semibold">
+                        {{ $course->description ?? 'No description available.' }}
+                    </p>
+                </div>
+
+                <div class="col-md-3 text-center">
+                    <a href="{{ route('agent.applications.create') }}?course_id={{ $course->id }}" class="uni-btn-success-small">
+                        <i class="fa-solid fa-paper-plane"> Apply to this Course</i>
+                    </a>
+                </div>
             </div>
+
         </div>
     </div>
 </div>

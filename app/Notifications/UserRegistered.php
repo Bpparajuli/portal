@@ -26,20 +26,30 @@ class UserRegistered extends Notification
 
     public function toMail($notifiable)
     {
-        $displayName = $this->newUser->business_name ?? $this->newUser->username ?? $this->newUser->name;
-
+        $businessname = $this->newUser->business_name ?? $this->newUser->owner_name ?? $this->newUser->name;
         return (new MailMessage)
             ->subject('New User Registration Pending Approval')
-            ->greeting('Hello Admin!')
-            ->line("A new user **{$displayName}** has registered and is awaiting approval.")
-            ->line("**Email:** {$this->newUser->email}")
-            ->action('View Pending Users', route('admin.users.waiting'))
-            ->line('Please review and approve the user to activate their account.');
+            ->view('emails.layout', [
+                'subject'    => 'New User Registration Pending Approval',
+                'greeting'   => 'Hello Admin!',
+                'introLines' => [
+                    "A new user <strong>{$businessname}</strong> has registered and is awaiting approval.",
+                    "Owner:<strong>{$this->newUser->owner_name}</strong>",
+                    "Email: <strong>{$this->newUser->email}</strong>",
+                    "Contact: <strong>{$this->newUser->contact}</strong>",
+                ],
+                'actionText' => 'View Pending Users',
+                'actionUrl'  => route('admin.users.waiting'),
+                'outroLines' => [
+                    "Please review and approve this user to activate their account."
+                ]
+            ]);
     }
+
 
     public function toArray($notifiable)
     {
-        $displayName = $this->newUser->business_name ?? $this->newUser->username ?? $this->newUser->name;
+        $displayName = $this->newUser->business_name ?? $this->newUser->owner_name ?? $this->newUser->name;
         $link = route('admin.users.waiting');
 
         ActivityLogger::log(

@@ -9,6 +9,7 @@ use App\Models\University;
 use App\Models\Course;
 use App\Models\User;
 use App\Models\Document;
+use App\Models\ApplicationMessage;
 use App\Notifications\ApplicationSubmitted;
 use App\Notifications\ApplicationWithdrawn;
 use App\Notifications\ApplicationMessageAdded;
@@ -263,6 +264,24 @@ class ApplicationController extends Controller
         }
 
         return back()->with('success', 'Message added and notification sent.');
+    }
+
+    public function deleteMessage(Application $application, ApplicationMessage $message)
+    {
+        // Make sure message belongs to this application
+        if ($message->application_id !== $application->id) {
+            abort(403, 'Unauthorized action.');
+        }
+        // Same logic as your addMessage method
+        $user = Auth::user();
+        $userType = $user->is_admin ? 'admin' : 'agent';
+        // Only admin or message owner can delete
+        if ($userType !== 'admin' && $user->id !== $message->user_id) {
+            abort(403, 'Unauthorized action.');
+        }
+        // Delete the message
+        $message->delete();
+        return back()->with('success', 'Message deleted successfully.');
     }
 
     /** Authorization check */

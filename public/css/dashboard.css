@@ -1,8 +1,7 @@
 .dash-dashboard {
     display: flex;
     flex-direction: column;
-    gap: 40px; /* vertical spacing between child sections */
-    padding: 40px 0; /* top & bottom padding for the whole container */
+    gap: 40px;
 }
 
 /* =========================
@@ -12,8 +11,8 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: linear-gradient(135deg, var(--secondary), var(--primary));
-    color: #fff;
+    background: var(--active);
+    color: var(--white);
     padding: 80px 40px;
     flex-wrap: wrap;
     gap: 50px;
@@ -33,32 +32,17 @@
     display: flex;
     gap: 1rem;
 }
-.dash-hero-buttons .dash-btn {
-    padding: 12px 24px;
-    border-radius: 8px;
-    text-decoration: none;
-}
-.dash-btn-login,
-.dash-btn-register {
-    background-color: var(--background-light);
-    color: var(--text-dark);
-}
-.dash-btn-login:hover {
-    background-color: var(--primary);
-    color: var(--text-light);
-}
-.dash-btn-register:hover {
-    background-color: var(--secondary);
-    color: var(--text-light);
-}
 
+/* =========================
+   Login Form Section
+========================= */
 .dash-login-form {
     flex: 1.5;
     min-width: 300px;
-    background: #fff;
+    background: var(--card);
     padding: 25px;
     border-radius: 12px;
-    color: #333;
+    color: var(--text-color);
 }
 .dash-form-group {
     text-align: left;
@@ -67,23 +51,15 @@
     display: block;
     font-weight: bold;
     margin: 10px 0;
+    color: var(--text-color);
 }
 .dash-form-group input {
     width: 100%;
     padding: 10px;
     border-radius: 6px;
-    border: 1px solid #ccc;
-}
-.dash-btn-login-submit {
-    background: green;
-    color: #fff;
-    border: none;
-    padding: 12px;
-    width: 100%;
-    margin-top: 20px;
-    border-radius: 8px;
-    font-weight: bold;
-    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--white);
+    color: var(--text-color);
 }
 
 /* =========================
@@ -92,19 +68,26 @@
 .dash-features {
     display: flex;
     gap: 20px;
-    justify-content: center;
+    justify-content: space-between;
     align-items: stretch;
-    overflow-x: auto;
+    flex-wrap: wrap; /* allow wrapping on smaller screens */
     padding: 10px;
+    overflow: visible; /* remove horizontal scroll if you want all cards in a row */
 }
+
 .dash-feature-card {
-    background: #fff;
+    background: var(--card);
     padding: 25px;
     border-radius: 12px;
-    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
-    flex: 0 0 250px;
+    box-shadow: var(--soft-shadow);
     text-align: center;
+
+    /* Flexible width: 4 cards per row */
+    flex: 1 1 calc(25% - 15px); /* 25% width minus half the gap */
+    min-width: 200px; /* prevents cards from shrinking too much */
+    box-sizing: border-box;
 }
+
 .dash-icon {
     font-size: 2rem;
     color: var(--primary);
@@ -118,19 +101,6 @@
     padding: 1rem;
     background: var(--light);
 }
-.countries-section .section-title,
-.dash-programs-section .section-title,
-.dash-universities .section-title {
-    background: #fff;
-    color: var(--primary);
-    font-weight: bold;
-    padding: 1rem;
-    margin: 0 auto 2rem;
-    text-align: center;
-    max-width: 500px;
-    border-radius: 6px;
-}
-
 .countries-custom-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -167,7 +137,7 @@
     opacity: 1;
 }
 .country-card .overlay h3 {
-    color: #fff;
+    color: var(--white);
     font-size: 1.4rem;
     font-weight: bold;
     margin: 0;
@@ -182,7 +152,7 @@
 /* =========================
    Programs Section
 ========================= */
-.dash-programs-section h2 {
+.dash-programs-section {
     margin-bottom: 20px;
 }
 .dash-programs-grid {
@@ -191,22 +161,10 @@
     gap: 20px;
 }
 .dash-program-card {
-    background: #f1f5f9;
+    background: var(--light);
     border-radius: 10px;
     padding: 20px;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-}
-.dash-btn-blue {
-    display: inline-block;
-    background: var(--primary);
-    color: #fff;
-    padding: 10px 20px;
-    border-radius: 8px;
-    text-decoration: none;
-    margin-top: 15px;
-}
-.dash-btn-blue:hover {
-    background: var(--secondary);
+    box-shadow: var(--soft-shadow);
 }
 
 /* =========================
@@ -214,15 +172,9 @@
 ========================= */
 .dash-testimonials {
     padding: 4rem 2rem;
-    background: #f0f4ff;
+    background: var(--light);
     text-align: center;
     font-family: "Poppins", sans-serif;
-}
-.dash-testimonials h2 {
-    font-size: 2.2rem;
-    margin-bottom: 2rem;
-    color: #1a1a1a;
-    font-weight: 600;
 }
 .testimonial-slider-container {
     position: relative;
@@ -239,10 +191,9 @@
 }
 .dash-testimonial-card {
     flex: 0 0 100%;
-    background: #fff;
+    background: var(--card);
     padding: 2.5rem 2rem;
     border-radius: 16px;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
     text-align: center;
     min-height: 220px;
     display: flex;
@@ -252,12 +203,12 @@
 .dash-testimonial-card p {
     font-size: 1.05rem;
     line-height: 1.6;
-    color: #333;
+    color: var(--dark);
     margin-bottom: 1.5rem;
 }
 .dash-testimonial-card h4 {
     font-size: 1rem;
-    color: #555;
+    color: var(--muted);
     font-weight: 500;
 }
 .slider-btn {
@@ -265,14 +216,14 @@
     top: 50%;
     transform: translateY(-50%);
     background: var(--secondary);
-    color: #fff;
+    color: var(--white);
     border: none;
-    padding: 12px 16px;
+    padding: 8px 12px;
     cursor: pointer;
     border-radius: 20%;
     font-size: 1.5rem;
     z-index: 2;
-    transition: background 0.3s;
+    transition: 0.3s;
 }
 .slider-btn:hover {
     background: var(--primary);
@@ -288,8 +239,8 @@
    CTA Section
 ========================= */
 .dash-cta {
-    background: linear-gradient(135deg, #820b5c, #1a0262);
-    color: #fff;
+    background: var(--active);
+    color: var(--light);
     padding: 0 !important;
 }
 .cta-container {
@@ -314,23 +265,12 @@
 .cta-right-section h2 {
     font-size: 2rem;
     margin-bottom: 15px;
+    color: var(--white);
 }
 .cta-right-section p {
     font-size: 1.1rem;
     margin-bottom: 20px;
-}
-.dash-btn-cta {
-    background: #fff;
-    color: #1a0262;
-    padding: 12px 28px;
-    border-radius: 10px;
-    text-decoration: none;
-    font-weight: bold;
-    transition: 0.3s;
-}
-.dash-btn-cta:hover {
-    background: #f0f0f0;
-    color: #820b5c;
+    color: var(--white);
 }
 
 /* =========================
@@ -339,13 +279,7 @@
 .dash-universities {
     padding: 1rem;
     text-align: center;
-    background: #f9f9f9;
-}
-.dash-universities h2 {
-    margin-bottom: 1rem;
-    font-size: 1.5rem;
-    font-weight: 600;
-    background-color: var(--light);
+    background: var(--light);
 }
 .dash-university-slider {
     display: flex;
@@ -363,9 +297,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #fff;
+    background: var(--card);
     border-radius: 12px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--soft-shadow);
 }
 .dash-university-logo img {
     max-width: 100%;
@@ -377,7 +311,6 @@
    Responsive Media Queries
 ========================= */
 @media (max-width: 768px) {
-    /* Hero */
     .dash-hero {
         flex-direction: column;
         padding: 50px 20px;
@@ -398,7 +331,6 @@
         margin: 0 auto;
     }
 
-    /* Features */
     .dash-features {
         flex-direction: column;
         gap: 20px;
@@ -409,7 +341,6 @@
         max-width: 350px;
     }
 
-    /* Countries */
     .countries-custom-grid {
         grid-template-columns: repeat(2, 1fr);
         gap: 1rem;
@@ -418,13 +349,11 @@
         grid-column: span 2;
     }
 
-    /* Programs */
     .dash-programs-grid {
         grid-template-columns: 1fr;
         gap: 20px;
     }
 
-    /* CTA */
     .cta-container {
         flex-direction: column;
         gap: 20px;
@@ -435,7 +364,6 @@
         text-align: center;
     }
 
-    /* Testimonials */
     .dash-testimonial-slider {
         gap: 1rem;
     }
@@ -448,12 +376,12 @@
         font-size: 1.2rem;
     }
 
-    /* University Logos */
     .dash-university-logo {
         width: 120px;
         height: 80px;
     }
 }
+
 @media (max-width: 480px) {
     .countries-custom-grid {
         grid-template-columns: 1fr;
@@ -469,7 +397,6 @@
         gap: 1rem;
     }
 
-    /* Text resizing */
     .dash-hero-text h1 {
         font-size: 1.8rem;
     }

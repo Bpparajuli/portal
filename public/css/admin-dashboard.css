@@ -146,10 +146,6 @@
     font-size: 2rem;
     color: var(--primary);
 }
-.btn-gray {
-    background-color: #7a7a7a;
-    color: #fff;
-}
 
 /* Keyframes */
 @keyframes fadeIn {

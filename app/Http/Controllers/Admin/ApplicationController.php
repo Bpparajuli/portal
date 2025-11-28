@@ -213,6 +213,20 @@ class ApplicationController extends Controller
 
         return back()->with('success', 'Message added and notification sent.');
     }
+    public function deleteMessage(Application $application, $messageId)
+    {
+        $message = $application->messages()->findOrFail($messageId);
+        // Same logic as your addMessage method
+        $user = Auth::user();
+        $userType = $user->is_admin ? 'admin' : 'agent';
+        // Only admin or message owner can delete
+        if ($userType === 'admin' && $user->id !== $message->user_id) {
+            abort(403, 'Unauthorized action.');
+        }
+        $message->delete();
+        return back()->with('success', 'Message deleted successfully.');
+    }
+
 
     /**
      * Remove the specified application from storage.

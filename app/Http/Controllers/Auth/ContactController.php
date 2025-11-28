@@ -22,9 +22,9 @@ class ContactController extends Controller
     public function submit(Request $request)
     {
         $data = $request->validate([
-            'name'    => 'required|string|max:100',
-            'subject' => 'nullable|string|max:150',
-            'email'   => 'required|email',
+            'name'    => 'required|string|max:200',
+            'subject' => 'nullable|string|max:300',
+            'email'   => 'required|email|max:255',
             'message' => 'required|string|max:2000',
             'hp'      => 'nullable|size:0', // honeypot
         ]);
@@ -33,17 +33,23 @@ class ContactController extends Controller
             return back()->with('success', 'Thank you! Your message has been received.');
         }
 
+        // Sanitize strings
+        $name = strip_tags($data['name']);
+        $email = filter_var($data['email'], FILTER_SANITIZE_EMAIL);
+        $subject = strip_tags($data['subject'] ?? 'New Contact Form Message');
+        $messageBody = strip_tags($data['message']);
+
         try {
             Mail::raw(
                 "You received a new message from the contact form:\n\n" .
-                    "Name: {$data['name']}\n" .
-                    "Email: {$data['email']}\n" .
-                    "Subject: " . ($data['subject'] ?? 'N/A') . "\n\n" .
-                    "Message:\n{$data['message']}",
-                function ($message) use ($data) {
-                    $message->to('bishesworparajuli@gmail.com')
-                        ->from($data['email'], $data['name'])
-                        ->subject($data['subject'] ?? 'New Contact Form Message');
+                    "Name: {$name}\n" .
+                    "Email: {$email}\n" .
+                    "Subject: {$subject}\n\n" .
+                    "Message:\n{$messageBody}",
+                function ($message) use ($name, $email, $subject) {
+                    $message->to('info@ideacs.com.np')
+                        ->from($email, $name)
+                        ->subject($subject);
                 }
             );
 

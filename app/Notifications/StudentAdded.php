@@ -24,19 +24,31 @@ class StudentAdded extends Notification
 
     public function via($notifiable)
     {
-        return ['database', 'mail'];
+        return ['database'];
     }
 
     public function toMail($notifiable)
     {
+        $student = $this->student;
         $addedBy = $this->agent->business_name ?? $this->agent->username ?? $this->agent->name;
+
+        $introLines = [
+            "A new student, <strong>{$student->first_name} {$student->last_name}</strong>, has been added.",
+            "Added by: <strong>{$addedBy}</strong>"
+        ];
 
         return (new MailMessage)
             ->subject('New Student Added')
-            ->greeting('Hello!')
-            ->line("A new student, {$this->student->first_name} {$this->student->last_name}, has been added by {$addedBy}.")
-            ->action('View Student', $this->getActivityLink($notifiable, 'student_added', $this->student));
+            ->view('emails.layout', [
+                'subject'    => 'New Student Added',
+                'greeting'   => "Hello {$notifiable->name},",
+                'introLines' => $introLines,
+                'actionText' => 'View Student',
+                'actionUrl'  => $this->getActivityLink($notifiable, 'student_added', $student),
+                'outroLines' => ['Please review the student details if necessary.']
+            ]);
     }
+
 
     public function toArray($notifiable)
     {
@@ -44,7 +56,7 @@ class StudentAdded extends Notification
 
         ActivityLogger::log(
             'student_added',
-            "👤 Student added: {$this->student->first_name} {$this->student->last_name} by {$this->agent->business_name}",
+            "ðŸ‘¤ Student added: {$this->student->first_name} {$this->student->last_name} by {$this->agent->business_name}",
             $this->student->id,
             $link,
             $this->agent->id

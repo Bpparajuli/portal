@@ -72,10 +72,13 @@
                         <td> {{ $course->fee }}</td>
                         <td class="text-center">
                             {{-- View Button --}}
-                            <a href="{{ route('agent.courses.show', $course->id) }}" class="btn btn-sm btn-primary text-white">
-                                <i class="fas fa-eye"> view </i>
-                            </a>
-
+                            <div class="d-flex gap-1"> <a href="{{ route('agent.courses.show', $course->id) }}" class="btn btn-sm btn-primary p-1 text-white">
+                                    <i class="fas fa-eye"> view </i>
+                                </a>
+                                <a href="{{ route('agent.applications.create') }}?course_id={{ $course->id }}" class="p-1 uni-btn-success-small">
+                                    <i class="fa-solid fa-paper-plane"> Apply</i>
+                                </a>
+                            </div>
                         </td>
                     </tr>
                     @empty

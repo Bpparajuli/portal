@@ -6,6 +6,10 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Str;
+use App\Models\Student;
+use App\Models\Document;
+use App\Models\Application;
 
 class User extends Authenticatable
 {
@@ -19,6 +23,8 @@ class User extends Authenticatable
         'address',
         'email',
         'password',
+        'agreement_file',
+        'agreement_status',
         'business_logo',
         'is_admin',
         'is_agent',
@@ -33,22 +39,47 @@ class User extends Authenticatable
         'is_agent' => 'boolean',
         'active'   => 'boolean',
     ];
+    // User.php
     public function students()
     {
         return $this->hasMany(Student::class, 'agent_id');
     }
 
+    public function documents()
+    {
+        // Has many through students
+        return $this->hasManyThrough(
+            Document::class,
+            Student::class,
+            'agent_id',    // Foreign key on students table
+            'student_id',  // Foreign key on documents table
+            'id',          // Local key on users table
+            'id'           // Local key on students table
+        );
+    }
+
     public function applications()
     {
         return $this->hasManyThrough(
-            Application::class,   // Target model
-            Student::class,       // Intermediate model
-            'agent_id',           // Foreign key on students table
-            'student_id',         // Foreign key on applications table
-            'id',                 // Local key on users table
-            'id'                  // Local key on students table
+            Application::class,
+            Student::class,
+            'agent_id',    // Foreign key on students table
+            'student_id',  // Foreign key on applications table
+            'id',          // Local key on users table
+            'id'           // Local key on students table
         );
     }
+    public function getRouteKeyName()
+    {
+        return 'business_name';
+    }
+
+    public function getBusinessNameSlugAttribute()
+    {
+        return Str::slug($this->business_name);
+    }
+
+
     public function formatNotification($notification)
     {
         // Ensure $data is always an associative array
@@ -140,7 +171,7 @@ class User extends Authenticatable
             // 🆕 New user registered
             case 'user_registered':
                 $messageText = "🆕 New user registered: "
-                    . ($data['user_name'] ?? 'Unknown User');
+                    . ($data['user']['name'] ?? 'Unknown User');
                 break;
 
             default:

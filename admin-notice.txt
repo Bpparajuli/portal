@@ -20,3 +20,12 @@ php artisan optimize:clear
 composer dump-autoload -o
 php artisan optimize
 ::: clean cache :::
+::: TO start from 1 or highest number :::
+ALTER TABLE universities AUTO_INCREMENT = 1;
+ALTER TABLE students AUTO_INCREMENT = 1;
+ALTER TABLE notifications AUTO_INCREMENT = 1;
+ALTER TABLE documents AUTO_INCREMENT = 1;
+ALTER TABLE courses AUTO_INCREMENT = 1;
+ALTER TABLE application_message AUTO_INCREMENT = 1;
+ALTER TABLE applications AUTO_INCREMENT = 1;
+ALTER TABLE activities AUTO_INCREMENT = 1;

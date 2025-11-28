@@ -1,10 +1,9 @@
 /* =========================
-Login Page & Countries Showcase - Component Styles Only
+Login Page & Countries Showcase - Component Styles Only login.css
 ========================= */
 
 /* Login Container */
 .login-container {
-    max-width: 1100px;
     margin: auto;
     background: #fff;
     border-radius: 20px;

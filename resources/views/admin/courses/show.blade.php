@@ -1,12 +1,15 @@
-@extends('layouts.agent')
+@extends('layouts.admin')
 
 @section('title', 'Course Details')
 
 @section('content')
 <div class="container-fluid py-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <h4 class="mb-0">Course Details</h4>
-        <a href="{{ route('agent.courses.index') }}" class="btn btn-secondary btn-sm">
+        <h4 class="uni-modal-title m-2">
+            <i class="fas fa-book"></i> Courses at <a href="{{ route('admin.universities.show', $course->university->id) }}" class="uni-name-link">
+                {{ $course->university->name }}- {{ $course->university->city ?? 'N/A' }}</strong></a>
+        </h4>
+        <a href="{{ route('admin.courses.index') }}" class="btn btn-secondary btn-sm">
             <i class="fas fa-arrow-left"></i> Back to Courses
         </a>
     </div>
@@ -61,7 +64,7 @@
                     <p class="text-muted fw-semibold">{{ $course->application_fee ? '$' . $course->application_fee : 'N/A' }}</p>
                 </div>
                 <div class="col-md-4">
-                    <h6 class="fw-bold">MOI Requirement</h6>
+                    <h6 class="fw-bold">MOI </h6>
                     <p class="text-muted fw-semibold">{{ $course->moi_requirement }}</p>
                 </div>
             </div>
@@ -81,7 +84,6 @@
                 </div>
             </div>
             <div class="row mb-3">
-
                 <div class="col-md-6">
                     <h6 class="fw-bold">IELTS / PTE / Other Language Requirements</h6>
                     <p class="text-muted fw-semibold">{{ $course->ielts_pte_other_languages ?? 'N/A' }}</p>
@@ -96,29 +98,34 @@
                 </div>
             </div>
             <hr>
-            <div class="mb-3">
-                <h6 class="fw-bold">Description</h6>
-                <p class="text-muted fw-semibold">{{ $course->description ?? 'No description available.' }}</p>
+            <div class="d-flex">
+                <div class="col-md-10 mb-3">
+                    <h6 class="fw-bold">Description</h6>
+                    <p class="text-muted fw-semibold">{{ $course->description ?? 'No description available.' }}</p>
+                </div>
+                <div class="col-md-2">
+                    <div class="m-1">
+                        <a href="{{ route('admin.courses.edit', $course->id) }}" class="btn btn-secondary me-2">
+                            <i class="fas fa-edit"></i> Edit
+                        </a>
+                    </div>
+                    <div class="m-1">
+                        @if(Auth::id() === 1)
+                        <form action="{{ route('admin.courses.destroy', $course->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this course?');">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
+                        </form>
+                        @endif
+                    </div>
+                </div>
             </div>
         </div>
+
     </div>
 
-    <div class="d-flex justify-content-end mt-4">
-        <a href="{{ route('admin.courses.edit', $course->id) }}" class="btn btn-primary me-2">
-            <i class="fas fa-edit"></i> Edit Course
-        </a>
 
-        @if(Auth::id() === 1)
-        <form action="{{ route('admin.courses.destroy', $course->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this course?');">
-            @csrf
-            @method('DELETE')
-            <button type="submit" class="btn btn-danger">
-                <i class="fas fa-trash"></i> Delete
-            </button>
-        </form>
-        @endif
-    </div>
-</div>
-</div>
 </div>
 @endsection

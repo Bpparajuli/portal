@@ -14,7 +14,8 @@ use App\Http\Controllers\Guest\{
 use App\Http\Controllers\Auth\{
     LoginController,
     RegisterController,
-    ContactController
+    ContactController,
+    WaitingController,
 };
 
 // Admin Controllers
@@ -39,19 +40,9 @@ use App\Http\Controllers\Agent\{
     DocumentController as AgentDocumentController,
     NotificationController as AgentNotificationController,
     StudentController as AgentStudentController,
-    UniversityController as AgentUniversityController
+    UniversityController as AgentUniversityController,
+    UserController as AgentUserController
 };
-
-
-/*
-|--------------------------------------------------------------------------
-| Debug Route (for testing only)
-|--------------------------------------------------------------------------
-*/
-
-Route::get('/check-admin', function () {
-    return 'Route is working';
-});
 
 
 /*
@@ -59,6 +50,7 @@ Route::get('/check-admin', function () {
 | Home / Guest Routes
 |--------------------------------------------------------------------------
 */
+
 Route::get('/', function () {
     if (Auth::check()) {
         return Auth::user()->is_admin
@@ -70,7 +62,6 @@ Route::get('/', function () {
 
     return app(GuestDashboardController::class)->welcome(request());
 })->name('home');
-
 
 Route::prefix('guest')->name('guest.')->group(function () {
     Route::get('dashboard', fn() => view('guest.dashboard'))->name('dashboard');
@@ -90,7 +81,6 @@ Route::prefix('guest')->name('guest.')->group(function () {
         Route::get('courses/{course}', 'show')->name('courses.show');
     });
 });
-
 
 /*
 |--------------------------------------------------------------------------
@@ -112,6 +102,14 @@ Route::prefix('auth')->name('auth.')->group(function () {
     Route::post('contact', [ContactController::class, 'submit'])->name('contact.submit');
 
     Route::view('terms', 'auth.terms')->name('terms');
+
+    Route::get('/waiting-dash', [WaitingController::class, 'show'])
+        ->name('waiting-dash')
+        ->middleware('auth');
+
+    Route::post('/agreement/upload', [WaitingController::class, 'upload'])
+        ->name('agreement.upload')
+        ->middleware('auth');
 });
 
 Route::post('/logout', [LoginController::class, 'logout'])->middleware('auth')->name('logout');
@@ -131,54 +129,85 @@ Route::middleware(['auth', \App\Http\Middleware\IsAdmin::class])
     ->name('admin.')
     ->group(function () {
 
+        // ---------------------------
+        // Dashboard & Chat
+        // ---------------------------
         Route::get('dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
         Route::get('chat', [AdminChatController::class, 'index'])->name('chat');
 
+        // ---------------------------
         // Notifications
+        // ---------------------------
         Route::get('notifications', [AdminNotificationController::class, 'index'])->name('notifications');
         Route::post('notifications/mark-all', [AdminNotificationController::class, 'markAll'])->name('notifications.markAll');
         Route::post('notifications/{id}/read', [AdminNotificationController::class, 'markAsRead'])->name('notifications.markRead');
         Route::post('notifications/{id}/unread', [AdminNotificationController::class, 'markAsUnread'])->name('notifications.markUnread');
         Route::get('notifications/{id}/redirect', [AdminNotificationController::class, 'readAndRedirect'])->name('notifications.readAndRedirect');
 
+        // ALL Users routes 
+        // WAITING FOR ACCOUNT APPROVAL
+        Route::get('users/waiting', [AdminUserController::class, 'waiting'])
+            ->name('users.waiting');
+        // APPROVE USER
+        Route::put('users/{user:business_name}/approve', [AdminUserController::class, 'approve'])
+            ->name('users.approve');
+        // AGREEMENT VERIFICATION LIST
+        Route::get('users/waiting-agreement', [AdminUserController::class, 'agreementWaiting'])
+            ->name('users.agreementWaiting');
+        // VERIFY AGREEMENT
+        Route::put('users/{user:business_name}/verify-agreement', [AdminUserController::class, 'verifyAgreement'])
+            ->name('users.verifyAgreement');
+        // VERIFY AGREEMENT
+        Route::delete('/users/{user}/agreement/delete', [AdminUserController::class, 'deleteAgreement'])
+            ->name('users.agreement.delete');
+
+        // ROUTES FOR STUDENTS 
+        Route::get('users/{user:business_name}/students', [AdminUserController::class, 'students'])
+            ->name('users.students');
+        // ROUTES FOR APPLICATIONS
+        Route::get('users/{user:business_name}/applications', [AdminUserController::class, 'applications'])
+            ->name('users.applications');
+        // Resource route MUST come last
+        Route::resource('users', AdminUserController::class)
+            ->parameters(['users' => 'user:business_name_slug']);
+        // ---------------------------
         // Dynamic Data
+        // ---------------------------
         Route::get('get-cities/{country}', [AdminUniversityController::class, 'getCities'])->name('get-cities');
         Route::get('get-universities/{city}', [AdminUniversityController::class, 'getUniversities'])->name('get-universities');
         Route::get('get-courses/{universityId}', [AdminUniversityController::class, 'getCourses'])->name('get-courses');
 
-        // Users
-        Route::get('users/waiting', [AdminUserController::class, 'waiting'])->name('users.waiting');
-        Route::put('users/{user}/approve', [AdminUserController::class, 'approve'])->name('users.approve');
-        Route::get('users/{agent}/students', [AdminUserController::class, 'students'])->name('users.students');
-        Route::get('users/{agent}/applications', [AdminUserController::class, 'applications'])->name('users.applications');
-        Route::resource('users', AdminUserController::class);
-
-        // CRUD Resources
+        // ---------------------------
+        // Resources
+        // ---------------------------
         Route::resources([
             'courses' => AdminCourseController::class,
             'students' => AdminStudentController::class,
             'universities' => AdminUniversityController::class,
         ]);
 
+        // ---------------------------
         // Documents
+        // ---------------------------
         Route::prefix('students/{student}')->group(function () {
             Route::get('documents', [AdminDocumentController::class, 'index'])->name('documents.index');
             Route::get('documents/create', [AdminDocumentController::class, 'create'])->name('documents.create');
-            Route::post('documents/other', [AdminDocumentController::class, 'storeOther'])->name('documents.storeOther');
             Route::post('documents', [AdminDocumentController::class, 'store'])->name('documents.store');
+            Route::post('documents/other', [AdminDocumentController::class, 'storeOther'])->name('documents.storeOther');
             Route::delete('documents/{document}/destroy', [AdminDocumentController::class, 'destroy'])->name('documents.destroy');
             Route::get('documents/{document}/download', [AdminDocumentController::class, 'download'])->name('documents.download');
             Route::get('documents/download-all', [AdminDocumentController::class, 'downloadAll'])->name('documents.downloadAll');
         });
 
-
+        // ---------------------------
         // Applications
+        // ---------------------------
         Route::get('students/{student}/applications', [AdminApplicationController::class, 'forStudent'])->name('students.applications');
         Route::patch('applications/{application}/withdraw', [AdminApplicationController::class, 'withdraw'])->name('applications.withdraw');
         Route::post('applications/{application}/add-message', [AdminApplicationController::class, 'addMessage'])->name('applications.addMessage');
+        Route::delete('applications/{application}/messages/{message}', [AdminApplicationController::class, 'deleteMessage'])->name('applications.messages.delete');
         Route::resource('applications', AdminApplicationController::class);
     });
-
 
 /*
 |--------------------------------------------------------------------------
@@ -213,6 +242,19 @@ Route::middleware(['auth', \App\Http\Middleware\IsAgent::class])
             'courses' => AgentCourseController::class,
         ]);
 
+        Route::get('/users/{user:business_name}', [AgentUserController::class, 'show'])
+            ->name('users.show');
+
+        Route::get('/users/{user:business_name}/edit', [AgentUserController::class, 'edit'])
+            ->name('users.edit');
+
+        Route::put('/users/{user:business_name}', [AgentUserController::class, 'update'])
+            ->name('users.update');
+
+        Route::post('/users/{user:business_name}/reset-password', [AgentUserController::class, 'resetPassword'])
+            ->name('users.reset-password');
+
+
         // Documents
         Route::prefix('students/{student}')->group(function () {
             Route::get('documents', [AgentDocumentController::class, 'index'])->name('documents.index');
@@ -226,9 +268,20 @@ Route::middleware(['auth', \App\Http\Middleware\IsAgent::class])
         // Applications
         Route::get('students/{student}/applications', [AgentApplicationController::class, 'forStudent'])
             ->name('students.applications');
+        Route::get('applications/get-courses/{universityId}', [AgentApplicationController::class, 'getCourses'])
+            ->name('applications.get-courses');
+        Route::patch('applications/{application}/withdraw', [AgentApplicationController::class, 'withdraw'])
+            ->name('applications.withdraw');
+        Route::post('applications/{application}/add-message', [AgentApplicationController::class, 'addMessage'])
+            ->name('applications.addMessage');
 
-        Route::get('applications/get-courses/{universityId}', [AgentApplicationController::class, 'getCourses'])->name('applications.get-courses');
-        Route::patch('applications/{application}/withdraw', [AgentApplicationController::class, 'withdraw'])->name('applications.withdraw');
-        Route::post('applications/{application}/add-message', [AgentApplicationController::class, 'addMessage'])->name('applications.addMessage');
+        // MUST BE BEFORE RESOURCE
+        Route::delete(
+            'applications/{application}/messages/{message}',
+            [AgentApplicationController::class, 'deleteMessage']
+        )
+            ->name('applications.messages.delete');
+
+        // Resource conflicts must always come last
         Route::resource('applications', AgentApplicationController::class);
     });

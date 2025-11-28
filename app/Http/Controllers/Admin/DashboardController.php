@@ -24,6 +24,7 @@ class DashboardController extends Controller
 
         // === KPI COUNTS ===
         $totalAgents       = User::where('is_agent', 1)->count();
+        $activeAgents      = User::where('agreement_status', operator: 'verified')->count();
         $totalAdmins       = User::where('is_admin', 1)->count();
         $totalStudents     = Student::count();
         $totalUniversities = University::count();
@@ -95,6 +96,7 @@ class DashboardController extends Controller
 
         return view('admin.dashboard', compact(
             'totalAgents',
+            'activeAgents',
             'totalAdmins',
             'totalStudents',
             'totalUniversities',

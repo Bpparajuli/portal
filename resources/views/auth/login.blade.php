@@ -5,7 +5,7 @@
 <div class="login-page d-flex align-items-center justify-content-center py-2">
     <div class="row w-100 g-0 shadow-lg rounded-4 overflow-hidden login-container">
         {{-- Left: Login Form --}}
-        <div class="col-lg-5 bg-white p-5 d-flex flex-column justify-content-center">
+        <div class="col-lg-4 bg-white p-5 d-flex flex-column justify-content-center">
             <h2 class="fw-bold mb-4 text-center">Welcome Back</h2>
             <p class="text-muted text-center mb-4">Login to continue to your dashboard</p>
 
@@ -35,7 +35,7 @@
         </div>
 
         {{-- Right: Countries Showcase --}}
-        <div class="col-lg-7 bg-light p-4 d-flex flex-column justify-content-center">
+        <div class="col-lg-8 bg-light p-4 d-flex flex-column justify-content-center">
             <h3 class="fw-bold text-center mb-4">Countries We Work For</h3>
 
             {{-- Desktop Grid --}}
