@@ -5,14 +5,14 @@
 <div class="register-page py-5">
 
     <div class="row justify-content-center">
-        <div class="col-lg-10">
+        <div class="col-lg-12">
             {{-- Card --}}
             <div class="card shadow-lg border-0 rounded-4 overflow-hidden">
 
                 {{-- Header --}}
                 <div class="card-header bg-primary text-white text-center py-4">
                     <h2 class="fw-bold mb-1">Become an IDEA Agent</h2>
-                    <p class="mb-0 small">Fill the form below to register your agency with us</p>
+                    <p class="mb-0 small">Please Fill the form below to register your agency with us</p>
                 </div>
 
                 {{-- Body --}}
@@ -106,9 +106,17 @@
                             </div>
 
                             {{-- Business Logo --}}
-                            <div class="col-12">
-                                <label class="form-label fw-semibold">Business Logo <small>( image must be less than 10mb )</small></label>
-                                <input type="file" name="business_logo" class="form-control" accept="image/*">
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Business Logo <span class="text-danger">*</span></label>
+                                <input type="file" name="business_logo" class="form-control" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Business Registration Certificate<span class="text-danger">*</span> </label>
+                                <input type="file" name="registration" class="form-control" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">PAN Certificate <span class="text-danger">*</span></label>
+                                <input type="file" name="pan" class="form-control" required>
                             </div>
 
                             {{-- Terms --}}

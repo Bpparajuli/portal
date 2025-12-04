@@ -11,20 +11,18 @@ use App\Models\Activity;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use App\Notifications\AgreementSubmitted;
+use Illuminate\Support\Facades\Storage;
 
 class UserController extends Controller
 {
     /**
-     * Convert slug to the real business_name
+     * Convert slug to the real User model
      */
-    private function businessNameFromSlug($slug)
+    private function getUserBySlug($slug)
     {
-        // Replace dashes with spaces
         $name = str_replace('-', ' ', $slug);
 
-        // Laravel fallback: match case-insensitive
         return User::whereRaw('LOWER(business_name) = ?', [strtolower($name)])
-            ->with(['documents', 'applications'])
             ->firstOrFail();
     }
 
@@ -34,27 +32,21 @@ class UserController extends Controller
     public function show($slug)
     {
         $auth = Auth::user();
+        $user = $this->getUserBySlug($slug);
 
-        // Convert slug → actual user model
-        $user = $this->businessNameFromSlug($slug);
-
-        // Authorization (agents can ONLY view their own profile)
         if ($auth->is_agent && $auth->id != $user->id) {
             abort(403, 'Unauthorized access.');
         }
 
-        $agentId = $auth->id;
-
-        // Recent activities (same as your original logic)
-        $studentActivities = Activity::where('user_id', $agentId)
+        $studentActivities = Activity::where('user_id', $user->id)
             ->whereIn('type', ['student_added', 'student_deleted'])
             ->latest()->take(5)->get();
 
-        $documentActivities = Activity::where('user_id', $agentId)
+        $documentActivities = Activity::where('user_id', $user->id)
             ->whereIn('type', ['document_uploaded', 'document_deleted'])
             ->latest()->take(5)->get();
 
-        $applicationActivities = Activity::where('user_id', $agentId)
+        $applicationActivities = Activity::where('user_id', $user->id)
             ->whereIn('type', ['application_submitted', 'application_withdrawn'])
             ->latest()->take(5)->get();
 
@@ -67,11 +59,15 @@ class UserController extends Controller
     }
 
     /**
-     * Edit user profile page
+     * Edit profile page
      */
     public function edit($slug)
     {
-        $user = $this->businessNameFromSlug($slug);
+        $user = $this->getUserBySlug($slug);
+
+        if (Auth::id() != $user->id) {
+            abort(403, 'Unauthorized.');
+        }
 
         return view('agent.users.edit', compact('user'));
     }
@@ -81,67 +77,57 @@ class UserController extends Controller
      */
     public function update(Request $request, $slug)
     {
-        $user = $this->businessNameFromSlug($slug);
+        $user = $this->getUserBySlug($slug);
+
+        if (Auth::id() != $user->id) {
+            abort(403, 'Unauthorized.');
+        }
 
         $request->validate([
             'email' => 'required|email',
-            'password' => 'nullable|min:6|confirmed',
-            'business_logo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'agreement_file' => 'nullable|file',
+            'contact' => 'nullable|string|max:20',
+            'address' => 'nullable|string|max:255',
+            'password' => 'nullable|string|min:6|confirmed',
+            'business_logo' => 'nullable|file|max:20480',
+            'registration' => 'nullable|file|max:20480',
+            'pan' => 'nullable|file|max:20480',
+            'agreement_file' => 'nullable|file|max:20480',
         ]);
 
+        // Update basic fields
         $user->email = $request->email;
         $user->contact = $request->contact;
         $user->address = $request->address;
 
         if ($request->filled('password')) {
-            $user->password = bcrypt($request->password);
+            $user->password = Hash::make($request->password);
         }
 
-        $safeBusinessName = preg_replace('/[^A-Za-z0-9_\-]/', '_', strtolower($request->business_name ?? 'agent'));
+        // File uploads
+        $user->business_logo = $this->uploadFile($request, $user, 'business_logo', 'logo');
+        $user->registration  = $this->uploadFile($request, $user, 'registration', 'registration');
+        $user->pan           = $this->uploadFile($request, $user, 'pan', 'pan');
 
-        // Logo
-        if ($request->hasFile('business_logo')) {
-            $logoPath = $request->file('business_logo')->storeAs(
-                'agents/' . $safeBusinessName,
-                $safeBusinessName . '_logo.' . $request->file('business_logo')->getClientOriginalExtension(),
-                'public'
-            );
-            $user->business_logo = $logoPath;
-        }
-
-        // Agreement File
-        $agreementFileChanged = false;
+        $agreementChanged = false;
 
         if ($request->hasFile('agreement_file')) {
-
-            $agreementFileName = $safeBusinessName . '_agreement.' .
-                $request->file('agreement_file')->getClientOriginalExtension();
-
-            $newFilePath = $request->file('agreement_file')->storeAs(
-                'agents/' . $safeBusinessName,
-                $agreementFileName,
-                'public'
-            );
-
-            if ($user->agreement_file !== $newFilePath) {
-                $agreementFileChanged = true;
-                $user->agreement_file = $newFilePath;
-            }
+            $user->agreement_file = $this->uploadFile($request, $user, 'agreement_file', 'agreement');
+            $user->agreement_status = 'uploaded';
+            $agreementChanged = true;
         }
 
         $user->save();
 
-        // Notify admin2 only if agreement updated
-        if ($agreementFileChanged) {
+        // Notify admin if agreement updated
+        if ($agreementChanged) {
             $admin = User::find(2);
             if ($admin) {
                 $admin->notify(new AgreementSubmitted($user));
             }
         }
 
-        return redirect()->route('agent.users.show', $user->business_name_slug)
-            ->with('success', 'User updated successfully!');
+        return redirect()->route('agent.users.show', $user->slug)
+            ->with('success', 'Profile updated successfully.');
     }
 
     /**
@@ -149,12 +135,37 @@ class UserController extends Controller
      */
     public function resetPassword($slug)
     {
-        $user = $this->businessNameFromSlug($slug);
-        $newPassword = Str::random(10);
+        $user = $this->getUserBySlug($slug);
 
+        if (Auth::id() != $user->id) {
+            abort(403, 'Unauthorized.');
+        }
+
+        $newPassword = Str::random(10);
         $user->password = Hash::make($newPassword);
         $user->save();
 
         return back()->with('success', "Password reset successfully. New password: $newPassword");
+    }
+
+    /**
+     * Upload files helper
+     */
+    private function uploadFile(Request $request, User $user, string $inputName, string $suffix)
+    {
+        if (!$request->hasFile($inputName)) return $user->$inputName;
+
+        $safeName = str_replace([' ', '.', '-'], '_', strtolower($user->business_name));
+        $folder   = "agents/$safeName";
+
+        $file = $request->file($inputName);
+        $fileName = $safeName . '_' . $suffix . '.' . $file->getClientOriginalExtension();
+
+        // Delete old file if exists
+        if ($user->$inputName && Storage::disk('public')->exists($user->$inputName)) {
+            Storage::disk('public')->delete($user->$inputName);
+        }
+
+        return $file->storeAs($folder, $fileName, 'public');
     }
 }

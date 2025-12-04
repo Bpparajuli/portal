@@ -24,7 +24,6 @@
                     <th>Contact</th>
                     <th>Address</th>
                     <th>Approve</th>
-                    <th>Applied at</th>
                 </tr>
             </thead>
             <tbody>
@@ -33,7 +32,7 @@
                     <td>{{ $user->id }}</td>
 
                     <td>
-                        <a href="{{ route('admin.users.show', $user->business_name) }}">
+                        <a href="{{ route('admin.users.show', $user->slug) }}">
                             {{ $user->business_name }}
                         </a>
                     </td>
@@ -44,7 +43,7 @@
                     <td>{{ $user->address }}</td>
 
                     <td>
-                        <form action="{{ route('admin.users.approve', $user->business_name) }}" method="POST">
+                        <form action="{{ route('admin.users.approve', $user->slug) }}" method="POST">
                             @csrf
                             @method('PUT')
                             <button class="btn btn-success btn-sm">Approve</button>
@@ -85,7 +84,7 @@
                     <td>{{ $user->id }}</td>
 
                     <td>
-                        <a href="{{ route('admin.users.show', $user->business_name) }}">
+                        <a href="{{ route('admin.users.show', $user->slug) }}">
                             {{ $user->business_name }}
                         </a>
                     </td>
@@ -99,7 +98,7 @@
                     </td>
 
                     <td>
-                        <a href="{{ route('admin.users.edit', $user->business_name_slug) }}" class="text-decoration-none">
+                        <a href="{{ route('admin.users.edit', $user->slug) }}" class="text-decoration-none">
                             @if ($user->agreement_status === 'not_uploaded')
                             <span class="badge bg-secondary">Not Uploaded</span>
                             @elseif ($user->agreement_status === 'uploaded')
@@ -113,7 +112,7 @@
                     </td>
 
                     <td>
-                        <form action="{{ route('admin.users.verifyAgreement', $user->business_name) }}" method="POST">
+                        <form action="{{ route('admin.users.verifyAgreement', $user->slug) }}" method="POST">
                             @csrf
                             @method('PUT')
                             <button class="btn btn-primary btn-sm">Verify</button>

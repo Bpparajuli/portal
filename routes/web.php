@@ -28,7 +28,8 @@ use App\Http\Controllers\Admin\{
     NotificationController as AdminNotificationController,
     StudentController as AdminStudentController,
     UniversityController as AdminUniversityController,
-    UserController as AdminUserController
+    UserController as AdminUserController,
+    BackupController as AdminBackupController
 };
 
 // Agent Controllers
@@ -129,6 +130,9 @@ Route::middleware(['auth', \App\Http\Middleware\IsAdmin::class])
     ->name('admin.')
     ->group(function () {
 
+        Route::get('/backup-files', [AdminBackupController::class, 'backupFilesIfChanged'])
+            ->name('backup.files');
+
         // ---------------------------
         // Dashboard & Chat
         // ---------------------------
@@ -148,28 +152,31 @@ Route::middleware(['auth', \App\Http\Middleware\IsAdmin::class])
         // WAITING FOR ACCOUNT APPROVAL
         Route::get('users/waiting', [AdminUserController::class, 'waiting'])
             ->name('users.waiting');
+
         // APPROVE USER
-        Route::put('users/{user:business_name}/approve', [AdminUserController::class, 'approve'])
+        Route::put('users/{user:slug}/approve', [AdminUserController::class, 'approve'])
             ->name('users.approve');
-        // AGREEMENT VERIFICATION LIST
-        Route::get('users/waiting-agreement', [AdminUserController::class, 'agreementWaiting'])
-            ->name('users.agreementWaiting');
+
         // VERIFY AGREEMENT
-        Route::put('users/{user:business_name}/verify-agreement', [AdminUserController::class, 'verifyAgreement'])
+        Route::put('users/{user:slug}/verify-agreement', [AdminUserController::class, 'verifyAgreement'])
             ->name('users.verifyAgreement');
-        // VERIFY AGREEMENT
-        Route::delete('/users/{user}/agreement/delete', [AdminUserController::class, 'deleteAgreement'])
+
+        // DELETE AGREEMENT
+        Route::delete('/users/{user:slug}/agreement/delete', [AdminUserController::class, 'deleteAgreement'])
             ->name('users.agreement.delete');
 
-        // ROUTES FOR STUDENTS 
-        Route::get('users/{user:business_name}/students', [AdminUserController::class, 'students'])
+        // STUDENTS
+        Route::get('users/{agent:slug}/students', [AdminUserController::class, 'students'])
             ->name('users.students');
-        // ROUTES FOR APPLICATIONS
-        Route::get('users/{user:business_name}/applications', [AdminUserController::class, 'applications'])
+
+        // APPLICATIONS
+        Route::get('users/{agent:slug}/applications', [AdminUserController::class, 'applications'])
             ->name('users.applications');
-        // Resource route MUST come last
+
+        // RESOURCE route (must come last)
         Route::resource('users', AdminUserController::class)
-            ->parameters(['users' => 'user:business_name_slug']);
+            ->parameters(['users' => 'user:slug']);
+
         // ---------------------------
         // Dynamic Data
         // ---------------------------
@@ -214,6 +221,8 @@ Route::middleware(['auth', \App\Http\Middleware\IsAdmin::class])
 | Agent Routes
 |--------------------------------------------------------------------------
 */
+
+
 Route::middleware(['auth', \App\Http\Middleware\IsAgent::class])
     ->prefix('agent')
     ->name('agent.')
@@ -242,18 +251,10 @@ Route::middleware(['auth', \App\Http\Middleware\IsAgent::class])
             'courses' => AgentCourseController::class,
         ]);
 
-        Route::get('/users/{user:business_name}', [AgentUserController::class, 'show'])
-            ->name('users.show');
-
-        Route::get('/users/{user:business_name}/edit', [AgentUserController::class, 'edit'])
-            ->name('users.edit');
-
-        Route::put('/users/{user:business_name}', [AgentUserController::class, 'update'])
-            ->name('users.update');
-
-        Route::post('/users/{user:business_name}/reset-password', [AgentUserController::class, 'resetPassword'])
-            ->name('users.reset-password');
-
+        Route::get('/users/{user:slug}', [AgentUserController::class, 'show'])->name('users.show');
+        Route::get('/users/{user:slug}/edit', [AgentUserController::class, 'edit'])->name('users.edit');
+        Route::put('/users/{user:slug}', [AgentUserController::class, 'update'])->name('users.update');
+        Route::post('/users/{user:slug}/reset-password', [AgentUserController::class, 'resetPassword'])->name('users.reset-password');
 
         // Documents
         Route::prefix('students/{student}')->group(function () {

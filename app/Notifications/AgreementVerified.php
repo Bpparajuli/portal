@@ -58,7 +58,7 @@ class AgreementVerified extends Notification
                 'id'   => $this->user->id,
                 'name' => $this->user->business_name ?? $this->user->username ?? $this->user->name,
             ],
-            'link'   => route('agent.users.show', $this->user->business_name_slug),
+            'link'   => route('agent.users.show', $this->user->slug),
         ];
     }
 }

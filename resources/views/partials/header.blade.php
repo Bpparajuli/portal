@@ -17,8 +17,8 @@ $user = auth()->user();
 
                 // Dynamic user show link
                 $userShowRoute = $user->is_admin
-                ? route('admin.users.show', ['user' => $user->business_name_slug])
-                : ($user->is_agent ? route('agent.users.show', ['user' => $user->business_name_slug]) : '#');
+                ? route('admin.users.show', $user)
+                : ($user->is_agent ? route('agent.users.show', $user) : '#');
                 @endphp
                 <a href="{{ $dashboardRoute }}" class="d-flex align-items-center gap-2 text-decoration-none">
                     @if($user->business_logo)
@@ -44,7 +44,7 @@ $user = auth()->user();
                 <div class="notice-bar">
                     <p class="notice-text mb-0">
                         <span class="marquee-text">
-                            📢 Notice: Dubai promotion started! 10+ direct college affiliations, high commissions, 100% visa success — bring good numbers & earn rewards, FAM trips for top performers!
+                            📢 Notice: Due to issues with the NOC of Dubai colleges in Nepal, we’ve partnered with 5+ universities—promote these for good commissions, and top performers can still earn FAM trips!
                         </span>
                     </p>
                 </div>

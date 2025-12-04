@@ -7,7 +7,9 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Auth;
 use App\Notifications\UserRegistered;
+use Illuminate\Support\Facades\Storage;
 
 class RegisterController extends Controller
 {
@@ -18,77 +20,79 @@ class RegisterController extends Controller
 
     public function register(Request $request)
     {
-        // VALIDATION
         $request->validate([
-            'business_name' => 'nullable|string|max:255',
-            'owner_name'    => 'nullable|string|max:255',
-            'name'          => 'required|string|max:255',
-            'contact'       => 'nullable|string|max:20',
-            'address'       => 'nullable|string|max:255',
-            'email'         => 'required|string|email|max:255|unique:users',
-            'password'      => 'required|string|min:6|confirmed',
-            'business_logo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10280',
-            // any file type
-            'agreement_file' => 'nullable|file',
+            'business_name' => 'required|string|max:255',
+            'owner_name' => 'nullable|string|max:255',
+            'name' => 'required|string|max:255',
+            'contact' => 'nullable|string|max:20',
+            'address' => 'nullable|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users',
+            'password' => 'required|string|min:6|confirmed',
+            'business_logo' => 'nullable|file|max:20480',
+            'registration' => 'required|file|max:20480',
+            'pan' => 'required|file|max:20480',
+            'agreement_file' => 'nullable|file|max:20480',
         ]);
 
-        // MAKE SAFE FOLDER NAME
-        $safeBusinessName = preg_replace('/[^A-Za-z0-9_\-]/', '_', strtolower($request->business_name ?? 'agent'));
-        // LOGO UPLOAD
-        $logoPath = null;
+        $user = new User();
+        $user->business_name  = $request->business_name;
+        $user->owner_name     = $request->owner_name;
+        $user->name           = $request->name;
+        $user->contact        = $request->contact;
+        $user->address        = $request->address;
+        $user->email          = $request->email;
+        $user->password       = Hash::make($request->password);
 
-        if ($request->hasFile('business_logo')) {
-            $logoPath = $request->file('business_logo')
-                ->storeAs(
-                    'agents/' . $safeBusinessName,
-                    $safeBusinessName . '_logo.' . $request->file('business_logo')->getClientOriginalExtension(),
-                    'public'
-                );
-        }
+        // IMPORTANT DEFAULTS
+        $user->role        = 'agent';
+        $user->is_agent    = 1;
+        $user->is_admin    = 0;
+        $user->active      = 1;
 
-        // AGREEMENT FILE UPLOAD (same folder)
-        $agreementFilePath = null;
+        // Slug only for URLs
+        $user->slug        = strtolower(str_replace(' ', '-', $request->business_name));
+
+        $user->save();
+
+        // UPLOAD FILES
+        $user->business_logo  = $this->uploadFile($request, $user, 'business_logo', 'logo');
+        $user->registration   = $this->uploadFile($request, $user, 'registration', 'registration');
+        $user->pan            = $this->uploadFile($request, $user, 'pan', 'pan');
+
         if ($request->hasFile('agreement_file')) {
-
-            $agreementFileName = $safeBusinessName . '_agreement.' .
-                $request->file('agreement_file')->getClientOriginalExtension();
-
-            $agreementFilePath = $request->file('agreement_file')
-                ->storeAs(
-                    'agents/' . $safeBusinessName,
-                    $agreementFileName,
-                    'public'
-                );
+            $user->agreement_file   = $this->uploadFile($request, $user, 'agreement_file', 'agreement');
+            $user->agreement_status = 'uploaded';
+        } else {
+            $user->agreement_status = 'not_uploaded';
         }
 
-        // CREATE USER
-        $user = User::create([
-            'business_name'    => $request->business_name,
-            'owner_name'       => $request->owner_name,
-            'name'             => $request->name,
-            'contact'          => $request->contact,
-            'address'          => $request->address,
-            'email'            => $request->email,
-            'password'         => Hash::make($request->password),
-            'business_logo'    => $logoPath,
-            // agreement
-            'agreement_file'   => $agreementFilePath,
-            'agreement_status' => $agreementFilePath ? 'uploaded' : 'not_uploaded',
+        $user->save();
 
-            'is_admin' => 0,
-            'is_agent' => 1,
-            'active'   => 1,
-        ]);
-        auth()->login($user);
-
-
-        // SEND NOTIFICATION TO ADMIN (id=2)
+        // Notify main admin (id=2)
         $admin = User::find(2);
-        if ($admin) {
-            Notification::send($admin, new UserRegistered($user));
-        }
+        if ($admin) Notification::send($admin, new UserRegistered($user));
+
+        Auth::login($user);
 
         return redirect()->route('auth.waiting-dash')
             ->with('success', 'Registered successfully. Please wait for admin approval.');
+    }
+
+    private function uploadFile(Request $request, User $user, string $inputName, string $suffix)
+    {
+        if (!$request->hasFile($inputName)) return $user->$inputName;
+
+        $safeName = str_replace([' ', '.', '-'], '_', strtolower($user->business_name));
+        $folder   = "agents/$safeName";
+
+        $file = $request->file($inputName);
+        $fileName = $safeName . '_' . $suffix . '.' . $file->getClientOriginalExtension();
+
+        // DELETE OLD FILE IF EXISTS
+        if ($user->$inputName && Storage::disk('public')->exists($user->$inputName)) {
+            Storage::disk('public')->delete($user->$inputName);
+        }
+
+        return $file->storeAs($folder, $fileName, 'public');
     }
 }

@@ -39,7 +39,7 @@ class AgreementSubmitted extends Notification
                 'greeting'   => "Hello Admin,",
                 'introLines' => $introLines,
                 'actionText' => 'View Agent',
-                'actionUrl'  => route('agent.users.show', $this->user->business_name_slug),
+                'actionUrl'  => route('admin.users.show', $this->user->slug),
                 'outroLines' => [
                     'Please review the agreement file attached by the user.',
                 ]
@@ -51,7 +51,7 @@ class AgreementSubmitted extends Notification
         return [
             'message' => "{$this->user->business_name} updated their agreement document.",
             'user_id' => $this->user->id,
-            'url' => route('admin.users.show', $this->user->business_name_slug),
+            'url' => route('admin.users.show', $this->user->slug),
         ];
     }
 }

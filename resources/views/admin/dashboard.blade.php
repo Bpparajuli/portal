@@ -141,7 +141,7 @@
                                 </a>
                             </td>
                             <td>
-                                <a href="{{ route('admin.users.show', $app->agent->id) }}">
+                                <a href="{{ route('admin.users.show', $app->agent->slug) }}">
                                     {{ $app->agent->name ?? 'N/A' }}
                                 </a>
                             </td>
@@ -270,6 +270,13 @@
         </div>
 
     </div>
+    @if(auth()->check() && auth()->user()->id == 2)
+    <a href="{{ route('admin.backup.files') }}" class="btn btn-primary">
+        Backup Files (if changed)
+    </a>
+    @endif
+
+
 
 </div>
 {{-- Chart.js --}}

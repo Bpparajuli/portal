@@ -74,7 +74,7 @@
                                 <th>Duration</th>
                                 <th>Fee</th>
                                 <th>Intakes</th>
-                                <th>MOI</th>
+                                <th>IELTS/PTE</th>
                                 <th>Scholarships</th>
                             </tr>
                         </thead>
@@ -86,7 +86,7 @@
                                 <td>{{ $course->duration ?? 'N/A' }}</td>
                                 <td>{{ $course->fee }}</td>
                                 <td>{{ $course->intakes ?? 'N/A' }}</td>
-                                <td>{{ $course->moi_requirement ?? 'N/A' }}</td>
+                                <td>{{ $course->ielts_pte_other_languages ?? 'N/A' }}</td>
                                 <td>{{ $course->scholarships ?? 'N/A' }}</td>
 
                             </tr>

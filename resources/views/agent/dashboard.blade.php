@@ -403,7 +403,7 @@ $statusColors = [
                     cutout: '65%'
                     , plugins: {
                         legend: {
-                            display: true
+                            display: false
                         }
                     }
                 }

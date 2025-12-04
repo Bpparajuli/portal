@@ -8,6 +8,7 @@
     <div class="card mb-4 shadow-sm">
         <div class="card-body d-flex justify-content-between align-items-center">
 
+            {{-- User Info --}}
             <div>
                 <h3 class="mb-1">{{ $user->business_name ?? $user->username }}</h3>
                 <p class="mb-0"><strong>Owner:</strong> {{ $user->owner_name ?? 'N/A' }}</p>
@@ -15,60 +16,113 @@
                 <p class="mb-0"><strong>Email:</strong> {{ $user->email }}</p>
                 <p class="mb-0"><strong>Address:</strong> {{ $user->address }}</p>
             </div>
-            <div>
-                @if($user->agreement_file)
-                @php
-                $fileUrl = Storage::url($user->agreement_file);
-                $extension = strtolower(pathinfo($user->agreement_file, PATHINFO_EXTENSION));
-                $isImage = in_array($extension, ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp']);
-                @endphp
 
-                @if($isImage)
-                {{-- Display image --}}
-                <img src="{{ $fileUrl }}" alt="Agreement file" width="200px" height="auto" class="rounded border shadow-sm mb-2">
-                @else
-                {{-- Display file icon or name --}}
-                <a href="{{ $fileUrl }}" target="_blank" class="btn btn-sm btn-secondary mt-1" data-preview="{{ $fileUrl }}">
-                    <div class="file-preview p-2 mb-2 border rounded shadow-sm" style="width: 200px; text-align:center;">
-                        <i class="fas fa-file-alt fa-2x mb-1"></i>
-                        <br>
-                        <span>{{ basename($user->agreement_file) }}</span>
+            {{-- Files Section --}}
+            <div class="d-flex align-items-start gap-3">
+                {{-- Registration --}}
+                <div class="registration position-relative" style="width:180px; height:200px; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+                    @if($user->registration)
+                    @php
+                    $regUrl = Storage::url($user->registration);
+                    $regExt = strtolower(pathinfo($user->registration, PATHINFO_EXTENSION));
+                    $isRegImage = in_array($regExt, ['jpg','jpeg','png','gif','webp','bmp']);
+                    @endphp
+                    @if($isRegImage)
+                    <img src="{{ $regUrl }}" alt="Registration" class="rounded border shadow-sm" style="max-height:150px;">
+                    @else
+                    <a href="{{ $regUrl }}" target="_blank">
+                        <div class="file-preview p-2 border rounded shadow-sm text-center" style="width:100%;">
+                            <i class="fas fa-file-alt fa-2x mb-1"></i><br>
+                            <span>{{ basename($user->registration) }}</span>
+                        </div>
+                    </a>
+                    @endif
+                    @else
+                    <div class="no-logo text-center border rounded shadow-sm" style="width:100%; height:150px; display:flex; align-items:center; justify-content:center;">
+                        Registration not uploaded
                     </div>
-                </a>
-                @endif
-                @else
-                <div class="no-logo text-center" style="width:200px; height:100px; background:#eee; display:flex; align-items:center; justify-content:center;">
-                    Agreement file Not_uploaded
+                    @endif
                 </div>
 
-                @endif
-                <br>
-                {{-- Status Badge --}}
-                <a href="{{ route('admin.users.edit', $user->business_name_slug) }}" class="text-decoration-none">
+                {{-- PAN --}}
+                <div class="pan position-relative" style="width:180px; height:200px; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+                    @if($user->pan)
+                    @php
+                    $panUrl = Storage::url($user->pan);
+                    $panExt = strtolower(pathinfo($user->pan, PATHINFO_EXTENSION));
+                    $isPanImage = in_array($panExt, ['jpg','jpeg','png','gif','webp','bmp']);
+                    @endphp
+                    @if($isPanImage)
+                    <img src="{{ $panUrl }}" alt="PAN" class="rounded border shadow-sm" style="max-height:150px;">
+                    @else
+                    <a href="{{ $panUrl }}" target="_blank">
+                        <div class="file-preview p-2 border rounded shadow-sm text-center" style="width:100%;">
+                            <i class="fas fa-file-alt fa-2x mb-1"></i><br>
+                            <span>{{ basename($user->pan) }}</span>
+                        </div>
+                    </a>
+                    @endif
+                    @else
+                    <div class="no-logo text-center border rounded shadow-sm" style="width:100%; height:150px; display:flex; align-items:center; justify-content:center;">
+                        PAN not uploaded
+                    </div>
+                    @endif
+                </div>
+
+                {{-- Agreement --}}
+                <div class="agreement position-relative" style="width:180px; height:200px; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+                    @if($user->agreement_file)
+                    @php
+                    $agrUrl = Storage::url($user->agreement_file);
+                    $agrExt = strtolower(pathinfo($user->agreement_file, PATHINFO_EXTENSION));
+                    $isAgrImage = in_array($agrExt, ['jpg','jpeg','png','gif','webp','bmp']);
+                    @endphp
+                    @if($isAgrImage)
+                    <img src="{{ $agrUrl }}" alt="Agreement" class="rounded border shadow-sm" style="max-height:150px;">
+                    @else
+                    <a href="{{ $agrUrl }}" target="_blank">
+                        <div class="file-preview p-2 border rounded shadow-sm text-center" style="width:100%;">
+                            <i class="fas fa-file-alt fa-2x mb-1"></i><br>
+                            <span>{{ basename($user->agreement_file) }}</span>
+                        </div>
+                    </a>
+                    @endif
+                    @else
+                    <div class="no-logo text-center border rounded shadow-sm" style="width:100%; height:150px; display:flex; align-items:center; justify-content:center;">
+                        Agreement not uploaded
+                    </div>
+                    @endif
+
+                    {{-- Agreement Status Badge --}}
                     <span class="badge 
-                                @if($user->agreement_status == 'verified') bg-success
-                                @elseif($user->agreement_status == 'not_uploaded') bg-warning
-                                @else bg-primary
-                                @endif">
+                @if($user->agreement_status == 'verified') bg-success
+                @elseif($user->agreement_status == 'not_uploaded') bg-warning
+                @else bg-primary
+                @endif" style="position:absolute; bottom:20px;">
                         {{ ucfirst($user->agreement_status) }}
                     </span>
-                </a>
+                </div>
+
+                {{-- Business Logo --}}
+                <div class="logo position-relative" style="width:180px; height:200px; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+                    @if($user->business_logo)
+                    <img src="{{ Storage::url($user->business_logo) }}" alt="Logo" class="rounded border shadow-sm" style="max-height:150px;">
+                    @else
+                    <div class="no-logo text-center border rounded shadow-sm" style="width:100%; height:150px; display:flex; align-items:center; justify-content:center;">
+                        No Logo
+                    </div>
+                    @endif
+                    {{-- User Active Status --}}
+                    <span class="badge {{ $user->active ? 'bg-success' : 'bg-secondary' }} mt-2" style="position:absolute; bottom:20px;">
+                        {{ $user->active ? 'Active' : 'Inactive' }}
+                    </span>
+                </div>
             </div>
-            <div>
-                @if($user->business_logo)
-                <img src="{{ Storage::url($user->business_logo) }}" alt="Logo" width="200px" height="auto" class="rounded border shadow-sm">
-                @else
-                <div class="no-logo text-center" style="width:120px;height:120px;line-height:120px;background:#eee;">No Logo</div>
-                @endif
-                <br>
-                <p class="badge {{ $user->active ? 'bg-success' : 'bg-secondary' }}">
-                    {{ $user->active ? 'Active' : 'Inactive' }}
-                </p>
-            </div>
+
         </div>
         {{-- Stats Section --}}
-        <div class="d-flex justify-content-between align-items-center">
-            <div class="stats-row ">
+        <div class="d-flex justify-content-between align-items-center mt-3">
+            <div class="stats-row">
                 <a href="{{ route('agent.students.index') }}" class="stat-link">
                     <div class="stat-card">
                         <div class="stat-left">
@@ -99,7 +153,7 @@
             </div>
             {{-- Edit Button --}}
             <div class="mt-2 align-right">
-                <a href="{{ route('agent.users.edit', $user->business_name_slug) }}" class="btn btn-primary btn-sm">✏️ Edit Profile</a>
+                <a href="{{ route('agent.users.edit', $user->slug) }}" class="btn btn-primary btn-sm">✏️ Edit Profile</a>
             </div>
         </div>
     </div>
@@ -144,7 +198,8 @@
     {{-- Documents List --}}
     <div class="accordion card" id="studentDocumentsAccordion">
         <div class="card-header bg-secondary text-white">
-            List of Students document Activities </div>
+            List of Students document Activities
+        </div>
         @foreach($user->students as $student)
         <div class="accordion-item">
             <h2 class="accordion-header" id="heading-{{ $student->id }}">
@@ -181,7 +236,6 @@
             </div>
         </div>
         @endforeach
-
     </div>
 
     {{-- Applications List --}}
@@ -288,5 +342,7 @@
             </ul>
         </div>
     </div>
+
 </div>
+
 @endsection

@@ -56,6 +56,9 @@ class Kernel extends HttpKernel
         // Add your custom middleware aliases here
         'IsAdmin' => \App\Http\Middleware\IsAdmin::class,
         'IsAgent' => \App\Http\Middleware\IsAgent::class,
+        'IsStaff' => \App\Http\Middleware\IsStaff::class,
+        'IsUniversity' => \App\Http\Middleware\IsUniversity::class,
+        'IsStudent'  => \App\Http\Middleware\IsStudent::class,
     ];
 
     /**

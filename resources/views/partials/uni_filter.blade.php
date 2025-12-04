@@ -78,8 +78,8 @@
 
             {{-- Buttons --}}
             <div class="mt-2 d-flex justify-content-end gap-2">
-                <a href="{{ route('guest.universities.index') }}" class="btn secondary">Clear</a>
-                <button type="submit" class="btn success">Find</button>
+                <a href="{{ route('guest.universities.index') }}" class="btn btn-primary">Clear</a>
+                <button type="submit" class="btn btn-success">Find</button>
             </div>
         </form>
     </div>

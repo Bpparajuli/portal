@@ -26,6 +26,10 @@ class User extends Authenticatable
         'agreement_file',
         'agreement_status',
         'business_logo',
+        'registration',
+        'pan',
+        'role',
+        'slug', // store slug permanently
         'is_admin',
         'is_agent',
         'active',
@@ -34,12 +38,22 @@ class User extends Authenticatable
     protected $hidden = ['password', 'remember_token'];
 
     protected $casts = [
-        // ✅ Cast to boolean
         'is_admin' => 'boolean',
         'is_agent' => 'boolean',
         'active'   => 'boolean',
     ];
-    // User.php
+
+    /**
+     * Use slug for route model binding
+     */
+    public function getRouteKeyName()
+    {
+        return 'slug';
+    }
+
+    /**
+     * Relationships
+     */
     public function students()
     {
         return $this->hasMany(Student::class, 'agent_id');
@@ -47,7 +61,6 @@ class User extends Authenticatable
 
     public function documents()
     {
-        // Has many through students
         return $this->hasManyThrough(
             Document::class,
             Student::class,
@@ -63,128 +76,181 @@ class User extends Authenticatable
         return $this->hasManyThrough(
             Application::class,
             Student::class,
-            'agent_id',    // Foreign key on students table
-            'student_id',  // Foreign key on applications table
-            'id',          // Local key on users table
-            'id'           // Local key on students table
+            'agent_id',
+            'student_id',
+            'id',
+            'id'
         );
     }
-    public function getRouteKeyName()
+
+    /**
+     * Generate slug automatically
+     */
+    protected static function booted()
     {
-        return 'business_name';
+        static::creating(function ($user) {
+            if (!$user->slug) {
+                $user->slug = self::makeSlug($user->business_name);
+            }
+        });
+
+        static::updating(function ($user) {
+            if (!$user->slug) {
+                $user->slug = self::makeSlug($user->business_name);
+            }
+        });
     }
 
-    public function getBusinessNameSlugAttribute()
+    /**
+     * Create a slug from business name
+     */
+    public static function makeSlug($businessName)
     {
-        return Str::slug($this->business_name);
+        $slug = Str::slug($businessName, '-');
+
+        if (!$slug) {
+            $slug = 'user-' . uniqid();
+        }
+
+        $original = $slug;
+        $count = 1;
+
+        while (self::where('slug', $slug)->exists()) {
+            $slug = $original . '-' . $count++;
+        }
+
+        return $slug;
     }
 
-
+    /**
+     * Format notifications
+     */
     public function formatNotification($notification)
     {
-        // Ensure $data is always an associative array
         $data = json_decode(json_encode($notification->data), true);
         $type = $data['type'] ?? 'unknown';
+        $messageText = $data['message'] ?? '🔔 New Notification';
 
         switch ($type) {
-            // 🧍 Student added
             case 'student_added':
                 $messageText = "👤 New student added: "
                     . ($data['student']['name'] ?? 'Unknown Student')
-                    . " by "
-                    . ($data['added_by']['name'] ?? 'Unknown Agent');
+                    . " by " . ($data['added_by']['name'] ?? 'Unknown Agent');
                 break;
-
-            // ❌ Student deleted
             case 'student_deleted':
                 $messageText = "❌ Student deleted: "
                     . ($data['student_name'] ?? 'Unknown Student')
-                    . " by "
-                    . ($data['deleted_by']['name'] ?? 'Unknown User');
+                    . " by " . ($data['deleted_by']['name'] ?? 'Unknown User');
                 break;
-
-            // 📌 Student status updated
             case 'student_status':
                 $messageText = "📌 Status of student "
                     . ($data['student']['name'] ?? 'Unknown Student')
                     . " updated to "
                     . ($data['student']['status'] ?? 'Unknown Status')
-                    . " by "
-                    . ($data['updated_by']['name'] ?? 'Unknown User');
+                    . " by " . ($data['updated_by']['name'] ?? 'Unknown User');
                 break;
-
-            // 📝 Application submitted
             case 'application_submitted':
                 $messageText = "📝 Application submitted for "
                     . ($data['student']['name'] ?? 'Unknown Student')
-                    . " to "
-                    . ($data['university']['name'] ?? 'Unknown University')
-                    . " by "
-                    . ($data['submitted_by']['name'] ?? 'Unknown Agent');
+                    . " to " . ($data['university']['name'] ?? 'Unknown University')
+                    . " by " . ($data['submitted_by']['name'] ?? 'Unknown Agent');
                 break;
-
-            // 📌 Application status updated
             case 'application_status_updated':
                 $messageText = "📌 Application status updated for "
                     . ($data['student']['name'] ?? 'Unknown Student')
-                    . " to "
-                    . ($data['application']['status'] ?? 'Unknown Status')
-                    . " by "
-                    . ($data['updated_by']['name'] ?? 'Unknown User');
+                    . " to " . ($data['application']['status'] ?? 'Unknown Status')
+                    . " by " . ($data['updated_by']['name'] ?? 'Unknown User');
                 break;
-
-            // 💬 New message on application
             case 'application_message_added':
                 $messageText = "💬 New message for "
                     . ($data['student']['name'] ?? 'Unknown Student')
-                    . " by "
-                    . ($data['added_by']['name'] ?? 'Unknown User');
+                    . " by " . ($data['added_by']['name'] ?? 'Unknown User');
                 break;
-
-            // ⚠️ Application withdrawn
             case 'application_withdrawn':
                 $messageText = "⚠️ Application withdrawn for "
                     . ($data['student']['name'] ?? 'Unknown Student')
                     . " (" . ($data['application']['number'] ?? 'N/A') . ")";
                 break;
-
-            // 📤 Document uploaded
             case 'document_uploaded':
-                $messageText = "📤 "
-                    . ucfirst($data['document_type'] ?? 'Document')
-                    . " uploaded for "
-                    . ($data['student']['name'] ?? 'Unknown Student')
-                    . " by "
-                    . ($data['uploaded_by']['name'] ?? 'Unknown User');
+                $messageText = "📤 " . ucfirst($data['document_type'] ?? 'Document')
+                    . " uploaded for " . ($data['student']['name'] ?? 'Unknown Student')
+                    . " by " . ($data['uploaded_by']['name'] ?? 'Unknown User');
                 break;
-
-            // 🗑️ Document deleted
             case 'document_deleted':
-                $messageText = "🗑️ "
-                    . ucfirst($data['document_type'] ?? 'Document')
-                    . " deleted for "
-                    . ($data['student']['name'] ?? 'Unknown Student')
-                    . " by "
-                    . ($data['deleted_by']['name'] ?? 'Unknown User');
+                $messageText = "🗑️ " . ucfirst($data['document_type'] ?? 'Document')
+                    . " deleted for " . ($data['student']['name'] ?? 'Unknown Student')
+                    . " by " . ($data['deleted_by']['name'] ?? 'Unknown User');
                 break;
-
-            // 🆕 New user registered
             case 'user_registered':
                 $messageText = "🆕 New user registered: "
                     . ($data['user']['name'] ?? 'Unknown User');
                 break;
-
-            default:
-                $messageText = $data['message'] ?? '🔔 New Notification';
         }
 
         return $messageText;
     }
+
+    /**
+     * Old IsAdmin,IsAgent Middleware helpers
+     */
+    public function getIsAdminAttribute($value)
+    {
+        return in_array($this->role, ['superadmin', 'admin']);
+    }
+
+    public function getIsAgentAttribute($value)
+    {
+        return $this->role === 'agent';
+    }
+
+    public function getIsStaffAttribute()
+    {
+        return $this->role === 'staff';
+    }
+    public function getIsStudentAttribute()
+    {
+        return $this->role === 'student';
+    }
+
+    public function getIsUniversityAttribute()
+    {
+        return $this->role === 'university';
+    }
+
+    /**
+     * Helper for query and listings 
+     */
+
+    public function scopeAdmins($query)
+    {
+        return $query->whereIn('role', ['superadmin', 'admin']);
+    }
+
+    public function scopeAgents($query)
+    {
+        return $query->where('role', 'agent');
+    }
+
+    public function scopeStaff($query)
+    {
+        return $query->where('role', 'staff');
+    }
+
+    public function scopeUniversities($query)
+    {
+        return $query->where('role', 'university');
+    }
+
+
+    /**
+     * Notifications helpers
+     */
     public static function notifyAdmins($notification)
     {
         $admins = self::where('is_admin', 1)->get();
         Notification::send($admins, $notification);
     }
+
     public static function notifyAgent($agentId, $notification)
     {
         $agent = self::where('id', $agentId)
