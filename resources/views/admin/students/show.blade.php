@@ -21,7 +21,7 @@
                             <div class="card-subtitle">PROFILE INFO</div>
                             <p><strong>University:</strong> {{ $student->university?->name ?? '-' }}</p>
                             <p><strong>Preferred Country:</strong> {{ $student->preferred_country ?? '-' }}</p>
-                            <p><strong>Preferred Course:</strong> {{ $student->preferred_course ?? '-' }}</p>
+                            <p><strong>Created At:</strong> {{ $student->created_at->timezone('Asia/Kathmandu')->format('d M Y') }}</p>
                         </div>
 
                         {{-- Actions --}}
@@ -167,7 +167,10 @@
                                         <div class="p-2 rounded" style="max-width:70%; background-color: {{ $m->type === 'agent' ? '#f1f1f1' : '#1a0262' }};
                                        color: {{ $m->type === 'agent' ? '#000' : '#fff' }};">
                                             <p class="mb-1 fw-semibold">{{ $m->message }}</p>
-                                            <small><b>{{ $m->user->name ?? 'Unknown' }}</b> • {{ $m->created_at->format('d M Y, H:i') }}</small>
+                                            <small>
+                                <b>{{ $m->user->name ?? 'Unknown' }}</b> •
+                                {{ $m->created_at->timezone('Asia/Kathmandu')->format('d M Y, H:i') }}
+                            </small>
                                         </div>
                                     </div>
                                     @empty

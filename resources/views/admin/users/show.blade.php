@@ -1,365 +1,609 @@
+{{-- resources/views/admin/users/show.blade.php --}}
 @extends('layouts.admin')
 
-@section('admin-content')
-<div class="container-fluid py-4">
-    {{-- Profile Header --}}
-    <div class="card mb-4 shadow-sm">
-        <div class="card-body d-flex justify-content-between align-items-center">
-            <div class="row">
-                <div>
-                    <h3 class=" bg-secondary text-white p-1 mb-1 rounded">{{ $user->business_name ?? $user->username }}</h3>
-                    <p class="mb-0"><strong>Owner:</strong> {{ $user->owner_name ?? 'N/A' }}</p>
-                    <p class="mb-0"><strong>Contact:</strong> {{ $user->contact ?? 'N/A' }}</p>
-                    <p class="mb-0"><strong>Email:</strong> {{ $user->email }}</p>
-                    <p class="mb-0"><strong>Address:</strong> {{ $user->address }}</p>
-                </div>
-                @if($user->role !== 'admin' && $user->role !== 'superadmin')
-                <div class="d-flex justify-content-between align-items-center">
-                    <div class="mt-3">
-                        <strong>Agreement File:</strong><br>
+@section('title', 'User Details - ' . ($user->business_name ?? $user->name))
+@section('content')
 
-                        @if($user->agreement_file)
-                        @php
-                        $fileUrl = Storage::url($user->agreement_file);
-                        $extension = strtolower(pathinfo($user->agreement_file, PATHINFO_EXTENSION));
-                        $isImage = in_array($extension, ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp']);
-                        @endphp
+<style>
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+    }
 
-                        @if($isImage)
-                        {{-- Display image --}}
-                        <a href="{{ $fileUrl }}" target="_blank" class="btn btn-sm btn-secondary mt-1" data-preview="{{ $fileUrl }}">
-                            <img src="{{ $fileUrl }}" alt="Agreement file" width="200px" height="auto" class="rounded border shadow-sm mb-2">
-                        </a> @else
-                        {{-- Display file icon or name --}}
-                        <a href="{{ $fileUrl }}" target="_blank" class="btn btn-sm btn-secondary mt-1" data-preview="{{ $fileUrl }}">
-                            <div class="file-preview p-2 mb-2 border rounded shadow-sm" style="width: 200px; text-align:center;">
-                                <i class="fas fa-file-alt fa-2x mb-1"></i>
-                                <br>
-                                <span>{{ basename($user->agreement_file) }}</span>
-                            </div>
-                        </a>
-                        @endif
-                        @else
-                        <div class="no-logo text-center" style="width:200px; height:100px; background:#eee; display:flex; align-items:center; justify-content:center;">
-                            Agreement file Not_uploaded
-                        </div>
+    .bg-gradient-info {
+        background: linear-gradient(135deg, var(--info) 0%, var(--info-light) 100%);
+    }
 
-                        @endif
-                        <br>
-                        {{-- Status Badge --}}
-                        <a href="{{ route('admin.users.edit', $user->slug) }}" class="text-decoration-none">
-                            @if ($user->agreement_status === 'not_uploaded')
-                            <span class="badge bg-secondary">Not Uploaded</span>
-                            @elseif ($user->agreement_status === 'uploaded')
-                            <span class="badge bg-warning text-dark">Uploaded</span>
-                            @elseif ($user->agreement_status === 'verified')
-                            <span class="badge bg-success">Verified</span>
+    .bg-gradient-warning {
+        background: linear-gradient(135deg, var(--warning) 0%, var(--warning-dark) 100%);
+    }
+
+    .timeline {
+        position: relative;
+    }
+
+    .timeline-item:not(:last-child) {
+        border-left: 2px solid #e9ecef;
+        margin-left: 16px;
+    }
+
+    .timeline-icon {
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .timeline-item .flex-shrink-0 {
+        position: relative;
+        z-index: 1;
+    }
+
+    .card {
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+    }
+
+</style>
+
+<div class="container-fluid px-4">
+    {{-- Header Section with Gradient Background --}}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <div class="card-body p-4">
+                    <div class="row align-items-center">
+                        <div class="col-auto">
+                            @if($user->business_logo)
+                            <img src="{{ Storage::url($user->business_logo) }}" alt="{{ $user->business_name }}" class="rounded-circle border border-3 border-white shadow" width="80" height="80" style="object-fit: cover;">
                             @else
-                            <span class="badge bg-danger">Unknown</span>
+                            <div class="rounded-circle bg-white bg-opacity-25 d-flex align-items-center justify-content-center shadow" style="width: 80px; height: 80px;">
+                                <i class="fas fa-building fa-3x text-white"></i>
+                            </div>
                             @endif
-                        </a>
-                    </div>
-                    {{-- Registration Certificate --}}
-                    <div class="mt-3">
-                        <strong>Registration Certificate:</strong><br>
-
-                        @php
-                        $regFile = $user->registration;
-                        $regUrl = $regFile ? Storage::url($regFile) : null;
-                        $regExt = $regFile ? strtolower(pathinfo($regFile, PATHINFO_EXTENSION)) : null;
-                        $regIsImage = in_array($regExt, ['jpg','jpeg','png','gif','bmp','webp']);
-                        @endphp
-
-                        @if($regFile)
-                        @if($regIsImage)
-                        <a href="{{ $regUrl }}" target="_blank">
-                            <img src="{{ $regUrl }}" width="200" class="rounded border shadow-sm mb-2">
-                        </a>
-                        @else
-                        <a href="{{ $regUrl }}" target="_blank">
-                            <div class="file-preview p-2 mb-2 border rounded shadow-sm" style="width: 200px; text-align:center;">
-                                <i class="fas fa-file-alt fa-2x mb-1"></i><br>
-                                <span>{{ basename($regFile) }}</span>
-                            </div>
-                        </a>
-                        @endif
-                        @else
-                        <div class="no-logo text-center" style="width:200px;height:100px;background:#eee;display:flex;align-items:center;justify-content:center;">
-                            Registration Not Uploaded
                         </div>
-                        @endif
-                    </div>
-
-                    {{-- PAN Certificate --}}
-                    <div class="mt-3">
-                        <strong>PAN Certificate:</strong><br>
-
-                        @php
-                        $panFile = $user->pan;
-                        $panUrl = $panFile ? Storage::url($panFile) : null;
-                        $panExt = $panFile ? strtolower(pathinfo($panFile, PATHINFO_EXTENSION)) : null;
-                        $panIsImage = in_array($panExt, ['jpg','jpeg','png','gif','bmp','webp']);
-                        @endphp
-
-                        @if($panFile)
-                        @if($panIsImage)
-                        <a href="{{ $panUrl }}" target="_blank">
-                            <img src="{{ $panUrl }}" width="200" class="rounded border shadow-sm mb-2">
-                        </a>
-                        @else
-                        <a href="{{ $panUrl }}" target="_blank">
-                            <div class="file-preview p-2 mb-2 border rounded shadow-sm" style="width: 200px; text-align:center;">
-                                <i class="fas fa-file-alt fa-2x mb-1"></i><br>
-                                <span>{{ basename($panFile) }}</span>
+                        <div class="col">
+                            <h1 class="text-white mb-2">{{ $user->business_name ?? $user->name }}</h1>
+                            <div class="d-flex flex-wrap gap-3">
+                                <span class="badge bg-light text-dark px-3 py-2">
+                                    <i class="fas fa-tag me-1"></i> {{ ucfirst($user->role) }}
+                                </span>
+                                <span class="badge {{ $user->active ? 'bg-success' : 'bg-danger' }} px-3 py-2">
+                                    <i class="fas {{ $user->active ? 'fa-check-circle' : 'fa-times-circle' }} me-1"></i>
+                                    {{ $user->active ? 'Active' : 'Inactive' }}
+                                </span>
+                                @if($user->agreement_status)
+                                <span class="badge {{ $user->agreement_status === 'verified' ? 'bg-success' : ($user->agreement_status === 'uploaded' ? 'bg-warning' : 'bg-secondary') }} px-3 py-2">
+                                    <i class="fas fa-file-contract me-1"></i>
+                                    {{ ucfirst(str_replace('_', ' ', $user->agreement_status)) }}
+                                </span>
+                                @endif
+                                @if($user->parent)
+                                <span class="badge bg-info text-dark px-3 py-2">
+                                    <i class="fas fa-building me-1"></i> Parent: {{ $user->parent->business_name }}
+                                </span>
+                                @endif
                             </div>
-                        </a>
-                        @endif
-                        @else
-                        <div class="no-logo text-center" style="width:200px;height:100px;background:#eee;display:flex;align-items:center;justify-content:center;">
-                            PAN Not Uploaded
                         </div>
+                        <div class="col-auto">
+                            <div class="dropdown">
+                                <button class="btn btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-cog"></i> Actions
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li>
+                                        <a class="dropdown-item" href="{{ route('admin.users.edit', $user->slug) }}">
+                                            <i class="fas fa-edit text-primary"></i> Edit User
+                                        </a>
+                                    </li>
+                                    @if(!$user->active)
+                                    <li>
+                                        <form action="{{ route('admin.users.approve', $user) }}" method="POST">
+                                            @csrf
+                                            <button type="submit" class="dropdown-item">
+                                                <i class="fas fa-check-circle text-success"></i> Approve User
+                                            </button>
+                                        </form>
+                                    </li>
+                                    @endif
+                                    @if($user->agreement_status === 'uploaded')
+                                    <li>
+                                        <form action="{{ route('admin.users.verify-agreement', $user) }}" method="POST">
+                                            @csrf
+                                            <button type="submit" class="dropdown-item">
+                                                <i class="fas fa-check-double text-success"></i> Verify Agreement
+                                            </button>
+                                        </form>
+                                    </li>
+                                    @endif
+                                    <li>
+                                        <hr class="dropdown-divider">
+                                    </li>
+                                    <li>
+                                        <button type="button" class="dropdown-item text-danger" data-bs-toggle="modal" data-bs-target="#deleteUserModal">
+                                            <i class="fas fa-trash-alt"></i> Delete User
+                                        </button>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        {{-- Left Column - User Information --}}
+        <div class="col-xl-4 col-lg-5 mb-4">
+            {{-- Profile Card --}}
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white border-0 pt-4 pb-0">
+                    <h5 class="mb-0"><i class="fas fa-user-circle text-primary me-2"></i>Profile Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="text-muted small mb-1">Owner Name</label>
+                        <p class="fw-bold mb-0">{{ $user->owner_name ?? 'N/A' }}</p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="text-muted small mb-1">Contact Person</label>
+                        <p class="fw-bold mb-0">{{ $user->name }}</p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="text-muted small mb-1">Email Address</label>
+                        <p class="mb-0">
+                            <a href="mailto:{{ $user->email }}" class="text-decoration-none">
+                                <i class="fas fa-envelope me-1"></i> {{ $user->email }}
+                            </a>
+                        </p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="text-muted small mb-1">Contact Number</label>
+                        <p class="mb-0">
+                            @if($user->contact)
+                            <a href="tel:{{ $user->contact }}" class="text-decoration-none">
+                                <i class="fas fa-phone me-1"></i> {{ $user->contact }}
+                            </a>
+                            @else
+                            N/A
+                            @endif
+                        </p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="text-muted small mb-1">Address</label>
+                        <p class="mb-0">
+                            @if($user->address)
+                            <i class="fas fa-map-marker-alt me-1"></i> {{ $user->address }}
+                            @else
+                            N/A
+                            @endif
+                        </p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="text-muted small mb-1">Account Created</label>
+                        <p class="mb-0">
+                            <i class="fas fa-calendar-alt me-1"></i>
+                            {{ $user->created_at ? $user->created_at->format('F j, Y, g:i A') : 'N/A' }}
+                        </p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="text-muted small mb-1">Last Updated</label>
+                        <p class="mb-0">
+                            <i class="fas fa-clock me-1"></i>
+                            {{ $user->updated_at ? $user->updated_at->diffForHumans() : 'N/A' }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Documents Card --}}
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white border-0 pt-4 pb-0">
+                    <h5 class="mb-0"><i class="fas fa-file-alt text-primary me-2"></i>Business Documents</h5>
+                </div>
+                <div class="card-body">
+                    @php
+                    $documents = [
+                    'registration' => ['label' => 'Registration Certificate', 'icon' => 'fa-building'],
+                    'pan' => ['label' => 'PAN Certificate', 'icon' => 'fa-file-invoice'],
+                    'agreement_file' => ['label' => 'Agreement Document', 'icon' => 'fa-file-contract']
+                    ];
+                    @endphp
+
+                    @foreach($documents as $docKey => $docInfo)
+                    @if($user->$docKey)
+                    <div class="mb-3 pb-2 border-bottom">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="fas {{ $docInfo['icon'] }} text-primary me-2"></i>
+                                <strong>{{ $docInfo['label'] }}</strong>
+                            </div>
+                            <div>
+                                <a href="{{ Storage::url($user->$docKey) }}" target="_blank" class="btn btn-sm btn-outline-primary me-1">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{{ Storage::url($user->$docKey) }}" download class="btn btn-sm btn-outline-secondary">
+                                    <i class="fas fa-download"></i>
+                                </a>
+                                @if($docKey === 'agreement_file')
+                                <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteAgreement({{ $user->id }})">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                                @endif
+                            </div>
+                        </div>
+                        <small class="text-muted">
+                            Uploaded: {{ $user->updated_at ? $user->updated_at->diffForHumans() : 'N/A' }}
+                        </small>
+                    </div>
+                    @else
+                    <div class="mb-3 pb-2 border-bottom text-muted">
+                        <i class="fas {{ $docInfo['icon'] }} me-2"></i>
+                        {{ $docInfo['label'] }}: <em>Not uploaded</em>
+                    </div>
+                    @endif
+                    @endforeach
+                </div>
+            </div>
+
+            {{-- Online Status Card --}}
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 pt-4 pb-0">
+                    <h5 class="mb-0"><i class="fas fa-circle text-success me-2"></i>Online Status</h5>
+                </div>
+                <div class="card-body">
+                    @php $status = $user->online_status; @endphp
+                    <div class="text-center py-3">
+                        @if($status['is_online'])
+                        <div class="mb-2">
+                            <span class="badge bg-success px-4 py-2">
+                                <i class="fas fa-circle me-1"></i> Online
+                            </span>
+                        </div>
+                        <small class="text-muted">Active now</small>
+                        @else
+                        <div class="mb-2">
+                            <span class="badge bg-secondary px-4 py-2">
+                                <i class="fas fa-circle me-1"></i> Offline
+                            </span>
+                        </div>
+                        <small class="text-muted">Last seen: {{ $status['last_seen_human'] }}</small>
+                        @if($status['last_seen_full'])
+                        <br><small class="text-muted">{{ $status['last_seen_full'] }}</small>
+                        @endif
                         @endif
                     </div>
                 </div>
-                @endif
-            </div>
-            <div>
-                @if($user->business_logo)
-                <img src="{{ Storage::url($user->business_logo) }}" alt="Logo" width="200px" height="auto" class="rounded border shadow-sm">
-                @else
-                <div class="no-logo text-center" style="width:120px;height:120px;line-height:120px;background:#eee;">No Logo</div>
-                @endif
-                <br>
-                <p class="badge {{ $user->active ? 'bg-success' : 'bg-secondary' }}">
-                    {{ $user->active ? 'Active' : 'Inactive' }}
-                </p>
             </div>
         </div>
 
-
-        {{-- Stats Section --}}
-        <div class="d-flex justify-content-between align-items-center">
-            <div class="stats-row ">
-                <a href="{{ route('admin.users.students', $user->slug) }}" class="stat-link">
-                    <div class="stat-card">
-                        <div class="stat-left">
-                            <h6>Total Students</h6>
-                            <h4>{{ $user->students->count() }}</h4>
-                        </div>
-                        <div class="icon text-primary"><i class="fa fa-users"></i></div>
-                    </div>
-                </a>
-                <a href="{{ route('admin.users.applications', $user->slug) }}" class="stat-link">
-                    <div class="stat-card">
-                        <div class="stat-left">
-                            <h6>Applications Submitted</h6>
-                            <h4>{{ $user->applications->count() }}</h4>
-                        </div>
-                        <div class="icon text-secondary"><i class="fa fa-vcard"></i></div>
-                    </div>
-                </a>
-                <a href="#" class="stat-link">
-                    <div class="stat-card">
-                        <div class="stat-left">
-                            <h6>Total Documents</h6>
-                            <h4>{{ $user->documents->count() }}</h4>
-                        </div>
-                        <div class="icon text-primary"><i class="fa fa-university"></i></div>
-                    </div>
-                </a>
-            </div>
-            {{-- Edit Button --}}
-            <div class="mt-2 align-right">
-                <a href="{{ route('admin.users.edit', $user->slug) }}" class="btn btn-primary btn-sm">✏️ Edit Profile</a>
-            </div>
-        </div>
-    </div>
-
-    {{-- Students List --}}
-    <div class="card mb-4 shadow-sm">
-        <div class="card-header bg-primary text-white">
-            Students
-        </div>
-        <div class="card-body">
-            @if($user->students && $user->students->count())
-            <table class="table table-hover align-middle">
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Email</th>
-                        <th>Applications</th>
-                        <th>Joined</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($user->students as $student)
-                    <tr>
-                        <td>
-                            <a href="{{ route('admin.students.show', $student->id) }}">
-                                {{ trim($student->first_name . ' ' . $student->last_name) }}
+        {{-- Right Column - Statistics and Activities --}}
+        <div class="col-xl-8 col-lg-7">
+            {{-- Statistics Cards Row --}}
+            <div class="row mb-4">
+                <div class="col-md-4 mb-3 mb-md-0">
+                    <div class="card border-0 shadow-sm bg-gradient-primary text-white h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="text-white-50 mb-1">Total Students</h6>
+                                    <h2 class="text-white mb-0">{{ $students->count() }}</h2>
+                                </div>
+                                <div>
+                                    <i class="fas fa-users fa-3x text-white-50"></i>
+                                </div>
+                            </div>
+                            @if($user->role === 'agent')
+                            <a href="{{ route('admin.users.students', $user) }}" class="text-white small text-decoration-none mt-2 d-block">
+                                View All Students <i class="fas fa-arrow-right"></i>
                             </a>
-                        </td>
-                        <td>{{ $student->email }}</td>
-                        <td>{{ $student->applications->count() }}</td>
-                        <td>{{ $student->created_at->format('M d, Y') }}</td>
-                    </tr>
-                    @endforeach
-                </tbody>
-            </table>
-            @else
-            <p class="text-muted">No students found for this agent.</p>
-            @endif
-        </div>
-    </div>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3 mb-md-0">
+                    <div class="card border-0 shadow-sm bg-gradient-info text-white h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="text-white-50 mb-1">Total Applications</h6>
+                                    <h2 class="text-white mb-0">{{ $applications->count() }}</h2>
+                                </div>
+                                <div>
+                                    <i class="fas fa-file-alt fa-3x text-white-50"></i>
+                                </div>
+                            </div>
+                            @if($user->role === 'agent')
+                            <a href="{{ route('admin.users.applications', $user) }}" class="text-white small text-decoration-none mt-2 d-block">
+                                View All Applications <i class="fas fa-arrow-right"></i>
+                            </a>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card border-0 shadow-sm bg-gradient-warning text-white h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="text-white-50 mb-1">Active Status</h6>
+                                    <h2 class="text-white mb-0">{{ $user->active ? 'Active' : 'Inactive' }}</h2>
+                                </div>
+                                <div>
+                                    <i class="fas {{ $user->active ? 'fa-check-circle' : 'fa-clock' }} fa-3x text-white-50"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-    {{-- Documents per Student (Accordion) --}}
-    <div class="accordion card" id="studentDocumentsAccordion">
-        <div class="card-header bg-secondary text-white">
-            List of Students Document Activities
-        </div>
-        @foreach($user->students as $student)
-        <div class="accordion-item">
-            <h2 class="accordion-header" id="heading-{{ $student->id }}">
-                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-{{ $student->id }}" aria-expanded="false">
-                    {{ $student->first_name }} {{ $student->last_name }}
-                    <span class="badge bg-primary ms-3">{{ $student->documents->count() }} docs</span>
-                </button>
-            </h2>
-            <div id="collapse-{{ $student->id }}" class="accordion-collapse collapse" data-bs-parent="#studentDocumentsAccordion">
-                <div class="accordion-body">
-                    @if($student->documents->count())
-                    <table class="table table-sm table-bordered">
-                        <thead>
-                            <tr>
-                                <th>Type</th>
-                                <th>File</th>
-                                <th>Uploaded</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($student->documents as $doc)
-                            <tr>
-                                <td>{{ ucfirst($doc->document_type) }}</td>
-                                <td><a href="{{ asset($doc->file_path) }}" target="_blank">{{ $doc->file_name }}</a></td>
-                                <td>{{ $doc->created_at->format('M d, Y') }}</td>
-                            </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
+            {{-- Students List --}}
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white border-0 pt-4 pb-0 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-graduation-cap text-primary me-2"></i>Recent Students</h5>
+                    @if($students->count() > 5)
+                    <a href="{{ route('admin.users.students', $user) }}" class="btn btn-sm btn-link">View All</a>
+                    @endif
+                </div>
+                <div class="card-body">
+                    @if($students->count() > 0)
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Status</th>
+                                    <th>Applications</th>
+                                    <th>Joined</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($students->take(5) as $student)
+                                <tr>
+                                    <td>
+                                        <a href="{{ route('admin.students.show', $student) }}" class="text-decoration-none fw-bold">
+                                            {{ $student->name }}
+                                        </a>
+                                    </td>
+                                    <td>{{ $student->email }}</td>
+                                    <td>
+                                        <span class="badge {{ $student->status === 'active' ? 'bg-success' : 'bg-secondary' }}">
+                                            {{ ucfirst($student->status ?? 'N/A') }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-info">{{ $student->applications_count ?? 0 }}</span>
+                                    </td>
+                                    <td>{{ $student->created_at->diffForHumans() }}</td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
                     @else
-                    <p class="text-muted">No documents uploaded.</p>
+                    <div class="text-center py-4">
+                        <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                        <p class="text-muted mb-0">No students found for this user.</p>
+                    </div>
                     @endif
                 </div>
             </div>
-        </div>
-        @endforeach
-    </div>
 
-    {{-- Applications List --}}
-    <div class="card mb-4 shadow-sm">
-        <div class="card-header bg-success text-white">
-            Applications
-        </div>
-        <div class="card-body">
-            @php $apps = $user->applications ?? collect(); @endphp
-            @if($apps->count())
-            <table class="table table-bordered align-middle">
-                <thead>
-                    <tr>
-                        <th>Student</th>
-                        <th>Course</th>
-                        <th>University</th>
-                        <th>Status</th>
-                        <th>Submitted</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($apps as $app)
-                    <tr>
-                        <td><a href="{{ route('admin.applications.show', $app->id) }}">
-                                {{ $app->student->first_name . ' ' . $app->student->last_name ?? 'N/A' }}
-                            </a></td>
-                        <td>{{ $app->course->title ?? 'N/A' }}</td>
-                        <td>{{ $app->university->name ?? 'N/A' }}</td>
-                        <td>
-                            <span class="badge {{ $app->status_class ?? 'bg-light text-muted' }}">
-                                {{ $app->application_status ?? 'N/A' }}
-                            </span>
-                        </td>
-                        <td>{{ $app->created_at->diffForHumans() }}</td>
-                    </tr>
-                    @endforeach
-                </tbody>
-            </table>
-            @else
-            <p class="text-muted">No applications submitted.</p>
-            @endif
-        </div>
-    </div>
-
-    {{-- Activities Section --}}
-    <div class="activities-row">
-        <div class="activity-card card">
-            <h6>Students Activities</h6>
-            <ul>
-                @forelse($studentActivities as $act)
-                <li>
-                    <div>
-                        @if($act->notifiable_id)
-                        <a href="{{ route('admin.students.show', $act->notifiable_id) }}">{{ $act->description }}</a>
-                        @else
-                        {{ $act->description }}
-                        @endif
-                        <div class="time-text">{{ $act->created_at->diffForHumans() }}</div>
+            {{-- Recent Applications --}}
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white border-0 pt-4 pb-0 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-file-signature text-primary me-2"></i>Recent Applications</h5>
+                    @if($applications->count() > 5)
+                    <a href="{{ route('admin.users.applications', $user) }}" class="btn btn-sm btn-link">View All</a>
+                    @endif
+                </div>
+                <div class="card-body">
+                    @if($applications->count() > 0)
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Student</th>
+                                    <th>Course</th>
+                                    <th>University</th>
+                                    <th>Status</th>
+                                    <th>Submitted</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($applications->take(5) as $application)
+                                <tr>
+                                    <td>
+                                        <a href="{{ route('admin.students.show', $application->student) }}" class="text-decoration-none">
+                                            {{ $application->student->name }}
+                                        </a>
+                                    </td>
+                                    <td>{{ $application->course->title ?? 'N/A' }}</td>
+                                    <td>{{ $application->course->university->name ?? 'N/A' }}</td>
+                                    <td>
+                                        <span class="badge {{ $application->status === 'approved' ? 'bg-success' : ($application->status === 'pending' ? 'bg-warning' : 'bg-secondary') }}">
+                                            {{ ucfirst($application->status ?? 'N/A') }}
+                                        </span>
+                                    </td>
+                                    <td>{{ $application->created_at->diffForHumans() }}</td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
                     </div>
-                </li>
-                @empty
-                <li>No students activities</li>
-                @endforelse
-            </ul>
-        </div>
-
-        <div class="activity-card card">
-            <h6>Documents</h6>
-            <ul>
-                @forelse($documentActivities as $act)
-                <li>
-                    <div>
-                        @if($act->notifiable_id)
-                        <a href="{{ route('admin.documents.index', $act->notifiable_id) }}">
-                            {{ $act->description }}
-                        </a>
-                        @else
-                        {{ $act->description }}
-                        @endif
-                        <div class="time-text">{{ $act->created_at->diffForHumans() }}</div>
+                    @else
+                    <div class="text-center py-4">
+                        <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
+                        <p class="text-muted mb-0">No applications found for this user.</p>
                     </div>
-                </li>
-                @empty
-                <li>No document activities</li>
-                @endforelse
-            </ul>
-        </div>
+                    @endif
+                </div>
+            </div>
 
-        <div class="activity-card card">
-            <h6>Applications</h6>
-            <ul>
-                @forelse($applicationActivities as $act)
-                <li>
-                    <div>
-                        @if($act->notifiable_id)
-                        <a href="{{ route('admin.applications.show', $act->notifiable_id) }}">{{ $act->description }}</a>
-                        @else
-                        {{ $act->description }}
-                        @endif
-                        <div class="time-text">{{ $act->created_at->diffForHumans() }}</div>
+            {{-- Activities Timeline --}}
+            <div class="row">
+                <div class="col-md-6 mb-4">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-header bg-white border-0 pt-4 pb-0">
+                            <h5 class="mb-0"><i class="fas fa-user-plus text-primary me-2"></i>Student Activities</h5>
+                        </div>
+                        <div class="card-body">
+                            @if($studentActivities->count() > 0)
+                            <div class="timeline">
+                                @foreach($studentActivities as $activity)
+                                <div class="timeline-item pb-3">
+                                    <div class="d-flex">
+                                        <div class="flex-shrink-0">
+                                            <div class="timeline-icon bg-primary rounded-circle p-2">
+                                                <i class="fas {{ $activity->type === 'student_added' ? 'fa-user-plus' : 'fa-user-minus' }} text-white fa-sm"></i>
+                                            </div>
+                                        </div>
+                                        <div class="flex-grow-1 ms-3">
+                                            <p class="mb-0">{{ $activity->description ?? ucfirst(str_replace('_', ' ', $activity->type)) }}</p>
+                                            <small class="text-muted">{{ $activity->created_at->diffForHumans() }}</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                @endforeach
+                            </div>
+                            @else
+                            <div class="text-center py-4">
+                                <i class="fas fa-history fa-3x text-muted mb-3"></i>
+                                <p class="text-muted mb-0">No student activities recorded.</p>
+                            </div>
+                            @endif
+                        </div>
                     </div>
-                </li>
-                @empty
-                <li>No applications yet</li>
-                @endforelse
-            </ul>
+                </div>
+
+                <div class="col-md-6 mb-4">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-header bg-white border-0 pt-4 pb-0">
+                            <h5 class="mb-0"><i class="fas fa-file-upload text-primary me-2"></i>Document Activities</h5>
+                        </div>
+                        <div class="card-body">
+                            @if($documentActivities->count() > 0)
+                            <div class="timeline">
+                                @foreach($documentActivities as $activity)
+                                <div class="timeline-item pb-3">
+                                    <div class="d-flex">
+                                        <div class="flex-shrink-0">
+                                            <div class="timeline-icon bg-info rounded-circle p-2">
+                                                <i class="fas {{ $activity->type === 'document_uploaded' ? 'fa-upload' : 'fa-trash' }} text-white fa-sm"></i>
+                                            </div>
+                                        </div>
+                                        <div class="flex-grow-1 ms-3">
+                                            <p class="mb-0">{{ $activity->description ?? ucfirst(str_replace('_', ' ', $activity->type)) }}</p>
+                                            <small class="text-muted">{{ $activity->created_at->diffForHumans() }}</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                @endforeach
+                            </div>
+                            @else
+                            <div class="text-center py-4">
+                                <i class="fas fa-history fa-3x text-muted mb-3"></i>
+                                <p class="text-muted mb-0">No document activities recorded.</p>
+                            </div>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+
+                @if($applicationActivities->count() > 0)
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-white border-0 pt-4 pb-0">
+                            <h5 class="mb-0"><i class="fas fa-clipboard-list text-primary me-2"></i>Application Activities</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="timeline">
+                                @foreach($applicationActivities as $activity)
+                                <div class="timeline-item pb-3">
+                                    <div class="d-flex">
+                                        <div class="flex-shrink-0">
+                                            <div class="timeline-icon bg-warning rounded-circle p-2">
+                                                <i class="fas {{ $activity->type === 'application_submitted' ? 'fa-paper-plane' : 'fa-ban' }} text-white fa-sm"></i>
+                                            </div>
+                                        </div>
+                                        <div class="flex-grow-1 ms-3">
+                                            <p class="mb-0">{{ $activity->description ?? ucfirst(str_replace('_', ' ', $activity->type)) }}</p>
+                                            <small class="text-muted">{{ $activity->created_at->diffForHumans() }}</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                @endif
+            </div>
         </div>
     </div>
 </div>
+
+{{-- Delete User Modal --}}
+<div class="modal fade" id="deleteUserModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Delete User</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center mb-3">
+                    <i class="fas fa-exclamation-triangle text-warning fa-4x"></i>
+                </div>
+                <p class="text-center mb-0">
+                    Are you sure you want to delete <strong>{{ $user->business_name ?? $user->name }}</strong>?<br>
+                    This action cannot be undone and will delete all associated students and applications.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form action="{{ route('admin.users.destroy', $user) }}" method="POST" class="d-inline">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="btn btn-danger">Delete User</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function deleteAgreement(userId) {
+        if (confirm('Are you sure you want to delete the agreement file?')) {
+            fetch(`/admin/users/${userId}/delete-agreement`, {
+                    method: 'DELETE'
+                    , headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        , 'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('Error deleting agreement');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error deleting agreement');
+                });
+        }
+    }
+
+</script>
+
 @endsection

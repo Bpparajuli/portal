@@ -29,14 +29,14 @@
                 @forelse($applications as $app)
                 <tr>
                     <td>{{ $app->id }}</td>
-                    <td>
-                        {{ $app->student ? $app->student->first_name . ' ' . $app->student->last_name : 'N/A' }}
-                    </td>
+                   
+                     <td><a href="{{ route('admin.students.show', $app->student->id) }}">{{ $app->student->first_name }} {{ $app->student->last_name }}</a></td>
                     <td>{{ $app->university->name ?? 'N/A' }}</td>
                     <td>{{ $app->course->title ?? 'N/A' }}</td>
-                    <td>
-                        {{ $app->agent ? $app->agent->business_name ?? $app->agent->username : 'Admin Added' }}
-                    </td>
+                    
+                     <td>
+                            <a href="{{ route('admin.users.applications', $app->agent->slug) }}">{{ $app->agent ? $app->agent->business_name ?? $app->agent->username : 'Admin Added' }}</a>
+                        </td>
                     <td>
                         <span class="badge {{ $app->status_class ?? 'bg-light text-muted' }}">
                             {{ $app->application_status }}

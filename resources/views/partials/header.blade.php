@@ -52,7 +52,30 @@ $user = auth()->user();
 
             {{-- Right Section: Notifications & Mobile Toggle --}}
             <div class="header-right d-flex align-items-center gap-2">
+                @auth
+                {{-- ✉️ Chat Messages Notification (New) --}}
+                @if ($user->is_admin || $user->is_agent)
+                <div class="notification-dropdown">
+                    @php
+                    // Dynamic route based on user type
+                    $chatRoute = $user->is_admin ? route('admin.chat') : route('agent.chat');
 
+                    // Count unread messages where the current user is the receiver
+                    $unreadChatCount = \App\Models\ChatMessage::where('receiver_id', $user->id)
+                    ->where('status', '!=', 'read')
+                    ->count();
+                    @endphp
+                    <a href="{{ $chatRoute }}" class="text-decoration-none">
+                        <button class="notification-toggle">
+                            <i class="fa fa-comments"></i>
+                            @if($unreadChatCount > 0)
+                            <span class="notification-badge bg-danger" id="globalChatBadge">{{ $unreadChatCount }}</span>
+                            @endif
+                        </button>
+                    </a>
+                </div>
+                @endif
+                @endauth
                 @auth
                 {{-- 🔔 Normal Notifications --}}
                 @if ($user->is_admin || $user->is_agent)
@@ -107,7 +130,7 @@ $user = auth()->user();
                 {{-- ✉️ Application Messages --}}
                 <div class="notification-dropdown">
                     <button class="notification-toggle" aria-expanded="false" aria-controls="message-menu">
-                        <i class="fa fa-envelope"></i>
+                        <i class="fa fa-vcard"></i>
                         @if($user->unreadNotifications->where('data.type', 'application_message_added')->count() > 0)
                         <span class="notification-badge">
                             {{ $user->unreadNotifications->where('data.type', 'application_message_added')->count() }}
@@ -137,23 +160,7 @@ $user = auth()->user();
                                 : route('agent.notifications') }}" class="notification-view-all">View All Messages</a>
                     </div>
                 </div>
-                @if ($user->is_admin )
-                <div class="notification-dropdown">
-                    <a href="{{ route('admin.users.waiting') }}" class="notification-item">
-                        <button class="notification-toggle">
-                            <i class="fa fa-users"></i>
-                            @php
-                            $totalWaitingUsers = app\models\User::where('is_agent', 1)
-                            ->whereIn('agreement_status', ['not_uploaded', 'uploaded'])
-                            ->count();
-                            @endphp
-                            @if($totalWaitingUsers > 0)
-                            <span class="notification-badge">{{ $totalWaitingUsers }}</span>
-                            @endif
-                        </button>
-                    </a>
-                </div>
-                @endif
+
 
                 @else
                 {{-- Guest text for non-logged-in users --}}
@@ -185,6 +192,21 @@ $user = auth()->user();
                 </li>
                 <li class="nav-item {{ request()->is('admin/applications*') ? 'active' : '' }}">
                     <a href="{{ route('admin.applications.index') }}"><i class="fa fa-file-text"></i> Applications</a>
+                </li>
+                <li class="nav-item {{ request()->is('admin/users*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.users.waiting') }}">
+                        <i class="fa fa-users"></i>
+                        @php
+                        $totalWaitingUsers = app\models\User::where('is_agent', 1)
+                        ->whereIn('agreement_status', ['not_uploaded', 'uploaded'])
+                        ->count();
+                        @endphp
+                        @if($totalWaitingUsers > 0)
+                        <span class="absolute top-0 right-0 bg-danger text-white rounded w-5 h-5 flex items-center justify-center text-xs">
+                            {{ $totalWaitingUsers }}
+                        </span>
+                        @endif
+                    </a>
                 </li>
                 @elseif ($user?->is_agent)
                 <li class="nav-item {{ request()->is('agent/dashboard') ? 'active' : '' }}">

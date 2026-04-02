@@ -8,7 +8,6 @@ use App\Models\Student;
 use App\Models\University;
 use App\Models\Course;
 use App\Models\User;
-use App\Models\Document;
 use App\Models\ApplicationMessage;
 use App\Notifications\ApplicationSubmitted;
 use App\Notifications\ApplicationWithdrawn;
@@ -18,10 +17,13 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-
+use App\Services\FileUploadService;
 
 class ApplicationController extends Controller
 {
+    // -------------------------------
+    // Required document types
+    // -------------------------------
     private function allDocumentTypes(): array
     {
         return [
@@ -38,7 +40,9 @@ class ApplicationController extends Controller
         ];
     }
 
-    /** Show all applications */
+    // -------------------------------
+    // List applications
+    // -------------------------------
     public function index()
     {
         $applications = Application::where('agent_id', Auth::id())
@@ -49,14 +53,18 @@ class ApplicationController extends Controller
         return view('agent.applications.index', compact('applications'));
     }
 
-    /** Show create form */
+    // -------------------------------
+    // Create form
+    // -------------------------------
     public function create(Request $request)
     {
         $universities = University::with('courses')->get();
         $courses = Course::all();
+
         $selectedUniversityId = $request->query('university_id');
         $selectedCourseId = $request->query('course_id');
 
+        // If coming from student
         if ($request->has('student_id')) {
             $student = Student::where('id', $request->student_id)
                 ->where('agent_id', Auth::id())
@@ -71,6 +79,7 @@ class ApplicationController extends Controller
             ));
         }
 
+        // Only students with required docs
         $requiredTypes = $this->allDocumentTypes();
 
         $students = Student::where('agent_id', Auth::id())
@@ -92,7 +101,9 @@ class ApplicationController extends Controller
         ));
     }
 
-    /** Store new application */
+    // -------------------------------
+    // Store application
+    // -------------------------------
     public function store(Request $request)
     {
         $request->validate([
@@ -102,8 +113,10 @@ class ApplicationController extends Controller
             'sop_file'      => 'required|file|mimes:jpeg,jpg,png,pdf,doc,docx|max:15360',
         ]);
 
-        $student = Student::where('agent_id', Auth::id())->findOrFail($request->student_id);
+        $student = Student::where('agent_id', Auth::id())
+            ->findOrFail($request->student_id);
 
+        // Prevent duplicate application
         if (Application::where('student_id', $student->id)
             ->where('university_id', $request->university_id)
             ->where('course_id', $request->course_id)
@@ -114,6 +127,7 @@ class ApplicationController extends Controller
             ])->withInput();
         }
 
+        // Create application
         $application = Application::create([
             'student_id' => $student->id,
             'university_id' => $request->university_id,
@@ -122,37 +136,63 @@ class ApplicationController extends Controller
             'application_status' => 'Application started',
         ]);
 
-        $application->application_number = Auth::id() . '-' . $student->id . '-' . $request->university_id . '-' . ($request->course_id ?? 0) . '-' . $application->id;
+        // Generate application number
+        $application->application_number =
+            Auth::id() . '-' .
+            $student->id . '-' .
+            $request->university_id . '-' .
+            ($request->course_id ?? 0) . '-' .
+            $application->id;
 
-        // ✅ Handle SOP upload
+        // ✅ SOP Upload using service
         if ($request->hasFile('sop_file')) {
-            $sopPath = $this->getSopStoragePath($request->file('sop_file'), $student, 'sop_file');
-            $application->sop_file = $sopPath;
+            $application->sop_file = FileUploadService::uploadStudentSOP(
+                $request->file('sop_file'),
+                Auth::user(),
+                $student
+            );
         }
 
         $application->save();
 
-        // Notify admin(s)
+        // Notify admin
         $admin = User::find(4);
-        Notification::send($admin, new ApplicationSubmitted($application));
+        if ($admin) {
+            Notification::send($admin, new ApplicationSubmitted($application));
+        }
 
-        return redirect()->route('agent.applications.index')->with('success', 'Application created successfully.');
+        return redirect()->route('agent.applications.index')
+            ->with('success', 'Application created successfully.');
     }
 
-    /** Show single application */
+    // -------------------------------
+    // Show
+    // -------------------------------
     public function show(Application $application)
     {
         $this->authorizeAgent($application);
-        $application->load(['student', 'university', 'course', 'documents', 'messages.user']);
+
+        $application->load([
+            'student',
+            'university',
+            'course',
+            'documents',
+            'messages.user'
+        ]);
 
         $status = Application::STATUSES;
         $statusColors = Application::STATUS_COLORS;
 
-        return view('agent.applications.show', compact('application', 'status', 'statusColors'));
+        return view('agent.applications.show', compact(
+            'application',
+            'status',
+            'statusColors'
+        ));
     }
 
-
-    /** Edit application */
+    // -------------------------------
+    // Edit
+    // -------------------------------
     public function edit($id)
     {
         $application = Application::where('agent_id', Auth::id())
@@ -163,7 +203,10 @@ class ApplicationController extends Controller
         $students = Student::where('agent_id', Auth::id())->get();
 
         $selectedUniversityId = $application->university_id;
-        $courses = $selectedUniversityId ? Course::where('university_id', $selectedUniversityId)->select('id', 'title')->get() : collect();
+
+        $courses = $selectedUniversityId
+            ? Course::where('university_id', $selectedUniversityId)->select('id', 'title')->get()
+            : collect();
 
         return view('agent.applications.edit', compact(
             'application',
@@ -174,10 +217,13 @@ class ApplicationController extends Controller
         ));
     }
 
-    /** Update application (SOP optional) */
+    // -------------------------------
+    // Update
+    // -------------------------------
     public function update(Request $request, $id)
     {
-        $application = Application::where('agent_id', Auth::id())->findOrFail($id);
+        $application = Application::where('agent_id', Auth::id())
+            ->findOrFail($id);
 
         $request->validate([
             'student_id'    => 'required|exists:students,id',
@@ -186,13 +232,19 @@ class ApplicationController extends Controller
             'sop_file'      => 'nullable|file|mimes:jpeg,jpg,png,pdf,doc,docx|max:15360',
         ]);
 
+        // SOP update
         if ($request->hasFile('sop_file')) {
+
+            // Delete old SOP
             if ($application->sop_file && Storage::disk('public')->exists($application->sop_file)) {
                 Storage::disk('public')->delete($application->sop_file);
             }
 
-            $sopPath = $this->getSopStoragePath($request->file('sop_file'), $application->student, 'sop_file');
-            $application->sop_file = $sopPath;
+            $application->sop_file = FileUploadService::uploadStudentSOP(
+                $request->file('sop_file'),
+                Auth::user(),
+                $application->student
+            );
         }
 
         $application->update([
@@ -203,10 +255,13 @@ class ApplicationController extends Controller
 
         $application->save();
 
-        return redirect()->route('agent.applications.index')->with('success', 'Application updated successfully.');
+        return redirect()->route('agent.applications.index')
+            ->with('success', 'Application updated successfully.');
     }
 
-    /** Get courses by university (AJAX) */
+    // -------------------------------
+    // Get courses (AJAX)
+    // -------------------------------
     public function getCourses($universityId)
     {
         $courses = Course::where('university_id', $universityId)
@@ -216,7 +271,9 @@ class ApplicationController extends Controller
         return response()->json($courses);
     }
 
-    /** Withdraw application */
+    // -------------------------------
+    // Withdraw
+    // -------------------------------
     public function withdraw(Request $request, Application $application)
     {
         $request->validate([
@@ -235,22 +292,29 @@ class ApplicationController extends Controller
         ]);
 
         $admin = User::find(4);
-        Notification::send($admin, new ApplicationWithdrawn($application));
+        if ($admin) {
+            Notification::send($admin, new ApplicationWithdrawn($application));
+        }
 
-        return redirect()->route('agent.applications.index')->with('success', 'Application withdrawn successfully.');
+        return redirect()->route('agent.applications.index')
+            ->with('success', 'Application withdrawn successfully.');
     }
 
-    /** Add message to application */
+    // -------------------------------
+    // Add message
+    // -------------------------------
     public function addMessage(Request $request, Application $application)
     {
-        $request->validate(['message' => 'required|string|max:2000']);
+        $request->validate([
+            'message' => 'required|string|max:2000'
+        ]);
 
         $user = Auth::user();
         $userType = $user->is_admin ? 'admin' : 'agent';
 
         $message = $application->messages()->create([
             'user_id' => $user->id,
-            'type'    => $userType,
+            'type' => $userType,
             'message' => $request->message,
         ]);
 
@@ -263,28 +327,33 @@ class ApplicationController extends Controller
             $application->agent?->notify(new ApplicationMessageAdded($application, $message));
         }
 
-        return back()->with('success', 'Message added and notification sent.');
+        return back()->with('success', 'Message added.');
     }
 
+    // -------------------------------
+    // Delete message
+    // -------------------------------
     public function deleteMessage(Application $application, ApplicationMessage $message)
     {
-        // Make sure message belongs to this application
         if ($message->application_id !== $application->id) {
-            abort(403, 'Unauthorized action.');
+            abort(403);
         }
-        // Same logic as your addMessage method
+
         $user = Auth::user();
         $userType = $user->is_admin ? 'admin' : 'agent';
-        // Only admin or message owner can delete
+
         if ($userType !== 'admin' && $user->id !== $message->user_id) {
-            abort(403, 'Unauthorized action.');
+            abort(403);
         }
-        // Delete the message
+
         $message->delete();
-        return back()->with('success', 'Message deleted successfully.');
+
+        return back()->with('success', 'Message deleted.');
     }
 
-    /** Authorization check */
+    // -------------------------------
+    // Authorization
+    // -------------------------------
     protected function authorizeAgent(Application $application)
     {
         if ($application->agent_id !== Auth::id()) {
@@ -292,26 +361,15 @@ class ApplicationController extends Controller
         }
     }
 
-    /** Generate SOP file path */
-    private function getSopStoragePath($file, $student, $documentType = 'sop_file')
-    {
-        $agent = Auth::user();
-        $safeAgent = preg_replace('/[^A-Za-z0-9_\-]/', '_', strtolower($agent->business_name ?? 'agent'));
-        $rawStudentName = trim(($student->first_name ?? '') . '_' . ($student->last_name ?? ''));
-        $safeStudent = empty($rawStudentName) || $rawStudentName === '_'
-            ? 'student_' . $student->id
-            : preg_replace('/[^A-Za-z0-9_\-]/', '_', strtolower($rawStudentName));
-
-        $fileName = $documentType . '.' . $file->getClientOriginalExtension();
-        $folderPath = "agents/{$safeAgent}/{$safeStudent}";
-
-        return $file->storeAs($folderPath, $fileName, 'public');
-    }
-
-    /** Applications FOr student */
+    // -------------------------------
+    // Applications for student
+    // -------------------------------
     public function forStudent($studentId)
     {
-        $student = Student::with(['applications.university', 'applications.course'])
+        $student = Student::with([
+            'applications.university',
+            'applications.course'
+        ])
             ->where('agent_id', Auth::id())
             ->findOrFail($studentId);
 

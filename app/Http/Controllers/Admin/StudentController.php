@@ -20,26 +20,57 @@ class StudentController extends Controller
     // List students with filters
     public function index(Request $request)
     {
-        $filters = $request->only(['search', 'agent', 'university', 'course_title', 'status', 'sort_by', 'sort_order']);
-        $students = Student::query()->with(['agent', 'university', 'course']);
+        $filters = $request->only([
+            'search',
+            'agent',
+            'university',
+            'course_title',
+            'status',
+            'sort_by',
+            'sort_order',
+            'quick_filter'
+        ]);
 
+        // Base query with relationships
+        $studentsQuery = Student::query()->with(['agent', 'university', 'course', 'applications']);
+
+        // Apply filters as before
         if (!empty($filters['search'])) {
-            $students->where(fn($q) => $q->where('first_name', 'like', "%{$filters['search']}%")
+            $studentsQuery->where(fn($q) => $q->where('first_name', 'like', "%{$filters['search']}%")
                 ->orWhere('last_name', 'like', "%{$filters['search']}%")
                 ->orWhere('email', 'like', "%{$filters['search']}%"));
         }
-
-        if (!empty($filters['agent'])) $students->where('agent_id', $filters['agent']);
-        if (!empty($filters['university'])) $students->where('university_id', $filters['university']);
+        if (!empty($filters['agent'])) $studentsQuery->where('agent_id', $filters['agent']);
+        if (!empty($filters['university'])) $studentsQuery->where('university_id', $filters['university']);
         if (!empty($filters['course_title'])) {
-            $students->whereHas('course', fn($q) => $q->where('title', $filters['course_title']));
+            $studentsQuery->whereHas('course', fn($q) => $q->where('title', $filters['course_title']));
         }
-        if (!empty($filters['status'])) $students->where('student_status', $filters['status']);
+        if (!empty($filters['status'])) {
+            $studentsQuery->whereHas('applications', function ($q) use ($filters) {
+                $q->where('application_status', $filters['status']);
+            });
+        }
+        if (!empty($filters['quick_filter'])) {
+            if ($filters['quick_filter'] === 'applied') {
+                $studentsQuery->whereHas('applications');
+            } elseif ($filters['quick_filter'] === 'not_applied') {
+                $studentsQuery->doesntHave('applications');
+            }
+        }
+        $studentsQuery->orderBy($filters['sort_by'] ?? 'created_at', $filters['sort_order'] ?? 'DESC');
 
-        $students->orderBy($filters['sort_by'] ?? 'created_at', $filters['sort_order'] ?? 'DESC');
+        // Split queries for two tables
+        $specialAgentIds = [11, 12];
+
+        $table2Query = clone $studentsQuery;
+        $table2Students = $table2Query->whereIn('agent_id', $specialAgentIds)->paginate(10, ['*'], 'table2')->withQueryString();
+
+        $table1Query = clone $studentsQuery;
+        $table1Students = $table1Query->whereNotIn('agent_id', $specialAgentIds)->paginate(15, ['*'], 'table1')->withQueryString();
 
         return view('admin.students.index', [
-            'students' => $students->paginate(15)->withQueryString(),
+            'table1Students' => $table1Students,
+            'table2Students' => $table2Students,
             'agents' => User::where('is_agent', 1)->get(),
             'universities' => University::all(),
             'courses' => Course::all(),

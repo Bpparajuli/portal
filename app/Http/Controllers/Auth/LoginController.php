@@ -12,8 +12,7 @@ class LoginController extends Controller
     public function showLoginForm()
     {
         if (Auth::check()) {
-            $user = Auth::user();
-            return redirect()->intended($user->is_admin ? '/admin/dashboard' : '/agent/dashboard');
+            return $this->redirectToDashboard(Auth::user());
         }
 
         return view('auth.login');
@@ -21,27 +20,46 @@ class LoginController extends Controller
 
     public function login(Request $request)
     {
-        // Validate input
         $request->validate([
             'email'    => 'required|email',
             'password' => 'required|string',
         ]);
 
-        // Rate limiting (optional, add throttle middleware or manually)
-        // attempt login
-        if (!Auth::attempt(['email' => $request->email, 'password' => $request->password, 'active' => 1])) {
+        if (!Auth::attempt([
+            'email' => $request->email,
+            'password' => $request->password,
+            'active' => 1
+        ])) {
             throw ValidationException::withMessages([
                 'email' => ['Invalid credentials or account not active.'],
             ]);
         }
 
-        // Regenerate session
         $request->session()->regenerate();
 
-        $user = Auth::user();
-        return redirect()->intended($user->is_admin ? '/admin/dashboard' : '/agent/dashboard');
+        return $this->redirectToDashboard(Auth::user());
     }
 
+    /**
+     * Centralized redirect logic
+     */
+    protected function redirectToDashboard($user)
+    {
+        if ($user->is_admin) {
+            return redirect()->intended('/admin/dashboard');
+        }
+
+        if ($user->is_staff) {
+            return redirect()->intended('/staff/dashboard');
+        }
+
+        if ($user->is_agent) {
+            return redirect()->intended('/agent/dashboard');
+        }
+
+        // fallback
+        return redirect('/');
+    }
     public function logout(Request $request)
     {
         Auth::logout();

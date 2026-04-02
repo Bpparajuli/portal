@@ -104,34 +104,29 @@
         </div>
 
         {{-- UPCOMING EVENTS --}}
-        <div class="card events-card">
-            <h6 class="gradient section-title">Upcoming Trainings & Counselling</h6>
-            <div class="events-grid">
-                <div>
-                    <h6>Trainings</h6>
-                    <ul>
-                        <li>Agent Portal Training – Nov 29</li>
-                        <li>Embassy Portal Training – Dec 2</li>
-                        <li>University Portal Training – Dec 7</li>
-                        <li>Agent Portal Training – Dec 10</li>
-                        <li>Embassy Portal Training – Dec 12</li>
-                        <li>University Portal Training – Dec 15</li>
-                    </ul>
-                </div>
-                <div>
-                    <h6>Counselling</h6>
-                    <ul>
-                        <li>Interview Preperation – Nov 23-28</li>
-                        <li>Germany Counselling – Nov 29</li>
-                        <li>German University Counselling– Dec 3</li>
-                        <li>Dubai Counselling – Dec 5</li>
-                        <li>Dubai University Counselling– Dec 9</li>
-                        <li>Other Countries Counselling– Dec 15</li>
-                    </ul>
-                </div>
-            </div>
+      <div class="card events-card">
+            <h6 class="gradient section-title">Upcoming Trainings </h6>
+            <ul>
+                <li>✅Students Meetup – Feb 19 Idea Baneshwor</li>
+                <li>✅PFH University 1 to 1 Counselling-Feb 19</li>
+                <li>✅Agent Meetup – Feb 21 Sip & Skip</li>
+                <li>✅Agent Meetup – Feb 23 Siddhartha Cottage Butwal</li>
+                <li>✅Agent Portal Training – March 10</li>
+                <li>✅Embassy Portal Training – March 11</li>
+                <li>✅University Portal Training – March 12</li>
+            </ul>
         </div>
-
+        <div class="card events-card">
+            <h6 class="gradient section-title">Upcoming Counselling</h6>
+            <ul>
+                <li>✅Interview Preperation – Feb 23-28</li>
+                <li>✅Germany Counselling – Feb 28</li>
+                <li>✅German University Counselling– March 9</li>
+                <li>✅Dubai Counselling – March 11</li>
+                <li>✅Dubai University Counselling– March 13</li>
+                <li>✅Other Countries Counselling– March 16</li>
+            </ul>
+        </div>
     </div>
 </div>
 

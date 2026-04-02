@@ -192,27 +192,54 @@ class ApplicationController extends Controller
     public function addMessage(Request $request, Application $application)
     {
         $request->validate([
-            'message' => 'required|string|max:2000',
+            'message'     => 'nullable|string|max:2000',
+            'attachment'  => 'nullable|file|max:10240', // 10MB
         ]);
+        if (!$request->message && !$request->hasFile('attachment')) {
+            return back()->withErrors('Write a message or attach a file.');
+        }
 
         $user = Auth::user();
         $userType = $user->is_admin ? 'admin' : 'agent';
 
+        $filePath = null;
+        $fileName = null;
+        $fileType = null;
+
+        // If file attached
+        if ($request->hasFile('attachment')) {
+            $file = $request->file('attachment');
+
+            $fileName = time() . '_' . $file->getClientOriginalName();
+
+            $filePath = $file->storeAs(
+                'application_messages/' . $application->id,
+                $fileName,
+                'public'
+            );
+
+            $fileType = $file->getClientMimeType();
+        }
+
         $message = $application->messages()->create([
-            'user_id' => $user->id,
-            'type' => $userType,
-            'message' => $request->message,
+            'user_id'   => $user->id,
+            'type'      => $userType,
+            'message'   => $request->message,
+            'file_path' => $filePath,
+            'file_name' => $fileName,
+            'file_type' => $fileType,
         ]);
 
+        // Notifications remain the same
         if ($userType === 'agent') {
             User::notifyAdmins(new ApplicationMessageAdded($application, $message));
         } else {
             $application->agent?->notify(new ApplicationMessageAdded($application, $message));
         }
 
-
-        return back()->with('success', 'Message added and notification sent.');
+        return back()->with('success', 'Message sent.');
     }
+
     public function deleteMessage(Application $application, $messageId)
     {
         $message = $application->messages()->findOrFail($messageId);

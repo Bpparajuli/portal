@@ -29,7 +29,8 @@ use App\Http\Controllers\Admin\{
     StudentController as AdminStudentController,
     UniversityController as AdminUniversityController,
     UserController as AdminUserController,
-    BackupController as AdminBackupController
+    BackupController as AdminBackupController,
+    ReminderController as AdminReminderController,
 };
 
 // Agent Controllers
@@ -45,6 +46,14 @@ use App\Http\Controllers\Agent\{
     UserController as AgentUserController
 };
 
+// Staff Controllers
+use App\Http\Controllers\Staff\{
+    DashboardController as StaffDashboardController,
+    StudentController as StaffStudentController
+};
+
+use App\Models\UserStatus;
+use App\Models\User;
 
 /*
 |--------------------------------------------------------------------------
@@ -70,11 +79,10 @@ Route::prefix('guest')->name('guest.')->group(function () {
     // Universities
     Route::get('universities', [GuestUniversityController::class, 'index'])->name('universities.index');
     Route::get('universities/{university}', [GuestUniversityController::class, 'show'])->name('universities.show');
-
-    // Ajax Filters
     Route::get('get-cities/{country}', [GuestUniversityController::class, 'getCities'])->name('get-cities');
     Route::get('get-universities/{city}', [GuestUniversityController::class, 'getUniversities'])->name('get-universities');
-    Route::get('get-courses/{universityId}', [GuestUniversityController::class, 'getCourses'])->name('get-courses');
+    Route::get('get-course-types/{universityId}', [GuestUniversityController::class, 'getCourseTypes'])->name('get-course-types');
+    Route::get('get-courses-by-type/{universityId}/{type}', [GuestUniversityController::class, 'getCoursesByType'])->name('get-courses-by-type');
 
     // Courses
     Route::controller(GuestCourseController::class)->group(function () {
@@ -134,10 +142,30 @@ Route::middleware(['auth', \App\Http\Middleware\IsAdmin::class])
             ->name('backup.files');
 
         // ---------------------------
-        // Dashboard & Chat
+        // Dashboard
         // ---------------------------
         Route::get('dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
-        Route::get('chat', [AdminChatController::class, 'index'])->name('chat');
+
+        // ---------------------------
+        // Chat
+        // ---------------------------
+        // Chat page
+        Route::get('chat', [AdminChatController::class, 'usersListView'])->name('chat');
+
+        // Get all users for left panel
+        Route::get('chat/users', [AdminChatController::class, 'usersList'])->name('chat.users');
+
+        // Get messages with a selected user
+        Route::get('chat/messages/{user}', [AdminChatController::class, 'fetchMessages'])
+            ->name('chat.messages');
+
+        // Send a new message
+        Route::post('chat/send', [AdminChatController::class, 'sendMessage'])
+            ->name('chat.send');
+
+
+        Route::delete('chat/delete/{id}', [AdminChatController::class, 'delete'])->name('chat.delete');
+        Route::delete('chat/clear/{user}', [AdminChatController::class, 'clear'])->name('chat.clear');
 
         // ---------------------------
         // Notifications
@@ -157,6 +185,10 @@ Route::middleware(['auth', \App\Http\Middleware\IsAdmin::class])
         Route::put('users/{user:slug}/approve', [AdminUserController::class, 'approve'])
             ->name('users.approve');
 
+        // Send email to users to uplaod AGREEMENT
+        Route::post('users/reminder/send', [AdminReminderController::class, 'sendAgreementReminder'])
+            ->name('reminder.send');
+
         // VERIFY AGREEMENT
         Route::put('users/{user:slug}/verify-agreement', [AdminUserController::class, 'verifyAgreement'])
             ->name('users.verifyAgreement');
@@ -173,6 +205,8 @@ Route::middleware(['auth', \App\Http\Middleware\IsAdmin::class])
         Route::get('users/{agent:slug}/applications', [AdminUserController::class, 'applications'])
             ->name('users.applications');
 
+        Route::get('users/get-parents', [AdminUserController::class, 'getParents'])->name('users.get-parents');
+
         // RESOURCE route (must come last)
         Route::resource('users', AdminUserController::class)
             ->parameters(['users' => 'user:slug']);
@@ -182,7 +216,8 @@ Route::middleware(['auth', \App\Http\Middleware\IsAdmin::class])
         // ---------------------------
         Route::get('get-cities/{country}', [AdminUniversityController::class, 'getCities'])->name('get-cities');
         Route::get('get-universities/{city}', [AdminUniversityController::class, 'getUniversities'])->name('get-universities');
-        Route::get('get-courses/{universityId}', [AdminUniversityController::class, 'getCourses'])->name('get-courses');
+        Route::get('get-course-types/{universityId}', [AdminUniversityController::class, 'getCourseTypes'])->name('get-course-types');
+        Route::get('get-courses-by-type/{universityId}/{type}', [AdminUniversityController::class, 'getCoursesByType'])->name('get-courses-by-type');
 
         // ---------------------------
         // Resources
@@ -218,18 +253,50 @@ Route::middleware(['auth', \App\Http\Middleware\IsAdmin::class])
 
 /*
 |--------------------------------------------------------------------------
+| Staff Routes
+|--------------------------------------------------------------------------
+*/
+
+
+Route::middleware(['auth', \App\Http\Middleware\IsStaff::class])
+    ->prefix('staff')
+    ->name('staff.') // This adds "staff." to all routes inside
+    ->group(function () {
+        // Now named: staff.dashboard
+        Route::get('/dashboard', [StaffDashboardController::class, 'index'])->name('dashboard');
+
+        // Now named: staff.student
+        Route::get('/student/{id}', [StaffStudentController::class, 'show'])->name('student');
+    });
+
+
+/*
+|--------------------------------------------------------------------------
 | Agent Routes
 |--------------------------------------------------------------------------
 */
+
 
 
 Route::middleware(['auth', \App\Http\Middleware\IsAgent::class])
     ->prefix('agent')
     ->name('agent.')
     ->group(function () {
-
+        // ---------------------------
+        // Dashboard
+        // ---------------------------
         Route::get('dashboard', [AgentDashboardController::class, 'index'])->name('dashboard');
-        Route::get('chat', [AgentChatController::class, 'index'])->name('chat');
+
+        // ---------------------------
+        // Chat
+        // --------------------------- 
+        Route::get('chat', [AgentChatController::class, 'usersListView'])->name('chat');
+        Route::get('chat/users', [AgentChatController::class, 'usersList'])->name('chat.users');
+        Route::get('chat/messages/{user}', [AgentChatController::class, 'fetchMessages'])->name('chat.messages');
+        Route::post('chat/send', [AgentChatController::class, 'sendMessage'])->name('chat.send');
+        Route::delete('chat/delete/{id}', [AgentChatController::class, 'delete'])->name('chat.delete');
+        Route::delete('chat/clear/{user}', [AgentChatController::class, 'clear'])->name('chat.clear');
+
 
         // Notifications
         Route::get('notifications', [AgentNotificationController::class, 'index'])->name('notifications');
@@ -240,9 +307,11 @@ Route::middleware(['auth', \App\Http\Middleware\IsAgent::class])
 
 
         // Filters
+        Route::get('universities', [AgentUniversityController::class, 'index'])->name('universities.index');
         Route::get('get-cities/{country}', [AgentUniversityController::class, 'getCities'])->name('get-cities');
         Route::get('get-universities/{city}', [AgentUniversityController::class, 'getUniversities'])->name('get-universities');
-        Route::get('get-courses/{universityId}', [AgentUniversityController::class, 'getCourses'])->name('get-courses');
+        Route::get('get-course-types/{universityId}', [AgentUniversityController::class, 'getCourseTypes'])->name('get-course-types');
+        Route::get('get-courses-by-type/{universityId}/{type}', [AgentUniversityController::class, 'getCoursesByType'])->name('get-courses-by-type');
 
         // Resources
         Route::resources([
@@ -286,3 +355,16 @@ Route::middleware(['auth', \App\Http\Middleware\IsAgent::class])
         // Resource conflicts must always come last
         Route::resource('applications', AgentApplicationController::class);
     });
+
+
+
+
+Route::get('/fix-user-status', function () {
+    foreach (User::all() as $user) {
+        UserStatus::firstOrCreate(
+            ['user_id' => $user->id],
+            ['is_online' => false, 'last_seen' => now()]
+        );
+    }
+    return "User statuses created successfully!";
+});

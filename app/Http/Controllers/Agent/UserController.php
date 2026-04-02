@@ -8,33 +8,30 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use App\Models\Activity;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Notification;
 use App\Notifications\AgreementSubmitted;
-use Illuminate\Support\Facades\Storage;
+use App\Services\FileUploadService;
 
 class UserController extends Controller
 {
     /**
-     * Convert slug to the real User model
+     * Get user by slug
      */
     private function getUserBySlug($slug)
     {
-        $name = str_replace('-', ' ', $slug);
-
-        return User::whereRaw('LOWER(business_name) = ?', [strtolower($name)])
-            ->firstOrFail();
+        return User::where('slug', $slug)->firstOrFail();
     }
 
     /**
-     * Show user profile
+     * Show profile
      */
     public function show($slug)
     {
         $auth = Auth::user();
         $user = $this->getUserBySlug($slug);
 
-        if ($auth->is_agent && $auth->id != $user->id) {
+        if ($auth->id != $user->id) {
             abort(403, 'Unauthorized access.');
         }
 
@@ -59,7 +56,7 @@ class UserController extends Controller
     }
 
     /**
-     * Edit profile page
+     * Edit profile
      */
     public function edit($slug)
     {
@@ -73,7 +70,7 @@ class UserController extends Controller
     }
 
     /**
-     * Update user
+     * Update profile
      */
     public function update(Request $request, $slug)
     {
@@ -83,46 +80,65 @@ class UserController extends Controller
             abort(403, 'Unauthorized.');
         }
 
+        // ✅ Validation
         $request->validate([
-            'email' => 'required|email',
-            'contact' => 'nullable|string|max:20',
-            'address' => 'nullable|string|max:255',
-            'password' => 'nullable|string|min:6|confirmed',
-            'business_logo' => 'nullable|file|max:20480',
-            'registration' => 'nullable|file|max:20480',
-            'pan' => 'nullable|file|max:20480',
-            'agreement_file' => 'nullable|file|max:20480',
+            'email'          => 'required|email|max:255|unique:users,email,' . $user->id,
+            'contact'        => 'nullable|string|max:20',
+            'address'        => 'nullable|string|max:255',
+            'password'       => 'nullable|string|min:6|confirmed',
+
+            'business_logo'  => 'nullable|file|mimes:jpg,jpeg,png|max:20480',
+            'registration'   => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:20480',
+            'pan'            => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:20480',
+            'agreement_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:20480',
         ]);
 
-        // Update basic fields
-        $user->email = $request->email;
+        // ✅ Basic fields
+        $user->email   = $request->email;
         $user->contact = $request->contact;
         $user->address = $request->address;
 
+        // ✅ Password update
         if ($request->filled('password')) {
             $user->password = Hash::make($request->password);
         }
 
-        // File uploads
-        $user->business_logo = $this->uploadFile($request, $user, 'business_logo', 'logo');
-        $user->registration  = $this->uploadFile($request, $user, 'registration', 'registration');
-        $user->pan           = $this->uploadFile($request, $user, 'pan', 'pan');
+        /**
+         * ⚠️ VERY IMPORTANT
+         * Make sure slug exists (FileUploadService depends on it)
+         */
+        if (!$user->slug) {
+            $user->slug = strtolower(str_replace(' ', '-', $user->business_name));
+        }
 
+        // ✅ Save before file upload (ensures clean state)
+        $user->save();
+
+        // ===============================
+        // FILE UPLOADS (SERVICE BASED)
+        // ===============================
+        $user->business_logo = FileUploadService::uploadAgentFile($request, $user, 'business_logo', 'logo');
+        $user->registration  = FileUploadService::uploadAgentFile($request, $user, 'registration', 'registration');
+        $user->pan           = FileUploadService::uploadAgentFile($request, $user, 'pan', 'pan');
+
+        // Agreement handling
         $agreementChanged = false;
 
         if ($request->hasFile('agreement_file')) {
-            $user->agreement_file = $this->uploadFile($request, $user, 'agreement_file', 'agreement');
+            $user->agreement_file   = FileUploadService::uploadAgentFile($request, $user, 'agreement_file', 'agreement');
             $user->agreement_status = 'uploaded';
             $agreementChanged = true;
         }
 
         $user->save();
 
-        // Notify admin if agreement updated
+        // ===============================
+        // NOTIFICATION
+        // ===============================
         if ($agreementChanged) {
-            $admin = User::find(2);
+            $admin = User::find(1); // safer than 2
             if ($admin) {
-                $admin->notify(new AgreementSubmitted($user));
+                Notification::send($admin, new AgreementSubmitted($user));
             }
         }
 
@@ -142,30 +158,10 @@ class UserController extends Controller
         }
 
         $newPassword = Str::random(10);
+
         $user->password = Hash::make($newPassword);
         $user->save();
 
         return back()->with('success', "Password reset successfully. New password: $newPassword");
-    }
-
-    /**
-     * Upload files helper
-     */
-    private function uploadFile(Request $request, User $user, string $inputName, string $suffix)
-    {
-        if (!$request->hasFile($inputName)) return $user->$inputName;
-
-        $safeName = str_replace([' ', '.', '-'], '_', strtolower($user->business_name));
-        $folder   = "agents/$safeName";
-
-        $file = $request->file($inputName);
-        $fileName = $safeName . '_' . $suffix . '.' . $file->getClientOriginalExtension();
-
-        // Delete old file if exists
-        if ($user->$inputName && Storage::disk('public')->exists($user->$inputName)) {
-            Storage::disk('public')->delete($user->$inputName);
-        }
-
-        return $file->storeAs($folder, $fileName, 'public');
     }
 }

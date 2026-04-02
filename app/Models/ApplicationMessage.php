@@ -15,7 +15,11 @@ class ApplicationMessage extends Model
         'user_id',
         'message',
         'type',
+        'file_path',
+        'file_name',
+        'file_type',
     ];
+
 
     public function application()
     {

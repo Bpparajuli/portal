@@ -321,7 +321,7 @@ Header, Navigation & Notifications - Component Styles Only
 
     /* Center notifications in mobile */
     .notification-menu {
-        top: -10%;
+        width: 200px;
         max-width: 300px;
     }
 }

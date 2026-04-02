@@ -75,6 +75,31 @@ class UniversityController extends Controller
         return response()->json($courses);
     }
 
+    // ---------------------------
+    // New Dynamic Filters
+    // ---------------------------
+
+    public function getCourseTypes($universityId)
+    {
+        $types = Course::where('university_id', $universityId)
+            ->select('course_type')
+            ->distinct()
+            ->pluck('course_type');
+
+        return response()->json($types);
+    }
+
+    public function getCoursesByType($universityId, $courseType)
+    {
+        $courses = Course::where('university_id', $universityId)
+            ->where('course_type', $courseType)
+            ->select('id', 'title')
+            ->get();
+
+        return response()->json($courses);
+    }
+
+
     /**
      * Show form to create a new university.
      */

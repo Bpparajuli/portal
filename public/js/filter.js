@@ -2,9 +2,9 @@ document.addEventListener("DOMContentLoaded", function () {
     const countryDropdown = $("#country");
     const cityDropdown = $("#city");
     const universityDropdown = $("#university_id");
+    const courseTypeDropdown = $("#course_type");
     const courseDropdown = $("#course_id");
 
-    // Populate dropdown helper
     function populateDropdown(selectElement, data, placeholder) {
         selectElement
             .empty()
@@ -17,15 +17,16 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    // Country → Cities
+    // COUNTRY → CITIES
     countryDropdown.on("change", function () {
         const country = $(this).val();
         populateDropdown(cityDropdown, [], "All Cities");
         populateDropdown(universityDropdown, [], "All Universities");
+        populateDropdown(courseTypeDropdown, [], "All Types");
         populateDropdown(courseDropdown, [], "All Courses");
 
         if (country) {
-            let url = $(this)
+            const url = $(this)
                 .data("cities-url")
                 .replace(":country", encodeURIComponent(country));
             $.getJSON(url, function (data) {
@@ -34,14 +35,15 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     });
 
-    // City → Universities
+    // CITY → UNIVERSITIES
     cityDropdown.on("change", function () {
         const city = $(this).val();
         populateDropdown(universityDropdown, [], "All Universities");
+        populateDropdown(courseTypeDropdown, [], "All Types");
         populateDropdown(courseDropdown, [], "All Courses");
 
         if (city) {
-            let url = $(this)
+            const url = $(this)
                 .data("universities-url")
                 .replace(":city", encodeURIComponent(city));
             $.getJSON(url, function (data) {
@@ -50,31 +52,39 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     });
 
-    // University → Courses
+    // UNIVERSITY → COURSE TYPES
     universityDropdown.on("change", function () {
         const uniId = $(this).val();
+        populateDropdown(courseTypeDropdown, [], "All Types");
         populateDropdown(courseDropdown, [], "All Courses");
 
         if (uniId) {
-            let url = $(this)
-                .data("courses-url")
-                .replace(":universityId", encodeURIComponent(uniId));
-            $.getJSON(url, function (data) {
-                populateDropdown(courseDropdown, data, "All Courses");
+            const url = $(this)
+                .data("type-url")
+                .replace(":universityId", uniId);
+            $.getJSON(url, function (types) {
+                populateDropdown(courseTypeDropdown, types, "All Types");
             });
         }
     });
 
-    // --- Auto-clear all filters if query params exist ---
-    if (window.location.search.length > 0) {
-        setTimeout(() => {
-            $("#search").val("");
-            countryDropdown.val("");
-            populateDropdown(cityDropdown, [], "All Cities");
-            populateDropdown(universityDropdown, [], "All Universities");
-            populateDropdown(courseDropdown, [], "All Courses");
-        }, 200);
-    }
+    // COURSE TYPE → COURSES
+    courseTypeDropdown.on("change", function () {
+        const uniId = universityDropdown.val();
+        const courseType = $(this).val();
+        populateDropdown(courseDropdown, [], "All Courses");
 
-    console.log("University filter JS loaded ✅");
+        if (uniId && courseType) {
+            const url = $(this)
+                .data("courses-url")
+                .replace(":universityId", uniId)
+                .replace(":type", courseType);
+
+            $.getJSON(url, function (courses) {
+                populateDropdown(courseDropdown, courses, "All Courses");
+            });
+        }
+    });
+
+    console.log("Filter.js loaded ✅");
 });

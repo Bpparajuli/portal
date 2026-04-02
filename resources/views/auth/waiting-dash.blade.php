@@ -42,10 +42,10 @@
                             1️⃣ Download the agreement provided by the admin:<br>
                             <p class="text-center"><a href="{{ asset('storage/agreement_file.docx') }}" target="_blank" class="m-2">📄 Download Agreement</a></p>
                         </li>
-                        <li class="list-group-item" style="background-color: #fff3cd;">
+                        <li class="list-group-item" style="background-color: #ffc400;">
                             2️⃣ Update your name and other details highlighted in yellow.
                         </li>
-                        <li class="list-group-item">3️⃣ Sign the agreement (digitally or print → sign → scan).</li>
+                        <li class="list-group-item">3️⃣ Sign and company stamp on the agreement.<br>(digitally or print → sign & stamp → scan)</li>
                         <li class="list-group-item">4️⃣ Upload the signed agreement using the form below.</li>
                     </ul>
 

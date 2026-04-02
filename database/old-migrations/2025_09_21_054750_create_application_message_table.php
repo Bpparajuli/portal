@@ -17,6 +17,9 @@ return new class extends Migration
             $table->unsignedBigInteger('user_id'); // who made the remark
             $table->text('message');
             $table->enum('type', ['agent', 'admin']); // to differentiate who made the remark
+            $table->string('file_path')->nullable()->after('message');
+            $table->string('file_name')->nullable()->after('file_path');
+            $table->string('file_type')->nullable()->after('file_name');
             $table->timestamps();
 
             $table->foreign('application_id')->references('id')->on('applications')->onDelete('cascade');

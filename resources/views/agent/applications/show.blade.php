@@ -148,7 +148,7 @@
                             <p class="mb-1">{{ $m->message }}</p>
                             <small>
                                 <b>{{ $m->user->name ?? 'Unknown' }}</b> •
-                                {{ $m->created_at->format('d M Y, H:i') }}
+                                {{ $m->created_at->timezone('Asia/Kathmandu')->format('d M Y, H:i') }}
                             </small>
                         </div>
 

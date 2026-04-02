@@ -45,7 +45,8 @@
     /* Layout */
     --radius: 14px;
     --sradius: 8px;
-    --shadow: 0 10px 30px rgba(15, 23, 42, 0.4), 0 4px 8px rgba(15, 23, 42, 0.1);
+    --shadow:
+        0 10px 30px rgba(15, 23, 42, 0.4), 0 4px 8px rgba(15, 23, 42, 0.1);
     --soft-shadow: 0 10px 20px rgba(15, 23, 42, 0.2);
 }
 /* -------------------------
@@ -110,8 +111,8 @@ a:hover {
     margin: 0 auto;
     padding: 0 16px;
 }
+
 .full-width {
-    width: 100%;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -119,6 +120,7 @@ a:hover {
     padding: 1.25rem;
     margin: 0 auto 18px;
 }
+
 .section-title {
     font-size: 1.4rem;
     display: flex;
@@ -264,6 +266,29 @@ a:hover {
     background: var(--primary);
     color: var(--white);
 }
+/* OUTLINE PRIMARY */
+.btn-outline-primary {
+    background: transparent;
+    color: var(--primary);
+    border: 1px solid var(--primary);
+}
+
+.btn-outline-primary:hover {
+    background: var(--primary);
+    color: var(--white);
+}
+
+/* OUTLINE SECONDARY */
+.btn-outline-secondary {
+    background: transparent;
+    color: var(--secondary);
+    border: 1px solid var(--secondary);
+}
+
+.btn-outline-secondary:hover {
+    background: var(--secondary);
+    color: var(--white);
+}
 
 .btn-success {
     background: var(--success);
@@ -328,12 +353,16 @@ input {
     box-shadow: var(--soft-shadow);
     padding: 8px;
     border: 1px solid var(--border);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    transition:
+        transform 0.3s ease,
+        box-shadow 0.3s ease;
 }
 
 .card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.08), 0 3px 10px rgba(0, 0, 0, 0.04);
+    box-shadow:
+        0 15px 30px rgba(0, 0, 0, 0.08),
+        0 3px 10px rgba(0, 0, 0, 0.04);
 }
 
 .gradient {

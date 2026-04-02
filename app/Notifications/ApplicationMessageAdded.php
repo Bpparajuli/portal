@@ -32,7 +32,7 @@ class ApplicationMessageAdded extends Notification
     public function via($notifiable)
     {
         // Send to database and optionally email
-        return ['database'];
+        return ['database','mail'];
     }
 
     /**

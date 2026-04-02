@@ -142,3 +142,43 @@ RESPONSIVE
         width: 100%;
     }
 }
+
+/* =========================
+SHOW BLADE 
+========================= */
+.file-box {
+    width: 100%; /* width handled by grid */
+    aspect-ratio: 4/4; /* keeps height proportional to width */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    position: relative;
+    background-color: #f8f9fa;
+}
+
+.file-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain; /* scale image proportionally */
+}
+
+.file-box .file-preview,
+.file-box .no-logo {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+.file-box .badge {
+    position: absolute;
+    bottom: 5px;
+}

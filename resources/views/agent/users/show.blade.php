@@ -1,162 +1,158 @@
 @extends('layouts.agent')
 
 @section('content')
+<style>
+    .file-box {
+        width: 100%;
+        /* width handled by grid */
+        aspect-ratio: 4/4;
+        /* keeps height proportional to width */
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        position: relative;
+        background-color: #f8f9fa;
+    }
 
-<div class="container py-4">
+    .file-box img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        /* scale image proportionally */
+    }
+
+    .file-box .file-preview,
+    .file-box .no-logo {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+    }
+
+    .file-box .badge {
+        position: absolute;
+        bottom: 5px;
+    }
+
+</style>
+
+<div class="container-fluid py-4">
 
     {{-- Profile Header --}}
     <div class="card mb-4 shadow-sm">
-        <div class="card-body d-flex justify-content-between align-items-center">
-
-            {{-- User Info --}}
-            <div>
-                <h3 class="mb-1">{{ $user->business_name ?? $user->username }}</h3>
-                <p class="mb-0"><strong>Owner:</strong> {{ $user->owner_name ?? 'N/A' }}</p>
-                <p class="mb-0"><strong>Contact:</strong> {{ $user->contact ?? 'N/A' }}</p>
-                <p class="mb-0"><strong>Email:</strong> {{ $user->email }}</p>
-                <p class="mb-0"><strong>Address:</strong> {{ $user->address }}</p>
-            </div>
-
-            {{-- Files Section --}}
-            <div class="d-flex align-items-start gap-3">
-                {{-- Registration --}}
-                <div class="registration position-relative" style="width:180px; height:200px; display:flex; flex-direction:column; align-items:center; justify-content:center;">
-                    @if($user->registration)
-                    @php
-                    $regUrl = Storage::url($user->registration);
-                    $regExt = strtolower(pathinfo($user->registration, PATHINFO_EXTENSION));
-                    $isRegImage = in_array($regExt, ['jpg','jpeg','png','gif','webp','bmp']);
-                    @endphp
-                    @if($isRegImage)
-                    <img src="{{ $regUrl }}" alt="Registration" class="rounded border shadow-sm" style="max-height:150px;">
-                    @else
-                    <a href="{{ $regUrl }}" target="_blank">
-                        <div class="file-preview p-2 border rounded shadow-sm text-center" style="width:100%;">
-                            <i class="fas fa-file-alt fa-2x mb-1"></i><br>
-                            <span>{{ basename($user->registration) }}</span>
-                        </div>
-                    </a>
-                    @endif
-                    @else
-                    <div class="no-logo text-center border rounded shadow-sm" style="width:100%; height:150px; display:flex; align-items:center; justify-content:center;">
-                        Registration not uploaded
-                    </div>
-                    @endif
+        <div class="card-body">
+            <div class="row">
+                {{-- User Info --}}
+                <div class="col-lg-4 col-md-12 mb-3">
+                    <h3 class="bg-secondary text-white p-1 mb-1 rounded">{{ $user->business_name ?? $user->username }}</h3>
+                    <p class="mb-0"><strong>Owner:</strong> {{ $user->owner_name ?? 'N/A' }}</p>
+                    <p class="mb-0"><strong>Contact:</strong> {{ $user->contact ?? 'N/A' }}</p>
+                    <p class="mb-0"><strong>Email:</strong> {{ $user->email }}</p>
+                    <p class="mb-0"><strong>Address:</strong> {{ $user->address }}</p>
                 </div>
 
-                {{-- PAN --}}
-                <div class="pan position-relative" style="width:180px; height:200px; display:flex; flex-direction:column; align-items:center; justify-content:center;">
-                    @if($user->pan)
-                    @php
-                    $panUrl = Storage::url($user->pan);
-                    $panExt = strtolower(pathinfo($user->pan, PATHINFO_EXTENSION));
-                    $isPanImage = in_array($panExt, ['jpg','jpeg','png','gif','webp','bmp']);
-                    @endphp
-                    @if($isPanImage)
-                    <img src="{{ $panUrl }}" alt="PAN" class="rounded border shadow-sm" style="max-height:150px;">
-                    @else
-                    <a href="{{ $panUrl }}" target="_blank">
-                        <div class="file-preview p-2 border rounded shadow-sm text-center" style="width:100%;">
-                            <i class="fas fa-file-alt fa-2x mb-1"></i><br>
-                            <span>{{ basename($user->pan) }}</span>
+                {{-- Files Section --}}
+                <div class="col-lg-8 col-md-12">
+                    <div class="row g-3">
+                        @php
+                        $files = [
+                        ['label' => 'Registration', 'file' => $user->registration, 'status' => null],
+                        ['label' => 'PAN', 'file' => $user->pan, 'status' => null],
+                        ['label' => 'Agreement', 'file' => $user->agreement_file, 'status' => $user->agreement_status ?? 'not_uploaded'],
+                        ['label' => 'Logo', 'file' => $user->business_logo, 'status' => $user->active ? 'Active' : 'Inactive'],
+                        ];
+                        @endphp
+
+                        @foreach($files as $f)
+                        <div class="col-lg-3 col-md-4 col-sm-6 col-6">
+                            <div class="file-box">
+                                @if($f['file'])
+                                @php
+                                $fileUrl = Storage::url($f['file']);
+                                $ext = strtolower(pathinfo($f['file'], PATHINFO_EXTENSION));
+                                $isImage = in_array($ext, ['jpg','jpeg','png','gif','webp','bmp']);
+                                @endphp
+
+                                @if($isImage)
+                                <a href="{{ $fileUrl }}" target="_blank">
+                                    <img src="{{ $fileUrl }}" alt="{{ $f['label'] }}">
+                                </a>
+                                @else
+                                <a href="{{ $fileUrl }}" target="_blank">
+                                    <div class="file-preview">
+                                        <i class="fas fa-file-alt fa-2x mb-1"></i>
+                                        <span>{{ basename($f['file']) }}</span>
+                                    </div>
+                                </a>
+                                @endif
+                                @else
+                                <div class="no-logo">{{ $f['label'] }} not uploaded</div>
+                                @endif
+
+                                {{-- Badge --}}
+                                @if($f['status'])
+                                <span class="badge 
+                                            @if($f['status'] == 'verified' || $f['status'] === 'Active') bg-success
+                                            @elseif($f['status'] == 'not_uploaded') bg-warning
+                                            @else bg-primary
+                                            @endif">
+                                    {{ ucfirst($f['status']) }}
+                                </span>
+                                @endif
+                            </div>
                         </div>
-                    </a>
-                    @endif
-                    @else
-                    <div class="no-logo text-center border rounded shadow-sm" style="width:100%; height:150px; display:flex; align-items:center; justify-content:center;">
-                        PAN not uploaded
+                        @endforeach
                     </div>
-                    @endif
-                </div>
-
-                {{-- Agreement --}}
-                <div class="agreement position-relative" style="width:180px; height:200px; display:flex; flex-direction:column; align-items:center; justify-content:center;">
-                    @if($user->agreement_file)
-                    @php
-                    $agrUrl = Storage::url($user->agreement_file);
-                    $agrExt = strtolower(pathinfo($user->agreement_file, PATHINFO_EXTENSION));
-                    $isAgrImage = in_array($agrExt, ['jpg','jpeg','png','gif','webp','bmp']);
-                    @endphp
-                    @if($isAgrImage)
-                    <img src="{{ $agrUrl }}" alt="Agreement" class="rounded border shadow-sm" style="max-height:150px;">
-                    @else
-                    <a href="{{ $agrUrl }}" target="_blank">
-                        <div class="file-preview p-2 border rounded shadow-sm text-center" style="width:100%;">
-                            <i class="fas fa-file-alt fa-2x mb-1"></i><br>
-                            <span>{{ basename($user->agreement_file) }}</span>
-                        </div>
-                    </a>
-                    @endif
-                    @else
-                    <div class="no-logo text-center border rounded shadow-sm" style="width:100%; height:150px; display:flex; align-items:center; justify-content:center;">
-                        Agreement not uploaded
-                    </div>
-                    @endif
-
-                    {{-- Agreement Status Badge --}}
-                    <span class="badge 
-                @if($user->agreement_status == 'verified') bg-success
-                @elseif($user->agreement_status == 'not_uploaded') bg-warning
-                @else bg-primary
-                @endif" style="position:absolute; bottom:20px;">
-                        {{ ucfirst($user->agreement_status) }}
-                    </span>
-                </div>
-
-                {{-- Business Logo --}}
-                <div class="logo position-relative" style="width:180px; height:200px; display:flex; flex-direction:column; align-items:center; justify-content:center;">
-                    @if($user->business_logo)
-                    <img src="{{ Storage::url($user->business_logo) }}" alt="Logo" class="rounded border shadow-sm" style="max-height:150px;">
-                    @else
-                    <div class="no-logo text-center border rounded shadow-sm" style="width:100%; height:150px; display:flex; align-items:center; justify-content:center;">
-                        No Logo
-                    </div>
-                    @endif
-                    {{-- User Active Status --}}
-                    <span class="badge {{ $user->active ? 'bg-success' : 'bg-secondary' }} mt-2" style="position:absolute; bottom:20px;">
-                        {{ $user->active ? 'Active' : 'Inactive' }}
-                    </span>
                 </div>
             </div>
 
-        </div>
-        {{-- Stats Section --}}
-        <div class="d-flex justify-content-between align-items-center mt-3">
-            <div class="stats-row">
-                <a href="{{ route('agent.students.index') }}" class="stat-link">
-                    <div class="stat-card">
-                        <div class="stat-left">
-                            <h6>Total Students</h6>
-                            <h4>{{ $user->students->count() }}</h4>
+            {{-- Stats Row --}}
+            <div class="row mt-3 align-items-center">
+                <div class="col-md-8 d-flex flex-wrap gap-2">
+                    <a href="{{ route('agent.students.index', $user->slug) }}" class="stat-link">
+                        <div class="stat-card">
+                            <div class="stat-left">
+                                <h6>Total Students</h6>
+                                <h4>{{ $user->students->count() }}</h4>
+                            </div>
+                            <div class="icon text-primary"><i class="fa fa-users"></i></div>
                         </div>
-                        <div class="icon text-primary"><i class="fa fa-users"></i></div>
-                    </div>
-                </a>
-                <a href="{{ route('agent.applications.index') }}" class="stat-link">
-                    <div class="stat-card">
-                        <div class="stat-left">
-                            <h6>Applications Submitted</h6>
-                            <h4>{{ $user->applications->count() }}</h4>
+                    </a>
+                    <a href="{{ route('agent.applications.index', $user->slug) }}" class="stat-link">
+                        <div class="stat-card">
+                            <div class="stat-left">
+                                <h6>Applications Submitted</h6>
+                                <h4>{{ $user->applications->count() }}</h4>
+                            </div>
+                            <div class="icon text-secondary"><i class="fa fa-vcard"></i></div>
                         </div>
-                        <div class="icon text-secondary"><i class="fa fa-vcard"></i></div>
-                    </div>
-                </a>
-                <a href="#" class="stat-link">
-                    <div class="stat-card">
-                        <div class="stat-left">
-                            <h6>Total Documents</h6>
-                            <h4>{{ $user->documents->count() }}</h4>
+                    </a>
+                    <a href="#" class="stat-link">
+                        <div class="stat-card">
+                            <div class="stat-left">
+                                <h6>Total Documents</h6>
+                                <h4>{{ $user->documents->count() }}</h4>
+                            </div>
+                            <div class="icon text-primary"><i class="fa fa-university"></i></div>
                         </div>
-                        <div class="icon text-primary"><i class="fa fa-university"></i></div>
-                    </div>
-                </a>
-            </div>
-            {{-- Edit Button --}}
-            <div class="mt-2 align-right">
-                <a href="{{ route('agent.users.edit', $user->slug) }}" class="btn btn-primary btn-sm">✏️ Edit Profile</a>
+                    </a>
+                </div>
+
+                <div class="col-md-4 text-md-end mt-2 mt-md-0">
+                    <a href="{{ route('agent.users.edit', $user->slug) }}" class="btn btn-primary btn-sm">✏️ Edit Profile</a>
+                </div>
             </div>
         </div>
     </div>
+
 
     {{-- Students List --}}
     <div class="card mb-4 shadow-sm">

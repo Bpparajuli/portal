@@ -56,7 +56,7 @@ class StudentAdded extends Notification
 
         ActivityLogger::log(
             'student_added',
-            "ðŸ‘¤ Student added: {$this->student->first_name} {$this->student->last_name} by {$this->agent->business_name}",
+            "👤 Student added: {$this->student->first_name} {$this->student->last_name} by {$this->agent->business_name}",
             $this->student->id,
             $link,
             $this->agent->id

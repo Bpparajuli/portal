@@ -12,7 +12,13 @@
             <small class="text-muted">
                 Agent: <a href="{{ route('admin.users.show', $student->agent->id) }}">{{ $student->agent->business_name }}</a> |
                 <a href="{{ route('admin.students.show', $student->id) }}">View Student</a> |
-                <a href="{{ route('admin.applications.index') }}?student_id={{ $student->id }}">View Applications</a>
+                 
+                @if($student->applications->count())
+                            <a href="{{ route('admin.students.applications', $student->id) }}">View Applications</a>
+                            @else
+                            0
+                            @endif
+                
             </small>
         </div>
         <a href="{{ route('admin.documents.downloadAll', $student->id) }}" class="btn btn-success btn-md">

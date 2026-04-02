@@ -60,7 +60,7 @@ class DocumentDeleted extends Notification
 
         ActivityLogger::log(
             'document_deleted',
-            "ðŸš® {$doc->document_type} deleted for {$this->student->first_name} {$this->student->last_name}",
+            "🚮 {$doc->document_type} deleted for {$this->student->first_name} {$this->student->last_name}",
             $this->student->id,
             $link,
             $this->agent->id

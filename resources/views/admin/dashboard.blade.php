@@ -124,8 +124,10 @@
                 <table class="table table-striped table-hover table-borderless align-middle">
                     <thead class="table-light">
                         <tr>
+                            <th>ID</th>
                             <th>Applicant</th>
                             <th>Agent</th>
+                            <th>Created</th>
                             <th>Course</th>
                             <th>University</th>
                             <th>Status</th>
@@ -135,15 +137,20 @@
                     <tbody>
                         @forelse($latestApplications as $app)
                         <tr>
+                             <td>{{ $app->id }}</td>
                             <td>
-                                <a href="{{ route('admin.students.show', $app->student->id) }}">
+                                <a href="{{ route('admin.students.show', $app->student->id) }}"class="text-decoration-none fw-semibold">
                                     {{ $app->student->first_name ?? 'N/A' }} {{ $app->student->last_name ?? 'N/A' }}
                                 </a>
                             </td>
                             <td>
-                                <a href="{{ route('admin.users.show', $app->agent->slug) }}">
-                                    {{ $app->agent->name ?? 'N/A' }}
-                                </a>
+                            <a href="{{ route('admin.users.show', $app->agent->slug) }}" class="text-decoration-none fw-semibold">
+                                {{ $app->agent->business_name }}
+                            </a>
+                        </td>
+                             
+                             <td>
+                                {{ $app->created_at->timezone('Asia/Kathmandu')->format('d M Y') }}
                             </td>
                             <td>{{ $app->course->title ?? 'N/A' }}</td>
                             <td>{{ $app->university->name ?? 'N/A' }}</td>
@@ -159,6 +166,8 @@
                                     <a href="{{ route('admin.applications.edit', $app->id) }}" class="p-2 btn btn-sm secondary">Edit</a>
                                 </div>
                             </td>
+                           
+
                         </tr>
                         @empty
                         <tr>

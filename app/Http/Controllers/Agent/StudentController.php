@@ -8,26 +8,33 @@ use App\Models\Student;
 use App\Models\User;
 use App\Models\University;
 use App\Models\Course;
-use App\Models\Application;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Notification;
 use App\Notifications\StudentAdded;
 use App\Notifications\StudentDeleted;
 use Illuminate\Pagination\LengthAwarePaginator;
+use App\Services\FileUploadService;
 
 class StudentController extends Controller
 {
     // -------------------------------
-    // List students for logged-in agent with filters
+    // List students with filters
     // -------------------------------
     public function index(Request $request)
     {
-        $filters = $request->only(['search', 'country', 'university', 'application_status', 'document_status']);
+        $filters = $request->only([
+            'search',
+            'country',
+            'university',
+            'application_status',
+            'document_status'
+        ]);
 
         $query = Student::with(['applications', 'documents'])
             ->where('agent_id', Auth::id());
 
+        // 🔍 Search
         if (!empty($filters['search'])) {
             $query->where(function ($q) use ($filters) {
                 $q->where('first_name', 'like', '%' . $filters['search'] . '%')
@@ -35,16 +42,19 @@ class StudentController extends Controller
             });
         }
 
+        // 🌍 Country filter
         if (!empty($filters['country'])) {
             $query->where('preferred_country', $filters['country']);
         }
 
+        // 🎓 University filter
         if (!empty($filters['university'])) {
             $query->whereHas('applications', function ($q) use ($filters) {
                 $q->where('university_id', $filters['university']);
             });
         }
 
+        // 📊 Application status
         if (!empty($filters['application_status'])) {
             $query->whereHas('applications', function ($q) use ($filters) {
                 $q->where('application_status', $filters['application_status']);
@@ -53,10 +63,13 @@ class StudentController extends Controller
 
         $perPage = 15;
 
+        // 📂 Document status filter (custom logic)
         if (!empty($filters['document_status'])) {
+
             $all = $query->orderBy('created_at', 'desc')->get();
 
             $filtered = $all->filter(function ($student) use ($filters) {
+
                 $requiredDocs = ['passport', 'id', 'transcript', 'financial', 'other'];
 
                 $uploadedTypes = $student->documents->pluck('document_type')
@@ -74,10 +87,9 @@ class StudentController extends Controller
             });
 
             $page = LengthAwarePaginator::resolveCurrentPage();
-            $itemsForCurrentPage = $filtered->slice(($page - 1) * $perPage, $perPage)->values();
 
             $students = new LengthAwarePaginator(
-                $itemsForCurrentPage,
+                $filtered->slice(($page - 1) * $perPage, $perPage)->values(),
                 $filtered->count(),
                 $perPage,
                 $page,
@@ -87,9 +99,12 @@ class StudentController extends Controller
                 ]
             );
         } else {
-            $students = $query->orderBy('created_at', 'desc')->paginate($perPage)->withQueryString();
+            $students = $query->orderBy('created_at', 'desc')
+                ->paginate($perPage)
+                ->withQueryString();
         }
 
+        // 🌍 Country list
         $countries = Student::where('agent_id', Auth::id())
             ->select('preferred_country')
             ->distinct()
@@ -99,11 +114,7 @@ class StudentController extends Controller
 
         $universities = University::orderBy('name')->get();
 
-        return view('agent.students.index', [
-            'students' => $students,
-            'countries' => $countries,
-            'universities' => $universities,
-        ]);
+        return view('agent.students.index', compact('students', 'countries', 'universities'));
     }
 
     // -------------------------------
@@ -127,18 +138,28 @@ class StudentController extends Controller
         $data = $this->validateStudent($request);
         $data['agent_id'] = Auth::id();
 
+        // ✅ Create student first
         $student = Student::create($data);
 
+        // ✅ Upload photo via service
         if ($request->hasFile('students_photo')) {
-            $student->students_photo = $this->uploadPhoto($request->file('students_photo'), $student);
+            $student->students_photo = FileUploadService::uploadStudentFile(
+                $request->file('students_photo'),
+                Auth::user(),
+                $student,
+                'photo'
+            );
             $student->save();
         }
 
-        // Notify Admin (ID=6)
+        // 🔔 Notify Admin (adjust ID later)
         $admin = User::find(6);
-        Notification::send($admin, new StudentAdded(Auth::user(), $student));
+        if ($admin) {
+            Notification::send($admin, new StudentAdded(Auth::user(), $student));
+        }
 
-        return redirect()->route('agent.students.index')->with('success', 'Student created successfully.');
+        return redirect()->route('agent.students.index')
+            ->with('success', 'Student created successfully.');
     }
 
     // -------------------------------
@@ -147,8 +168,10 @@ class StudentController extends Controller
     public function show(Student $student)
     {
         $this->authorizeStudent($student);
+
         $documents = $student->documents;
         $applications = $student->applications;
+
         return view('agent.students.show', compact('student', 'documents', 'applications'));
     }
 
@@ -158,6 +181,7 @@ class StudentController extends Controller
     public function edit(Student $student)
     {
         $this->authorizeStudent($student);
+
         return view('agent.students.edit', [
             'student' => $student,
             'universities' => University::all(),
@@ -172,11 +196,18 @@ class StudentController extends Controller
     public function update(Request $request, Student $student)
     {
         $this->authorizeStudent($student);
+
         $data = $this->validateStudent($request, $student->id);
         $student->update($data);
 
+        // ✅ Update photo using service
         if ($request->hasFile('students_photo')) {
-            $student->students_photo = $this->uploadPhoto($request->file('students_photo'), $student);
+            $student->students_photo = FileUploadService::uploadStudentFile(
+                $request->file('students_photo'),
+                Auth::user(),
+                $student,
+                'photo'
+            );
             $student->save();
         }
 
@@ -191,37 +222,35 @@ class StudentController extends Controller
     {
         $this->authorizeStudent($student);
 
-        // Notify Admin about deletion
+        // 🔔 Notify Admin
         $admin = User::find(6);
-        Notification::send($admin, new StudentDeleted(Auth::user(), $student));
+        if ($admin) {
+            Notification::send($admin, new StudentDeleted(Auth::user(), $student));
+        }
 
-        if ($student->students_photo && Storage::disk('public')->exists($student->students_photo)) {
-            Storage::disk('public')->delete($student->students_photo);
+        // ✅ Delete entire student folder
+        $agentSlug = Auth::user()->slug;
+
+        $studentName = strtolower(str_replace(' ', '-', $student->first_name . '-' . $student->last_name));
+
+        $folder = "agents/{$agentSlug}/{$studentName}";
+
+        if (Storage::disk('public')->exists($folder)) {
+            Storage::disk('public')->deleteDirectory($folder);
         }
 
         $student->delete();
 
-        return redirect()->route('agent.students.index')->with('success', 'Student deleted successfully.');
+        return redirect()->route('agent.students.index')
+            ->with('success', 'Student deleted successfully.');
     }
 
     // -------------------------------
-    // Helper: Upload photo
-    // -------------------------------
-    private function uploadPhoto($file, Student $student)
-    {
-        $agent_name = str_replace(' ', '_', strtolower(Auth::user()->username ?? Auth::user()->business_name));
-        $student_name = str_replace(' ', '_', strtolower($student->first_name . '_' . $student->last_name));
-        $folderPath = "agents/{$agent_name}/{$student_name}";
-        $filename = "student_photo." . $file->getClientOriginalExtension();
-        return $file->storeAs($folderPath, $filename, 'public');
-    }
-
-    // -------------------------------
-    // Helper: Validate Student
+    // Validation
     // -------------------------------
     private function validateStudent(Request $request, $id = null)
     {
-        $rules = [
+        return $request->validate([
             'first_name'        => 'required|string|max:255',
             'last_name'         => 'required|string|max:255',
             'dob'               => 'nullable|date',
@@ -247,13 +276,11 @@ class StudentController extends Controller
             'notes'             => 'nullable|string',
             'follow_up_date'    => 'nullable|date',
             'students_photo'    => 'nullable|image|mimes:jpg,jpeg,png|max:5120'
-        ];
-
-        return $request->validate($rules);
+        ]);
     }
 
     // -------------------------------
-    // Helper: Authorization
+    // Authorization
     // -------------------------------
     private function authorizeStudent(Student $student)
     {

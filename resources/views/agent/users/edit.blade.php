@@ -22,7 +22,7 @@
                     <div class="col-md-4">
                         <!-- Business Logo -->
                         <div class="d-flex gap-1 align-items-center mb-2">
-                            <img id="logoPreview" src="{{ $user->business_logo ? Storage::url($user->business_logo) : 'https://placehold.co/100?text=Logo' }}" class="rounded border shadow-sm" width="100" height="100">
+                            <img id="logoPreview" src="{{ $user->business_logo ? Storage::url($user->business_logo) : 'https://placehold.co/100?text=No Logo' }}" class="rounded border shadow-sm" width="100" height="100">
                             <div>
                                 <label class="fw-bold d-block mb-1">Business Logo</label>
                                 <input type="file" name="business_logo" class="form-control" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif,.bmp,.tiff,.webp,image/*" onchange="previewImage(this, 'logoPreview')">
@@ -32,7 +32,7 @@
                         <!-- Registration File -->
                         <div class="d-flex gap-1 align-items-center mb-2">
                             <a href="{{ Storage::url($user->registration) }}" target="_blank">
-                                <img id="regPreview" src="{{ $user->registration ? Storage::url($user->registration) : 'https://placehold.co/100?text=File'}}" class="rounded border shadow-sm" width="100" height="100">
+                                <img id="regPreview" src="{{ $user->registration ? Storage::url($user->registration) : 'https://placehold.co/100?text=No File'}}" class="rounded border shadow-sm" width="100" height="100">
                             </a>
                             <div>
                                 <label class="fw-bold d-block mb-1">Registration File</label>
@@ -46,7 +46,7 @@
                         <!-- PAN File -->
                         <div class="d-flex gap-1 align-items-center mb-2">
                             <a href="{{ Storage::url($user->pan) }}" target="_blank">
-                                <img id="panPreview" src="{{ $user->pan ? Storage::url($user->pan) : 'https://placehold.co/100?text=File'}}" class="rounded border shadow-sm" width="100" height="100">
+                                <img id="panPreview" src="{{ $user->pan ? Storage::url($user->pan) : 'https://placehold.co/100?text=No File'}}" class="rounded border shadow-sm" width="100" height="100">
                             </a>
                             <div>
                                 <label class="fw-bold d-block mb-1">PAN Registration</label>
@@ -56,13 +56,43 @@
                         <hr>
 
                         <!-- Agreement File -->
-                        <div class="d-flex gap-1 align-items-center mb-2">
-                            <a href="{{ Storage::url($user->agreement_file) }}" target="_blank">
-                                <img id="agreementPreview" src="{{ $user->agreement_file ? Storage::url($user->agreement_file) : 'https://placehold.co/100?text=File'}}" class="rounded border shadow-sm" width="100" height="100">
-                            </a>
+                        <div class="d-flex gap-2 align-items-center mb-2">
+                            @php
+                            $file = $user->agreement_file;
+                            $url = $file ? Storage::url($file) : null;
+                            $ext = $file ? strtolower(pathinfo($file, PATHINFO_EXTENSION)) : null;
+                            $isImage = in_array($ext, ['jpg','jpeg','png','gif','webp','bmp']);
+                            @endphp
+
+                            <!-- Preview -->
+                            <div class="file-box" style="width:100px; height:100px;">
+                                @if($file)
+                                @if($isImage)
+                                <a href="{{ $url }}" target="_blank">
+                                    <img src="{{ $url }}" alt="Agreement" style="width:100%; height:100%; object-fit:contain;">
+                                </a>
+                                @else
+                                <a href="{{ $url }}" target="_blank">
+                                    <div class="file-preview d-flex flex-column justify-content-center align-items-center h-100">
+                                        <i class="fas fa-file-alt fa-2x mb-1"></i>
+                                        <span class="small text-center">{{ basename($file) }}</span>
+                                    </div>
+                                </a>
+                                @endif
+                                @else
+                                <div class="no-logo d-flex justify-content-center align-items-center h-100 text-center">
+                                    No File
+                                </div>
+                                @endif
+                            </div>
+
+                            <!-- File Input -->
                             <div>
                                 <label class="fw-bold d-block mb-1">Agreement File</label>
-                                <input type="file" name="agreement_file" class="form-control" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif,.bmp,.tiff,.webp,image/*" onchange="previewImage(this, 'agreementPreview')">
+                                <input type="file" name="agreement_file" class="form-control" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif,.bmp,.tiff,.webp,image/*">
+                                @if($file)
+                                <small class="text-muted">Existing file: {{ basename($file) }}</small>
+                                @endif
                             </div>
                         </div>
 

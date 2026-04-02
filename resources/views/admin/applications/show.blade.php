@@ -164,19 +164,41 @@
 
                     <div class="d-flex mb-3 {{ $isAgent ? 'justify-content-start' : 'justify-content-end' }} align-items-center">
 
-                        {{-- 💬 MESSAGE BUBBLE --}}
+                        {{-- MESSAGE BUBBLE --}}
                         <div class="position-relative p-2 rounded" style="max-width:70%; background-color:{{ $bubbleBg }}; color:{{ $bubbleClr }};">
 
+                            {{-- TEXT --}}
+                            @if($m->message)
                             <p class="mb-1">{{ $m->message }}</p>
+                            @endif
+
+                            {{-- FILE ATTACHMENT --}}
+                            @if($m->file_path)
+                            <div class="mt-2">
+
+                                {{-- Image preview --}}
+                                @if(str_contains($m->file_type,'image'))
+                                <img src="{{ asset('storage/'.$m->file_path) }}" class="rounded mb-2" width="180">
+                                @endif
+
+                                {{-- Download link --}}
+                                <a href="{{ asset('storage/'.$m->file_path) }}" download class="d-block">
+                                    📎 {{ $m->file_name }}
+                                </a>
+                            </div>
+                            @endif
+
+                            {{-- META --}}
                             <small>
                                 <b>{{ $m->user->name ?? 'Unknown' }}</b> •
-                                {{ $m->created_at->format('d M Y, H:i') }}
+                                {{ $m->created_at->timezone('Asia/Kathmandu')->format('d M Y, H:i') }}
                             </small>
                         </div>
 
-                        {{-- 🗑 DELETE BUTTON (right for left bubbles, left for right bubbles) --}}
+                        {{-- DELETE BUTTON --}}
                         @if(auth()->user()->is_admin || auth()->id() === $m->user_id)
                         <form action="{{ route('admin.applications.messages.delete', [$application->id, $m->id]) }}" method="POST" onsubmit="return confirm('Delete this message?')" class="ms-2 me-2">
+
                             @csrf
                             @method('DELETE')
 
@@ -191,15 +213,25 @@
                     <p class="text-muted">No messages yet.</p>
                     @endforelse
 
-                </div>{{-- Add new message --}}
-                <form method="POST" action="{{ route('admin.applications.addMessage', $application->id) }}">
+                </div>
+                {{-- Add Message --}}
+                <form method="POST" action="{{ route('admin.applications.addMessage', $application->id) }}" enctype="multipart/form-data">
                     @csrf
-                    <div class="d-flex">
-                        <textarea name="message" class="form-control me-2" rows="2" placeholder="Add a message..." required></textarea>
+                    <div class="d-flex gap-2 align-items-start">
+                        <label class="btn btn-outline-secondary mb-0">
+                            <i class="fa fa-paperclip"></i>
+                            <input type="file" name="attachment" hidden>
+                        </label>
+                        <div class="d-flex flex-grow-1">
+                            <textarea name="message" class="form-control" rows="2" placeholder="Type a message..."></textarea>
+                            <div class="attachment-preview mt-1"></div>
+                        </div>
                         <button type="submit" class="btn btn-success btn-sm">Send</button>
                     </div>
                 </form>
+
             </div>
+
 
         </div>
 
@@ -240,4 +272,42 @@
     </div>
 </div>
 </div>
+{{-- JS for File Preview --}}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const fileInput = document.querySelector('input[name="attachment"]');
+        const messageBox = document.querySelector('textarea[name="message"]');
+        const previewContainer = document.querySelector('.attachment-preview');
+
+        if (fileInput) {
+            fileInput.addEventListener('change', function(e) {
+                previewContainer.innerHTML = '';
+                const file = this.files[0];
+                if (!file) return;
+                const fileType = file.type;
+                const fileName = file.name;
+
+                if (fileType.startsWith('image/')) {
+                    const img = document.createElement('img');
+                    img.src = URL.createObjectURL(file);
+                    img.style.width = '150px';
+                    img.style.marginBottom = '5px';
+                    img.classList.add('rounded');
+                    previewContainer.appendChild(img);
+                }
+
+                const link = document.createElement('div');
+                link.textContent = '📎 ' + fileName;
+                previewContainer.appendChild(link);
+            });
+        }
+
+        // Auto scroll chat to bottom
+        const thread = document.querySelector('.remarks-thread');
+        if (thread) {
+            thread.scrollTop = thread.scrollHeight;
+        }
+    });
+
+</script>
 @endsection
