@@ -30,6 +30,7 @@ class UserController extends Controller
     public function index(Request $request)
     {
         $query = User::query();
+        $query->withCount(['students', 'applications']);
 
         // Track active filters
         $activeFilters = [];
@@ -109,7 +110,7 @@ class UserController extends Controller
                 $query->orderBy('created_at', 'desc');
                 break;
             default:
-                $query->orderBy('created_at', 'desc');
+                $query->orderByRaw('(COALESCE(students_count, 0) + COALESCE(applications_count, 0)) DESC');
         }
 
         // Handle export
@@ -143,7 +144,7 @@ class UserController extends Controller
         } elseif ($role === 'agent') {
             $agents = (clone $query)->where('role', 'agent')
                 ->withCount(['students', 'applications'])
-                ->paginate(20, ['*'], 'agent_page')
+                ->paginate(100, ['*'], 'agent_page')
                 ->withQueryString();
             $admins = collect();
             $staffs = collect();
@@ -163,7 +164,7 @@ class UserController extends Controller
 
             $agents = (clone $query)->where('role', 'agent')
                 ->withCount(['students', 'applications'])
-                ->paginate(20, ['*'], 'agent_page')
+                ->paginate(100, ['*'], 'agent_page')
                 ->withQueryString();
 
             $staffs = (clone $query)->where('role', 'staff')
@@ -342,7 +343,7 @@ class UserController extends Controller
 
         $studentActivities = Activity::where('user_id', $user->id)
             ->whereIn('type', ['student_added', 'student_deleted'])
-            ->latest()->take(7)->get();
+            ->latest()->take(5)->get();
 
         $documentActivities = Activity::where('user_id', $user->id)
             ->whereIn('type', ['document_uploaded', 'document_deleted'])
@@ -493,8 +494,8 @@ class UserController extends Controller
 
         $this->assignUserFields($user, $request);
 
-        $user->active = $request->has('status') ? 1 : 0;
-
+        // Replace the status line with this:
+        $user->active = $request->input('status', 0) == 1 ? 1 : 0;
         // Update contact and address
         if ($request->filled('contact')) {
             $user->contact = $request->contact;
@@ -562,8 +563,9 @@ class UserController extends Controller
      */
     public function destroy(User $user)
     {
-        if (!in_array(Auth::id(), [1])) {
-            return back()->with('error', 'Only super admin can delete.');
+        // Allow only Admin 1 and Admin 2
+        if (!in_array(Auth::id(), [1, 2])) {
+            return back()->with('error', 'Unauthorized action.');
         }
 
         // Prevent self-deletion
@@ -571,12 +573,19 @@ class UserController extends Controller
             return back()->with('error', 'You cannot delete your own account.');
         }
 
+        // Prevent deleting Super Admin (ID = 1)
+        if ($user->id == 1) {
+            return back()->with('error', 'Super admin cannot be deleted.');
+        }
+
+        // Delete files
         foreach (['business_logo', 'registration', 'pan', 'agreement_file'] as $file) {
             if ($user->$file && Storage::disk('public')->exists($user->$file)) {
                 Storage::disk('public')->delete($user->$file);
             }
         }
 
+        // Delete user
         $user->delete();
 
         return redirect()->route('admin.users.index')
@@ -637,7 +646,8 @@ class UserController extends Controller
 
         $user->notify(new AgreementVerified($user));
 
-        return redirect()->route('admin.users.waiting')->with('success', 'Agreement verified.');
+        return redirect()->route('admin.users.show', $user->slug)
+            ->with('success', 'Agreement verified.');
     }
 
     /**
@@ -702,7 +712,7 @@ class UserController extends Controller
         try {
             $parents = User::whereIn('role', ['admin', 'agent'])
                 ->where('active', 1)
-                ->select('id', 'name', 'business_name', 'role', 'email')
+                ->select('id', 'name', 'business_name', 'owner_name', 'role', 'email')  // ← Added owner_name
                 ->orderBy('role')
                 ->orderBy('business_name')
                 ->get();

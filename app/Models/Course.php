@@ -21,7 +21,7 @@ class Course extends Model
         'fee',
         'intakes',
         'ielts_pte_other_languages',
-        'moi_requirement',
+        'moi_acceptance',
         'application_fee',
         'scholarships',
     ];

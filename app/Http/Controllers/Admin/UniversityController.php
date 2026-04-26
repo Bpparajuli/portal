@@ -48,7 +48,10 @@ class UniversityController extends Controller
             $query->whereHas('courses', fn($q) => $q->where('id', $request->course_id));
         }
 
-        $universities = $query->paginate(16)->withQueryString();
+        $universities = $query
+            ->inRandomOrder()
+            ->paginate(40)
+            ->withQueryString();
         return view('admin.universities.index', compact('universities', 'countries'));
     }
 
@@ -210,7 +213,7 @@ class UniversityController extends Controller
         $university->save();
 
         return redirect()
-            ->route('admin.universities.index')
+            ->route('admin.universities.show', $university)
             ->with('success', 'University updated successfully!');
     }
 

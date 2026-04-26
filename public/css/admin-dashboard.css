@@ -4,7 +4,7 @@
 
 /* Dashboard Widgets */
 .widget-card {
-    background: linear-gradient(135deg, var(--gray) 0%, #f9f9ff 100%);
+    background: var(--light-gradient);
     display: flex;
     flex-direction: column;
     justify-content: space-between;

@@ -1,17 +1,19 @@
+/* =========================================
+    Dashboard.CSS - Dashboard for guest users
+   Fully Cleaned & Integrated
+========================================= */
 .dash-dashboard {
     display: flex;
     flex-direction: column;
     gap: 40px;
 }
 
-/* =========================
-   Hero Section
-========================= */
+/* Hero */
 .dash-hero {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: var(--active);
+    background: var(--light);
     color: var(--white);
     padding: 80px 40px;
     flex-wrap: wrap;
@@ -23,80 +25,65 @@
     flex-direction: column;
     gap: 1rem;
     text-align: left;
+    color: var(--secondary);
+    font-weight: bold;
 }
 .dash-hero-text h1 {
     font-size: 2.5rem;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    color: var(--primary);
+    text-shadow: 2px 2px 4px #1a02625b;
 }
 .dash-hero-buttons {
     display: flex;
     gap: 1rem;
 }
 
-/* =========================
-   Login Form Section
-========================= */
+/* Login panel inside hero */
 .dash-login-form {
     flex: 1.5;
     min-width: 300px;
-    background: var(--card);
+    background: var(--bg-card);
     padding: 25px;
     border-radius: 12px;
     color: var(--text-color);
-}
-.dash-form-group {
-    text-align: left;
 }
 .dash-form-group label {
     display: block;
     font-weight: bold;
     margin: 10px 0;
-    color: var(--text-color);
 }
 .dash-form-group input {
     width: 100%;
     padding: 10px;
     border-radius: 6px;
     border: 1px solid var(--border);
-    background: var(--white);
-    color: var(--text-color);
 }
 
-/* =========================
-   Features Section
-========================= */
+/* Feature cards */
 .dash-features {
     display: flex;
     gap: 20px;
     justify-content: space-between;
     align-items: stretch;
-    flex-wrap: wrap; /* allow wrapping on smaller screens */
+    flex-wrap: wrap;
     padding: 10px;
-    overflow: visible; /* remove horizontal scroll if you want all cards in a row */
 }
-
 .dash-feature-card {
-    background: var(--card);
+    background: var(--bg-card);
     padding: 25px;
     border-radius: 12px;
-    box-shadow: var(--soft-shadow);
+    box-shadow: var(--shadow-sm);
     text-align: center;
-
-    /* Flexible width: 4 cards per row */
-    flex: 1 1 calc(25% - 15px); /* 25% width minus half the gap */
-    min-width: 200px; /* prevents cards from shrinking too much */
-    box-sizing: border-box;
+    flex: 1 1 calc(25% - 15px);
+    min-width: 200px;
 }
-
 .dash-icon {
     font-size: 2rem;
     color: var(--primary);
     margin-bottom: 10px;
 }
 
-/* =========================
-   Countries Section
-========================= */
+/* Countries grid */
 .countries-section {
     padding: 1rem;
     background: var(--light);
@@ -142,19 +129,11 @@
     font-weight: bold;
     margin: 0;
 }
-.country-card.single {
-    grid-column: span 1;
-}
 .country-card.double {
     grid-column: span 2;
 }
 
-/* =========================
-   Programs Section
-========================= */
-.dash-programs-section {
-    margin-bottom: 20px;
-}
+/* Programs */
 .dash-programs-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -164,17 +143,14 @@
     background: var(--light);
     border-radius: 10px;
     padding: 20px;
-    box-shadow: var(--soft-shadow);
+    box-shadow: var(--shadow-sm);
 }
 
-/* =========================
-   Testimonials Section
-========================= */
+/* Testimonials */
 .dash-testimonials {
     padding: 4rem 2rem;
     background: var(--light);
     text-align: center;
-    font-family: "Poppins", sans-serif;
 }
 .testimonial-slider-container {
     position: relative;
@@ -191,7 +167,7 @@
 }
 .dash-testimonial-card {
     flex: 0 0 100%;
-    background: var(--card);
+    background: var(--bg-card);
     padding: 2.5rem 2rem;
     border-radius: 16px;
     text-align: center;
@@ -199,17 +175,6 @@
     display: flex;
     flex-direction: column;
     justify-content: center;
-}
-.dash-testimonial-card p {
-    font-size: 1.05rem;
-    line-height: 1.6;
-    color: var(--dark);
-    margin-bottom: 1.5rem;
-}
-.dash-testimonial-card h4 {
-    font-size: 1rem;
-    color: var(--muted);
-    font-weight: 500;
 }
 .slider-btn {
     position: absolute;
@@ -235,9 +200,7 @@
     right: -10px;
 }
 
-/* =========================
-   CTA Section
-========================= */
+/* CTA */
 .dash-cta {
     background: var(--active);
     color: var(--light);
@@ -258,8 +221,6 @@
     width: 100%;
     height: auto;
     display: block;
-    margin: 0;
-    padding: 0;
     border-radius: 12px;
 }
 .cta-right-section h2 {
@@ -273,14 +234,7 @@
     color: var(--white);
 }
 
-/* =========================
-   Universities Section
-========================= */
-.dash-universities {
-    padding: 1rem;
-    text-align: center;
-    background: var(--light);
-}
+/* University logo strip */
 .dash-university-slider {
     display: flex;
     gap: 2rem;
@@ -297,9 +251,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--card);
+    background: var(--bg-card);
     border-radius: 12px;
-    box-shadow: var(--soft-shadow);
+    box-shadow: var(--shadow-sm);
 }
 .dash-university-logo img {
     max-width: 100%;
@@ -307,9 +261,7 @@
     object-fit: contain;
 }
 
-/* =========================
-   Responsive Media Queries
-========================= */
+/* Responsive */
 @media (max-width: 768px) {
     .dash-hero {
         flex-direction: column;
@@ -325,91 +277,25 @@
         justify-content: center;
         flex-wrap: wrap;
     }
-    .dash-login-form {
-        width: 100%;
-        max-width: 400px;
-        margin: 0 auto;
-    }
-
-    .dash-features {
-        flex-direction: column;
-        gap: 20px;
-        align-items: center;
-    }
     .dash-feature-card {
         width: 90%;
         max-width: 350px;
     }
-
     .countries-custom-grid {
         grid-template-columns: repeat(2, 1fr);
-        gap: 1rem;
     }
     .country-card.double {
         grid-column: span 2;
     }
-
-    .dash-programs-grid {
-        grid-template-columns: 1fr;
-        gap: 20px;
-    }
-
     .cta-container {
         flex-direction: column;
-        gap: 20px;
-    }
-    .cta-left-section,
-    .cta-right-section {
-        width: 100%;
-        text-align: center;
-    }
-
-    .dash-testimonial-slider {
-        gap: 1rem;
-    }
-    .dash-testimonial-card {
-        flex: 0 0 90%;
-        margin: 0 auto;
-    }
-    .slider-btn {
-        padding: 8px;
-        font-size: 1.2rem;
-    }
-
-    .dash-university-logo {
-        width: 120px;
-        height: 80px;
     }
 }
-
 @media (max-width: 480px) {
     .countries-custom-grid {
         grid-template-columns: 1fr;
     }
     .country-card.double {
         grid-column: span 1;
-    }
-    .dash-university-logo {
-        width: 100px;
-        height: 60px;
-    }
-    .dash-university-slider {
-        gap: 1rem;
-    }
-
-    .dash-hero-text h1 {
-        font-size: 1.8rem;
-    }
-    .cta-right-section h2 {
-        font-size: 1.5rem;
-    }
-    .cta-right-section p {
-        font-size: 1rem;
-    }
-    .dash-program-card h3 {
-        font-size: 1.2rem;
-    }
-    .dash-testimonial-card h4 {
-        font-size: 1rem;
     }
 }

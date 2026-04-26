@@ -1,167 +1,163 @@
-/* =========================
-INDEX PAGE - FILTER & SEARCH Students.css
-========================= */
-.filter-card {
-    background: #f8f9fa;
-    border-radius: 8px;
-    padding: 15px;
-    margin-bottom: 20px;
-}
+/* =============================================================
+   student.css — Student module specific styles only
+   =============================================================
 
-.filter-card label {
+
+/* Quick filter pills (student index specific) */
+.quick-pill {
+    border-radius: 20px;
+    font-size: 0.8rem;
     font-weight: 500;
+    padding: 0.3rem 0.85rem;
+    border: 1px solid var(--border);
+    background: var(--white);
+    color: var(--gray-600);
+    transition: var(--transition-fast);
+    cursor: pointer;
 }
 
-.filter-form {
-    min-width: 80px;
+.quick-pill.active-applied {
+    background: var(--success);
+    color: var(--white);
+    border-color: var(--success);
 }
 
-/* Status badges */
-.status-badge {
+.quick-pill.active-not {
+    background: var(--danger);
+    color: var(--white);
+    border-color: var(--danger);
+}
+
+.quick-pill.active-all {
+    background: var(--primary);
+    color: var(--white);
+    border-color: var(--primary);
+}
+
+.quick-pill:hover {
+    opacity: 0.85;
+}
+
+/* Student avatar in table */
+.avatar-wrapper {
+    position: relative;
     display: inline-block;
-    padding: 4px 10px;
-    border-radius: 8px;
-    font-weight: 500;
-    font-size: 0.85rem;
-    text-align: center;
 }
 
-.status-badge.bg-info {
-    background: #17a2b8;
-    color: #fff;
-}
-.status-badge.bg-primary {
-    background: #007bff;
-    color: #fff;
-}
-.status-badge.bg-warning {
-    background: #ffc107;
-    color: #333;
-}
-.status-badge.bg-success {
-    background: #28a745;
-    color: #fff;
-}
-.status-badge.bg-danger {
-    background: #dc3545;
-    color: #fff;
-}
-.status-badge.bg-dark {
-    background: #343a40;
-    color: #fff;
-}
-.status-badge.bg-light {
-    background: #f8f9fa;
-    color: #333;
+/* Image */
+.student-avatar,
+.student-avatar-placeholder {
+    width: 50px;
+    height: 50px;
+    border-radius: 10%;
+    object-fit: cover;
+    overflow: hidden;
 }
 
-/* Action buttons */
-.action-buttons {
+/* Placeholder center icon */
+.student-avatar-placeholder {
     display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-
-.btn-edit {
-    background: #ffc107;
-    color: #333;
-}
-.btn-doc {
-    background: #17a2b8;
-    color: #fff;
-}
-.btn-sm {
-    font-size: 0.85rem;
-    padding: 5px 10px;
-}
-
-.empty-row {
-    text-align: center;
-    color: #777;
-    padding: 20px;
-}
-
-/* Pagination */
-.pagination-wrap {
-    margin-top: 15px;
-    display: flex;
+    align-items: center;
     justify-content: center;
+    background: #f1f1f1;
 }
 
-/* =========================
-FORM PAGE (CREATE / EDIT)
-========================= */
-.create-form-wrapper {
-    background: #fff;
-    padding: 40px;
-    border-radius: 12px;
-    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
-}
+/* Overlay */
+.overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
 
-.form-title {
-    font-size: 1.4rem;
-    font-weight: 600;
-    margin-bottom: 15px;
-}
-
-.student-form .mb-3 label {
-    font-weight: 500;
-    margin-bottom: 6px;
-}
-.student-form .form-control,
-.student-form .form-select {
-    border-radius: 8px;
-    padding: 10px;
-}
-
-.form-actions {
-    margin-top: 20px;
-    display: flex;
-    justify-content: flex-start;
-    gap: 10px;
-}
-
-/* Buttons */
-.btn-main {
-    background: #2a9d8f;
+    background: rgba(0, 0, 0, 0.6);
     color: #fff;
-    padding: 8px 16px;
-    border-radius: 8px;
-}
 
-/* =========================
-STUDENT SHOW / PROFILE
-========================= */
-.custom-tabs .nav-link {
-    font-weight: 500;
-    padding: 10px 20px;
-    border: none;
-    border-bottom: 3px solid transparent;
-    transition: all 0.3s ease;
-    color: #495057;
-}
+    display: flex;
+    align-items: center;
+    justify-content: center;
 
-.custom-tabs .nav-link:hover {
-    color: #0d6efd;
-    background-color: #f8f9fa;
-    border-radius: 8px 8px 0 0;
-}
-
-.custom-tabs .nav-link.active {
-    color: #0d6efd;
-    background-color: #fff;
-    border-bottom: 3px solid #0d6efd;
-    border-radius: 8px 8px 0 0;
+    font-size: 20px;
     font-weight: 600;
+    border-radius: 10%;
+
+    opacity: 0;
+    transition: opacity 0.3s ease;
 }
 
+/* Show on hover */
+.avatar-wrapper:hover .overlay {
+    opacity: 1;
+}
+
+/* Document progress bar (student specific) */
+.doc-progress-wrap {
+    min-width: 130px;
+}
+
+.doc-progress-bar {
+    height: 6px;
+    border-radius: 4px;
+    background: var(--gray-200);
+    overflow: hidden;
+    margin: 3px 0;
+}
+
+.doc-progress-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width var(--transition-default);
+}
+
+.doc-progress-fill.fill-success {
+    background-color: var(--success);
+}
+
+.doc-progress-fill.fill-warning {
+    background-color: var(--warning);
+}
+
+.doc-progress-fill.fill-danger {
+    background-color: var(--danger);
+}
+
+/* Section header (student index card sections) */
+.section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1.25rem;
+    background: var(--gray-50);
+    border-bottom: 1px solid var(--border);
+}
+
+.section-title {
+    font-size: 0.95rem;
+    font-weight: var(--font-semibold);
+    margin: 0;
+}
+
+/* Students page layout */
+.students-page {
+    padding: 1.5rem;
+}
+
+.page-title {
+    font-size: 1.35rem;
+    font-weight: var(--font-bold);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   STUDENT PROFILE PAGE
+   ───────────────────────────────────────────────────────────── */
+
+/* Profile card layout */
 .profile-card {
     display: flex;
     gap: 20px;
-    background: #fff;
+    background: var(--bg-card);
     padding: 20px;
-    border-radius: 12px;
-    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+    border-radius: var(--radius-md);
     margin-bottom: 20px;
 }
 
@@ -169,71 +165,60 @@ STUDENT SHOW / PROFILE
     flex: 0 0 150px;
     text-align: center;
 }
+
 .profile-photo {
-    width: 150px;
-    height: 150px;
-    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    border-radius: var(--radius-sm);
     object-fit: cover;
 }
+
 .profile-placeholder {
-    width: 150px;
-    height: 150px;
-    border-radius: 50%;
-    background: #f0f0f0;
+    width: 60px;
+    height: 60px;
+    border-radius: var(--radius-sm);
+    background: var(--gray-100);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #777;
+    color: var(--gray-500);
 }
 
-.profile-right h3 {
-    margin-bottom: 10px;
+/* Student tab navigation (custom variant) */
+.custom-tabs .nav-link {
+    font-weight: var(--font-medium);
+    padding: 10px 20px;
+    border: none;
+    border-bottom: 3px solid transparent;
+    transition: var(--transition-default);
+    color: var(--gray-600);
 }
 
-.card {
-    border-radius: 12px;
-    overflow: hidden;
-    margin-bottom: 15px;
-}
-.card-avatar {
-    width: 100%;
-    height: 250px;
-    border-radius: 12px;
-    object-fit: cover;
-    border: 4px solid #fff;
-}
-.card-fullname {
-    text-align: center;
-    font-size: 1.5rem;
-    margin-top: 10px;
-}
-.card-jobtitle {
-    text-align: center;
-    font-size: 1rem;
-    color: #555;
-    margin-bottom: 15px;
-}
-.card-section {
-    padding: 15px;
-}
-.card-social {
-    padding: 10px 15px;
-    display: flex;
-    gap: 10px;
-    justify-content: center;
+.custom-tabs .nav-link:hover {
+    color: var(--primary);
+    background-color: var(--gray-50);
+    border-radius: var(--radius-sm) var(--radius-sm) 0 0;
 }
 
-/* =========================
-DOCUMENT / UPLOAD SECTION
-========================= */
+.custom-tabs .nav-link.active {
+    color: var(--primary);
+    background-color: var(--white);
+    border-bottom: 3px solid var(--primary);
+    border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+    font-weight: var(--font-semibold);
+}
+
+/* Document cards (student uploads) */
 .document-card {
-    border-radius: 12px;
-    transition: transform 0.2s, box-shadow 0.2s;
+    border-radius: var(--radius-md);
+    transition:
+        transform var(--transition-default),
+        box-shadow var(--transition-default);
 }
 
 .document-card:hover {
     transform: translateY(-4px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    box-shadow: var(--shadow-md);
 }
 
 .doc-preview {
@@ -243,6 +228,7 @@ DOCUMENT / UPLOAD SECTION
     border-radius: 6px;
     margin-bottom: 10px;
 }
+
 .doc-placeholder {
     width: 100%;
     height: 100px;
@@ -250,51 +236,14 @@ DOCUMENT / UPLOAD SECTION
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    background-color: #f2f2f2;
+    background: var(--gray-100);
     border-radius: 6px;
-    color: #6c757d;
+    color: var(--gray-600);
     font-size: 18px;
     margin-bottom: 10px;
 }
 
-.upload-section {
-    max-width: 1000px;
-    margin: auto;
-    padding: 20px;
-}
-
-.upload-box {
-    border: 2px dashed #007bff;
-    border-radius: 8px;
-    padding: 40px;
-    text-align: center;
-    color: #555;
-    font-size: 16px;
-    cursor: pointer;
-}
-.upload-box:hover {
-    background-color: #e9f0ff;
-    border-color: #0056b3;
-}
-
-#file-preview {
-    margin-top: 15px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-#file-preview img {
-    max-width: 180px;
-    max-height: 180px;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    object-fit: cover;
-    transition: transform 0.2s ease;
-}
-#file-preview img:hover {
-    transform: scale(1.05);
-}
-
+/* Uploaded files grid */
 .uploaded-files-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -303,69 +252,245 @@ DOCUMENT / UPLOAD SECTION
 }
 
 .uploaded-file {
-    background-color: #fff;
-    border: 1px solid #e0e0e0;
-    border-radius: 10px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
     padding: 15px;
     text-align: center;
-    transition: box-shadow 0.3s ease, transform 0.2s ease;
+    transition:
+        box-shadow var(--transition-default),
+        transform var(--transition-default);
 }
+
 .uploaded-file:hover {
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+    box-shadow: var(--shadow-md);
     transform: translateY(-3px);
 }
 
+/* File action buttons (student specific) */
 .file-actions {
     display: flex;
     justify-content: center;
     gap: 6px;
 }
+
 .file-actions a.btn-view {
-    background: #17a2b8;
-    color: #fff;
-    padding: 5px 10px;
-    border-radius: 6px;
-}
-.file-actions a.btn-download {
-    background: #28a745;
-    color: #fff;
-    padding: 5px 10px;
-    border-radius: 6px;
-}
-.file-actions button.btn-delete {
-    background: #dc3545;
-    color: #fff;
+    background: var(--info);
+    color: var(--white);
     padding: 5px 10px;
     border-radius: 6px;
 }
 
-/* =========================
-RESPONSIVE
-========================= */
+.file-actions a.btn-download {
+    background: var(--success);
+    color: var(--white);
+    padding: 5px 10px;
+    border-radius: 6px;
+}
+
+.file-actions button.btn-delete {
+    background: var(--danger);
+    color: var(--white);
+    padding: 5px 10px;
+    border-radius: 6px;
+}
+
+/* File preview (edit/upload blade) */
+#file-preview {
+    margin-top: 15px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#file-preview img {
+    max-width: 180px;
+    max-height: 180px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    object-fit: cover;
+    transition: transform var(--transition-default);
+}
+
+#file-preview img:hover {
+    transform: scale(1.05);
+}
+
+/* Create/Edit form wrapper */
+.create-form-wrapper {
+    background: var(--bg-card);
+    padding: 40px;
+    border-radius: var(--radius-md);
+}
+
+.form-title {
+    font-size: 1.4rem;
+    font-weight: var(--font-semibold);
+    margin-bottom: 15px;
+}
+
+/* File box (show blade) */
+.file-box {
+    width: 100%;
+    aspect-ratio: 4/4;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+    background: var(--gray-50);
+}
+
+.file-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.file-box .badge {
+    position: absolute;
+    bottom: 5px;
+}
+
+/* Photo thumbnail (student specific variant) */
+.photo-thumb {
+    width: 120px;
+    height: 120px;
+    object-fit: cover;
+    border-radius: var(--radius-sm);
+    border: 2px solid var(--border);
+}
+
+.photo-placeholder {
+    width: 120px;
+    height: 120px;
+    border-radius: var(--radius-sm);
+    border: 2px dashed var(--gray-300);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--gray-50);
+}
+
+/* Form section (student specific layout) */
+.form-section {
+    border-radius: var(--radius-md);
+    margin-bottom: 1rem;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-xs);
+    transition: all var(--transition-default);
+}
+
+.form-section:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.form-section-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.85rem 1.25rem;
+    font-weight: var(--font-semibold);
+    font-size: 0.875rem;
+    background: var(--gray-200);
+    border-bottom: 1px solid var(--border);
+}
+
+.form-section-body {
+    padding: 1.5rem;
+    background: var(--white);
+}
+
+/* Bottom ribbon for preferred country */
+.ribbon-bottom {
+    position: absolute;
+    left: 5px;
+    right: 5px;
+    bottom: 5px;
+    background: rgba(26, 2, 98, 0.2);
+    color: var(--white);
+    padding: 6px 10px;
+    font-size: 12px;
+    font-weight: var(--font-semibold);
+    text-align: center;
+    border-radius: 8px;
+    box-shadow: var(--shadow-md);
+}
+
+/* Nav tabs modifier (student variant) */
+.nav-tabs .nav-link {
+    border: none;
+    color: var(--text-muted);
+    transition: var(--transition-default);
+    font-weight: var(--font-medium);
+}
+
+.nav-tabs .nav-link:hover {
+    background-color: var(--gray-100);
+    color: var(--primary);
+}
+
+.nav-tabs .nav-link.active {
+    background-color: transparent;
+    color: var(--primary);
+    border-bottom: 3px solid var(--primary);
+    font-weight: var(--font-semibold);
+}
+
+/* Utility classes (student specific) */
+.rounded-4 {
+    border-radius: 1rem !important;
+}
+
+.btn-close-sm {
+    width: 0.6rem;
+    height: 0.6rem;
+    font-size: 0.6rem;
+    background-size: 0.6rem;
+}
+
+/* Dark glass fix */
+.bg-white.bg-opacity-25 {
+    background-color: rgba(255, 255, 255, 0.25) !important;
+    color: white !important;
+}
+
+.bg-white.bg-opacity-25 .btn-close-white {
+    filter: brightness(0) invert(1);
+}
+
+/* Student image (preferred country card) */
+.student-img {
+    width: 200px;
+    height: 200px;
+    object-fit: cover;
+    border-radius: var(--radius-md);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   RESPONSIVE (student specific overrides)
+   ───────────────────────────────────────────────────────────── */
+
 @media (max-width: 768px) {
-    .filter-card .row > div {
-        margin-bottom: 10px;
-    }
     .uploaded-files-grid {
         grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
         gap: 15px;
     }
+
     .profile-card {
         flex-direction: column;
         align-items: center;
         text-align: center;
     }
-    .profile-left,
-    .profile-right {
-        width: 100%;
-    }
-    .card-avatar {
-        height: 200px;
-    }
-    .card-fullname {
-        font-size: 1.2rem;
-    }
-    .card-jobtitle {
-        font-size: 0.9rem;
+
+    .photo-thumb,
+    .photo-placeholder {
+        width: 100px;
+        height: 100px;
     }
 }

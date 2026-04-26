@@ -47,7 +47,7 @@ class ContactController extends Controller
                     "Subject: {$subject}\n\n" .
                     "Message:\n{$messageBody}",
                 function ($message) use ($name, $email, $subject) {
-                    $message->to('bishesworparajuli@gmail.com')
+                    $message->to('admin@ideacs.com.np')
                         ->from($email, $name)
                         ->subject($subject);
                 }

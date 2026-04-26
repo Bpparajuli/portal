@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <meta charset="UTF-8">
     <title>{{ $subject ?? 'Notification' }}</title>
@@ -76,9 +77,9 @@
                 margin: 10px auto;
             }
         }
-
     </style>
 </head>
+
 <body>
     <div class="email-container">
 
@@ -93,24 +94,24 @@
             <h2>{{ $greeting ?? 'Hello!' }}</h2>
 
             {{-- Intro Lines --}}
-            @if(isset($introLines))
-            @foreach($introLines as $line)
-            <p>{!! $line !!}</p>
-            @endforeach
+            @if (isset($introLines))
+                @foreach ($introLines as $line)
+                    <p>{!! $line !!}</p>
+                @endforeach
             @endif
 
             {{-- Action Button --}}
             @isset($actionText)
-            <div class="email-button">
-                <a href="{{ $actionUrl }}">{{ $actionText }}</a>
-            </div>
+                <div class="email-button">
+                    <a href="{{ $actionUrl }}">{{ $actionText }}</a>
+                </div>
             @endisset
 
             {{-- Outro Lines --}}
-            @if(isset($outroLines))
-            @foreach($outroLines as $line)
-            <p style="font-size:14px; color:#777;">{!! $line !!}</p>
-            @endforeach
+            @if (isset($outroLines))
+                @foreach ($outroLines as $line)
+                    <p style="font-size:14px; color:#777;">{!! $line !!}</p>
+                @endforeach
             @endif
 
             {{-- Signature --}}
@@ -125,4 +126,5 @@
         </div>
     </div>
 </body>
+
 </html>

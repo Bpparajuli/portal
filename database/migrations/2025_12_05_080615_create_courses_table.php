@@ -24,7 +24,7 @@ return new class extends Migration
             $table->string('fee')->nullable();
             $table->string('intakes');
             $table->text('ielts_pte_other_languages')->nullable();
-            $table->enum('moi_requirement', ['Yes', 'No']);
+            $table->text('moi_acceptance')->nullable();
             $table->string('application_fee')->nullable();
             $table->text('scholarships')->nullable();
             $table->timestamp('created_at')->nullable()->useCurrent();

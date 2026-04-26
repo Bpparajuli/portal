@@ -1,202 +1,291 @@
-<div class="accordion" id="studentAccordion">
-    {{-- General Info --}}
-    <div class="accordion-item">
-        <h2 class="accordion-header" id="headingGeneral">
-            <button class="accordion-button bg-dark text-light" type="button" data-bs-toggle="collapse" data-bs-target="#collapseGeneral">
-                👤 General Info
-            </button>
-        </h2>
-        <div id="collapseGeneral" class="accordion-collapse collapse show" data-bs-parent="#studentAccordion">
-            <div class="accordion-body">
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label>First Name</label>
-                        <input type="text" name="first_name" class="form-control" value="{{ old('first_name', $student->first_name ?? '') }}">
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label>Last Name</label>
-                        <input type="text" name="last_name" class="form-control" value="{{ old('last_name', $student->last_name ?? '') }}">
-                    </div>
-                </div>
+{{--
+    Shared admin student form partial.
+    Requires: $student, $agents, $universities, $courses
+--}}
 
-                <div class="row">
-                    <div class="col-md-4 mb-3">
-                        <label>DOB</label>
-                        <input type="date" name="dob" class="form-control" value="{{ old('dob', isset($student->dob) ? $student->dob->format('Y-m-d') : '') }}">
-                    </div>
-                    <div class="col-md-4 mb-3">
-                        <label>Gender</label>
-                        <select name="gender" class="form-select">
-                            @foreach(\App\Models\Student::GENDERS as $gender)
-                            <option value="{{ $gender }}" {{ old('gender', $student->gender ?? '') == $gender ? 'selected' : '' }}>
-                                {{ ucfirst($gender) }}
-                            </option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-md-4 mb-3">
-                        <label>Photo</label>
-                        <input type="file" name="students_photo" class="form-control">
-                        @if(!empty($student->students_photo))
-                        <img src="{{ asset($student->students_photo) }}" width="80" class="mt-2 rounded">
-                        @endif
-                    </div>
-                </div>
 
-                <div class="mb-3">
-                    <label>Email</label>
-                    <input type="email" name="email" class="form-control" value="{{ old('email', $student->email ?? '') }}">
-                </div>
-
-                <div class="mb-3">
-                    <label>Phone</label>
-                    <input type="text" name="phone_number" class="form-control" value="{{ old('phone_number', $student->phone_number ?? '') }}">
-                </div>
-
-                <div class="mb-3">
-                    <label>Permanent Address</label>
-                    <textarea name="permanent_address" class="form-control">{{ old('permanent_address', $student->permanent_address ?? '') }}</textarea>
-                </div>
-
-                <div class="mb-3">
-                    <label>Temporary Address</label>
-                    <textarea name="temporary_address" class="form-control">{{ old('temporary_address', $student->temporary_address ?? '') }}</textarea>
-                </div>
-
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label>Nationality</label>
-                        <input type="text" name="nationality" class="form-control" value="{{ old('nationality', $student->nationality ?? '') }}">
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label>Marital Status</label>
-                        <input type="text" name="marital_status" class="form-control" value="{{ old('marital_status', $student->marital_status ?? '') }}">
-                    </div>
-                </div>
-
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label>Passport Number</label>
-                        <input type="text" name="passport_number" class="form-control" value="{{ old('passport_number', $student->passport_number ?? '') }}">
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label>Passport Expiry</label>
-                        <input type="date" name="passport_expiry" class="form-control" value="{{ old('passport_expiry', $student->passport_expiry ?? '') }}">
-                    </div>
-                </div>
-
-                <div class="mb-3">
-                    <label>Follow-up Date</label>
-                    <input type="date" name="follow_up_date" class="form-control" value="{{ old('follow_up_date', $student->follow_up_date ?? '') }}">
-                </div>
-            </div>
-        </div>
+{{-- ── Assignment ─────────────────────────────────── --}}
+<div class="form-section">
+    <div class="form-section-header">
+        <i class="fas fa-user-tie text-primary"></i> Assignment
     </div>
+    <div class="form-section-body">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label fw-semibold small">Agent</label>
+                <select name="agent_id" class="form-select">
+                    <option value="">Unassigned</option>
+                    @php
+                        $selectedAgent = old('agent_id', $student->agent_id ?? null);
+                    @endphp
 
-    {{-- Academic Info --}}
-    <div class="accordion-item">
-        <h2 class="accordion-header" id="headingAcademic">
-            <button class="accordion-button bg-dark text-light collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAcademic">
-                🎓 Academic Info
-            </button>
-        </h2>
-        <div id="collapseAcademic" class="accordion-collapse collapse" data-bs-parent="#studentAccordion">
-            <div class="accordion-body">
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label>Qualification</label>
-                        <input type="text" name="qualification" class="form-control" value="{{ old('qualification', $student->qualification ?? '') }}">
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label>Passed Year</label>
-                        <input type="number" name="passed_year" class="form-control" value="{{ old('passed_year', $student->passed_year ?? '') }}">
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label>Gap Years</label>
-                        <input type="number" name="gap" class="form-control" value="{{ old('gap', $student->gap ?? '') }}">
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label>Last Grades</label>
-                        <input type="text" name="last_grades" class="form-control" value="{{ old('last_grades', $student->last_grades ?? '') }}">
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label>Education Board</label>
-                        <input type="text" name="education_board" class="form-control" value="{{ old('education_board', $student->education_board ?? '') }}">
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label>Preferred Country</label>
-                        <input type="text" name="preferred_country" class="form-control" value="{{ old('preferred_country', $student->preferred_country ?? '') }}">
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    {{-- Application Info --}}
-    <div class="accordion-item">
-        <h2 class="accordion-header" id="headingApplication">
-            <button class="accordion-button bg-dark text-light collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseApplication">
-                📑 Application Details
-            </button>
-        </h2>
-        <div id="collapseApplication" class="accordion-collapse collapse" data-bs-parent="#studentAccordion">
-            <div class="accordion-body">
-                <div class="mb-3">
-                    <label>Agent</label>
-                    <select name="agent_id" class="form-select">
-                        <option value="">Select</option>
-                        @foreach($agents as $agent)
-                        <option value="{{ $agent->id }}" {{ old('agent_id', $student->agent_id ?? '') == $agent->id ? 'selected' : '' }}>
+                    @foreach ($agents ?? collect() as $agent)
+                        <option value="{{ $agent->id }}" {{ $selectedAgent == $agent->id ? 'selected' : '' }}>
                             {{ $agent->business_name ?? $agent->username }}
                         </option>
-                        @endforeach
-                    </select>
-                </div>
+                    @endforeach
+                </select>
+            </div>
 
-                <div class="mb-3">
-                    <label>University</label>
-                    <select name="university_id" class="form-select">
-                        <option value="">Select</option>
-                        @foreach($universities as $uni)
-                        <option value="{{ $uni->id }}" {{ old('university_id', $student->university_id ?? '') == $uni->id ? 'selected' : '' }}>
-                            {{ $uni->name }}
+        </div>
+    </div>
+</div>
+
+{{-- ── Personal Information ─────────────────────── --}}
+<div class="form-section">
+    <div class="form-section-header">
+        <i class="fas fa-user text-primary"></i> Personal Information
+    </div>
+    <div class="form-section-body">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label fw-semibold small">First Name <span class="text-danger">*</span></label>
+                <input type="text" name="first_name" class="form-control @error('first_name') is-invalid @enderror"
+                    value="{{ old('first_name', $student->first_name) }}" placeholder="First name">
+                @error('first_name')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label fw-semibold small">
+                    Last Name <span class="text-danger">*</span>
+                    <span class="text-muted fw-normal">(include middle name if any)</span>
+                </label>
+                <input type="text" name="last_name" class="form-control @error('last_name') is-invalid @enderror"
+                    value="{{ old('last_name', $student->last_name) }}" placeholder="Last name">
+                @error('last_name')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label fw-semibold small">Date of Birth</label>
+                <input type="date" name="dob" class="form-control"
+                    value="{{ old('dob', optional($student->dob)->format('Y-m-d')) }}">
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label fw-semibold small">Gender</label>
+                <select name="gender" class="form-select">
+                    <option value="">Select…</option>
+                    @foreach (\App\Models\Student::GENDERS as $g)
+                        <option value="{{ $g }}"
+                            {{ old('gender', $student->gender) === $g ? 'selected' : '' }}>
+                            {{ $g }}
                         </option>
-                        @endforeach
-                    </select>
-                </div>
+                    @endforeach
+                </select>
+            </div>
 
-                <div class="mb-3">
-                    <label>Course</label>
-                    <select name="course_id" class="form-select">
-                        <option value="">Select</option>
-                        @foreach($courses as $course)
-                        <option value="{{ $course->id }}" {{ old('course_id', $student->course_id ?? '') == $course->id ? 'selected' : '' }}>
-                            {{ $course->title }}
+            <div class="col-md-4">
+                <label class="form-label fw-semibold small">Marital Status</label>
+                <select name="marital_status" class="form-select">
+                    <option value="">Select…</option>
+                    @foreach (\App\Models\Student::MARITAL_STATUSES as $m)
+                        <option value="{{ $m }}"
+                            {{ old('marital_status', $student->marital_status) === $m ? 'selected' : '' }}>
+                            {{ $m }}
                         </option>
-                        @endforeach
-                    </select>
-                </div>
+                    @endforeach
+                </select>
+            </div>
 
-                <div class="mb-3">
-                    <label>Student Status</label>
-                    <select name="student_status" class="form-select">
-                        @foreach(['created','viewed','applied to university','accepted','rejected','applied to another university','forwarded to embassy'] as $status)
-                        <option value="{{ $status }}" {{ old('student_status', $student->student_status ?? '') == $status ? 'selected' : '' }}>
-                            {{ ucfirst($status) }}
-                        </option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <div class="mb-3">
-                    <label>Notes</label>
-                    <textarea name="notes" class="form-control">{{ old('notes', $student->notes ?? '') }}</textarea>
-                </div>
+            <div class="col-md-4">
+                <label class="form-label fw-semibold small">Nationality</label>
+                <input type="text" name="nationality" class="form-control"
+                    value="{{ old('nationality', $student->nationality) }}" placeholder="e.g. Nepalese">
             </div>
         </div>
     </div>
 </div>
+
+{{-- ── Contact Information ──────────────────────── --}}
+<div class="form-section">
+    <div class="form-section-header">
+        <i class="fas fa-address-card text-success"></i> Contact Information
+    </div>
+    <div class="form-section-body">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label fw-semibold small">Email Address</label>
+                <input type="email" name="email" class="form-control @error('email') is-invalid @enderror"
+                    value="{{ old('email', $student->email) }}" placeholder="student@example.com">
+                @error('email')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label fw-semibold small">Phone Number</label>
+                <input type="text" name="phone_number" class="form-control"
+                    value="{{ old('phone_number', $student->phone_number) }}" placeholder="+977 98XXXXXXXX">
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label fw-semibold small">Permanent Address</label>
+                <input type="text" name="permanent_address" class="form-control"
+                    value="{{ old('permanent_address', $student->permanent_address) }}"
+                    placeholder="Full permanent address">
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label fw-semibold small">Temporary Address</label>
+                <input type="text" name="temporary_address" class="form-control"
+                    value="{{ old('temporary_address', $student->temporary_address) }}"
+                    placeholder="Current address if different">
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- ── Passport ──────────────────────────────────── --}}
+<div class="form-section">
+    <div class="form-section-header">
+        <i class="fas fa-passport text-secondary"></i> Passport Information
+    </div>
+    <div class="form-section-body">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label fw-semibold small">Passport Number</label>
+                <input type="text" name="passport_number" class="form-control"
+                    value="{{ old('passport_number', $student->passport_number) }}" placeholder="PA1234567">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label fw-semibold small">Passport Expiry Date</label>
+                <input type="date" name="passport_expiry" class="form-control"
+                    value="{{ old('passport_expiry', optional($student->passport_expiry)->format('Y-m-d')) }}">
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- ── Academic Information ──────────────────────── --}}
+<div class="form-section">
+    <div class="form-section-header">
+        <i class="fas fa-graduation-cap text-warning"></i> Academic Information
+    </div>
+    <div class="form-section-body">
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label fw-semibold small">Qualification</label>
+                <input type="text" name="qualification" class="form-control"
+                    value="{{ old('qualification', $student->qualification) }}" placeholder="e.g. Bachelor's Degree">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label fw-semibold small">Passed Year</label>
+                <input type="number" name="passed_year" class="form-control"
+                    value="{{ old('passed_year', $student->passed_year) }}" placeholder="e.g. 2022" min="1990"
+                    max="{{ date('Y') }}">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label fw-semibold small">Gap (years)</label>
+                <input type="number" name="gap" class="form-control" value="{{ old('gap', $student->gap) }}"
+                    placeholder="0" min="0" max="20">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label fw-semibold small">Last Grades / GPA</label>
+                <input type="text" name="last_grades" class="form-control"
+                    value="{{ old('last_grades', $student->last_grades) }}" placeholder="e.g. 3.6/4.0">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label fw-semibold small">Education Board</label>
+                <input type="text" name="education_board" class="form-control"
+                    value="{{ old('education_board', $student->education_board) }}" placeholder="e.g. CBSE / NEB">
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- ── Study Preferences ────────────────────────── --}}
+<div class="form-section">
+    <div class="form-section-header">
+        <i class="fas fa-globe-americas text-info"></i> Study Preferences
+    </div>
+    <div class="form-section-body">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label fw-semibold small">Preferred Country</label>
+                <input type="text" name="preferred_country" class="form-control"
+                    value="{{ old('preferred_country', $student->preferred_country) }}"
+                    placeholder="e.g. Canada, Australia">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label fw-semibold small">Preferred City</label>
+                <input type="text" name="preferred_city" class="form-control"
+                    value="{{ old('preferred_city', $student->preferred_city) }}" placeholder="e.g. Toronto, Sydney">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label fw-semibold small">Preferred Course</label>
+                <input type="text" name="preferred_course" class="form-control"
+                    value="{{ old('preferred_course', $student->preferred_course) }}"
+                    placeholder="e.g. Computer Science">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label fw-semibold small">Preferred University</label>
+                <input type="text" name="preferred_university" class="form-control"
+                    value="{{ old('preferred_university', $student->preferred_university) }}"
+                    placeholder="University name">
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- ── Remarks & Photo ──────────────────────────── --}}
+<div class="form-section">
+    <div class="form-section-header">
+        <i class="fas fa-pen-to-square text-secondary"></i> Remarks &amp; Photo
+    </div>
+    <div class="form-section-body">
+        <div class="row g-3">
+            <div class="col-md-8">
+                <label class="form-label fw-semibold small">Remarks / Notes</label>
+                <textarea name="remarks" rows="4" class="form-control" placeholder="Any additional notes…">{{ old('remarks', $student->remarks) }}</textarea>
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label fw-semibold small d-block">Student Photo</label>
+                @if (isset($student) && $student->exists && $student->students_photo)
+                    <img src="{{ Storage::url($student->students_photo) }}" class="photo-thumb mb-2 d-block"
+                        alt="Photo">
+                    <div class="text-muted small mb-2">Upload new to replace</div>
+                @else
+                    <div class="photo-placeholder mb-2" id="photoPlaceholder">
+                        <i class="fas fa-camera text-muted fa-xl"></i>
+                    </div>
+                    <img id="photoPreview" class="photo-thumb mb-2 d-none" alt="Preview">
+                @endif
+                <input type="file" name="students_photo" id="studentPhotoInput"
+                    class="form-control form-control-sm" accept="image/jpeg,image/png,image/jpg">
+                <div class="text-muted mt-1" style="font-size:.7rem;">JPG/PNG, max 5MB</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@push('scripts')
+    <script>
+        (function() {
+            const input = document.getElementById('studentPhotoInput');
+            if (!input) return;
+            input.addEventListener('change', function() {
+                const file = this.files[0];
+                const preview = document.getElementById('photoPreview');
+                const placeholder = document.getElementById('photoPlaceholder');
+                if (file && preview) {
+                    const reader = new FileReader();
+                    reader.onload = e => {
+                        preview.src = e.target.result;
+                        preview.classList.remove('d-none');
+                        if (placeholder) placeholder.classList.add('d-none');
+                    };
+                    reader.readAsDataURL(file);
+                } else if (preview) {
+                    preview.classList.add('d-none');
+                    preview.src = '';
+                    if (placeholder) placeholder.classList.remove('d-none');
+                }
+            });
+        }());
+    </script>
+@endpush

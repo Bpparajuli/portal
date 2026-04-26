@@ -56,6 +56,7 @@ return new class extends Migration
                 'uploaded',
                 'verified'
             ])->default('not_uploaded');
+            $table->timestamp('agreement_uploaded_at')->nullable();
 
             // Status
             $table->boolean('active')->default(true);

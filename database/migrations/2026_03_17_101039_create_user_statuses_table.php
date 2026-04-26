@@ -23,6 +23,9 @@ return new class extends Migration
 
             $table->timestamps();
 
+            $table->timestamp('last_login_at')->nullable();
+            $table->string('last_login_ip')->nullable();
+
             // Index for sorting/filtering
             $table->index('last_seen', 'idx_last_seen');
 

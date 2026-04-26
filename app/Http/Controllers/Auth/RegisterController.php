@@ -12,14 +12,50 @@ use Illuminate\Database\QueryException;
 use Illuminate\Support\Str;
 use App\Notifications\UserRegistered;
 use App\Services\FileUploadService;
+use Illuminate\Support\Facades\Log;
 
 class RegisterController extends Controller
 {
     /**
+     * Create a new controller instance.
+     * This ensures only guests can access registration
+     */
+    public function __construct()
+    {
+        // Only guests can access registration
+        $this->middleware('guest')->except('logout');
+
+        // Alternative: You can also use middleware in routes file
+        // But adding here ensures protection even if routes are misconfigured
+    }
+
+    /**
      * Show registration form
+     * Redirects to dashboard if user is already logged in
      */
     public function showRegistrationForm()
     {
+        // Check if user is already logged in
+        if (Auth::check()) {
+            $user = Auth::user();
+
+            // Redirect based on user role and status
+            if ($user->is_admin) {
+                return redirect()->route('admin.dashboard')->with('info', 'You are already logged in as admin.');
+            } elseif ($user->is_agent) {
+                // Check agreement status
+                if ($user->agreement_status === 'verified') {
+                    return redirect()->route('agent.dashboard')->with('info', 'You are already registered and verified.');
+                } else {
+                    return redirect()->route('auth.waiting-dash')->with('info', 'Your registration is pending verification.');
+                }
+            }
+
+            // Default fallback
+            return redirect('/')->with('info', 'You are already logged in.');
+        }
+
+        // Show registration form for guests only
         return view('auth.register');
     }
 
@@ -28,6 +64,11 @@ class RegisterController extends Controller
      */
     public function register(Request $request)
     {
+        // Additional check to prevent logged-in users from registering again
+        if (Auth::check()) {
+            return redirect()->route('home')->with('error', 'You are already logged in.');
+        }
+
         // ✅ Validation
         $request->validate(
             [
@@ -99,10 +140,12 @@ class RegisterController extends Controller
             // 🔥 Save again after file upload
             $user->save();
 
-            // ✅ Notify admin (temporary id=2)
-            $admin = User::find(2);
-            if ($admin) {
-                Notification::send($admin, new UserRegistered($user));
+            // ✅ Notify admin (find admin users instead of hardcoded id=2)
+            $admins = User::where('is_admin', 1)->orWhere('role', 'admin')->get();
+            if ($admins->count() > 0) {
+                foreach ($admins as $admin) {
+                    Notification::send($admin, new UserRegistered($user));
+                }
             }
 
             // ✅ Auto-login
@@ -110,11 +153,13 @@ class RegisterController extends Controller
 
             return redirect()
                 ->route('auth.waiting-dash')
-                ->with('success', 'Registered successfully. Please wait for admin approval.');
+                ->with('success', 'Registered successfully! Please upload your agreement to complete registration.');
         } catch (QueryException $e) {
             // 🔥 Failsafe (never expose SQL errors)
+            Log::error('Registration error: ' . $e->getMessage());
+
             return back()
-                ->withErrors(['name' => 'This user name is already in use. Please choose another.'])
+                ->withErrors(['error' => 'Registration failed. Please try again or contact support.'])
                 ->withInput();
         }
     }

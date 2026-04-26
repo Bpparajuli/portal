@@ -1,72 +1,10 @@
-/* =========================
-PAGE HEADER user.css
-========================= */
-.page-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    margin-bottom: 1.5rem;
-}
-
-.page-header h2 {
-    font-weight: 600;
-    color: #1e293b;
-    margin-bottom: 0.8rem;
-}
-
-/* Add Button */
-.add-btn {
-    background: var(--success);
-    color: white;
-    border-radius: 6px;
-    padding: 8px 16px;
-    transition: all 0.3s ease;
-    font-weight: 500;
-    text-decoration: none;
-}
-
-.add-btn:hover {
-    background: var(--success-dark);
-}
+/* =========================================
+   user.css - Page-specific styles for User/Student Management
+   Only unique styles not available in styles.css
+   ========================================= */
 
 /* =========================
-FILTER & SEARCH
-========================= */
-.filter-bar {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    align-items: center;
-    margin-bottom: 1.5rem;
-}
-
-.filter-bar input[type="text"],
-.filter-bar select {
-    border: 1px solid #cbd5e1;
-    border-radius: 6px;
-    padding: 8px 12px;
-    outline: none;
-    font-size: 0.95rem;
-}
-
-.filter-bar button {
-    border-radius: 6px;
-    padding: 8px 16px;
-    font-size: 0.9rem;
-    background: var(--secondary);
-    color: white;
-    border: none;
-    transition: all 0.3s ease;
-    cursor: pointer;
-}
-
-.filter-bar button:hover {
-    background: var(--secondary-dark);
-}
-
-/* =========================
-CARD SECTION
+   CARD SECTION (Unique styles)
 ========================= */
 .card-section {
     background: #ffffff;
@@ -85,70 +23,12 @@ CARD SECTION
     color: #1e293b;
 }
 
-/* Badges */
-.badge {
-    border-radius: 6px;
-    padding: 5px 10px;
-    font-size: 0.8rem;
-    font-weight: 500;
-}
-
-.bg-success {
-    background: #22c55e;
-    color: white;
-}
-
-.bg-secondary {
-    background: #94a3b8;
-    color: white;
-}
-
 /* =========================
-PAGINATION
-========================= */
-.pagination {
-    margin: 1rem 0;
-    display: flex;
-    justify-content: center;
-}
-
-.pagination .page-link {
-    color: #2563eb;
-    border: none;
-    font-weight: 500;
-    border-radius: 6px;
-}
-
-.pagination .active .page-link {
-    background-color: #2563eb;
-    color: white;
-}
-
-/* =========================
-RESPONSIVE
-========================= */
-@media (max-width: 768px) {
-    .page-header {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-
-    .filter-bar {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .filter-bar button {
-        width: 100%;
-    }
-}
-
-/* =========================
-SHOW BLADE 
+   SHOW BLADE - File Box Component
 ========================= */
 .file-box {
-    width: 100%; /* width handled by grid */
-    aspect-ratio: 4/4; /* keeps height proportional to width */
+    width: 100%;
+    aspect-ratio: 4/4;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -164,7 +44,7 @@ SHOW BLADE
 .file-box img {
     width: 100%;
     height: 100%;
-    object-fit: contain; /* scale image proportionally */
+    object-fit: contain;
 }
 
 .file-box .file-preview,
@@ -181,4 +61,290 @@ SHOW BLADE
 .file-box .badge {
     position: absolute;
     bottom: 5px;
+}
+
+/* =========================
+   NAVIGATION PILLS (Bootstrap overrides)
+========================= */
+.nav-pills .nav-link {
+    color: #820b5c;
+    transition: all 0.2s ease;
+}
+
+.nav-pills .nav-link:hover {
+    color: #f7fafc;
+    background-color: #1a0262;
+}
+
+.nav-pills .nav-link.active {
+    background-color: #1a0262;
+    color: white;
+}
+
+/* =========================
+   UTILITY CLASSES
+========================= */
+.object-fit-cover {
+    object-fit: cover;
+}
+
+/* Form focus states (Bootstrap overrides) */
+.form-control:focus,
+.form-select:focus {
+    border-color: #1a0262;
+    box-shadow: 0 0 0 0.2rem rgba(79, 70, 229, 0.25);
+}
+
+.input-group-text {
+    background-color: #f8f9fa;
+}
+
+.is-invalid {
+    border-color: #dc3545 !important;
+}
+
+.col-auto {
+    position: static;
+}
+
+.dropdown-menu {
+    z-index: 1050;
+}
+
+/* Gradient overrides for cards */
+.bg-gradient-primary .card-body {
+    overflow: visible;
+}
+
+.bg-gradient-primary {
+    overflow: visible;
+    background: linear-gradient(
+        135deg,
+        var(--primary) 0%,
+        var(--secondary) 100%
+    );
+}
+
+.bg-gradient-info {
+    background: linear-gradient(135deg, var(--info) 0%, var(--info-light) 100%);
+}
+
+.bg-gradient-warning {
+    background: linear-gradient(
+        135deg,
+        var(--warning) 0%,
+        var(--warning-dark) 100%
+    );
+}
+
+/* =========================
+   MODERN ACTIVITIES COMPONENT
+   (Unique component not in global styles)
+========================= */
+/* Activities Row */
+.activities-modern-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 1.5rem;
+}
+
+/* Modern Activity Card */
+.modern-activity-card {
+    background: var(--bg-card);
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.modern-activity-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+/* Card Header */
+.card-header-modern {
+    padding: 1rem 1.25rem;
+    background: linear-gradient(
+        135deg,
+        var(--gray-100) 0%,
+        var(--bg-card) 100%
+    );
+    border-bottom: 2px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.header-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+}
+
+.student-icon {
+    background: linear-gradient(
+        135deg,
+        var(--primary) 0%,
+        var(--primary-light) 100%
+    );
+    color: var(--white);
+}
+
+.document-icon {
+    background: linear-gradient(
+        135deg,
+        var(--success) 0%,
+        var(--success-dark) 100%
+    );
+    color: var(--white);
+}
+
+.application-icon {
+    background: linear-gradient(
+        135deg,
+        var(--secondary) 0%,
+        var(--secondary-light) 100%
+    );
+    color: var(--white);
+}
+
+.card-header-modern h5 {
+    flex: 1;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--secondary);
+}
+
+.activity-count {
+    background: var(--gray-200);
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+/* Card Body */
+.card-body-modern {
+    padding: 0.5rem 0;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+/* Custom Scrollbar */
+.card-body-modern::-webkit-scrollbar {
+    width: 4px;
+}
+
+.card-body-modern::-webkit-scrollbar-track {
+    background: var(--light);
+}
+
+.card-body-modern::-webkit-scrollbar-thumb {
+    background: var(--gray-400);
+    border-radius: 10px;
+}
+
+/* Activity Item */
+.activity-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.875rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.2s ease;
+}
+
+.activity-item:hover {
+    background: var(--bg-hover);
+}
+
+.activity-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-top: 6px;
+    flex-shrink: 0;
+}
+
+.student-dot {
+    background: var(--primary);
+    box-shadow: 0 0 0 3px rgba(130, 11, 92, 0.2);
+}
+
+.document-dot {
+    background: var(--success);
+    box-shadow: 0 0 0 3px rgba(0, 128, 43, 0.2);
+}
+
+.application-dot {
+    background: var(--secondary-light);
+    box-shadow: 0 0 0 3px rgba(50, 11, 245, 0.2);
+}
+
+/* Activity Content */
+.activity-content {
+    flex: 1;
+}
+
+.activity-link {
+    text-decoration: none;
+    color: var(--text-color);
+    font-size: 0.875rem;
+    font-weight: 500;
+    display: inline-block;
+    margin-bottom: 4px;
+    transition: color 0.2s ease;
+}
+
+.activity-link:hover {
+    color: var(--primary);
+}
+
+.activity-time {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+}
+
+/* Empty State */
+.empty-activities {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-muted);
+}
+
+.empty-activities i {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    opacity: 0.5;
+}
+
+.empty-activities p {
+    font-size: 0.875rem;
+    margin: 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .activities-modern-row {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .card-header-modern {
+        padding: 0.875rem 1rem;
+    }
+
+    .activity-item {
+        padding: 0.75rem 1rem;
+    }
 }

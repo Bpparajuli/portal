@@ -59,7 +59,8 @@ class ApplicationController extends Controller
     public function create(Request $request)
     {
         $universities = University::with('courses')->get();
-        $courses = Course::all();
+        $courses = Course::where('id', $request->course_id)->get();
+
 
         $selectedUniversityId = $request->query('university_id');
         $selectedCourseId = $request->query('course_id');

@@ -1,0 +1,327 @@
+/* =========================
+Header, Navigation & Notifications - Component Styles Only
+========================= */
+
+/* Header Structure */
+.perfect-header {
+    padding: 1rem 1rem;
+    border-bottom: 1px solid var(--border);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    background: var(--gray);
+    border-radius: 5px;
+}
+
+.header-container {
+    margin: 0 auto;
+}
+
+.header-top-row {
+    display: grid;
+    grid-template-columns: 1fr 3fr 1fr;
+    align-items: center;
+    gap: 1rem;
+}
+
+.header-logo img {
+    height: 90px;
+    width: auto;
+}
+
+.header-center {
+    justify-self: center;
+}
+
+.header-right {
+    justify-self: end;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.header-title {
+    display: flex;
+    gap: 10px;
+    text-align: right;
+}
+
+.header-title-text {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary);
+    line-height: 1.2;
+    margin: 0;
+    text-align: center;
+}
+
+.header-user-info {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    flex-shrink: 0;
+}
+
+.welcome-message {
+    font-size: 0.9rem;
+    line-height: 1.3;
+    text-align: right;
+    color: var(--secondary);
+}
+
+.welcome-message strong {
+    color: var(--primary);
+    font-weight: 700;
+}
+
+.user-avatar img {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 10%;
+    border: 2px solid var(--primary);
+}
+
+.menu-toggle {
+    display: none;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--primary);
+}
+
+/* Notice Bar */
+.notice-bar {
+    background: var(--white);
+    border-radius: 5px;
+    padding: 0.5rem 1rem;
+    text-align: center;
+    width: 100%;
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+.notice-text {
+    font-size: 1rem;
+    font-weight: 700;
+    margin: 0;
+    color: #1a0262;
+    overflow: hidden;
+    width: 100%;
+}
+
+.marquee-text {
+    width: 100%;
+    white-space: nowrap;
+    animation: marquee 15s linear infinite;
+    display: inline-block;
+}
+
+@keyframes marquee {
+    0% {
+        transform: translateX(100%);
+    }
+    100% {
+        transform: translateX(-100%);
+    }
+}
+
+/* Navigation */
+.header-nav {
+    margin-top: 1rem;
+}
+
+.nav-list {
+    display: flex;
+    flex-wrap: wrap;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    background: var(--secondary);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.nav-item {
+    flex: 1 1 auto;
+    text-align: center;
+}
+
+.nav-item a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 1rem;
+    text-decoration: none;
+    color: var(--white);
+    font-weight: 500;
+    transition: 0.2s ease, transform 0.2s ease;
+}
+
+.nav-item a:hover,
+.nav-item.active a {
+    background: var(--active);
+    border-radius: 10px;
+    font-weight: 700;
+    color: var(--white) !important;
+}
+
+.nav-item i {
+    font-size: 1.25rem;
+}
+
+/* Badges */
+.logout-link a {
+    background: #e74c3c;
+    color: var(--light);
+}
+
+.logout-link a:hover {
+    background: #c0392b;
+}
+
+/* Notification Dropdown */
+.notification-dropdown {
+    position: relative;
+}
+
+.notification-toggle {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--primary);
+    cursor: pointer;
+    position: relative;
+    padding: 0.5rem;
+}
+
+.notification-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: #e74c3c;
+    color: var(--light);
+    font-size: 0.7rem;
+    border-radius: 50%;
+    padding: 0.2em 0.5em;
+    min-width: 20px;
+    text-align: center;
+}
+
+.notification-menu {
+    display: none; /* hidden by default */
+    position: absolute;
+    top: 100%;
+    right: 0;
+    width: 400px;
+    background: var(--white);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border-radius: 8px;
+    z-index: 1000;
+    overflow: hidden;
+    margin-top: 0.5rem;
+}
+
+.notification-toggle[aria-expanded="true"] + .notification-menu {
+    display: block;
+}
+
+.notification-menu a {
+    display: block;
+    padding: 10px 15px;
+    color: var(--text-dark);
+    text-decoration: none;
+    border-bottom: 1px solid var(--border);
+    transition: 0.2s ease;
+}
+
+.notification-menu a:hover {
+    background: var(--background-light);
+}
+
+.notification-menu small {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--secondary);
+    margin-top: 5px;
+}
+
+.notification-view-all {
+    text-align: center;
+    font-weight: 500;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 992px) {
+    .perfect-header {
+        padding: 1rem;
+    }
+    .header-top-row {
+        grid-template-columns: 1fr auto;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .header-center {
+        display: none;
+    }
+    .header-right {
+        gap: 0.5rem;
+    }
+    .header-title,
+    .header-user-info {
+        display: none;
+    }
+    .menu-toggle {
+        display: block;
+    }
+    .header-nav {
+        display: none;
+        margin-top: 0;
+        background: var(--primary);
+        border-radius: 0 0 8px 8px;
+        overflow: hidden;
+    }
+    .header-nav.is-active {
+        display: block;
+    }
+    .nav-list {
+        flex-direction: column;
+        border-radius: 0;
+    }
+    .nav-item {
+        border-bottom: 1px solid var(--active);
+    }
+    .nav-item a {
+        justify-content: flex-start;
+        padding: 1rem;
+    }
+    .header-nav .header-user-info {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 1rem;
+        background: var(--active);
+        gap: 1rem;
+        width: 100%;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    .header-nav .header-user-info .welcome-message {
+        color: var(--light);
+        text-align: left;
+    }
+    .header-nav .header-user-info .user-avatar img {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        margin-right: 10px;
+    }
+    .logout-link {
+        width: 100%;
+    }
+
+    /* Center notifications in mobile */
+    .notification-menu {
+        width: 200px;
+        max-width: 300px;
+    }
+}

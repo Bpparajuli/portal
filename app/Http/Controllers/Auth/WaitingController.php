@@ -8,51 +8,181 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Notification;
 use App\Notifications\AgreementSubmitted;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 use App\Services\FileUploadService;
 
 class WaitingController extends Controller
 {
-    /**
-     * Show waiting dashboard
-     */
     public function show()
     {
         $user = Auth::user();
+
+        if ($user->agreement_status === 'verified') {
+            return redirect()->route('agent.dashboard')->with('info', 'Your account is already verified.');
+        }
+
+        if (!$user->is_agent) {
+            if ($user->is_admin) {
+                return redirect()->route('admin.dashboard');
+            }
+            return redirect('/')->with('error', 'Unauthorized access.');
+        }
+
         return view('auth.waiting-dash', compact('user'));
     }
 
     /**
-     * Upload agreement file
+     * Upload agreement using FileUploadService
      */
     public function upload(Request $request)
     {
         $user = Auth::user();
 
-        // Only agents can upload
+        // Quick validation
         if (!$user->is_agent) {
-            abort(403, 'Unauthorized.');
+            return redirect()->back()->with('error', 'Unauthorized access.');
         }
 
-        // ✅ Validation
-        $request->validate([
-            'agreement_file' => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240', // 10MB
+        if ($user->agreement_status === 'verified') {
+            return redirect()->route('agent.dashboard')->with('error', 'Your account is already verified.');
+        }
+
+        // Validate file
+        $validator = validator($request->all(), [
+            'agreement_file' => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240',
         ]);
 
-        // ✅ Use FileUploadService for consistency
-        $storedPath = FileUploadService::uploadAgentFile($request, $user, 'agreement_file', 'agreement');
-
-        // ✅ Update user record
-        $user->agreement_file = $storedPath;
-        $user->agreement_status = 'uploaded';
-        $user->save();
-
-        // ✅ Notify admin (id=2)
-        $admin = User::find(2);
-        if ($admin) {
-            Notification::send($admin, new AgreementSubmitted($user));
+        if ($validator->fails()) {
+            return redirect()->back()
+                ->with('error', $validator->errors()->first('agreement_file'))
+                ->withInput();
         }
 
-        return redirect()->route('auth.waiting-dash')
-            ->with('success', 'Agreement uploaded successfully. Waiting for admin verification.');
+        try {
+            DB::beginTransaction();
+
+            // Store old file path for cleanup (if needed)
+            $oldFile = $user->agreement_file;
+
+            // Use FileUploadService - this will store at: agents/{user->slug}/agreement.{ext}
+            $uploadedPath = FileUploadService::uploadAgentFile($request, $user, 'agreement_file', 'agreement');
+
+            if (!$uploadedPath) {
+                throw new \Exception('File upload failed');
+            }
+
+            // Update user record
+            $user->agreement_file = $uploadedPath;
+            $user->agreement_status = 'uploaded';
+            $user->agreement_uploaded_at = now();
+            $user->save();
+
+            DB::commit();
+
+            // Send notifications in background
+            $this->notifyAdminsAsync($user);
+
+            Log::info("Agreement uploaded successfully", [
+                'user_id' => $user->id,
+                'user_slug' => $user->slug,
+                'file_path' => $uploadedPath
+            ]);
+
+            return redirect()->route('auth.waiting-dash')
+                ->with('success', '✓ Agreement uploaded successfully! Your document is under review.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Upload failed: ' . $e->getMessage());
+
+            return redirect()->back()
+                ->with('error', 'Upload failed: ' . $e->getMessage())
+                ->withInput();
+        }
+    }
+
+    /**
+     * Async notifications - doesn't block the response
+     */
+    private function notifyAdminsAsync($user)
+    {
+        try {
+            // Get admin users
+            $admins = User::where('is_admin', 1)
+                ->orWhere('role', 'admin')
+                ->get(['id', 'email', 'name']);
+
+            if ($admins->isNotEmpty()) {
+                foreach ($admins as $admin) {
+                    try {
+                        Notification::send($admin, new AgreementSubmitted($user));
+                    } catch (\Exception $e) {
+                        Log::warning("Admin notification failed for admin ID: {$admin->id}");
+                    }
+                }
+            } else {
+                // Fallback: try to find any admin
+                $defaultAdmin = User::where('is_admin', 1)->orWhere('role', 'admin')->first();
+                if ($defaultAdmin) {
+                    Notification::send($defaultAdmin, new AgreementSubmitted($user));
+                }
+            }
+        } catch (\Exception $e) {
+            Log::warning('Notification system error: ' . $e->getMessage());
+            // Don't rethrow - we don't want to fail the upload
+        }
+    }
+
+    /**
+     * Optional: Method to view/download the agreement
+     */
+    public function viewAgreement()
+    {
+        $user = Auth::user();
+
+        if (!$user->agreement_file || !Storage::disk('public')->exists($user->agreement_file)) {
+            return redirect()->back()->with('error', 'Agreement file not found.');
+        }
+
+        return response()->file(Storage::disk('public')->path($user->agreement_file));
+    }
+
+    /**
+     * Optional: Method to delete agreement (if user wants to re-upload)
+     */
+    public function deleteAgreement()
+    {
+        $user = Auth::user();
+
+        if (!$user->is_agent) {
+            return redirect()->back()->with('error', 'Unauthorized access.');
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // Delete file if exists
+            if ($user->agreement_file && Storage::disk('public')->exists($user->agreement_file)) {
+                Storage::disk('public')->delete($user->agreement_file);
+            }
+
+            // Reset user agreement fields
+            $user->agreement_file = null;
+            $user->agreement_status = 'not_uploaded';
+            $user->agreement_uploaded_at = null;
+            $user->save();
+
+            DB::commit();
+
+            return redirect()->route('auth.waiting-dash')
+                ->with('success', 'Agreement deleted. You can upload a new one.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Agreement deletion failed: ' . $e->getMessage());
+
+            return redirect()->back()
+                ->with('error', 'Failed to delete agreement: ' . $e->getMessage());
+        }
     }
 }

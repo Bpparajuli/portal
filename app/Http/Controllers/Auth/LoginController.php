@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 
 class LoginController extends Controller
 {
@@ -37,7 +39,11 @@ class LoginController extends Controller
 
         $request->session()->regenerate();
 
-        return $this->redirectToDashboard(Auth::user());
+        // Call the authenticated method manually after successful login
+        $user = Auth::user();
+        $this->authenticated($request, $user);
+
+        return $this->redirectToDashboard($user);
     }
 
     /**
@@ -50,7 +56,7 @@ class LoginController extends Controller
         }
 
         if ($user->is_staff) {
-            return redirect()->intended('/staff/dashboard');
+            return redirect()->intended('/crm');
         }
 
         if ($user->is_agent) {
@@ -60,12 +66,54 @@ class LoginController extends Controller
         // fallback
         return redirect('/');
     }
+
     public function logout(Request $request)
     {
+        // Set user as offline before logout
+        $user = Auth::user();
+        if ($user && $user->status) {
+            $user->status->update([
+                'is_online' => false,
+                'last_seen' => now()
+            ]);
+        }
+
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
         return redirect('/');
+    }
+
+    /**
+     * Handle post-login actions (update last login and online status)
+     */
+    protected function authenticated(Request $request, $user)
+    {
+        // Get the real IP address
+        $ipAddress = $request->ip();
+
+        // If behind a proxy, get the real IP
+        if ($request->server->has('HTTP_X_FORWARDED_FOR')) {
+            $ipAddress = $request->server->get('HTTP_X_FORWARDED_FOR');
+        }
+
+        // Update or create status record
+        $status = $user->status()->firstOrCreate(
+            ['user_id' => $user->id],
+            [
+                'is_online' => true,
+                'last_seen' => now(),
+                'last_login_at' => now(),
+                'last_login_ip' => $ipAddress
+            ]
+        );
+
+        // Update existing status
+        $status->is_online = true;
+        $status->last_seen = now();
+        $status->last_login_at = now();
+        $status->last_login_ip = $ipAddress;
+        $status->save();
     }
 }

@@ -1,46 +1,41 @@
-/* =========================
-Login Page & Countries Showcase - Component Styles Only
-========================= */
-
-/* Login Container */
+/* =========================================
+   Login.CSS - Progress Tracker Component
+   Fully Cleaned & Integrated
+========================================= */
 .login-container {
     margin: auto;
     background: #fff;
     border-radius: 20px;
 }
 
-/* Login Form */
 .login-page h2 {
     font-size: 1.8rem;
     color: #222;
 }
-
-/* Form Controls (Login Form Specific) */
 .login-page .form-control {
     border-radius: 10px;
     padding: 12px;
 }
-
-/* Login Button */
 .login-page .btn-primary {
     border-radius: 10px;
     background: linear-gradient(90deg, #1a0262, #820b5c);
     border: none;
     font-weight: 600;
-    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease;
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
 }
 .login-page .btn-primary:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
 }
 
-/* Countries Grid */
+/* Countries grid (login page version) */
 .countries-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 12px;
 }
-
 .country-card {
     position: relative;
     overflow: hidden;
@@ -49,19 +44,15 @@ Login Page & Countries Showcase - Component Styles Only
     display: block;
     transition: transform 0.4s ease;
 }
-
 .country-card img {
     width: 100%;
     height: 100%;
     object-fit: cover;
     transition: transform 0.4s ease;
 }
-
 .country-card:hover img {
     transform: scale(1.1);
 }
-
-/* Overlay Effect on Hover */
 .country-card .overlay {
     position: absolute;
     inset: 0;
@@ -73,34 +64,20 @@ Login Page & Countries Showcase - Component Styles Only
     opacity: 0;
     transition: opacity 0.4s ease;
 }
-
 .country-card:hover .overlay {
     opacity: 1;
 }
-
 .country-card .overlay h3 {
     font-size: 1.2rem;
     font-weight: 600;
     text-align: center;
 }
 
-/* Carousel Adjustments for Mobile */
-#countriesCarousel .country-card {
-    border-radius: 15px;
-}
-
-#countriesCarousel img {
-    border-radius: 15px;
-    object-fit: cover;
-}
-
-/* Responsive Tweaks */
 @media (max-width: 992px) {
     .countries-grid {
         grid-template-columns: repeat(2, 1fr);
     }
 }
-
 @media (max-width: 640px) {
     .countries-grid {
         grid-template-columns: 1fr;

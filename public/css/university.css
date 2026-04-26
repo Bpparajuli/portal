@@ -1,21 +1,19 @@
-/* PAGE WRAPPER */
+/* =========================================
+   University.CSS - Progress Tracker Component
+   Fully Cleaned & Integrated
+========================================= */
 .uni-page {
     padding: 2rem;
     background: var(--white);
 }
 
-/* GRID */
 .uni-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
     gap: 1.5rem;
 }
 
-.uni-col {
-    width: 100%;
-}
-
-/* CARD */
+/* Card */
 .uni-card {
     background: var(--white);
     border-radius: 8px;
@@ -31,19 +29,16 @@
     box-shadow: 0 10px 30px rgba(15, 23, 42, 0.4);
 }
 
-/* HEADER */
 .uni-card-header {
     background: linear-gradient(135deg, var(--light-blue), var(--light-gray));
     text-align: center;
 }
-
 .uni-logo-full {
     width: 100%;
     height: 100px;
     object-fit: contain;
     background: var(--white);
 }
-
 .uni-no-logo {
     padding: 20px;
     text-align: center;
@@ -52,32 +47,28 @@
     color: var(--muted);
 }
 
-/* BODY */
 .uni-card-body {
     padding: 1.2rem;
     text-align: left;
 }
 .uni-card-body p {
-    margin-bottom: 0.6rem; /* adjust spacing as you like */
+    margin-bottom: 0.6rem;
 }
 .uni-name {
     font-size: 1.2rem;
     font-weight: bold;
     color: var(--secondary);
 }
-
 .uni-short-name {
     color: var(--muted);
     font-size: 0.9rem;
 }
-
 .uni-location,
 .uni-email {
     font-size: 0.9rem;
     color: var(--text-color);
 }
 
-/* Footer */
 .uni-card-footer {
     border-top: 1px solid var(--border);
     padding: 12px;
@@ -86,7 +77,6 @@
     justify-content: space-between;
     align-items: center;
 }
-
 .uni-actions {
     display: flex;
     gap: 20px;
@@ -99,7 +89,6 @@
     cursor: pointer;
     color: var(--dark);
 }
-
 .uni-icon-btn.danger {
     color: var(--primary);
 }
@@ -108,137 +97,4 @@
 }
 .danger:hover {
     color: var(--secondary);
-}
-/* Buttons */
-
-.uni-btn-outline {
-    padding: 6px 10px;
-    border: none;
-    border-radius: 8px;
-    background: transparent;
-    font-size: 14px;
-    color: var(--secondary);
-    cursor: pointer;
-}
-.uni-btn-outline:hover {
-    background: var(--secondary);
-    color: var(--white);
-}
-.uni-btn-success {
-    padding: 4px 8px;
-    border: none;
-    border-radius: 6px;
-    font-size: 14px;
-    background: var(--success);
-    color: var(--light);
-    cursor: pointer;
-}
-.uni-btn-success:hover {
-    background: var(--light);
-    color: var(--dark);
-}
-.uni-btn-success-small {
-    padding: 8px;
-    border: none;
-    border-radius: 6px;
-    font-size: 14px;
-    background: var(--success);
-    color: var(--light);
-    cursor: pointer;
-}
-.uni-btn-success-small:hover {
-    background: var(--light);
-    color: var(--dark);
-}
-.uni-btn-small {
-    padding: 6px 12px;
-    border-radius: 6px;
-    background: var(--primary);
-    color: var(--white);
-    font-size: 0.8rem;
-}
-.uni-btn-small:hover {
-    background: var(--secondary);
-    color: var(--white);
-}
-
-/* MODAL */
-.uni-modal {
-    display: none;
-    position: fixed;
-    z-index: 500;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.55);
-    padding: 40px 0;
-}
-
-.uni-modal-content {
-    width: 90%;
-    margin: auto;
-    background: var(--white);
-    border-radius: var(--radius);
-    padding: 25px;
-    max-height: 90vh;
-    overflow-y: auto;
-    animation: fadeIn 0.3s ease;
-    box-shadow: var(--shadow);
-}
-
-.uni-modal-close {
-    float: right;
-    font-size: 1.8rem;
-    cursor: pointer;
-    color: var(--primary);
-}
-.uni-modal-close:hover {
-    color: var(--dark);
-}
-
-/* TABLE */
-.uni-table-wrapper {
-    overflow-x: auto;
-}
-
-.uni-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.uni-table th {
-    background: var(--secondary);
-    color: var(--white);
-    padding: 10px;
-    text-align: center;
-}
-
-.uni-table td {
-    padding: 8px;
-    text-align: center;
-    border: 1px solid var(--border);
-}
-
-/* PAGINATION */
-.uni-pagination {
-    display: flex;
-    justify-content: center;
-    margin-top: 40px;
-}
-
-/* EMPTY MESSAGE */
-.uni-empty {
-    text-align: center;
-    color: var(--muted);
-    margin-top: 50px;
-}
-
-/* Animation */
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
 }

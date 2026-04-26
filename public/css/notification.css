@@ -1,64 +1,19 @@
-/* =========================
-   Notifications Page - Component Styles
-========================= */
+/* =========================================
+   Notification.CSS - Progress Tracker Component
+   Fully Cleaned & Integrated
+========================================= */
 
-/* ---------- Container & Header ---------- */
 .notifications-container {
     max-width: 1400px;
     margin: 0 auto;
     padding: 1.5rem;
 }
-
-.page-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1.5rem;
-    flex-wrap: wrap;
-    gap: 1rem;
-}
-
-.page-title {
-    font-size: 1.75rem;
-    font-weight: 700;
-    margin: 0;
-    color: var(--text);
-}
-
-/* ---------- Grid Layout ---------- */
 .notifications-grid {
     display: grid;
     grid-template-columns: 1fr 400px;
     gap: 2rem;
 }
 
-@media (max-width: 992px) {
-    .notifications-grid {
-        grid-template-columns: 1fr;
-    }
-}
-
-/* ---------- Section Card ---------- */
-.section-card {
-    background: var(--bg);
-    border-radius: var(--radius);
-    padding: 1.5rem;
-    box-shadow: var(--shadow);
-    border: 1px solid var(--border);
-}
-
-.section-title {
-    font-size: 1.1rem;
-    display: flex;
-    font-weight: bold;
-    padding: 1rem;
-    text-align: start;
-    max-width: 500px;
-    border-radius: 6px;
-    color: var(--light);
-}
-
-/* ---------- Notification Link Wrapper ---------- */
 .notification-link {
     display: block;
     text-decoration: none;
@@ -67,13 +22,11 @@
     overflow: hidden;
     transition: all 0.15s ease;
 }
-
 .notification-link:hover {
     transform: translateY(-2px);
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
 }
 
-/* ---------- Notification Card ---------- */
 .notification-card {
     background: #fff;
     border: 1px solid #e5e7eb;
@@ -82,29 +35,15 @@
     transition: all 0.2s ease;
     position: relative;
 }
-
 .notification-card:hover {
     background: #f8fafc;
     transform: translateY(-1px);
 }
-
 .notification-card.unread {
     border-left: 4px solid var(--primary);
     background: linear-gradient(90deg, rgba(13, 110, 253, 0.08), #d3e2fc 70%);
 }
 
-/* Text inside card */
-.notification-card p {
-    margin: 0;
-    font-size: 0.92rem;
-}
-
-.notification-card .meta {
-    font-size: 0.78rem;
-    color: #6b7280;
-}
-
-/* ---------- Notification Icon & Body ---------- */
 .notification-icon {
     width: 44px;
     height: 44px;
@@ -117,45 +56,30 @@
     background: rgba(0, 0, 0, 0.05);
     color: #555;
 }
-
 .notification-body {
     flex: 1;
     min-width: 0;
 }
-
 .notification-title {
-    margin: 0 0 0.35rem 0;
+    margin: 0 0 0.35rem;
     font-weight: 600;
     font-size: 0.98rem;
-    color: var(--text);
+    color: var(--text-color);
     word-break: break-word;
 }
-
 .notification-text {
-    margin: 0.35rem 0 0.6rem 0;
-    color: var(--text-muted);
+    margin: 0.35rem 0 0.6rem;
+    color: var(--muted);
     font-size: 0.9rem;
     line-height: 1.4;
 }
-
 .notification-meta {
     display: flex;
     align-items: center;
     gap: 0.75rem;
     font-size: 0.82rem;
-    color: var(--text-muted);
+    color: var(--muted);
 }
-
-/* ---------- Badges & Actions ---------- */
-.badge-new {
-    background: var(--primary);
-    color: #fff;
-    font-size: 0.7rem;
-    padding: 0.15rem 0.45rem;
-    border-radius: 6px;
-    font-weight: 600;
-}
-
 .notification-actions {
     display: flex;
     gap: 0.4rem;
@@ -164,48 +88,178 @@
     z-index: 10;
 }
 
-.btn-icon {
-    width: 34px;
-    height: 34px;
-    padding: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.9rem;
-    border-radius: 8px;
-    border: 1px solid var(--border);
-    background: var(--bg);
-    color: var(--text-muted);
-    transition: all 0.15s ease;
-}
-
-.btn-icon:hover {
-    background: var(--primary);
-    color: #fff;
-    border-color: var(--primary);
-}
-
-/* ---------- Empty State ---------- */
-.empty-state {
-    text-align: center;
-    padding: 3rem 1.5rem;
-    color: var(--text-muted);
-}
-
-.empty-state i {
-    font-size: 2.5rem;
-    margin-bottom: 1rem;
-    opacity: 0.5;
-}
-
-/* ---------- Messages List ---------- */
 .messages-list {
     list-style: none;
     margin: 0;
     padding: 0;
 }
-
 .sender-name {
     font-weight: 600;
     color: var(--primary);
+}
+
+@media (max-width: 992px) {
+    .notifications-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ----------------------------------------
+   Application progress tracker
+   pages/application.css  (or include here)
+   ---------------------------------------- */
+.app-progress {
+    width: 100%;
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: var(--gap-lg);
+    box-sizing: border-box;
+}
+
+.status-pill {
+    display: inline-block;
+    background: linear-gradient(90deg, var(--primary), var(--secondary));
+    color: var(--white);
+    font-weight: 700;
+    padding: 10px 20px;
+    border-radius: var(--radius);
+    font-size: 16px;
+}
+
+.progress-bar {
+    position: relative;
+    height: 8px;
+    background: var(--muted);
+    border-radius: 6px;
+    margin-top: 86px;
+    overflow: visible;
+}
+.progress-fill {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: var(--progress);
+    background: linear-gradient(90deg, #28a745, #2ecc71);
+    border-radius: 6px;
+    transition: width 0.6s ease;
+    z-index: 1;
+}
+
+.progress-box {
+    position: absolute;
+    left: var(--progress);
+    top: -62px;
+    transform: translateX(-50%);
+    background: var(--card);
+    color: var(--text-color);
+    padding: 8px 12px;
+    border-radius: var(--sradius);
+    box-shadow: var(--shadow-sm);
+    min-width: 160px;
+    max-width: 260px;
+    text-align: center;
+    z-index: 4;
+    pointer-events: none;
+}
+.progress-box-title {
+    font-size: 14px;
+    color: var(--text-color);
+    display: block;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+.progress-box-sub {
+    font-size: 12px;
+    color: var(--white);
+    margin-top: 4px;
+    font-weight: 600;
+}
+
+.status-list {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    list-style: none;
+    margin-top: 12px;
+    padding: 0;
+    width: 100%;
+    overflow-x: hidden;
+}
+.step-item {
+    flex: 1 1 auto;
+    text-align: center;
+    min-width: 80px;
+    box-sizing: border-box;
+    cursor: default;
+    padding: 4px;
+}
+.step-dot {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 2px solid #ddd;
+    background: var(--card);
+    line-height: 30px;
+    font-size: 13px;
+    font-weight: 800;
+    color: #555;
+    display: inline-block;
+}
+.step-label {
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--muted-2);
+    max-width: 100px;
+    margin-left: auto;
+    margin-right: auto;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.step-item.completed .step-dot {
+    background: var(--success);
+    border-color: var(--success);
+    color: var(--white);
+}
+.step-item.completed .step-label {
+    color: var(--success);
+    font-weight: 700;
+}
+.step-item.current .step-dot {
+    background: var(--warning);
+    border-color: #d4a800;
+    color: #222;
+}
+.step-item.current .step-label {
+    color: #b8860b;
+    font-weight: 800;
+}
+.step-item.upcoming .step-dot {
+    background: var(--card);
+    border-color: #ddd;
+    color: #999;
+}
+.step-item.upcoming .step-label {
+    color: #999;
+    font-weight: 500;
+}
+
+@media (max-width: 720px) {
+    .step-label {
+        display: none;
+    }
+    .step-item {
+        min-width: 55px;
+    }
+    .progress-box {
+        min-width: 110px;
+        font-size: 12px;
+        padding: 6px 10px;
+    }
+    .progress-bar {
+        margin-top: 28px;
+    }
 }

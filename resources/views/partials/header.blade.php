@@ -1,260 +1,344 @@
 @php
-$user = auth()->user();
+    $user = auth()->user();
 @endphp
 
-<header class="perfect-header">
-    <div class="header-container">
-        {{-- Top Section: Logo, User Info & Notice Bar --}}
-        <div class="header-top-row d-flex justify-content-between align-items-center">
-            {{-- Left Section: User Logo + Name --}}
-            <div class="header-left d-flex align-items-center gap-2">
+<header class="app-header">
+    <div class="app-header-inner">
+        {{-- Top Bar --}}
+        <div class="header-top">
+            {{-- Logo Section --}}
+            <div class="logo-section">
                 @auth
-                @php
-                // Dynamic dashboard link
-                $dashboardRoute = $user->is_admin
-                ? route('admin.dashboard')
-                : ($user->is_agent ? route('agent.dashboard') : '/');
-
-                // Dynamic user show link
-                $userShowRoute = $user->is_admin
-                ? route('admin.users.show', $user)
-                : ($user->is_agent ? route('agent.users.show', $user) : '#');
-                @endphp
-                <a href="{{ $dashboardRoute }}" class="d-flex align-items-center gap-2 text-decoration-none">
-                    @if($user->business_logo)
-                    <img src="{{ Storage::url($user->business_logo) }}" alt="Logo" width="90" height="90" class="rounded border shadow-sm">
-                    @else
-                    <div class="no-logo rounded border bg-secondary text-white d-flex justify-content-center align-items-center" style="width:50px; height:50px;">
-                        N/A
-                    </div>
-                    @endif
-                </a>
-                <a href="{{ $userShowRoute }}" class="text-dark fw-bold">
-                    {{ $user->business_name }}
-                </a>
-                @else
-                {{-- Default Logo for Guests --}}
-                <div class="header-logo">
-                    <img src="{{ asset('images/main_logo.png') }}" alt="Idea Consultancy" />
-                </div>
-                @endauth
-            </div>
-            {{-- Center Section: Notice Bar --}}
-            <div class="header-center flex-grow-1 mx-3">
-                <div class="notice-bar">
-                    <p class="notice-text mb-0">
-                        <span class="marquee-text">
-                            📢 Notice: Due to issues with the NOC of Dubai colleges in Nepal, we’ve partnered with 5+ universities—promote these for good commissions, and top performers can still earn FAM trips!
-                        </span>
-                    </p>
-                </div>
-            </div>
-
-            {{-- Right Section: Notifications & Mobile Toggle --}}
-            <div class="header-right d-flex align-items-center gap-2">
-                @auth
-                {{-- ✉️ Chat Messages Notification (New) --}}
-                @if ($user->is_admin || $user->is_agent)
-                <div class="notification-dropdown">
                     @php
-                    // Dynamic route based on user type
-                    $chatRoute = $user->is_admin ? route('admin.chat') : route('agent.chat');
+                        $dashboardRoute = $user->is_admin
+                            ? route('admin.dashboard')
+                            : ($user->is_agent
+                                ? route('agent.dashboard')
+                                : ($user->is_staff
+                                    ? route('crm.dashboard')
+                                    : '/'));
 
-                    // Count unread messages where the current user is the receiver
-                    $unreadChatCount = \App\Models\ChatMessage::where('receiver_id', $user->id)
-                    ->where('status', '!=', 'read')
-                    ->count();
+                        $profileRoute = $user->is_admin
+                            ? route('admin.users.show', $user)
+                            : ($user->is_agent
+                                ? route('agent.users.show', $user)
+                                : ($user->is_staff
+                                    ? route('crm.dashboard')
+                                    : '#'));
                     @endphp
-                    <a href="{{ $chatRoute }}" class="text-decoration-none">
-                        <button class="notification-toggle">
-                            <i class="fa fa-comments"></i>
-                            @if($unreadChatCount > 0)
-                            <span class="notification-badge bg-danger" id="globalChatBadge">{{ $unreadChatCount }}</span>
-                            @endif
-                        </button>
-                    </a>
-                </div>
-                @endif
-                @endauth
-                @auth
-                {{-- 🔔 Normal Notifications --}}
-                @if ($user->is_admin || $user->is_agent)
-                <div class="notification-dropdown">
-                    <button class="notification-toggle" aria-expanded="false" aria-controls="notif-menu">
-                        <i class="fa fa-bell"></i>
-                        @php
-                        $unreadCount = $user->unreadNotifications
-                        ->where('data.type', '!=', 'application_message_added')
-                        ->count();
-                        @endphp
-                        @if($unreadCount > 0)
-                        <span class="notification-badge">{{ $unreadCount }}</span>
+                    <a href="{{ $dashboardRoute }}" class="logo-link">
+                        @if ($user->business_logo)
+                            <img src="{{ Storage::url($user->business_logo) }}" alt="Logo" class="logo-img">
+                        @else
+                            <div class="logo-placeholder">
+                                <span>{{ substr($user->business_name ?? 'IC', 0, 2) }}</span>
+                            </div>
                         @endif
-                    </button>
+                    </a>
+                @else
+                    <a href="/" class="logo-link">
+                        <img src="{{ asset('images/main_logo.png') }}" alt="Idea Consultancy" class="logo-img">
+                    </a>
+                    <span class="fw-bold text-white">Idea Consultancy</span>
+                @endauth
+            </div>
 
-                    <div class="notification-menu" id="notif-menu">
-                        @php
-                        $unreadNotifications = $user->unreadNotifications
-                        ->where('data.type', '!=', 'application_message_added');
-                        @endphp
-                        @forelse($unreadNotifications->take(5) as $notification)
-                        <a href="{{ $user->is_admin 
-                                        ? route('admin.notifications.readAndRedirect', $notification->id)
-                                        : route('agent.notifications.readAndRedirect', $notification->id) }}" class="notification-item unread">
-                            <div>{{ $user->formatNotification($notification) }}</div>
-                            <small class="text-muted">{{ $notification->created_at->diffForHumans() }}</small>
-                        </a>
-                        @empty
-                        <span class="notification-item-text">No new notifications</span>
-                        @endforelse
-                        <hr class="my-1">
-                        <div class="d-flex justify-content-between align-items-center px-3 py-2 border-top">
-                            <form action="{{ $user->is_admin 
-                                        ? route('admin.notifications.markAll')
-                                        : route('agent.notifications.markAll') }}" method="POST" class="d-inline">
-                                @csrf
-                                <button type="submit" class="text-decoration-none text-dark btn btn-link p-0">
-                                    <i class="fa fa-check-double me-1"></i> Mark All
-                                </button>
-                            </form>
-                            <a href="{{ $user->is_admin 
-                                        ? route('admin.notifications')
-                                        : route('agent.notifications') }}" class="text-decoration-none text-primary">
-                                View All
-                            </a>
+            {{-- Notice Bar --}}
+            @if (!$user || $user->is_agent)
+                <div class="notice-section">
+                    <div class="notice-content">
+                        <i class="fas fa-bullhorn"></i>
+                        <div class="notice-text">
+                            <span>
+                                Due to issues with NOC of Dubai colleges in Nepal, we've partnered with 5+ universities
+                                —
+                                promote these for good commissions, and top performers can still earn FAM trips!
+                            </span>
                         </div>
                     </div>
                 </div>
-                @endif
+            @endif
 
-                {{-- ✉️ Application Messages --}}
-                <div class="notification-dropdown">
-                    <button class="notification-toggle" aria-expanded="false" aria-controls="message-menu">
-                        <i class="fa fa-vcard"></i>
-                        @if($user->unreadNotifications->where('data.type', 'application_message_added')->count() > 0)
-                        <span class="notification-badge">
-                            {{ $user->unreadNotifications->where('data.type', 'application_message_added')->count() }}
-                        </span>
-                        @endif
-                    </button>
-
-                    <div class="notification-menu" id="message-menu">
-                        @php
-                        $messageNotifications = $user->unreadNotifications
-                        ->where('data.type', 'application_message_added');
-                        @endphp
-
-                        @forelse($messageNotifications->take(5) as $notification)
-                        <a href="{{ $user->is_admin 
-                                    ? route('admin.notifications.readAndRedirect', $notification->id)
-                                    : route('agent.notifications.readAndRedirect', $notification->id) }}" class="notification-item unread bg-light border-start border-primary ps-3">
-                            <div>{{ $user->formatNotification($notification) }}</div>
-                            <small class="text-muted">{{ $notification->created_at->diffForHumans() }}</small>
-                        </a>
-                        @empty
-                        <span class="notification-item-text">No new messages</span>
-                        @endforelse
-
-                        <a href="{{ $user->is_admin 
-                                ? route('admin.notifications') 
-                                : route('agent.notifications') }}" class="notification-view-all">View All Messages</a>
+            @auth
+                @if ($user->is_admin)
+                    <div class="header-bottom" id="navMenu">
+                        <nav class="nav-menu">
+                            <ul>
+                                <li class="{{ request()->is('admin/dashboard') ? 'active' : '' }}"><a
+                                        href="{{ route('admin.dashboard') }}"><i class="fas fa-tachometer-alt"></i>
+                                        Dashboard</a></li>
+                                <li class="{{ request()->is('admin/students*') ? 'active' : '' }}"><a
+                                        href="{{ route('admin.students.index') }}"><i class="fas fa-user-graduate"></i>
+                                        Students</a></li>
+                                <li class="{{ request()->is('admin/universities*') ? 'active' : '' }}"><a
+                                        href="{{ route('admin.universities.index') }}"><i class="fas fa-university"></i>
+                                        Universities</a></li>
+                                <li class="{{ request()->is('admin/users*') ? 'active' : '' }}"><a
+                                        href="{{ route('admin.users.index') }}"><i class="fas fa-users"></i> Users</a>
+                                </li>
+                                <li class="{{ request()->is('admin/applications*') ? 'active' : '' }}"><a
+                                        href="{{ route('admin.applications.index') }}"><i class="fas fa-file-alt"></i>
+                                        Applications</a>
+                                </li>
+                            </ul>
+                        </nav>
                     </div>
-                </div>
+                @endif
+            @endauth
+            {{-- Actions Section --}}
+            <div class="actions-section">
+                @auth
+                    {{-- Chat --}}
+                    @if (($user->is_admin || $user->is_agent) && ($user->is_admin ? Route::has('admin.chat') : Route::has('agent.chat')))
+                        @php
+                            $chatRoute = $user->is_admin ? route('admin.chat') : route('agent.chat');
+                            $unreadChatCount =
+                                \App\Models\ChatMessage::where('receiver_id', $user->id)
+                                    ->where('status', '!=', 'read')
+                                    ->count() ?? 0;
+                        @endphp
+                        <a href="{{ $chatRoute }}" class="action-btn">
+                            <i class="fas fa-comments" title="Chat with Admin"></i>
+                            @if ($unreadChatCount > 0)
+                                <span class="header-badge">{{ $unreadChatCount }}</span>
+                            @endif
+                        </a>
+                    @endif
 
+                    {{-- Notifications --}}
+                    @if ($user->is_admin || $user->is_agent)
+                        <div class="dropdown-container">
+                            <button class="action-btn notif-btn">
+                                <i class="fas fa-bell"></i>
+                                @php $notifCount = $user->unreadNotifications->where('data.type', '!=', 'application_message_added')->count(); @endphp
+                                @if ($notifCount > 0)
+                                    <span class="header-badge">{{ $notifCount }}</span>
+                                @endif
+                            </button>
+                            <div class="dropdown-panel">
+                                <div class="panel-header">
+                                    <strong>AllNotifications</strong>
+                                    <form
+                                        action="{{ $user->is_admin ? route('admin.notifications.markAll') : route('agent.notifications.markAll') }}"
+                                        method="POST">
+                                        @csrf
+                                        <button type="submit" class="mark-all">Mark all read</button>
+                                    </form>
+                                </div>
+                                <div class="panel-body">
+                                    @php $notifications = $user->notifications()->where('data->type', '!=', 'application_message_added')->take(5)->get(); @endphp
+                                    @forelse($notifications as $notification)
+                                        <a href="{{ $user->is_admin ? route('admin.notifications.readAndRedirect', $notification->id) : route('agent.notifications.readAndRedirect', $notification->id) }}"
+                                            class="panel-item {{ is_null($notification->read_at) ? 'unread' : '' }}">
+                                            <div class="item-text">{!! $user->formatNotification($notification) !!}</div>
+                                            <div class="item-time">{{ $notification->created_at->diffForHumans() }}</div>
+                                        </a>
+                                    @empty
+                                        <div class="empty-panel">
+                                            <i class="far fa-bell-slash"></i>
+                                            <p>No notifications</p>
+                                        </div>
+                                    @endforelse
+                                </div>
+                                <div class="panel-footer">
+                                    <a
+                                        href="{{ $user->is_admin ? route('admin.notifications') : route('agent.notifications') }}">View
+                                        all notifications →</a>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
 
+                    {{-- Messages --}}
+                    <div class="dropdown-container">
+                        <button class="action-btn message-btn">
+                            <i class="fas fa-envelope"></i>
+                            @php $msgCount = $user->unreadNotifications->where('data.type', 'application_message_added')->count(); @endphp
+                            @if ($msgCount > 0)
+                                <span class="header-header-badge">{{ $msgCount }}</span>
+                            @endif
+                        </button>
+                        <div class="dropdown-panel">
+                            <div class="panel-header">
+                                <strong>Application Messages</strong>
+                            </div>
+                            <div class="panel-body">
+                                @php $messages = $user->notifications()->where('data->type', 'application_message_added')->take(5)->get(); @endphp
+                                @forelse($messages as $notification)
+                                    <a href="{{ $user->is_admin ? route('admin.notifications.readAndRedirect', $notification->id) : route('agent.notifications.readAndRedirect', $notification->id) }}"
+                                        class="panel-item {{ is_null($notification->read_at) ? 'unread' : '' }}">
+                                        <div class="item-text">{!! $user->formatNotification($notification) !!}</div>
+                                        <div class="item-time">{{ $notification->created_at->diffForHumans() }}</div>
+                                    </a>
+                                @empty
+                                    <div class="empty-panel">
+                                        <i class="far fa-inbox"></i>
+                                        <p>No messages</p>
+                                    </div>
+                                @endforelse
+                            </div>
+                            <div class="panel-footer">
+                                <a
+                                    href="{{ $user->is_admin ? route('admin.notifications') : route('agent.notifications') }}">View
+                                    all messages →</a>
+                            </div>
+                        </div>
+                    </div>
+                    {{-- Pending Unapproved Users --}}
+
+                    {{-- Pending Users (Admin) --}}
+                    @if ($user->is_admin)
+                        <a href="{{ route('admin.users.waiting') }}" class="action-btn">
+                            <i class="fas fa-user-clock"></i>
+                            @php
+                                $pendingUsers = \App\Models\User::where('is_agent', 1)
+                                    ->whereIn('agreement_status', ['not_uploaded', 'uploaded'])
+                                    ->count();
+                            @endphp
+                            @if ($pendingUsers > 0)
+                                <span class="header-badge">{{ $pendingUsers }}</span>
+                            @endif
+                        </a>
+                    @endif
+
+                    {{-- User Menu --}}
+                    <div class="dropdown-container">
+                        <button class="user-menu-btn">
+                            <span>{{ $user->name ?? explode(' ', $user->business_name ?? 'User')[0] }}</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <div class="dropdown-panel dropdown-right">
+                            <div class="panel-header user-info-header">
+                                <div class="user-details">
+                                    @if ($user->business_logo)
+                                        <img src="{{ Storage::url($user->business_logo) }}"
+                                            alt="{{ $user->business_name }}" class="user-avatar-lg">
+                                    @else
+                                        <div class="user-avatar-lg-placeholder">
+                                            {{ substr($user->name ?? ($user->business_name ?? 'U'), 0, 1) }}</div>
+                                    @endif
+                                    <div>
+                                        <div class="user-fullname">{{ $user->name ?? ($user->business_name ?? 'User') }}
+                                        </div>
+                                        <div class="user-email">{{ $user->email }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="panel-divider"></div>
+                            <a href="{{ $profileRoute }}" class="panel-item">
+                                <i class="fas fa-user-circle"></i> My Profile
+                            </a>
+                            <a href="#" class="panel-item text-danger"
+                                onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                                <i class="fas fa-sign-out-alt"></i> Logout
+                            </a>
+                            <form id="logout-form" method="POST" action="{{ route('logout') }}"
+                                style="display: none;">
+                                @csrf</form>
+                        </div>
+                    </div>
                 @else
-                {{-- Guest text for non-logged-in users --}}
-                <span class="guest-text fw-bold text-primary">Idea Consultancy Portal</span>
+                    {{-- Guest Buttons --}}
+                    <a href="https://wa.me/+977905799575" class="btn btn-success rounded-pill" target="_blank"
+                        rel="noopener noreferrer">
+                        <i class="fa fa-phone "> </i>Chat in whataspp
+                    </a>
                 @endauth
 
-                {{-- Mobile Toggle Button --}}
-                <button class="menu-toggle" aria-label="Toggle navigation menu">
-                    <i class="fa fa-bars"></i>
+                {{-- Mobile Menu Toggle --}}
+                <button class="mobile-toggle" id="mobileToggle">
+                    <i class="fas fa-bars"></i>
                 </button>
             </div>
         </div>
 
-        {{-- Main Navigation Menu --}}
-        <nav class="header-nav">
-            <ul class="nav-list">
-                @if ($user?->is_admin)
-                <li class="nav-item {{ request()->is('admin/dashboard') ? 'active' : '' }}">
-                    <a href="{{ route('admin.dashboard') }}"><i class="fa fa-house"></i> Dashboard</a>
-                </li>
-                <li class="nav-item {{ request()->is('admin/students*') ? 'active' : '' }}">
-                    <a href="{{ route('admin.students.index') }}"><i class="fa fa-users"></i> Students</a>
-                </li>
-                <li class="nav-item {{ request()->is('admin/universities*') ? 'active' : '' }}">
-                    <a href="{{ route('admin.universities.index') }}"><i class="fa fa-university"></i> Universities</a>
-                </li>
-                <li class="nav-item {{ request()->is('admin/users*') ? 'active' : '' }}">
-                    <a href="{{ route('admin.users.index') }}"><i class="fa fa-user"></i> Users</a>
-                </li>
-                <li class="nav-item {{ request()->is('admin/applications*') ? 'active' : '' }}">
-                    <a href="{{ route('admin.applications.index') }}"><i class="fa fa-file-text"></i> Applications</a>
-                </li>
-                <li class="nav-item {{ request()->is('admin/users*') ? 'active' : '' }}">
-                    <a href="{{ route('admin.users.waiting') }}">
-                        <i class="fa fa-users"></i>
-                        @php
-                        $totalWaitingUsers = app\models\User::where('is_agent', 1)
-                        ->whereIn('agreement_status', ['not_uploaded', 'uploaded'])
-                        ->count();
-                        @endphp
-                        @if($totalWaitingUsers > 0)
-                        <span class="absolute top-0 right-0 bg-danger text-white rounded w-5 h-5 flex items-center justify-center text-xs">
-                            {{ $totalWaitingUsers }}
-                        </span>
+        {{-- Navigation Menu --}}
+        <div class="header-bottom" id="navMenu">
+            <nav class="nav-menu">
+                <ul>
+                    @if ($user && $user->is_admin)
+                    @elseif($user && $user->is_agent)
+                        <li class="{{ request()->is('agent/dashboard') ? 'active' : '' }}"><a
+                                href="{{ route('agent.dashboard') }}"><i class="fas fa-tachometer-alt"></i>
+                                Dashboard</a></li>
+                        <li class="{{ request()->is('agent/students*') ? 'active' : '' }}"><a
+                                href="{{ route('agent.students.index') }}"><i class="fas fa-user-graduate"></i>
+                                Students</a></li>
+                        <li class="{{ request()->is('agent/universities*') ? 'active' : '' }}"><a
+                                href="{{ route('agent.universities.index') }}"><i class="fas fa-university"></i>
+                                Universities</a></li>
+                        <li class="{{ request()->is('agent/applications*') ? 'active' : '' }}"><a
+                                href="{{ route('agent.applications.index') }}"><i class="fas fa-file-alt"></i>
+                                Applications</a></li>
+                    @elseif($user && $user->is_staff)
+                    @else
+                        <li class="{{ request()->is('/') ? 'active' : '' }}"><a href="{{ url('/') }}"><i
+                                    class="fas fa-home"></i> Home</a></li>
+                        <li><a href="https://ideaconsultancyservices.com/" target="_blank"><i
+                                    class="fas fa-globe"></i> Website</a></li>
+                        @if (Route::has('guest.universities.index'))
+                            <li class="{{ request()->is('guest/universities*') ? 'active' : '' }}"><a
+                                    href="{{ route('guest.universities.index') }}"><i class="fas fa-university"></i>
+                                    Universities</a></li>
                         @endif
-                    </a>
-                </li>
-                @elseif ($user?->is_agent)
-                <li class="nav-item {{ request()->is('agent/dashboard') ? 'active' : '' }}">
-                    <a href="{{ route('agent.dashboard') }}"><i class="fa fa-house"></i> Dashboard</a>
-                </li>
-                <li class="nav-item {{ request()->is('agent/students*') ? 'active' : '' }}">
-                    <a href="{{ route('agent.students.index') }}"><i class="fa fa-users"></i> Students</a>
-                </li>
-                <li class="nav-item {{ request()->is('agent/universities*') ? 'active' : '' }}">
-                    <a href="{{ route('agent.universities.index') }}"><i class="fa fa-university"></i> Universities</a>
-                </li>
-                <li class="nav-item {{ request()->is('agent/applications*') ? 'active' : '' }}">
-                    <a href="{{ route('agent.applications.index') }}"><i class="fa fa-book"></i> Applied List</a>
-                </li>
-                @else
-                {{-- Guest Navigation --}}
-                <li class="nav-item {{ request()->is('/') ? 'active' : '' }}">
-                    <a href="{{ url('/') }}"><i class="fa fa-house"></i> Home</a>
-                </li>
-                <li class="nav-item">
-                    <a href="https://ideaconsultancyservices.com/"><i class="fa fa-globe"></i> Webpage</a>
-                </li>
-                <li class="nav-item {{ request()->is('guest/universities*') ? 'active' : '' }}">
-                    <a href="{{ route('guest.universities.index') }}"><i class="fa fa-calendar-check"></i> Universities</a>
-                </li>
-                <li class="nav-item {{ request()->is('auth/contact') ? 'active' : '' }}">
-                    <a href="{{ route('auth.contact') }}"><i class="fa fa-envelope"></i> Contact Us</a>
-                </li>
-                <li class="nav-item {{ request()->is('auth/login') ? 'active' : '' }}">
-                    <a href="{{ route('login') }}"><i class="fa fa-sign-in"></i> Login</a>
-                </li>
-                <li class="nav-item {{ request()->is('auth/register') ? 'active' : '' }}">
-                    <a href="{{ route('register') }}"><i class="fa fa-user-plus"></i> Register</a>
-                </li>
-                @endif
-
-                {{-- Logout --}}
-                @auth
-                <li class="nav-item logout-link">
-                    <form method="POST" action="{{ route('logout') }}">
-                        @csrf
-                        <a href="#" onclick="event.preventDefault(); this.closest('form').submit();">
-                            <i class="fa-solid fa-right-from-bracket"></i> Logout
-                        </a>
-                    </form>
-                </li>
-                @endauth
-            </ul>
-        </nav>
+                        @if (Route::has('auth.contact'))
+                            <li class="{{ request()->is('auth/contact') ? 'active' : '' }}"><a
+                                    href="{{ route('auth.contact') }}"><i class="fas fa-envelope"></i> Contact</a>
+                            </li>
+                        @endif
+                        <li class="{{ request()->is('auth/register') ? 'active' : '' }}">
+                            <a href="{{ route('auth.register') }}"> <i class="fas fa-user-plus"></i>
+                                Register</a>
+                        </li>
+                        <li class="{{ request()->is('auth/login') ? 'active' : '' }}">
+                            <a href="{{ route('auth.login') }}"> <i class="fas fa-user"></i>
+                                Login</a>
+                        </li>
+                    @endif
+                </ul>
+            </nav>
+        </div>
     </div>
 </header>
+
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Mobile menu toggle
+        const mobileToggle = document.getElementById('mobileToggle');
+        const navMenu = document.getElementById('navMenu');
+
+        if (mobileToggle && navMenu) {
+            mobileToggle.addEventListener('click', function(e) {
+                e.stopPropagation();
+                navMenu.classList.toggle('open');
+                const icon = this.querySelector('i');
+                if (icon) {
+                    if (navMenu.classList.contains('open')) {
+                        icon.classList.remove('fa-bars');
+                        icon.classList.add('fa-times');
+                    } else {
+                        icon.classList.remove('fa-times');
+                        icon.classList.add('fa-bars');
+                    }
+                }
+            });
+        }
+
+        // Close mobile menu on link click
+        document.querySelectorAll('.nav-menu li a').forEach(function(link) {
+            link.addEventListener('click', function() {
+                if (window.innerWidth <= 768 && navMenu && navMenu.classList.contains('open')) {
+                    navMenu.classList.remove('open');
+                    if (mobileToggle) {
+                        const icon = mobileToggle.querySelector('i');
+                        if (icon) {
+                            icon.classList.remove('fa-times');
+                            icon.classList.add('fa-bars');
+                        }
+                    }
+                }
+            });
+        });
+    });
+</script>

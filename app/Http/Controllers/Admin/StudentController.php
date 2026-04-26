@@ -3,213 +3,322 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use App\Models\Student;
-use App\Models\User;
-use App\Models\University;
+use App\Models\Application;
 use App\Models\Course;
 use App\Models\Document;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Notification;
+use App\Models\Student;
+use App\Models\University;
+use App\Models\User;
 use App\Notifications\StudentAdded;
-use App\Notifications\StudentStatusUpdated;
 use App\Notifications\StudentDeleted;
+use App\Services\FileUploadService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Storage;
 
 class StudentController extends Controller
 {
-    // List students with filters
+    // -------------------------------------------------------------------------
+    // Index
+    // -------------------------------------------------------------------------
+
     public function index(Request $request)
     {
-        $filters = $request->only([
-            'search',
-            'agent',
-            'university',
-            'course_title',
-            'status',
-            'sort_by',
-            'sort_order',
-            'quick_filter'
-        ]);
+        $baseQuery = Student::with(['agent', 'documents', 'applications']);
+        // Search
+        if ($search = $request->get('search')) {
+            $baseQuery->where(function ($q) use ($search) {
 
-        // Base query with relationships
-        $studentsQuery = Student::query()->with(['agent', 'university', 'course', 'applications']);
+                $q->where('first_name', 'like', "%{$search}%")
+                    ->orWhere('last_name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")
 
-        // Apply filters as before
-        if (!empty($filters['search'])) {
-            $studentsQuery->where(fn($q) => $q->where('first_name', 'like', "%{$filters['search']}%")
-                ->orWhere('last_name', 'like', "%{$filters['search']}%")
-                ->orWhere('email', 'like', "%{$filters['search']}%"));
-        }
-        if (!empty($filters['agent'])) $studentsQuery->where('agent_id', $filters['agent']);
-        if (!empty($filters['university'])) $studentsQuery->where('university_id', $filters['university']);
-        if (!empty($filters['course_title'])) {
-            $studentsQuery->whereHas('course', fn($q) => $q->where('title', $filters['course_title']));
-        }
-        if (!empty($filters['status'])) {
-            $studentsQuery->whereHas('applications', function ($q) use ($filters) {
-                $q->where('application_status', $filters['status']);
+                    ->orWhereHas('agent', function ($q) use ($search) {
+                        $q->where('business_name', 'like', "%{$search}%");
+                    })
+
+                    ->orWhereHas('applications.university', function ($q) use ($search) {
+                        $q->where('name', 'like', "%{$search}%");
+                    })
+
+                    ->orWhereHas('applications.course', function ($q) use ($search) {
+                        $q->where('title', 'like', "%{$search}%");
+                    });
             });
         }
-        if (!empty($filters['quick_filter'])) {
-            if ($filters['quick_filter'] === 'applied') {
-                $studentsQuery->whereHas('applications');
-            } elseif ($filters['quick_filter'] === 'not_applied') {
-                $studentsQuery->doesntHave('applications');
-            }
+        $sortBy = $request->get('sort_by', 'created_at');
+        $order  = $request->get('order', 'desc');
+
+        $baseQuery->orderBy($sortBy, $order);
+        // Agent filter
+        if ($agentId = $request->get('agent')) {
+            $baseQuery->where('agent_id', $agentId);
         }
-        $studentsQuery->orderBy($filters['sort_by'] ?? 'created_at', $filters['sort_order'] ?? 'DESC');
+
+        // Application status filter
+        if ($status = $request->get('status')) {
+            $baseQuery->whereHas('applications', fn($q) => $q->where('application_status', $status));
+        }
+        if ($university = $request->get('university')) {
+            $baseQuery->whereHas('applications', function ($q) use ($university) {
+                $q->where('university_id', $university);
+            });
+        }
+        // Preferred country filter
+        if ($country = $request->get('country')) {
+            $baseQuery->where('preferred_country', $country);
+        }
+        // Quick filter
+        match ($request->get('quick_filter')) {
+            'applied'     => $baseQuery->whereHas('applications'),
+            'not_applied' => $baseQuery->whereDoesntHave('applications'),
+            default       => null,
+        };
+
+
+        // Clone query before applying agent scope split
+        $allQuery     = clone $baseQuery;
+        $partnerQuery = clone $baseQuery;
 
         // Split queries for two tables
         $specialAgentIds = [11, 12];
 
-        $table2Query = clone $studentsQuery;
-        $table2Students = $table2Query->whereIn('agent_id', $specialAgentIds)->paginate(10, ['*'], 'table2')->withQueryString();
+        $universities = University::whereHas('applications')
+            ->withCount('applications')
+            ->orderBy('name')
+            ->get();
+        $agents = User::agents()
+            ->whereHas('students')
+            ->withCount('students')
+            ->orderBy('business_name')
+            ->get();
+        $applicationStatuses = Application::whereNotNull('application_status')
+            ->selectRaw('application_status, COUNT(*) as total')
+            ->groupBy('application_status')
+            ->orderBy('application_status')
+            ->get();
+        $countries = University::whereHas('applications')
+            ->whereNotNull('country')
+            ->distinct()
+            ->orderBy('country')
+            ->pluck('country');
 
-        $table1Query = clone $studentsQuery;
-        $table1Students = $table1Query->whereNotIn('agent_id', $specialAgentIds)->paginate(15, ['*'], 'table1')->withQueryString();
+
+        $table1Students = $allQuery
+            ->when(!empty($specialAgentIds), function ($q) use ($specialAgentIds) {
+                $q->whereNotIn('agent_id', array_values($specialAgentIds));
+            })
+            ->paginate(15, ['*'], 'page1')
+            ->withQueryString();
+
+        $table2Students = $partnerQuery
+            ->whereIn('agent_id', $specialAgentIds)
+            ->paginate(15, ['*'], 'page2')
+            ->withQueryString();
+
+        // Attach doc stats
+        foreach ([$table1Students, $table2Students] as $collection) {
+            foreach ($collection as $student) {
+                $stats                     = $student->getDocumentStats();
+                $student->document_status   = $stats['status'];
+                $student->document_progress = $stats['progress'];
+                $student->uploaded_count    = $stats['uploaded_count'];
+            }
+        }
 
         return view('admin.students.index', [
-            'table1Students' => $table1Students,
-            'table2Students' => $table2Students,
-            'agents' => User::where('is_agent', 1)->get(),
-            'universities' => University::all(),
-            'courses' => Course::all(),
+            'table1Students'      => $table1Students,
+            'table2Students'      => $table2Students,
+            'agents'              => $agents,
+            'universities'        => $universities,
+            'totalRequiredDocs'   => count(Student::REQUIRED_DOCUMENTS),
+            'sort_by'             => $sortBy,
+            'order'               => $order,
+            'countries'           => $countries,
+            'applicationStatuses' => $applicationStatuses,
+
+
         ]);
     }
 
-    // Show form to create student
+    // -------------------------------------------------------------------------
+    // Create
+    // -------------------------------------------------------------------------
+
     public function create()
     {
         return view('admin.students.create', [
-            'student' => new Student(),
-            'agents' => User::where('is_agent', 1)->get(),
-            'universities' => University::all(),
-            'courses' => Course::all(),
-            'statuses' => Student::STATUS,
+            'student'      => new Student(),
+            'agents'       => User::agents()->orderBy('business_name')->get(),
+            'universities' => University::orderBy('name')->get(),
+            'courses'      => Course::orderBy('title')->get(),
         ]);
     }
 
-    // Store new student
+    // -------------------------------------------------------------------------
+    // Store
+    // -------------------------------------------------------------------------
+
     public function store(Request $request)
     {
-        $data = $this->validateStudent($request);
+        $data         = $this->validateStudent($request);
+        $data['tags'] = $this->parseTags($request->get('tags', ''));
+
         $student = Student::create($data);
 
         if ($request->hasFile('students_photo')) {
-            $student->students_photo = $this->uploadPhoto($request->file('students_photo'), $student, $request->agent_id);
-            $student->save();
+            $student->students_photo = FileUploadService::uploadStudentFile(
+                $request->file('students_photo'),
+                Auth::user(),
+                $student,
+                'photo'
+            );
+            $student->saveQuietly();
         }
 
-        // Notify agent if assigned
-        if ($student->agent_id && $agent = User::find($student->agent_id)) {
-            Notification::send($agent, new StudentAdded($agent, $student));
-        }
-
-        return redirect()->route('admin.students.index')->with('success', 'Student created successfully.');
+        return redirect()->route('admin.students.show', $student)
+            ->with('success', 'Student created successfully.');
     }
 
-    // Show student details
+    // -------------------------------------------------------------------------
+    // Show
+    // -------------------------------------------------------------------------
+
     public function show(Student $student)
     {
-        $documents = $student->documents;
-        return view('admin.students.show', compact('student', 'documents'));
-    }
+        $student->load([
+            'agent',
+            'documents',
+            'applications.university',
+            'applications.course',
+            'applications.messages.user',
+            'currentStage',
+        ]);
 
-    // Show form to edit student
-    public function edit(Student $student)
-    {
-        return view('admin.students.edit', [
-            'student' => $student,
-            'agents' => User::where('is_agent', 1)->get(),
-            'universities' => University::all(),
-            'courses' => Course::all(),
-            'statuses' => Student::STATUS,
+        return view('admin.students.show', [
+            'student'           => $student,
+            'documentStats'     => $student->getDocumentStats(),
+            'totalRequiredDocs' => count(Student::REQUIRED_DOCUMENTS),
         ]);
     }
 
-    // Update student
+    // -------------------------------------------------------------------------
+    // Edit
+    // -------------------------------------------------------------------------
+
+    public function edit(Student $student)
+    {
+        return view('admin.students.edit', [
+            'student'      => $student,
+            'agents'       => User::agents()->orderBy('business_name')->get(),
+            'universities' => University::orderBy('name')->get(),
+            'courses'      => Course::orderBy('title')->get(),
+        ]);
+    }
+
+    // -------------------------------------------------------------------------
+    // Update
+    // -------------------------------------------------------------------------
+
     public function update(Request $request, Student $student)
     {
-        $data = $this->validateStudent($request, $student->id);
+        $data         = $this->validateStudent($request, $student->id);
+        $data['tags'] = $this->parseTags($request->get('tags', ''));
+
         $student->update($data);
 
         if ($request->hasFile('students_photo')) {
-            $student->students_photo = $this->uploadPhoto($request->file('students_photo'), $student, $request->agent_id);
-            $student->save();
+            $student->students_photo = FileUploadService::uploadStudentFile(
+                $request->file('students_photo'),
+                Auth::user(),
+                $student,
+                'photo'
+            );
+            $student->saveQuietly();
         }
 
-        // Notify agent if student status changed
-        if ($student->wasChanged('student_status') && $student->agent) {
-            Notification::send($student->agent, new StudentStatusUpdated($student));
-        }
-
-        return redirect()->route('admin.students.show', $student->id)->with('success', 'Student updated successfully.');
+        return redirect()->route('admin.students.show', $student)
+            ->with('success', 'Student updated successfully.');
     }
 
-    // Delete student
+    // -------------------------------------------------------------------------
+    // Destroy
+    // -------------------------------------------------------------------------
+
     public function destroy(Student $student)
     {
-        // Notify agent before deletion
-        if ($student->agent) {
-            Notification::send($student->agent, new StudentDeleted(Auth::user(), $student));
-        }
+        $folder = sprintf(
+            'agents/%s/%s',
+            optional($student->agent)->slug ?? 'unknown',
+            strtolower(str_replace(' ', '-', "{$student->first_name}-{$student->last_name}"))
+        );
 
-        // Delete student photo
-        if ($student->students_photo && file_exists(public_path($student->students_photo))) {
-            unlink(public_path($student->students_photo));
+        if (Storage::disk('public')->exists($folder)) {
+            Storage::disk('public')->deleteDirectory($folder);
         }
 
         $student->delete();
 
-        return redirect()->route('admin.students.index')->with('success', 'Student deleted successfully.');
+        return redirect()->route('admin.students.index')
+            ->with('success', 'Student deleted successfully.');
     }
 
-    // Upload student photo
-    private function uploadPhoto($file, Student $student, $agent_id = null)
+    // -------------------------------------------------------------------------
+    // Student Applications listing
+    // -------------------------------------------------------------------------
+
+    public function applications(Student $student)
     {
-        $agent = $agent_id ? User::find($agent_id) : Auth::user();
-        $agent_name = $agent ? ($agent->username ?? $agent->business_name) : 'unknown_agent';
-        $student_name = $student->first_name . '_' . $student->last_name;
-        $path = 'images/agents/' . $agent_name . '/' . $student_name;
-        if (!file_exists(public_path($path))) {
-            mkdir(public_path($path), 0755, true);
+        $student->load(['applications.university', 'applications.course']);
+
+        return view('admin.students.applications', compact('student'));
+    }
+
+    // -------------------------------------------------------------------------
+    // Private Helpers
+    // -------------------------------------------------------------------------
+
+    private function validateStudent(Request $request, ?int $excludeId = null): array
+    {
+        $emailRule = 'nullable|email|unique:students,email' . ($excludeId ? ",{$excludeId}" : '');
+
+        return $request->validate([
+            'agent_id'            => 'nullable|exists:users,id',
+            'first_name'          => 'required|string|max:255',
+            'last_name'           => 'required|string|max:255',
+            'dob'                 => 'nullable|date',
+            'gender'              => ['nullable', 'in:' . implode(',', Student::GENDERS)],
+            'email'               => $emailRule,
+            'phone_number'        => 'nullable|string|max:50',
+            'permanent_address'   => 'nullable|string|max:255',
+            'temporary_address'   => 'nullable|string|max:255',
+            'nationality'         => 'nullable|string|max:100',
+            'passport_number'     => 'nullable|string|max:100',
+            'passport_expiry'     => 'nullable|date',
+            'marital_status'      => ['nullable', 'in:' . implode(',', Student::MARITAL_STATUSES)],
+            'qualification'       => 'nullable|string|max:255',
+            'passed_year'         => 'nullable|integer|min:1900|max:' . date('Y'),
+            'gap'                 => 'nullable|integer|min:0|max:20',
+            'last_grades'         => 'nullable|string|max:50',
+            'education_board'     => 'nullable|string|max:100',
+            'preferred_country'   => 'nullable|string|max:100',
+            'preferred_city'      => 'nullable|string|max:100',
+            'preferred_course'    => 'nullable|string|max:255',
+            'preferred_university' => 'nullable|string|max:255',
+            'remarks'             => 'nullable|string',
+            'follow_up_date'      => 'nullable|date',
+            'students_photo'      => 'nullable|image|mimes:jpg,jpeg,png|max:5120',
+        ]);
+    }
+
+    private function parseTags(string $raw): array
+    {
+        if (empty(trim($raw))) {
+            return [];
         }
-        $filename = $student_name . '_photo.' . $file->getClientOriginalExtension();
-        $file->move(public_path($path), $filename);
-        return $path . '/' . $filename;
-    }
 
-    // Validate student request
-    private function validateStudent(Request $request, $id = null)
-    {
-        $rules = [
-            'first_name' => 'required|string|max:255',
-            'last_name' => 'required|string|max:255',
-            'dob' => 'nullable|date',
-            'gender' => 'required|in:' . implode(',', Student::GENDERS),
-            'email' => 'required|email|unique:students,email' . ($id ? ',' . $id : ''),
-            'phone_number' => 'nullable|string',
-            'permanent_address' => 'nullable|string',
-            'temporary_address' => 'nullable|string',
-            'nationality' => 'nullable|string',
-            'passport_number' => 'nullable|string',
-            'passport_expiry' => 'nullable|date',
-            'marital_status' => 'nullable|in:Single,Married,Other',
-            'qualification' => 'nullable|string',
-            'passed_year' => 'nullable|numeric',
-            'gap' => 'nullable|numeric',
-            'last_grades' => 'nullable|string',
-            'education_board' => 'nullable|string',
-            'preferred_country' => 'nullable|string',
-            'agent_id' => 'nullable|exists:users,id',
-            'university_id' => 'nullable|exists:universities,id',
-            'course_id' => 'nullable|exists:courses,id',
-            'student_status' => 'nullable|in:' . implode(',', Student::STATUS),
-            'notes' => 'nullable|string',
-            'follow_up_date' => 'nullable|date',
-            'students_photo' => 'nullable|image|mimes:jpg,jpeg,png|max:5120',
-        ];
-
-        return $request->validate($rules);
+        return array_values(array_filter(array_map('trim', explode(',', $raw))));
     }
 }

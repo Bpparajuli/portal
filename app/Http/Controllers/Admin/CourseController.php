@@ -91,14 +91,14 @@ class CourseController extends Controller
             ],
             'title' => 'required|string|max:255',
             'course_link' => 'nullable|string',
-            'course_type' => 'required|in:UG,PG,Diploma',
+            'course_type' => 'nullable|string|max:50',
             'academic_requirement' => 'nullable|string',
             'description' => 'nullable|string',
             'duration' => 'nullable|string|max:255',
             'fee' => 'nullable|string|max:255',
             'intakes' => 'required|string|max:255',
             'ielts_pte_other_languages' => 'nullable|string|max:255',
-            'moi_requirement' => 'required|in:Yes,No',
+            'moi_acceptance' => 'nullable|string',
             'application_fee' => 'nullable|string|max:255',
             'scholarships' => 'nullable|string|max:255',
         ]);
@@ -114,7 +114,11 @@ class CourseController extends Controller
     public function edit($id)
     {
         $course = Course::with('university')->findOrFail($id);
-        return view('admin.courses.edit', compact('course'));
+
+        $previous = Course::where('id', '<', $id)->orderBy('id', 'desc')->first();
+        $next = Course::where('id', '>', $id)->orderBy('id', 'asc')->first();
+
+        return view('admin.courses.edit', compact('course', 'previous', 'next'));
     }
 
     /**
@@ -138,21 +142,23 @@ class CourseController extends Controller
             ],
             'title' => 'required|string|max:255',
             'course_link' => 'nullable|string',
-            'course_type' => 'required|in:UG,PG,Diploma',
+            'course_type' => 'nullable|string|max:50',
+            'moi_acceptance' => 'nullable|string',
             'academic_requirement' => 'nullable|string',
             'description' => 'nullable|string',
             'duration' => 'nullable|string|max:255',
             'fee' => 'nullable|string|max:255',
             'intakes' => 'required|string|max:255',
             'ielts_pte_other_languages' => 'nullable|string|max:255',
-            'moi_requirement' => 'required|in:Yes,No',
             'application_fee' => 'nullable|string|max:255',
             'scholarships' => 'nullable|string|max:255',
         ]);
 
         $course->update($request->all());
 
-        return redirect()->route('admin.courses.index')->with('success', 'Course updated successfully.');
+        return redirect()
+            ->route('admin.courses.edit', $course->id)
+            ->with('success', 'Course updated successfully.');
     }
 
     /**

@@ -26,6 +26,7 @@ class User extends Authenticatable
         'password',
         'agreement_file',
         'agreement_status',
+        'agreement_uploaded_at',
         'business_logo',
         'registration',
         'pan',
@@ -42,6 +43,8 @@ class User extends Authenticatable
         'is_admin' => 'boolean',
         'is_agent' => 'boolean',
         'active'   => 'boolean',
+        'agreement_uploaded_at' => 'datetime',
+
     ];
 
     /**
@@ -60,6 +63,24 @@ class User extends Authenticatable
         return $this->hasMany(Student::class, 'agent_id');
     }
 
+    public function getAccessibleStudents()
+    {
+        if ($this->is_admin()) {
+            return Student::all();
+        }
+
+        if ($this->is_agent()) {
+            $staffIds = User::where('parent_id', $this->id)->pluck('id')->toArray();
+            $agentIds = array_merge([$this->id], $staffIds);
+            return Student::whereIn('agent_id', $agentIds)->get();
+        }
+
+        if ($this->is_staff()) {
+            return Student::where('agent_id', $this->id)->get();
+        }
+
+        return collect();
+    }
     public function documents()
     {
         return $this->hasManyThrough(
@@ -321,7 +342,6 @@ class User extends Authenticatable
             ->where('status', '!=', 'read');
     }
 
-
     // ==============================
     // ONLINE STATUS RELATIONS
     // ==============================
@@ -331,8 +351,9 @@ class User extends Authenticatable
         return $this->hasOne(UserStatus::class, 'user_id');
     }
 
+
     /**
-     * Enhanced online status with formatted last seen
+     * Enhanced online status with formatted last seen and last login
      */
     public function getOnlineStatusAttribute()
     {
@@ -343,26 +364,33 @@ class User extends Authenticatable
                 'last_seen_full' => null,
                 'last_seen_human' => 'Never',
                 'last_seen_with_day' => 'Never',
+                'last_login' => null,
+                'last_login_ip' => null,
             ];
         }
 
         $isOnline = (bool) $this->status->is_online;
         $lastSeen = $this->status->last_seen;
+        $lastLogin = $this->status->last_login_at;
+        $lastLoginIp = $this->status->last_login_ip;
 
         if (!$lastSeen) {
             return [
-                'is_online' => $isOnline,
+                'is_online' => false,
                 'last_seen' => 'Never',
                 'last_seen_full' => null,
                 'last_seen_human' => 'Never',
                 'last_seen_with_day' => 'Never',
+                'last_login' => $this->formatLastLogin($lastLogin),
+                'last_login_ip' => $lastLoginIp,
             ];
         }
 
-        $carbonLastSeen = Carbon::parse($lastSeen);
-        $now = Carbon::now();
+        // Convert to Nepal timezone
+        $carbonLastSeen = Carbon::parse($lastSeen)->timezone(config('app.timezone'));
+        $now = now();
 
-        // Check if online (within last 2 minutes)
+        // ✅ Online check (within last 2 minutes)
         if ($isOnline && $carbonLastSeen->diffInMinutes($now) <= 2) {
             return [
                 'is_online' => true,
@@ -370,20 +398,24 @@ class User extends Authenticatable
                 'last_seen_full' => $carbonLastSeen->format('l, F j, Y g:i A'),
                 'last_seen_human' => 'Online now',
                 'last_seen_with_day' => 'Online',
+                'last_login' => $this->formatLastLogin($lastLogin),
+                'last_login_ip' => $lastLoginIp,
             ];
         }
 
-        // Format for different time periods
-        $diffInMinutes = $carbonLastSeen->diffInMinutes($now);
-        $diffInHours = $carbonLastSeen->diffInHours($now);
+        // Time differences
         $diffInDays = $carbonLastSeen->diffInDays($now);
 
-        if ($diffInMinutes < 60) {
-            $lastSeenText = $diffInMinutes . ' minute' . ($diffInMinutes != 1 ? 's' : '') . ' ago';
-            $lastSeenWithDay = $lastSeenText;
-        } elseif ($diffInHours < 24) {
-            $lastSeenText = $diffInHours . ' hour' . ($diffInHours != 1 ? 's' : '') . ' ago';
-            $lastSeenWithDay = $lastSeenText;
+        // ✅ Smart formatting
+        if ($diffInDays < 1) {
+            // Recent → use human readable
+            $lastSeenText = $carbonLastSeen->diffForHumans([
+                'parts' => 1, // e.g. "2 hours 5 minutes ago"
+            ]);
+
+            $lastSeenWithDay = $carbonLastSeen->diffForHumans([
+                'parts' => 1, // e.g. "2 hours ago"
+            ]);
         } elseif ($diffInDays == 1) {
             $lastSeenText = 'Yesterday at ' . $carbonLastSeen->format('g:i A');
             $lastSeenWithDay = 'Yesterday';
@@ -401,7 +433,32 @@ class User extends Authenticatable
             'last_seen_full' => $carbonLastSeen->format('l, F j, Y g:i A'),
             'last_seen_human' => $lastSeenText,
             'last_seen_with_day' => $lastSeenWithDay,
+            'last_login' => $this->formatLastLogin($lastLogin),
+            'last_login_ip' => $lastLoginIp,
         ];
+    }
+    /**
+     * Format last login timestamp
+     */
+    private function formatLastLogin($lastLogin)
+    {
+        if (!$lastLogin) {
+            return null;
+        }
+
+        $carbonLastLogin = Carbon::parse($lastLogin);
+        $now = now();
+        $diffInDays = $carbonLastLogin->diffInDays($now);
+
+        if ($diffInDays == 0) {
+            return 'Today at ' . $carbonLastLogin->format('g:i A');
+        } elseif ($diffInDays == 1) {
+            return 'Yesterday at ' . $carbonLastLogin->format('g:i A');
+        } elseif ($diffInDays < 7) {
+            return $carbonLastLogin->format('l') . ' at ' . $carbonLastLogin->format('g:i A');
+        } else {
+            return $carbonLastLogin->format('M j, Y') . ' at ' . $carbonLastLogin->format('g:i A');
+        }
     }
 
     /**
@@ -423,17 +480,31 @@ class User extends Authenticatable
     }
 
     /**
+     * Get formatted last login
+     */
+    public function getFormattedLastLoginAttribute()
+    {
+        $status = $this->online_status;
+
+        if (!$status['last_login']) {
+            return '<span class="text-muted">Never logged in</span>';
+        }
+
+        return '<span class="text-muted">Last login: ' . $status['last_login'] . '</span>';
+    }
+
+    /**
      * Update user's online status
      */
     public function updateOnlineStatus()
     {
         $status = $this->status()->firstOrCreate([], [
             'is_online' => true,
-            'last_seen' => Carbon::now()
+            'last_seen' => now()
         ]);
 
         $status->is_online = true;
-        $status->last_seen = Carbon::now();
+        $status->last_seen = now();
         $status->save();
 
         return $status;
@@ -445,8 +516,97 @@ class User extends Authenticatable
     public function setOffline()
     {
         if ($this->status) {
-            $this->status->is_online = false;
-            $this->status->save();
+            $this->status->update([
+                'is_online' => false,
+                'last_seen' => now()
+            ]);
         }
+    }
+
+    /**
+     * Update login info (call this after user logs in)
+     */
+    public function updateLoginInfo($request)
+    {
+        $status = $this->status()->firstOrCreate([], [
+            'is_online' => true,
+            'last_seen' => now(),
+            'last_login_at' => now(),
+            'last_login_ip' => $request->ip()
+        ]);
+
+        $status->update([
+            'is_online' => true,
+            'last_seen' => now(),
+            'last_login_at' => now(),
+            'last_login_ip' => $request->ip()
+        ]);
+
+        return $status;
+    }
+    // In app/Models/User.php - Add these methods
+
+    // ========================================================================
+    // CRM Relationships (Add these)
+    // ========================================================================
+
+    /**
+     * Activities assigned to this user
+     */
+    public function assignedActivities()
+    {
+        return $this->hasMany(CrmTasks::class, 'assigned_to');
+    }
+
+    /**
+     * Activities created by this user
+     */
+    public function createdActivities()
+    {
+        return $this->hasMany(CrmTasks::class, 'created_by');
+    }
+
+    /**
+     * Pending activities assigned to this user
+     */
+    public function pendingActivities()
+    {
+        return $this->hasMany(CrmTasks::class, 'assigned_to')
+            ->where('status', 'pending');
+    }
+
+    /**
+     * Today's activities for this user
+     */
+    public function todayActivities()
+    {
+        return $this->hasMany(CrmTasks::class, 'assigned_to')
+            ->whereDate('scheduled_at', today())
+            ->orderBy('priority_time_slot');
+    }
+
+    /**
+     * Notes created by this user
+     */
+    public function createdNotes()
+    {
+        return $this->hasMany(StudentNote::class, 'created_by');
+    }
+
+    /**
+     * Stage changes made by this user
+     */
+    public function stageChanges()
+    {
+        return $this->hasMany(StudentStageHistory::class, 'changed_by');
+    }
+
+
+    /**
+     * Get parent agent (if this user is staff)
+     */
+    public function parentAgent()
+    {
+        return $this->belongsTo(User::class, 'parent_id')->where('role', 'agent');
     }
 }
