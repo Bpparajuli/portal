@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Application;
+use App\Models\ApplicationStatus;
 use App\Models\Course;
 use App\Models\Document;
 use App\Models\Student;
@@ -59,7 +60,9 @@ class StudentController extends Controller
 
         // Application status filter
         if ($status = $request->get('status')) {
-            $baseQuery->whereHas('applications', fn($q) => $q->where('application_status', $status));
+            $baseQuery->whereHas('applications', function ($q) use ($status) {
+                $q->where('application_status_id', $status);
+            });
         }
         if ($university = $request->get('university')) {
             $baseQuery->whereHas('applications', function ($q) use ($university) {
@@ -94,10 +97,9 @@ class StudentController extends Controller
             ->withCount('students')
             ->orderBy('business_name')
             ->get();
-        $applicationStatuses = Application::whereNotNull('application_status')
-            ->selectRaw('application_status, COUNT(*) as total')
-            ->groupBy('application_status')
-            ->orderBy('application_status')
+
+        $applicationStatuses = ApplicationStatus::withCount('applications')
+            ->having('applications_count', '>', 0)
             ->get();
         $countries = University::whereHas('applications')
             ->whereNotNull('country')

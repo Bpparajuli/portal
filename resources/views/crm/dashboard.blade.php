@@ -21,6 +21,7 @@
             background: var(--crm-bg);
         }
 
+        /* Stats */
         .crm-stats {
             display: flex;
             gap: 1rem;
@@ -55,6 +56,7 @@
             color: var(--crm-muted);
         }
 
+        /* Toolbar */
         .crm-toolbar {
             background: var(--crm-card);
             border: 1px solid var(--crm-border);
@@ -81,7 +83,7 @@
             font-size: .875rem;
         }
 
-        .crm-toolbar .search-wrap .search-icon {
+        .crm-toolbar .search-wrap .si {
             position: absolute;
             left: .7rem;
             top: 50%;
@@ -105,6 +107,7 @@
             border-color: var(--crm-primary);
         }
 
+        /* Kanban */
         .kanban-board {
             display: flex;
             gap: 1rem;
@@ -143,6 +146,7 @@
             flex: 1;
         }
 
+        /* Student card */
         .student-card {
             background: #fff;
             border: 1px solid var(--crm-border);
@@ -208,6 +212,18 @@
             color: var(--crm-success);
         }
 
+        .sc-followup.none {
+            background: #f9fafb;
+            color: var(--crm-muted);
+        }
+
+        .staff-info {
+            font-size: .7rem;
+            color: var(--crm-muted);
+            margin-top: .2rem;
+        }
+
+        /* List / Table */
         .crm-list-table {
             background: var(--crm-card);
             border: 1px solid var(--crm-border);
@@ -244,13 +260,7 @@
             padding: .2rem .65rem;
         }
 
-        .staff-info {
-            font-size: .7rem;
-            color: var(--crm-muted);
-            margin-top: .2rem;
-        }
-
-        @media (max-width: 768px) {
+        @media (max-width:768px) {
             .kanban-col {
                 flex: 0 0 260px;
             }
@@ -271,19 +281,17 @@
                 <h4 class="mb-0 fw-bold" style="color:var(--crm-text)">CRM Pipeline</h4>
                 <p class="text-muted small mb-0">
                     @if (auth()->user()->is_admin)
-                        All students (Admin View)
-                    @elseif(auth()->user()->is_agent)
-                        Your team's students (Agent View)
+                        All students &mdash; Admin View
+                    @elseif (auth()->user()->is_admin_staff)
+                        All students &mdash; Admin Staff View
+                    @elseif (auth()->user()->is_agent)
+                        Your team's students &mdash; Agent View
+                    @elseif (auth()->user()->is_agent_staff)
+                        Your students &amp; your agent's students
                     @else
-                        Your created students (Staff View)
+                        Your assigned students
                     @endif
                 </p>
-                @if (auth()->user()->is_staff)
-                    <p class="text-muted small mt-1 mb-0">
-                        <i class="fas fa-info-circle"></i> Showing students where you are the assigned agent (agent_id =
-                        {{ auth()->id() }})
-                    </p>
-                @endif
             </div>
             <div class="d-flex gap-2">
                 @if (auth()->user()->is_admin)
@@ -294,42 +302,64 @@
             </div>
         </div>
 
-        {{-- Stats bar --}}
         <div class="crm-stats">
-            <div class="crm-stat">
+
+            {{-- Total Students --}}
+            <a href="{{ route('crm.dashboard', array_merge(request()->query(), ['stat_filter' => 'total'])) }}"
+                class="crm-stat text-decoration-none">
                 <span class="stat-icon">👥</span>
                 <div>
                     <div class="stat-num">{{ $stats['total'] }}</div>
-                    <div class="stat-lbl">
-                        @if (auth()->user()->is_staff)
-                            Your Students
-                        @else
-                            Total Students
-                        @endif
-                    </div>
+                    <div class="stat-lbl">Students</div>
                 </div>
-            </div>
-            <div class="crm-stat">
+            </a>
+
+            {{-- My Students --}}
+            <a href="{{ route('crm.dashboard', array_merge(request()->query(), ['stat_filter' => 'my_students'])) }}"
+                class="crm-stat text-decoration-none">
+                <span class="stat-icon">👥</span>
+                <div>
+                    <div class="stat-num">{{ $stats['my_students'] }}</div>
+                    <div class="stat-lbl">My Students</div>
+                </div>
+            </a>
+
+            {{-- Today's Tasks --}}
+            <a href="{{ route('crm.dashboard', array_merge(request()->query(), ['activity_filter' => 'today'])) }}"
+                class="crm-stat text-decoration-none">
                 <span class="stat-icon">📅</span>
                 <div>
                     <div class="stat-num">{{ $stats['today'] }}</div>
                     <div class="stat-lbl">Today's Tasks</div>
                 </div>
-            </div>
-            <div class="crm-stat">
+            </a>
+
+            {{-- Overdue --}}
+            <a href="{{ route('crm.dashboard', array_merge(request()->query(), ['activity_filter' => 'overdue'])) }}"
+                class="crm-stat text-decoration-none">
                 <span class="stat-icon">⚠️</span>
                 <div>
                     <div class="stat-num text-danger">{{ $stats['overdue'] }}</div>
                     <div class="stat-lbl">Overdue</div>
                 </div>
-            </div>
-            <div class="crm-stat">
+            </a>
+
+            {{-- Upcoming --}}
+            <a href="{{ route('crm.dashboard', array_merge(request()->query(), ['activity_filter' => 'upcoming'])) }}"
+                class="crm-stat text-decoration-none">
                 <span class="stat-icon">🔜</span>
                 <div>
-                    <div class="stat-num" style="color:var(--crm-success)">{{ $stats['upcoming'] }}</div>
+                    <div class="stat-num" style="color:var(--crm-success)">
+                        {{ $stats['upcoming'] }}
+                    </div>
                     <div class="stat-lbl">Upcoming</div>
                 </div>
-            </div>
+            </a>
+            @if (request('stat_filter') || request('activity_filter'))
+                <a href="{{ route('crm.dashboard') }}" class="btn btn-sm btn-outline-danger">
+                    Clear Stats Filter
+                </a>
+            @endif
         </div>
 
         {{-- Toolbar --}}
@@ -337,7 +367,7 @@
             <input type="hidden" name="view" value="{{ $view }}">
             <div class="crm-toolbar">
                 <div class="search-wrap">
-                    <span class="search-icon">🔍</span>
+                    <span class="si">🔍</span>
                     <input type="text" name="search" placeholder="Search students…" value="{{ request('search') }}"
                         oninput="debounceSubmit()">
                 </div>
@@ -345,16 +375,19 @@
                 <select name="stage_id" onchange="this.form.submit()">
                     <option value="">All Stages</option>
                     @foreach ($stages as $stage)
-                        <option value="{{ $stage->id }}" @selected(request('stage_id') == $stage->id)>{{ $stage->name }}</option>
+                        <option value="{{ $stage->id }}" @selected(request('stage_id') == $stage->id)>
+                            {{ $stage->name }}
+                        </option>
                     @endforeach
                 </select>
 
                 @if ($assignees->count())
                     <select name="assignee_id" onchange="this.form.submit()">
-                        <option value="">All Staff</option>
+                        <option value="">All Assignees</option>
                         @foreach ($assignees as $a)
-                            <option value="{{ $a->id }}" @selected(request('assignee_id') == $a->id)>{{ $a->name }}
-                                ({{ ucfirst($a->role) }})</option>
+                            <option value="{{ $a->id }}" @selected(request('assignee_id') == $a->id)>
+                                {{ $a->name }} ({{ ucfirst($a->role) }})
+                            </option>
                         @endforeach
                     </select>
                 @endif
@@ -381,7 +414,9 @@
             </div>
         </form>
 
+        {{-- ══════════════════════════════════════════════════════════════════════ --}}
         {{-- KANBAN VIEW --}}
+        {{-- ══════════════════════════════════════════════════════════════════════ --}}
         @if ($view === 'kanban')
             <div class="kanban-board">
                 @foreach ($stages as $stage)
@@ -389,12 +424,12 @@
                     <div class="kanban-col">
                         <div class="kanban-col-header">
                             <div>
-                                <span class="col-dot"
-                                    style="background:{{ $stage->color }}; width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:.4rem"></span>
+                                <span
+                                    style="background:{{ $stage->color }};width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:.4rem"></span>
                                 {{ $stage->name }}
                             </div>
                             <span class="badge rounded-pill"
-                                style="background:{{ $stage->color }}30; color:{{ $stage->color }}; font-size:.7rem">
+                                style="background:{{ $stage->color }}30;color:{{ $stage->color }};font-size:.7rem">
                                 {{ $colStudents->count() }}
                             </span>
                         </div>
@@ -404,31 +439,89 @@
                                     $overdue = $student->overdueActivities->count();
                                     $upcoming = $student->upcomingActivities->count();
                                     $task = $student->pendingActivities->first();
-                                    $followupClass = $overdue ? 'overdue' : ($upcoming ? 'upcoming' : 'today');
-                                    $followupLabel = $overdue
-                                        ? "⚠️ {$overdue} overdue"
-                                        : ($task
-                                            ? '📅 ' .
-                                                ($task->scheduled_at?->isToday()
-                                                    ? 'Today'
-                                                    : $task->scheduled_at?->format('d M'))
-                                            : '—');
+
+                                    if ($overdue) {
+                                        $fClass = 'overdue';
+                                        $fLabel = "⚠️ {$overdue} overdue";
+                                    } elseif ($task && $task->scheduled_at?->isToday()) {
+                                        $fClass = 'today';
+                                        $fLabel = '📅 Today';
+                                    } elseif ($upcoming) {
+                                        $fClass = 'upcoming';
+                                        $fLabel = '📅 ' . ($task?->scheduled_at?->format('d M') ?? 'Upcoming');
+                                    } else {
+                                        $fClass = 'none';
+                                        $fLabel = '— no tasks';
+                                    }
                                 @endphp
-                                <a href="{{ route('crm.student.show', $student) }}" class="student-card">
-                                    <div class="sc-name">{{ $student->full_name }}</div>
-                                    <div class="sc-phone">📞 {{ $student->phone_number ?? '—' }}</div>
-                                    @if ($student->tags)
-                                        <div class="sc-tags">
-                                            @foreach (array_slice($student->tags, 0, 3) as $tag)
-                                                <span class="sc-tag">🏷️ {{ $tag }}</span>
-                                            @endforeach
+                                <div class="student-card">
+                                    <a href="{{ route('crm.student.show', $student) }}">
+                                        <div class="sc-name">{{ $student->full_name }}</div>
+                                        <div class="sc-phone">📞 {{ $student->phone_number ?? '—' }}</div>
+                                        @if ($student->tags)
+                                            <div class="sc-tags">
+                                                @foreach (array_slice($student->tags, 0, 3) as $tag)
+                                                    <span class="sc-tag">🏷️ {{ $tag }}</span>
+                                                @endforeach
+                                            </div>
+                                        @endif
+                                        <div class="sc-followup {{ $fClass }}">{{ $fLabel }}</div>
+                                        @if (auth()->user()->is_admin || auth()->user()->is_admin_staff || auth()->user()->is_agent)
+                                            <div class="staff-info">👤 {{ $student->agent?->name ?? 'Unassigned' }}</div>
+                                        @endif
+                                    </a>
+                                    <form id="ratingForm" action="{{ route('crm.dashboard.updateRating', $student->id) }}"
+                                        method="POST">
+                                        @csrf
+                                        @method('PUT')
+                                        <div class="star-rating">
+                                            <input type="radio" name="rating" id="star3" value="3"
+                                                {{ old('rating', $student->rating ?? '') == 3 ? 'checked' : '' }}>
+                                            <label for="star3">&#9733;</label>
+
+                                            <input type="radio" name="rating" id="star2" value="2"
+                                                {{ old('rating', $student->rating ?? '') == 2 ? 'checked' : '' }}>
+                                            <label for="star2">&#9733;</label>
+
+                                            <input type="radio" name="rating" id="star1" value="1"
+                                                {{ old('rating', $student->rating ?? '') == 1 ? 'checked' : '' }}>
+                                            <label for="star1">&#9733;</label>
                                         </div>
-                                    @endif
-                                    <div class="sc-followup {{ $followupClass }}">{{ $followupLabel }}</div>
-                                    @if (auth()->user()->is_admin || auth()->user()->is_agent)
-                                        <div class="staff-info">Agent: {{ $student->agent?->name ?? 'Unassigned' }}</div>
-                                    @endif
-                                </a>
+                                    </form>
+                                </div>
+                                <style>
+                                    .star-rating {
+                                        display: flex;
+                                        flex-direction: row-reverse;
+                                        justify-content: flex-end;
+                                        gap: 5px;
+                                    }
+
+                                    .star-rating input {
+                                        display: none;
+                                    }
+
+                                    .star-rating label {
+                                        font-size: 32px;
+                                        color: #ccc;
+                                        cursor: pointer;
+                                        transition: 0.2s;
+                                    }
+
+                                    .star-rating input:checked~label,
+                                    .star-rating label:hover,
+                                    .star-rating label:hover~label {
+                                        color: #ffc107;
+                                    }
+                                </style>
+
+                                <script>
+                                    document.querySelectorAll('.star-rating input').forEach(star => {
+                                        star.addEventListener('change', function() {
+                                            document.getElementById('ratingForm').submit();
+                                        });
+                                    });
+                                </script>
                             @empty
                                 <div class="text-center text-muted py-3" style="font-size:.75rem">No students</div>
                             @endforelse
@@ -437,8 +530,10 @@
                 @endforeach
             </div>
 
+            {{-- ══════════════════════════════════════════════════════════════════════ --}}
             {{-- LIST VIEW --}}
-        @elseif($view === 'list')
+            {{-- ══════════════════════════════════════════════════════════════════════ --}}
+        @elseif ($view === 'list')
             <div class="crm-list-table">
                 @forelse($students as $student)
                     <div class="d-flex align-items-center gap-3 px-3 py-2 border-bottom">
@@ -449,17 +544,17 @@
                                 style="color:var(--crm-text)">
                                 {{ $student->full_name }}
                             </a>
-                            <div class="small text-muted">📞 {{ $student->phone_number }} &bull; {{ $student->email }}
+                            <div class="small text-muted">
+                                📞 {{ $student->phone_number ?? '—' }} &bull; {{ $student->email ?? '—' }}
                             </div>
-                            @if (auth()->user()->is_admin || auth()->user()->is_agent)
-                                <div class="small text-muted mt-1">👤 Agent: {{ $student->agent?->name ?? 'Unassigned' }}
-                                </div>
+                            @if (auth()->user()->is_admin || auth()->user()->is_admin_staff || auth()->user()->is_agent)
+                                <div class="small text-muted mt-1">👤 {{ $student->agent?->name ?? 'Unassigned' }}</div>
                             @endif
                         </div>
                         <div class="d-none d-md-block">
                             @if ($student->currentStage)
                                 <span class="stage-pill"
-                                    style="background:{{ $student->currentStage->color }}20; color:{{ $student->currentStage->color }}">
+                                    style="background:{{ $student->currentStage->color }}20;color:{{ $student->currentStage->color }}">
                                     {{ $student->currentStage->name }}
                                 </span>
                             @endif
@@ -467,7 +562,7 @@
                         <div>
                             @if ($student->overdueActivities->count())
                                 <span class="badge bg-danger">⚠️ {{ $student->overdueActivities->count() }} overdue</span>
-                            @elseif($student->upcomingActivities->count())
+                            @elseif ($student->upcomingActivities->count())
                                 <span class="badge bg-success">✅ {{ $student->upcomingActivities->count() }}
                                     upcoming</span>
                             @else
@@ -480,9 +575,6 @@
                 @empty
                     <div class="text-center text-muted py-5">
                         No students found.
-                        @if (auth()->user()->is_staff)
-                            <div class="mt-2 small">You don't have any students assigned to you.</div>
-                        @endif
                     </div>
                 @endforelse
             </div>
@@ -490,7 +582,9 @@
                 <div class="mt-3">{{ $students->withQueryString()->links() }}</div>
             @endif
 
+            {{-- ══════════════════════════════════════════════════════════════════════ --}}
             {{-- TABLE VIEW --}}
+            {{-- ══════════════════════════════════════════════════════════════════════ --}}
         @else
             <div class="crm-list-table">
                 <table>
@@ -514,14 +608,15 @@
                                             height="30" alt="">
                                         <div>
                                             <div class="fw-medium">{{ $student->full_name }}</div>
-                                            <div class="text-muted" style="font-size:.75rem">{{ $student->email }}</div>
+                                            <div class="text-muted" style="font-size:.75rem">{{ $student->email ?? '—' }}
+                                            </div>
                                         </div>
                                     </div>
                                 </td>
                                 <td>
                                     @if ($student->currentStage)
                                         <span class="stage-pill"
-                                            style="background:{{ $student->currentStage->color }}20; color:{{ $student->currentStage->color }}">
+                                            style="background:{{ $student->currentStage->color }}20;color:{{ $student->currentStage->color }}">
                                             {{ $student->currentStage->name }}
                                         </span>
                                     @else
@@ -539,15 +634,17 @@
                                     @if ($student->overdueActivities->count())
                                         <span class="badge bg-danger">{{ $student->overdueActivities->count() }}
                                             overdue</span>
-                                    @elseif($student->upcomingActivities->count())
+                                    @elseif ($student->upcomingActivities->count())
                                         <span class="badge bg-success">{{ $student->upcomingActivities->count() }}
                                             upcoming</span>
                                     @else
                                         <span class="text-muted">—</span>
                                     @endif
                                 </td>
-                                <td><a href="{{ route('crm.student.show', $student) }}"
-                                        class="btn btn-sm btn-outline-primary">View</a></td>
+                                <td>
+                                    <a href="{{ route('crm.student.show', $student) }}"
+                                        class="btn btn-sm btn-outline-primary">View</a>
+                                </td>
                             </tr>
                         @empty
                             <tr>
@@ -561,6 +658,7 @@
                 <div class="mt-3">{{ $students->withQueryString()->links() }}</div>
             @endif
         @endif
+
     </div>
 @endsection
 

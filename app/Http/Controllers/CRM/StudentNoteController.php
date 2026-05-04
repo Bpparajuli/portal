@@ -5,11 +5,16 @@ namespace App\Http\Controllers\CRM;
 use App\Http\Controllers\Controller;
 use App\Models\Student;
 use App\Models\StudentNote;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class StudentNoteController extends Controller
 {
+    // =========================================================================
+    // STORE
+    // =========================================================================
+
     public function store(Request $request)
     {
         $this->denyAgents();
@@ -23,7 +28,7 @@ class StudentNoteController extends Controller
             'reminder_time_slot' => ['nullable', 'in:morning,day,evening'],
         ]);
 
-        $this->authorizeStudentAccess($validated['student_id']);
+        $this->authorizeStudentAccess((int) $validated['student_id']);
 
         $note = StudentNote::create([
             ...$validated,
@@ -39,6 +44,10 @@ class StudentNoteController extends Controller
         return back()->with('success', 'Note saved.');
     }
 
+    // =========================================================================
+    // UPDATE
+    // =========================================================================
+
     public function update(Request $request, StudentNote $note)
     {
         $this->denyAgents();
@@ -52,19 +61,31 @@ class StudentNoteController extends Controller
             'reminder_time_slot' => ['nullable', 'in:morning,day,evening'],
         ]);
 
-        $note->update([...$validated, 'is_pinned' => $request->boolean('is_pinned')]);
+        $note->update([
+            ...$validated,
+            'is_pinned' => $request->boolean('is_pinned'),
+        ]);
 
         return back()->with('success', 'Note updated.');
     }
+
+    // =========================================================================
+    // TOGGLE PIN
+    // =========================================================================
 
     public function togglePin(StudentNote $note)
     {
         $this->denyAgents();
         $this->authorizeNote($note);
+
         $note->togglePin();
 
         return response()->json(['success' => true, 'is_pinned' => $note->is_pinned]);
     }
+
+    // =========================================================================
+    // DESTROY
+    // =========================================================================
 
     public function destroy(StudentNote $note)
     {
@@ -78,6 +99,10 @@ class StudentNoteController extends Controller
 
         return back()->with('success', 'Note deleted.');
     }
+
+    // =========================================================================
+    // Helpers
+    // =========================================================================
 
     private function denyAgents(): void
     {
@@ -94,11 +119,26 @@ class StudentNoteController extends Controller
         $user    = Auth::user();
         $student = Student::findOrFail($studentId);
 
-        if ($user->is_admin) return;
+        if ($user->is_admin)       return;
+        if ($user->is_admin_staff) return;
+
+        if ($user->is_agent) {
+            $staffIds        = User::where('parent_id', $user->id)->where('role', 'staff')->pluck('id')->toArray();
+            $allowedAgentIds = array_merge([$user->id], $staffIds);
+            abort_unless(in_array($student->agent_id, $allowedAgentIds), 403);
+            return;
+        }
+
+        if ($user->is_agent_staff) {
+            abort_unless(in_array($student->agent_id, [$user->id, $user->parent_id]), 403);
+            return;
+        }
+
         if ($user->is_staff) {
             abort_unless($student->agent_id === $user->id, 403);
             return;
         }
+
         abort(403);
     }
 }

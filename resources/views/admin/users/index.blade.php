@@ -541,78 +541,82 @@
                                                     </a>
                                                 </div>
                                             </div>
-                    </div>
-                    </td>
-                    <td class="align-middle">
-                        <span
-                            class="badge 
+                                        </td>
+                                        <td class="align-middle">
+                                            <span
+                                                class="badge 
                     {{ $agent->active ? 'bg-success text-white' : 'bg-danger text-white' }} 
                     rounded-pill  p-2">
-                            <i class="fas fa-circle me-1" style="font-size: 10px;"></i>
-                            {{ $agent->active ? 'Active' : 'Inactive' }}
-                        </span>
-                    </td>
-                    <td class="align-middle">
-                        @php
-                            $badgeClass = match ($agent->agreement_status) {
-                                'verified' => 'btn-outline-success',
-                                'uploaded' => 'btn-outline-warning',
-                                default => 'btn-outline-secondary',
-                            };
-                        @endphp
-                        <span class="badge {{ $badgeClass }} rounded-1 px-3 py-2">
-                            {{ str_replace('_', ' ', ucfirst($agent->agreement_status)) }}
-                        </span>
+                                                <i class="fas fa-circle me-1" style="font-size: 10px;"></i>
+                                                {{ $agent->active ? 'Active' : 'Inactive' }}
+                                            </span>
+                                        </td>
+                                        <td class="align-middle">
+                                            @php
+                                                $badgeClass = match ($agent->agreement_status) {
+                                                    'verified' => 'btn-outline-success',
+                                                    'uploaded' => 'btn-outline-warning',
+                                                    default => 'btn-outline-secondary',
+                                                };
+                                            @endphp
+                                            <span class="badge {{ $badgeClass }} rounded-1 px-3 py-2">
+                                                {{ str_replace('_', ' ', ucfirst($agent->agreement_status)) }}
+                                            </span>
+                                        </td>
+                                        <td class="align-middle text-center">
+                                            <a href="{{ route('admin.users.students', $agent->slug) }}"
+                                                class="btn btn-sm btn-outline-primary">
+                                                <i
+                                                    class="fas fa-graduation-cap me-1"></i>{{ $agent->students_count ?? 0 }}
+                                            </a>
+                                        </td>
+                                        <td class="align-middle text-center">
+                                            <a href="{{ route('admin.users.applications', $agent->slug) }}"
+                                                class="btn btn-sm btn-outline-secondary">
+                                                <i class="fas fa-file-alt me-1"></i>{{ $agent->applications_count ?? 0 }}
+                                            </a>
+                                        </td>
+                                        <td class="align-middle text-end">
+                                            <div class="dropdown">
+                                                <button class="btn btn-sm btn-light border-0" data-bs-toggle="dropdown">
+                                                    <i class="fas fa-ellipsis-v"></i>
+                                                </button>
+                                                <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3">
+                                                    <li><a class="dropdown-item py-2"
+                                                            href="{{ route('admin.users.show', $agent->slug) }}"><i
+                                                                class="fas fa-eye me-2"></i> View</a></li>
+                                                    <li><a class="dropdown-item py-2"
+                                                            href="{{ route('admin.users.edit', $agent->slug) }}"><i
+                                                                class="fas fa-edit me-2"></i> Edit</a></li>
+                                                    @if (in_array(auth()->id(), [1, 2]) && !in_array($agent->id, [1, 2]))
+                                                        <li>
+                                                            <hr class="dropdown-divider">
+                                                        </li>
+                                                        <li><button class="dropdown-item py-2 text-danger"
+                                                                onclick="confirmDelete('{{ route('admin.users.destroy', $agent->slug) }}', '{{ $agent->business_name }}')"><i
+                                                                    class="fas fa-trash me-2"></i> Delete</button></li>
+                                                    @endif
+                                                </ul>
+                                            </div>
+                                        </td>
+
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-                </td>
-                <td class="align-middle text-center">
-                    <a href="{{ route('admin.users.students', $agent->slug) }}" class="btn btn-sm btn-outline-primary">
-                        <i class="fas fa-graduation-cap me-1"></i>{{ $agent->students_count ?? 0 }}
-                    </a>
-            </div>
-            </td>
-            <td class="align-middle text-center">
-                <a href="{{ route('admin.users.applications', $agent->slug) }}" class="btn btn-sm btn-outline-secondary">
-                    <i class="fas fa-file-alt me-1"></i>{{ $agent->applications_count ?? 0 }}
-                </a>
-    </div>
-    </td>
-    <td class="align-middle text-end">
-        <div class="dropdown">
-            <button class="btn btn-sm btn-light border-0" data-bs-toggle="dropdown">
-                <i class="fas fa-ellipsis-v"></i>
-            </button>
-            <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3">
-                <li><a class="dropdown-item py-2" href="{{ route('admin.users.show', $agent->slug) }}"><i
-                            class="fas fa-eye me-2"></i> View</a></li>
-                <li><a class="dropdown-item py-2" href="{{ route('admin.users.edit', $agent->slug) }}"><i
-                            class="fas fa-edit me-2"></i> Edit</a></li>
-                @if (in_array(auth()->id(), [1, 2]) && !in_array($agent->id, [1, 2]))
-                    <li>
-                        <hr class="dropdown-divider">
-                    </li>
-                    <li><button class="dropdown-item py-2 text-danger"
-                            onclick="confirmDelete('{{ route('admin.users.destroy', $agent->slug) }}', '{{ $agent->business_name }}')"><i
-                                class="fas fa-trash me-2"></i> Delete</button></li>
-                @endif
-            </ul>
-        </div>
-        </div>
-        </tr>
-        @endforeach
-        </tbody>
-        </table>
-        </div>
-        </div>
-        <div class="card-footer bg-white border-0 pt-3">
-            <div class="d-flex justify-content-between align-items-center">
-                <div class="text-muted small">
-                    Showing {{ $agents->firstItem() }} to {{ $agents->lastItem() }} of {{ $agents->total() }} agents
+
+                <div class="card-footer bg-white border-0 pt-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="text-muted small">
+                            Showing {{ $agents->firstItem() }} to {{ $agents->lastItem() }} of {{ $agents->total() }}
+                            agents
+                        </div>
+                        {{ $agents->withQueryString()->links() }}
+                    </div>
                 </div>
-                {{ $agents->withQueryString()->links() }}
             </div>
-        </div>
-        </div>
         @endif
 
         @if (!$admins->count() && !$staffs->count() && !$agents->count())
@@ -625,7 +629,6 @@
                 </a>
             </div>
         @endif
-        </div>
 
         {{-- Delete Confirmation Modal --}}
         <div class="modal fade" id="deleteModal" tabindex="-1">
@@ -650,93 +653,93 @@
                 </div>
             </div>
         </div>
+    </div>
+@endsection
 
-    @endsection
+@push('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        // Toggle advanced filters
+        function toggleAdvancedFilters() {
+            const filters = document.getElementById('advancedFilters');
+            if (filters.style.display === 'none') {
+                filters.style.display = 'block';
+            } else {
+                filters.style.display = 'none';
+            }
+        }
 
-    @push('scripts')
-        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-        <script>
-            // Toggle advanced filters
-            function toggleAdvancedFilters() {
-                const filters = document.getElementById('advancedFilters');
-                if (filters.style.display === 'none') {
-                    filters.style.display = 'block';
-                } else {
-                    filters.style.display = 'none';
-                }
+        // Apply role filter from stats cards
+        function applyRoleFilter(role) {
+            const url = new URL(window.location.href);
+            if (role === 'all') {
+                url.searchParams.delete('role');
+            } else {
+                url.searchParams.set('role', role);
+            }
+            url.searchParams.delete('page');
+            window.location.href = url.toString();
+        }
+
+        // Sort functionality
+        function sortBy(field) {
+            const url = new URL(window.location.href);
+            const currentSort = url.searchParams.get('sort');
+            let newSort = field + '_asc';
+
+            if (currentSort === field + '_asc') {
+                newSort = field + '_desc';
             }
 
-            // Apply role filter from stats cards
-            function applyRoleFilter(role) {
-                const url = new URL(window.location.href);
-                if (role === 'all') {
-                    url.searchParams.delete('role');
-                } else {
-                    url.searchParams.set('role', role);
-                }
-                url.searchParams.delete('page');
-                window.location.href = url.toString();
+            url.searchParams.set('sort', newSort);
+            url.searchParams.delete('page');
+            window.location.href = url.toString();
+        }
+
+        // Remove filter
+        function removeFilter(filterName) {
+            const url = new URL(window.location.href);
+            if (filterName === 'date') {
+                url.searchParams.delete('date_from');
+                url.searchParams.delete('date_to');
+            } else {
+                url.searchParams.delete(filterName);
             }
+            url.searchParams.delete('page');
+            window.location.href = url.toString();
+        }
 
-            // Sort functionality
-            function sortBy(field) {
-                const url = new URL(window.location.href);
-                const currentSort = url.searchParams.get('sort');
-                let newSort = field + '_asc';
-
-                if (currentSort === field + '_asc') {
-                    newSort = field + '_desc';
-                }
-
-                url.searchParams.set('sort', newSort);
-                url.searchParams.delete('page');
-                window.location.href = url.toString();
-            }
-
-            // Remove filter
-            function removeFilter(filterName) {
-                const url = new URL(window.location.href);
-                if (filterName === 'date') {
-                    url.searchParams.delete('date_from');
-                    url.searchParams.delete('date_to');
-                } else {
-                    url.searchParams.delete(filterName);
-                }
-                url.searchParams.delete('page');
-                window.location.href = url.toString();
-            }
-
-            // Confirm delete with SweetAlert
-            function confirmDelete(deleteUrl, userName) {
-                Swal.fire({
-                    title: 'Are you sure?',
-                    text: `You are about to delete "${userName}". This action cannot be undone!`,
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#d33',
-                    cancelButtonColor: '#3085d6',
-                    confirmButtonText: 'Yes, delete it!',
-                    cancelButtonText: 'Cancel'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        const form = document.createElement('form');
-                        form.method = 'POST';
-                        form.action = deleteUrl;
-                        form.innerHTML = `
+        // Confirm delete with SweetAlert
+        function confirmDelete(deleteUrl, userName) {
+            Swal.fire({
+                title: 'Are you sure?',
+                text: `You are about to delete "${userName}". This action cannot be undone!`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, delete it!',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = deleteUrl;
+                    form.innerHTML = `
                     @csrf
                     @method('DELETE')
                 `;
-                        document.body.appendChild(form);
-                        form.submit();
-                    }
-                });
-            }
+                    document.body.appendChild(form);
+                    form.submit();
+                }
+            });
+        }
 
-            // Export functionality
-            function exportData(type) {
-                const url = new URL(window.location.href);
-                url.searchParams.set('export', type);
-                window.location.href = url.toString();
-            }
-        </script>
-    @endpush
+        // Export functionality
+        function exportData(type) {
+            const url = new URL(window.location.href);
+            url.searchParams.set('export', type);
+            window.location.href = url.toString();
+        }
+    </script>
+@endpush

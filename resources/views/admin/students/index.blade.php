@@ -66,12 +66,13 @@
                         </div>
                         <div class="col-md-2">
                             <label class="form-label small fw-semibold mb-1">Application Status</label>
-                            <select name="status" class="form-select form-select-sm">
+
+                            <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
                                 <option value="">All</option>
                                 @foreach ($applicationStatuses as $status)
-                                    <option value="{{ $status->application_status }}"
-                                        {{ request('status') == $status->application_status ? 'selected' : '' }}>
-                                        {{ $status->application_status }} ({{ $status->total }})
+                                    <option value="{{ $status->id }}"
+                                        {{ request('status') == $status->id ? 'selected' : '' }}>
+                                        {{ $status->name }} ({{ $status->applications_count }})
                                     </option>
                                 @endforeach
                             </select>

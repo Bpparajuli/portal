@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Application;
+use App\Models\ApplicationStatus;
 use App\Models\Student;
 use App\Models\University;
 use App\Models\Course;
@@ -17,67 +18,140 @@ use App\Notifications\ApplicationStatusUpdated;
 class ApplicationController extends Controller
 {
     /**
-     * Display a listing of the applications.
+     * LIST
      */
     public function index(Request $request)
     {
-        $query = Application::with(['student', 'university', 'course', 'agent'])->latest();
+        $query = Application::with([
+            'student',
+            'university',
+            'course',
+            'agent',
+            'status'
+        ])->latest();
 
+        /*
+    |--------------------------------------------------------------------------
+    | Search Filter
+    |--------------------------------------------------------------------------
+    */
         if ($request->filled('search')) {
             $search = $request->search;
 
             $query->where(function ($q) use ($search) {
-                // Search by student first_name or last_name
                 $q->whereHas('student', function ($q2) use ($search) {
                     $q2->where('first_name', 'like', "%{$search}%")
-                        ->orWhere('last_name', 'like', "%{$search}%");
+                        ->orWhere('last_name', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%");
                 })
-                    // Search by course name/title
+
                     ->orWhereHas('course', function ($q3) use ($search) {
-                        $q3->where('title', 'like', "%{$search}%"); // replace 'title' with your course column
+                        $q3->where('title', 'like', "%{$search}%");
                     })
-                    // Search by university name
+
                     ->orWhereHas('university', function ($q4) use ($search) {
-                        $q4->where('name', 'like', "%{$search}%"); // replace 'name' with your university column
+                        $q4->where('name', 'like', "%{$search}%");
                     });
             });
         }
 
-        $applications = $query->paginate(20)->withQueryString();
+        /*
+    |--------------------------------------------------------------------------
+    | Status Card Filter (Approved / Rejected / Lost)
+    |--------------------------------------------------------------------------
+    */
+        if ($request->filled('status')) {
+            $query->where('application_status_id', $request->status);
+        }
 
-        return view('admin.applications.index', compact('applications'));
+        /*
+    |--------------------------------------------------------------------------
+    | Dropdown Status Filter
+    |--------------------------------------------------------------------------
+    */
+        if ($request->filled('status_filter')) {
+            $query->where('application_status_id', $request->status_filter);
+        }
+
+        /*
+    |--------------------------------------------------------------------------
+    | University Filter
+    |--------------------------------------------------------------------------
+    */
+        if ($request->filled('university_filter')) {
+            $query->where('university_id', $request->university_filter);
+        }
+
+        /*
+    |--------------------------------------------------------------------------
+    | Only show statuses having applications
+    |--------------------------------------------------------------------------
+    */
+        $statuses = ApplicationStatus::where('is_active', 1)
+            ->whereHas('applications')
+            ->withCount('applications')
+            ->orderBy('sort_order')
+            ->get();
+
+        /*
+    |--------------------------------------------------------------------------
+    | Only show universities having applications
+    |--------------------------------------------------------------------------
+    */
+
+
+        $universities = University::whereHas('applications')
+            ->withCount('applications')
+            ->orderBy('name')
+            ->get();
+        /*
+    |--------------------------------------------------------------------------
+    | Statistics Count Cards
+    |--------------------------------------------------------------------------
+    */
+        $acceptedCount = Application::where('application_status_id', 14)->count();
+        $rejectedCount = Application::where('application_status_id', 15)->count();
+        $lostCount = Application::where('application_status_id', 18)->count();
+
+        /*
+    |--------------------------------------------------------------------------
+    | Paginated Results
+    |--------------------------------------------------------------------------
+    */
+        $applications = $query
+            ->paginate(20)
+            ->withQueryString();
+
+        return view('admin.applications.index', compact(
+            'applications',
+            'statuses',
+            'universities',
+            'acceptedCount',
+            'rejectedCount',
+            'lostCount'
+        ));
     }
-
-
     /**
-     * Show the form for creating a new application.
+     * CREATE FORM
      */
     public function create(Request $request)
     {
         $selectedStudent = null;
-        $selectedUniversityId = $request->query('university_id');
-        $selectedCourseId = $request->query('course_id');
 
         if ($request->has('student_id')) {
             $selectedStudent = Student::find($request->student_id);
         }
 
-        $students = Student::whereHas('documents')->get();
-        $universities = University::all();
-        $courses = Course::all();
-
-        return view('admin.applications.create', compact(
-            'students',
-            'universities',
-            'courses',
-            'selectedStudent',
-            'selectedUniversityId',
-            'selectedCourseId'
-        ));
+        return view('admin.applications.create', [
+            'students' => Student::whereHas('documents')->get(),
+            'universities' => University::all(),
+            'courses' => Course::all(),
+            'selectedStudent' => $selectedStudent,
+        ]);
     }
 
     /**
-     * Store a newly created application in storage.
+     * STORE
      */
     public function store(Request $request)
     {
@@ -90,20 +164,24 @@ class ApplicationController extends Controller
 
         $student = Student::findOrFail($request->student_id);
 
+
+        // DEFAULT STATUS = ID 1
+        $defaultStatus = ApplicationStatus::find(1);
+
         $application = new Application();
         $application->student_id = $student->id;
         $application->agent_id = $student->agent_id;
         $application->university_id = $request->university_id;
         $application->course_id = $request->course_id;
-        $application->application_status = 'Application started';
+        $application->application_status_id = $defaultStatus?->id;
 
-        // Store SOP file
+        // SOP file
         if ($request->hasFile('sop_file')) {
             $file = $request->file('sop_file');
             $folder = "agents/{$student->agent_id}/{$student->id}/applications";
             $filename = 'sop_' . time() . '.' . $file->getClientOriginalExtension();
-            $path = $file->storeAs($folder, $filename, 'public');
-            $application->sop_file = $path;
+
+            $application->sop_file = $file->storeAs($folder, $filename, 'public');
         }
 
         $application->save();
@@ -113,33 +191,48 @@ class ApplicationController extends Controller
     }
 
     /**
-     * Display the specified application.
+     * SHOW
      */
     public function show(Application $application)
     {
-        $application->load(['student', 'university', 'course', 'documents', 'messages.user']);
+        $statuses = ApplicationStatus::orderBy('sort_order')
+            ->where('is_active', 1)
+            ->get();
+        $application->load([
+            'student',
+            'university',
+            'course',
+            'documents',
+            'messages.user',
+            'status'
+        ]);
 
-        $status = Application::STATUSES;
-        $statusColors = Application::STATUS_COLORS;
 
-        return view('admin.applications.show', compact('application', 'status', 'statusColors'));
+        return view('admin.applications.show', compact('application', 'statuses'));
     }
 
-
     /**
-     * Show the form for editing the specified application.
+     * EDIT
      */
     public function edit($id)
     {
-        $application = Application::with(['student', 'university', 'course'])->findOrFail($id);
-        $universities = University::all();
-        $courses = Course::all();
+        $application = Application::with([
+            'student',
+            'university',
+            'course',
+            'status'
+        ])->findOrFail($id);
 
-        return view('admin.applications.edit', compact('application', 'universities', 'courses'));
+        return view('admin.applications.edit', [
+            'application' => $application,
+            'universities' => University::all(),
+            'courses' => Course::all(),
+            'statuses' => ApplicationStatus::orderBy('sort_order')->get(),
+        ]);
     }
 
     /**
-     * Update the specified application.
+     * UPDATE
      */
     public function update(Request $request, $id)
     {
@@ -148,53 +241,57 @@ class ApplicationController extends Controller
         $request->validate([
             'university_id' => 'required|exists:universities,id',
             'course_id' => 'nullable|exists:courses,id',
-            'application_status' => 'required|string|in:' . implode(',', Application::STATUSES),
+            'application_status_id' => 'required|exists:application_statuses,id',
             'sop_file' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:15360',
         ]);
 
-        $oldStatus = $application->application_status;
+        $oldStatus = $application->application_status_id;
 
         $application->update([
             'university_id' => $request->university_id,
             'course_id' => $request->course_id,
-            'application_status' => $request->application_status,
+            'application_status_id' => $request->application_status_id,
         ]);
 
-        // Handle SOP file update
+        // SOP update
         if ($request->hasFile('sop_file')) {
-            $student = $application->student;
+
             $file = $request->file('sop_file');
+            $student = $application->student;
+
             $folder = "agents/{$student->agent_id}/{$student->id}/applications";
             $filename = 'sop_' . time() . '.' . $file->getClientOriginalExtension();
-            $path = $file->storeAs($folder, $filename, 'public');
 
             if ($application->sop_file && Storage::disk('public')->exists($application->sop_file)) {
                 Storage::disk('public')->delete($application->sop_file);
             }
 
-            $application->update(['sop_file' => $path]);
+            $application->update([
+                'sop_file' => $file->storeAs($folder, $filename, 'public')
+            ]);
         }
 
-        // Log & Notify if status changed
-        if ($oldStatus !== $request->application_status) {
-            $student = $application->student;
-            $agentId = $student->agent_id;
-            User::notifyAgent($agentId, new ApplicationStatusUpdated($application, Auth::user()));
+        // STATUS CHANGE NOTIFICATION
+        if ($oldStatus != $request->application_status_id) {
+            User::notifyAgent(
+                $application->student->agent_id,
+                new ApplicationStatusUpdated($application, Auth::user())
+            );
         }
 
-        return redirect()->route('admin.applications.index')
-            ->with('success', 'Application updated successfully.');
+        return back()->with('success', 'Application updated successfully.');
     }
 
     /**
-     * Add message to application (for communication).
+     * MESSAGE SYSTEM (UNCHANGED LOGIC)
      */
     public function addMessage(Request $request, Application $application)
     {
         $request->validate([
-            'message'     => 'nullable|string|max:2000',
-            'attachment'  => 'nullable|file|max:10240', // 10MB
+            'message' => 'nullable|string|max:2000',
+            'attachment' => 'nullable|file|max:10240',
         ]);
+
         if (!$request->message && !$request->hasFile('attachment')) {
             return back()->withErrors('Write a message or attach a file.');
         }
@@ -203,34 +300,24 @@ class ApplicationController extends Controller
         $userType = $user->is_admin ? 'admin' : 'agent';
 
         $filePath = null;
-        $fileName = null;
-        $fileType = null;
 
-        // If file attached
         if ($request->hasFile('attachment')) {
             $file = $request->file('attachment');
 
-            $fileName = time() . '_' . $file->getClientOriginalName();
-
             $filePath = $file->storeAs(
                 'application_messages/' . $application->id,
-                $fileName,
+                time() . '_' . $file->getClientOriginalName(),
                 'public'
             );
-
-            $fileType = $file->getClientMimeType();
         }
 
         $message = $application->messages()->create([
-            'user_id'   => $user->id,
-            'type'      => $userType,
-            'message'   => $request->message,
+            'user_id' => $user->id,
+            'type' => $userType,
+            'message' => $request->message,
             'file_path' => $filePath,
-            'file_name' => $fileName,
-            'file_type' => $fileType,
         ]);
 
-        // Notifications remain the same
         if ($userType === 'agent') {
             User::notifyAdmins(new ApplicationMessageAdded($application, $message));
         } else {
@@ -240,27 +327,28 @@ class ApplicationController extends Controller
         return back()->with('success', 'Message sent.');
     }
 
+    /**
+     * DELETE MESSAGE
+     */
     public function deleteMessage(Application $application, $messageId)
     {
         $message = $application->messages()->findOrFail($messageId);
-        // Same logic as your addMessage method
-        $user = Auth::user();
-        $userType = $user->is_admin ? 'admin' : 'agent';
-        // Only admin or message owner can delete
-        if ($userType === 'admin' && $user->id !== $message->user_id) {
-            abort(403, 'Unauthorized action.');
+
+        if (Auth::user()->is_admin && Auth::id() !== $message->user_id) {
+            abort(403);
         }
+
         $message->delete();
+
         return back()->with('success', 'Message deleted successfully.');
     }
 
-
     /**
-     * Remove the specified application from storage.
+     * DELETE APPLICATION
      */
     public function destroy(Application $application)
     {
-        if ($application->sop_file && Storage::disk('public')->exists($application->sop_file)) {
+        if ($application->sop_file) {
             Storage::disk('public')->delete($application->sop_file);
         }
 
@@ -270,22 +358,28 @@ class ApplicationController extends Controller
             ->with('success', 'Application deleted successfully.');
     }
 
-    /** Get courses by university (AJAX) */
+    /**
+     * AJAX COURSES
+     */
     public function getCourses($universityId)
     {
-        $courses = Course::where('university_id', $universityId)
+        return Course::where('university_id', $universityId)
             ->select('id', 'title')
             ->get();
-
-        return response()->json($courses);
     }
 
-
+    /**
+     * STUDENT APPLICATIONS
+     */
     public function forStudent(Student $student)
     {
-        // Load applications with related models
-        $applications = $student->applications()->with('university', 'course')->latest()->get();
+        $statuses = ApplicationStatus::orderBy('sort_order')->get();
 
-        return view('admin.applications.for_student', compact('student', 'applications'));
+        $applications = $student->applications()
+            ->with('university', 'course', 'status')
+            ->latest()
+            ->get();
+
+        return view('admin.applications.for_student', compact('student', 'applications', 'statuses'));
     }
 }

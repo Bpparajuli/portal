@@ -56,56 +56,6 @@ class User extends Authenticatable
     }
 
     /**
-     * Relationships
-     */
-    public function students()
-    {
-        return $this->hasMany(Student::class, 'agent_id');
-    }
-
-    public function getAccessibleStudents()
-    {
-        if ($this->is_admin()) {
-            return Student::all();
-        }
-
-        if ($this->is_agent()) {
-            $staffIds = User::where('parent_id', $this->id)->pluck('id')->toArray();
-            $agentIds = array_merge([$this->id], $staffIds);
-            return Student::whereIn('agent_id', $agentIds)->get();
-        }
-
-        if ($this->is_staff()) {
-            return Student::where('agent_id', $this->id)->get();
-        }
-
-        return collect();
-    }
-    public function documents()
-    {
-        return $this->hasManyThrough(
-            Document::class,
-            Student::class,
-            'agent_id',    // Foreign key on students table
-            'student_id',  // Foreign key on documents table
-            'id',          // Local key on users table
-            'id'           // Local key on students table
-        );
-    }
-
-    public function applications()
-    {
-        return $this->hasManyThrough(
-            Application::class,
-            Student::class,
-            'agent_id',
-            'student_id',
-            'id',
-            'id'
-        );
-    }
-
-    /**
      * Generate slug automatically
      */
     protected static function booted()
@@ -143,6 +93,123 @@ class User extends Authenticatable
 
         return $slug;
     }
+
+    /**
+     * Old IsAdmin,IsAgent Middleware helpers
+     */
+    public function getIsAdminAttribute($value)
+    {
+        return in_array($this->role, ['superadmin', 'admin']);
+    }
+
+    public function getIsAgentAttribute($value)
+    {
+        return $this->role === 'agent';
+    }
+
+    public function getIsStaffAttribute()
+    {
+        return $this->role === 'staff';
+    }
+    public function getIsStudentAttribute()
+    {
+        return $this->role === 'student';
+    }
+
+    public function getIsUniversityAttribute()
+    {
+        return $this->role === 'university';
+    }
+
+    // =========================================================================
+    // Staff type helpers
+    // =========================================================================
+
+    /**
+     * TRUE when this staff member belongs to an admin (or has no parent = also admin-level).
+     * Admin-staff see ALL students.
+     */
+    public function getIsAdminStaffAttribute(): bool
+    {
+        if (! $this->is_staff) return false;
+        if (! $this->parent_id) return true; // no parent => treat as admin-level
+
+        $parent = $this->parent()->first();
+        return $parent && $parent->is_admin;
+    }
+
+    /**
+     * TRUE when this staff member belongs to an agent.
+     * Agent-staff see own students + parent agent's students.
+     */
+    public function getIsAgentStaffAttribute(): bool
+    {
+        if (! $this->is_staff) return false;
+        if (! $this->parent_id) return false;
+
+        $parent = $this->parent()->first();
+        return $parent && $parent->is_agent;
+    }
+
+
+    /**
+     * Relationships
+     */
+    // =========================================================================
+    // Relationships
+    // =========================================================================
+
+    public function students()
+    {
+        return $this->hasMany(Student::class, 'agent_id');
+    }
+
+    public function documents()
+    {
+        return $this->hasManyThrough(
+            Document::class,
+            Student::class,
+            'agent_id',
+            'student_id',
+            'id',
+            'id'
+        );
+    }
+
+    public function applications()
+    {
+        return $this->hasManyThrough(
+            Application::class,
+            Student::class,
+            'agent_id',
+            'student_id',
+            'id',
+            'id'
+        );
+    }
+    /**
+     * Parent-child relationships for staff and agents
+     **/
+    public function parent()
+    {
+        return $this->belongsTo(User::class, 'parent_id');
+    }
+
+    public function children()
+    {
+        return $this->hasMany(User::class, 'parent_id');
+    }
+
+    public function staffMembers()
+    {
+        return $this->hasMany(User::class, 'parent_id')->where('role', 'staff');
+    }
+
+    public function parentAgent()
+    {
+        return $this->belongsTo(User::class, 'parent_id')->where('role', 'agent');
+    }
+
 
     /**
      * Format notifications
@@ -212,32 +279,6 @@ class User extends Authenticatable
         return $messageText;
     }
 
-    /**
-     * Old IsAdmin,IsAgent Middleware helpers
-     */
-    public function getIsAdminAttribute($value)
-    {
-        return in_array($this->role, ['superadmin', 'admin']);
-    }
-
-    public function getIsAgentAttribute($value)
-    {
-        return $this->role === 'agent';
-    }
-
-    public function getIsStaffAttribute()
-    {
-        return $this->role === 'staff';
-    }
-    public function getIsStudentAttribute()
-    {
-        return $this->role === 'student';
-    }
-
-    public function getIsUniversityAttribute()
-    {
-        return $this->role === 'university';
-    }
 
     /**
      * Helper for query and listings 
@@ -263,24 +304,8 @@ class User extends Authenticatable
         return $query->where('role', 'university');
     }
 
-    /**
-     * Parent-child relationships for staff and agents
-     **/
 
-    public function parent()
-    {
-        return $this->belongsTo(User::class, 'parent_id');
-    }
 
-    public function children()
-    {
-        return $this->hasMany(User::class, 'parent_id');
-    }
-
-    public function staffMembers()
-    {
-        return $this->hasMany(User::class, 'parent_id')->where('role', 'staff');
-    }
 
     /**
      * Notifications helpers
@@ -549,35 +574,26 @@ class User extends Authenticatable
     // ========================================================================
     // CRM Relationships (Add these)
     // ========================================================================
+    // =========================================================================
+    // CRM Relationships
+    // =========================================================================
 
-    /**
-     * Activities assigned to this user
-     */
     public function assignedActivities()
     {
         return $this->hasMany(CrmTasks::class, 'assigned_to');
     }
 
-    /**
-     * Activities created by this user
-     */
     public function createdActivities()
     {
         return $this->hasMany(CrmTasks::class, 'created_by');
     }
 
-    /**
-     * Pending activities assigned to this user
-     */
     public function pendingActivities()
     {
         return $this->hasMany(CrmTasks::class, 'assigned_to')
             ->where('status', 'pending');
     }
 
-    /**
-     * Today's activities for this user
-     */
     public function todayActivities()
     {
         return $this->hasMany(CrmTasks::class, 'assigned_to')
@@ -585,28 +601,53 @@ class User extends Authenticatable
             ->orderBy('priority_time_slot');
     }
 
-    /**
-     * Notes created by this user
-     */
     public function createdNotes()
     {
         return $this->hasMany(StudentNote::class, 'created_by');
     }
 
-    /**
-     * Stage changes made by this user
-     */
     public function stageChanges()
     {
         return $this->hasMany(StudentStageHistory::class, 'changed_by');
     }
 
+      // =========================================================================
+    // Accessible students — used outside Eloquent scopes
+    // =========================================================================
 
     /**
-     * Get parent agent (if this user is staff)
+     * Returns a Collection of students this user is allowed to see.
+     *
+     * Rules:
+     *  Admin            → all students
+     *  Admin's staff    → all students
+     *  Agent            → own students + all staff-under-agent students
+     *  Agent's staff    → own students (agent_id = self) + parent agent's students (agent_id = parent_id)
      */
-    public function parentAgent()
+    public function getAccessibleStudents()
     {
-        return $this->belongsTo(User::class, 'parent_id')->where('role', 'agent');
+        // Admin
+        if ($this->is_admin) {
+            return Student::all();
+        }
+
+        // Admin's staff → all students
+        if ($this->is_staff && $this->is_admin_staff) {
+            return Student::all();
+        }
+
+        // Agent → own + all staff-under-them
+        if ($this->is_agent) {
+            $staffIds        = User::where('parent_id', $this->id)->where('role', 'staff')->pluck('id')->toArray();
+            $allowedAgentIds = array_merge([$this->id], $staffIds);
+            return Student::whereIn('agent_id', $allowedAgentIds)->get();
+        }
+
+        // Agent's staff → own students + parent agent's students
+        if ($this->is_staff && $this->is_agent_staff) {
+            return Student::whereIn('agent_id', [$this->id, $this->parent_id])->get();
+        }
+
+        return collect();
     }
 }

@@ -55,14 +55,16 @@
 
             Swal.fire({
                 title: "Are you sure?",
-                html: `You are about to delete <strong>${itemName}</strong>. <br><span style="color:red;">This action cannot be undone!</span>`,
+                html: `You are about to delete <strong>${itemName}</strong>.<br><span style="color:red;">This action cannot be undone!</span>`,
                 icon: "warning",
                 showCancelButton: true,
                 confirmButtonColor: "#d33",
-                cancelButtonColor: "#3085d6",
+                cancelButtonColor: "#6c757d",
                 confirmButtonText: "Yes, delete it!",
-                cancelButtonText: "Cancel",
+                cancelButtonText: "No, cancel",
+                reverseButtons: true
             }).then((result) => {
+
                 if (result.isConfirmed) {
 
                     const form = document.createElement("form");
@@ -70,12 +72,23 @@
                     form.action = deleteUrl;
 
                     form.innerHTML = `
-                        <input type="hidden" name="_token" value="{{ csrf_token() }}">
-                        <input type="hidden" name="_method" value="DELETE">
-                    `;
+                <input type="hidden" name="_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="_method" value="DELETE">
+            `;
 
                     document.body.appendChild(form);
                     form.submit();
+
+                } else if (result.dismiss === Swal.DismissReason.cancel) {
+
+                    Swal.fire({
+                        title: "Cancelled",
+                        text: "Your data is safe 🙂",
+                        icon: "info",
+                        timer: 1200,
+                        showConfirmButton: false
+                    });
+
                 }
             });
         });

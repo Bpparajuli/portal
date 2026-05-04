@@ -62,6 +62,7 @@ class Student extends Model
         'preferred_university',
         'remarks',
         'current_stage_id',
+        'rating',
         'tags',
     ];
 
@@ -348,36 +349,42 @@ class Student extends Model
      * - Agent: Their students + their staff's students
      * - Staff: Only students where agent_id = their own ID
      */
+    // app/Models/Student.php - Replace the scopeAccessible method
     public function scopeAccessible($query)
     {
         $user = Auth::user();
 
-        if (!$user) {
+        if (! $user) {
             return $query->whereRaw('1 = 0');
         }
 
-        // Admin sees everything
+        // ── Admin ─────────────────────────────────────────────────────────────
         if ($user->is_admin) {
             return $query;
         }
 
-        // Agent (Main Agent) sees their students + their staff's students
-        if ($user->is_agent) {
-            // Get all staff IDs under this agent
-            $staffIds = User::where('parent_id', $user->id)
-                ->where('role', 'staff')
-                ->pluck('id')
-                ->toArray();
+        // ── Staff ─────────────────────────────────────────────────────────────
+        if ($user->is_staff) {
 
-            // Include the agent's own ID
-            $allowedAgentIds = array_merge([$user->id], $staffIds);
+            // Admin's staff → all students
+            if ($user->is_admin_staff) {
+                return $query;
+            }
 
-            return $query->whereIn('agent_id', $allowedAgentIds);
+            // Agent's staff → own students + parent agent's students
+            if ($user->is_agent_staff) {
+                return $query->whereIn('agent_id', [$user->id, $user->parent_id]);
+            }
+
+            // Fallback: staff with unknown/no parent → only own students
+            return $query->where('agent_id', $user->id);
         }
 
-        // Staff sees ONLY students they personally created
-        if ($user->is_staff) {
-            return $query->where('agent_id', $user->id);
+        // ── Agent ─────────────────────────────────────────────────────────────
+        if ($user->is_agent) {
+            $staffIds        = User::where('parent_id', $user->id)->where('role', 'staff')->pluck('id')->toArray();
+            $allowedAgentIds = array_merge([$user->id], $staffIds);
+            return $query->whereIn('agent_id', $allowedAgentIds);
         }
 
         return $query->whereRaw('1 = 0');

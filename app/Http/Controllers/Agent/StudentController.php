@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Agent;
 
 use App\Http\Controllers\Controller;
 use App\Models\Application;
+use App\Models\ApplicationStatus;
 use App\Models\Document;
 use App\Models\Student;
 use App\Models\University;
@@ -122,12 +123,16 @@ class StudentController extends Controller
                 ->filter()
                 ->values()
         );
+        $statuses = ApplicationStatus::orderBy('sort_order')
+            ->where('is_active', 1)
+            ->get();
+
 
         return view('agent.students.index', [
             'students'            => $students,
             'countries'           => $countries,
             'universities'        => $universities,
-            'applicationStatuses' => Application::STATUSES,
+            'applicationStatuses' => $statuses,
             'totalRequiredDocs'   => count(Student::REQUIRED_DOCUMENTS),
             ...$dashboardStats,
         ]);

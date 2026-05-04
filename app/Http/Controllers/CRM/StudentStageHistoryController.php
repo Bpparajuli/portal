@@ -3,63 +3,69 @@
 namespace App\Http\Controllers\CRM;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use App\Models\Student;
+use App\Models\StudentStageHistory;
+use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 
 class StudentStageHistoryController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Return JSON stage history for a student.
+     * Consumed by the History tab in crm/show.blade.php via fetch().
      */
-    public function index()
+    public function forStudent(Student $student)
     {
-        //
+        $this->authorizeAccess($student);
+
+        $history = StudentStageHistory::where('student_id', $student->id)
+            ->with(['fromStage', 'toStage', 'changer'])
+            ->latest()
+            ->get()
+            ->map(fn($h) => [
+                'id'               => $h->id,
+                'from'             => $h->fromStage?->name ?? 'Initial Stage',
+                'to'               => $h->toStage?->name   ?? '—',
+                'changed_by'       => $h->changer?->name   ?? 'Unknown',
+                'reason'           => $h->reason,
+                'days_in_previous' => $h->days_in_previous_stage,
+                'date'             => $h->created_at->format('d M Y'),
+                'description'      => $h->stage_change_description ?? null,
+            ]);
+
+        return response()->json($history);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
+    // =========================================================================
+    // Helpers
+    // =========================================================================
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+    private function authorizeAccess(Student $student): void
     {
-        //
-    }
+        $user = Auth::user();
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-    }
+        if ($user->is_admin)       return;
+        if ($user->is_admin_staff) return;
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
+        if ($user->is_agent) {
+            $staffIds = User::where('parent_id', $user->id)->where('role', 'staff')->pluck('id');
+            abort_unless(
+                $student->agent_id === $user->id || $staffIds->contains($student->agent_id),
+                403
+            );
+            return;
+        }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
+        if ($user->is_agent_staff) {
+            abort_unless(in_array($student->agent_id, [$user->id, $user->parent_id]), 403);
+            return;
+        }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
+        if ($user->is_staff) {
+            abort_unless($student->agent_id === $user->id, 403);
+            return;
+        }
+
+        abort(403);
     }
 }

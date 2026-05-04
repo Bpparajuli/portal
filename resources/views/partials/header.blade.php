@@ -228,6 +228,14 @@
                             <a href="{{ $profileRoute }}" class="panel-item">
                                 <i class="fas fa-user-circle"></i> My Profile
                             </a>
+                            @if ($user->is_admin)
+                                <a href="{{ route('crm.dashboard') }}" class="panel-item">
+                                    <i class="fas fa-chart-line"></i> CRM
+                                </a>
+                                <a href="{{ route('admin.application-status.index') }}" class="panel-item">
+                                    <i class="fas fa-layer-group"></i> Application Status
+                                </a>
+                            @endif
                             <a href="#" class="panel-item text-danger"
                                 onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
                                 <i class="fas fa-sign-out-alt"></i> Logout

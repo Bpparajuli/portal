@@ -9,6 +9,7 @@ use App\Models\University;
 use App\Models\Course;
 use App\Models\User;
 use App\Models\ApplicationMessage;
+use App\Models\ApplicationStatus;
 use App\Notifications\ApplicationSubmitted;
 use App\Notifications\ApplicationWithdrawn;
 use App\Notifications\ApplicationMessageAdded;
@@ -43,14 +44,125 @@ class ApplicationController extends Controller
     // -------------------------------
     // List applications
     // -------------------------------
-    public function index()
+    public function index(Request $request)
     {
-        $applications = Application::where('agent_id', Auth::id())
-            ->with(['student', 'university', 'course', 'documents', 'messages.user'])
-            ->latest()
-            ->paginate(20);
+        $query = Application::where('agent_id', Auth::id())
+            ->with([
+                'student',
+                'university',
+                'course',
+                'documents',
+                'messages.user',
+                'status'
+            ])
+            ->latest();
 
-        return view('agent.applications.index', compact('applications'));
+        /*
+    |--------------------------------------------------------------------------
+    | Search Filter
+    |--------------------------------------------------------------------------
+    */
+        if ($request->filled('search')) {
+            $search = $request->search;
+
+            $query->where(function ($q) use ($search) {
+                $q->whereHas('student', function ($q2) use ($search) {
+                    $q2->where('first_name', 'like', "%{$search}%")
+                        ->orWhere('last_name', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%");
+                })
+                    ->orWhereHas('course', function ($q3) use ($search) {
+                        $q3->where('title', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('university', function ($q4) use ($search) {
+                        $q4->where('name', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        /*
+    |--------------------------------------------------------------------------
+    | Status Filters
+    |--------------------------------------------------------------------------
+    */
+        if ($request->filled('status')) {
+            $query->where('application_status_id', $request->status);
+        }
+
+        if ($request->filled('status_filter')) {
+            $query->where('application_status_id', $request->status_filter);
+        }
+
+        /*
+    |--------------------------------------------------------------------------
+    | University Filter
+    |--------------------------------------------------------------------------
+    */
+        if ($request->filled('university_filter')) {
+            $query->where('university_id', $request->university_filter);
+        }
+
+        /*
+    |--------------------------------------------------------------------------
+    | Status List (ONLY this agent's applications)
+    |--------------------------------------------------------------------------
+    */
+        $statuses = ApplicationStatus::where('is_active', 1)
+            ->whereHas('applications', function ($q) {
+                $q->where('agent_id', Auth::id());
+            })
+            ->withCount(['applications' => function ($q) {
+                $q->where('agent_id', Auth::id());
+            }])
+            ->orderBy('sort_order')
+            ->get();
+
+        /*
+    |--------------------------------------------------------------------------
+    | Universities List (ONLY this agent's applications)
+    |--------------------------------------------------------------------------
+    */
+        $universities = University::whereHas('applications', function ($q) {
+            $q->where('agent_id', Auth::id());
+        })
+            ->withCount(['applications' => function ($q) {
+                $q->where('agent_id', Auth::id());
+            }])
+            ->orderBy('name')
+            ->get();
+
+        /*
+    |--------------------------------------------------------------------------
+    | Statistics Cards (ONLY this agent)
+    |--------------------------------------------------------------------------
+    */
+        $acceptedCount = Application::where('agent_id', Auth::id())
+            ->where('application_status_id', 14)
+            ->count();
+
+        $rejectedCount = Application::where('agent_id', Auth::id())
+            ->where('application_status_id', 15)
+            ->count();
+
+        $lostCount = Application::where('agent_id', Auth::id())
+            ->where('application_status_id', 18)
+            ->count();
+
+        /*
+    |--------------------------------------------------------------------------
+    | Pagination
+    |--------------------------------------------------------------------------
+    */
+        $applications = $query->paginate(20)->withQueryString();
+
+        return view('agent.applications.index', compact(
+            'applications',
+            'statuses',
+            'universities',
+            'acceptedCount',
+            'rejectedCount',
+            'lostCount'
+        ));
     }
 
     // -------------------------------
@@ -171,25 +283,22 @@ class ApplicationController extends Controller
     // -------------------------------
     public function show(Application $application)
     {
-        $this->authorizeAgent($application);
-
+        $statuses = ApplicationStatus::orderBy('sort_order')
+            ->where('is_active', 1)
+            ->get();
         $application->load([
             'student',
             'university',
             'course',
             'documents',
-            'messages.user'
+            'messages.user',
+            'status'
         ]);
 
-        $status = Application::STATUSES;
-        $statusColors = Application::STATUS_COLORS;
 
-        return view('agent.applications.show', compact(
-            'application',
-            'status',
-            'statusColors'
-        ));
+        return view('agent.applications.show', compact('application', 'statuses'));
     }
+
 
     // -------------------------------
     // Edit

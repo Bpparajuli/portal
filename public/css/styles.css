@@ -363,27 +363,27 @@ a:hover {
 
 /* ================= SOFT BACKGROUNDS ================= */
 .bg-soft-primary {
-    background: rgba(130, 11, 92, 0.1);
+    background: rgba(130, 11, 92, 0.2);
     color: var(--primary);
 }
 .bg-soft-secondary {
-    background: rgba(26, 2, 98, 0.1);
+    background: rgba(26, 2, 98, 0.2);
     color: var(--secondary);
 }
 .bg-soft-success {
-    background: rgba(0, 128, 43, 0.1);
+    background: rgba(0, 128, 43, 0.2);
     color: var(--success);
 }
 .bg-soft-danger {
-    background: rgba(239, 68, 68, 0.1);
+    background: rgba(239, 68, 68, 0.2);
     color: var(--danger);
 }
 .bg-soft-warning {
-    background: rgba(245, 158, 11, 0.1);
+    background: rgba(245, 158, 11, 0.2);
     color: var(--warning);
 }
 .bg-soft-info {
-    background: rgba(59, 130, 246, 0.1);
+    background: rgba(59, 130, 246, 0.2);
     color: var(--info);
 }
 

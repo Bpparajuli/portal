@@ -38,8 +38,7 @@
             <tbody>
                 @forelse ($students as $student)
                     @php
-                        $latestApp = $student->applications->sortByDesc('created_at')->first();
-
+                        $latestApp = $student->applications()->with('status', 'university')->latest()->first();
                         $docStatusColor = match ($student->document_status) {
                             'Completed' => 'success',
                             'Incomplete' => 'warning',
@@ -122,21 +121,30 @@
                         <td>
                             @if ($student->applications->count())
                                 <div class="d-flex flex-column gap-1">
+
                                     @foreach ($student->applications as $app)
                                         <a href="{{ route('admin.applications.show', $app) }}"
                                             class="d-flex align-items-center justify-content-between text-decoration-none p-2 rounded-1 border small">
+
+                                            {{-- Status Badge --}}
                                             <span
-                                                class="badge {{ $app->status_class ?? 'bg-secondary' }} text-truncate">
-                                                {{ ucfirst($app->application_status ?? 'Pending') }}
+                                                class="badge {{ $app->status?->color ?? 'bg-secondary text-white' }} text-truncate">
+                                                {{ $app->status?->name ?? 'Status Error' }}
                                             </span>
-                                            <span class=" ms-2 text-truncate" style="max-width:100px;">
+
+                                            {{-- University --}}
+                                            <span class="ms-2 text-muted" style="max-width:100px;">
                                                 {{ optional($app->university)->short_name ?? 'N/A' }}
                                             </span>
+
                                         </a>
                                     @endforeach
+
                                 </div>
                             @else
-                                <span class="badge bg-light  border">Not started</span>
+                                <span class="badge bg-light border text-dark">
+                                    Not Started
+                                </span>
                             @endif
                         </td>
 

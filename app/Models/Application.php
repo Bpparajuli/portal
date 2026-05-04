@@ -15,47 +15,14 @@ class Application extends Model
         'university_id',
         'course_id',
         'agent_id',
-        'application_status',
+        'application_status_id', // ✅ UPDATED
         'application_number',
-        'sop_file', // SOP file path
+        'sop_file',
     ];
 
-    // All possible application statuses
-    public const STATUSES = [
-        'Application started',
-        'Application viewed by Admin',
-        'Applied to University',
-        'Need to give the test',
-        'Accepted by the University',
-        'Rejected by the University',
-        'Applied to another university',
-        'Application forwarded to embassy',
-        'Is on waiting list on Embassy',
-        'Visa Approved',
-        'Visa Rejected',
-        'Lost',
-        'Withdrawn', // optional
-    ];
-
-    // Status colors (for badges or display)
-    public const STATUS_COLORS = [
-        'Application started'              => 'bg-info text-dark',
-        'Application viewed by Admin'      => 'bg-primary text-white',
-        'Applied to University'            => 'bg-warning text-dark',
-        'Need to give the test'            => 'bg-secondary text-white',
-        'Accepted by the University'       => 'bg-success text-white',
-        'Rejected by the University'       => 'bg-danger text-white',
-        'Applied to another university'    => 'bg-warning text-dark',
-        'Application forwarded to embassy' => 'bg-primary text-white',
-        'Is on waiting list on Embassy'    => 'bg-info text-dark',
-        'Visa Approved'                     => 'bg-success text-white',
-        'Visa Rejected'                     => 'bg-danger text-white',
-        'Lost'                              => 'bg-dark text-white',
-        'Withdrawn'                         => 'bg-light text-muted',
-        'No Application'                    => 'bg-light text-muted',
-    ];
-
-    /** Relationships */
+    /**
+     * Relationships
+     */
 
     public function student()
     {
@@ -78,6 +45,22 @@ class Application extends Model
     }
 
     /**
+     * Status (NEW SYSTEM)
+     */
+    public function status()
+    {
+        return $this->belongsTo(ApplicationStatus::class, 'application_status_id');
+    }
+
+    public function getStatusNameAttribute()
+    {
+        return $this->status?->name ?? 'N/A';
+    }
+    public function getStatusColorAttribute()
+    {
+        return $this->status?->color ?? 'bg-secondary';
+    }
+    /**
      * All documents except SOP
      */
     public function documents()
@@ -87,7 +70,7 @@ class Application extends Model
     }
 
     /**
-     * SOP document if stored in documents table
+     * SOP document
      */
     public function sopDocument()
     {
@@ -96,18 +79,10 @@ class Application extends Model
     }
 
     /**
-     * Application messages
+     * Messages
      */
     public function messages()
     {
         return $this->hasMany(ApplicationMessage::class, 'application_id');
-    }
-
-    /**
-     * Get CSS class for status (for badges)
-     */
-    public function getStatusClassAttribute(): string
-    {
-        return self::STATUS_COLORS[$this->application_status] ?? 'bg-light text-dark';
     }
 }

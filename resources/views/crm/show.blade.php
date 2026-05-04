@@ -5,31 +5,15 @@
 
 @push('styles')
     <style>
-        :root {
-            --crm-bg: #f4f6fb;
-            --crm-card: #ffffff;
-            --crm-border: #e5e9f2;
-            --crm-text: #1a1f36;
-            --crm-muted: #6b7280;
-            --crm-primary: #4f46e5;
-            --crm-danger: #ef4444;
-            --crm-warning: #f59e0b;
-            --crm-success: #10b981;
-        }
+        /* CRM-specific components - Not in main styles.css */
 
-        body {
-            background: var(--crm-bg);
-        }
-
-        /* ── Back bar ── */
         .crm-back-bar {
-            background: var(--crm-card);
-            border-bottom: 1px solid var(--crm-border);
+            background: var(--light);
+            border-bottom: 1px solid var(--glass-gradient);
             padding: .5rem 1.5rem;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            font-size: .875rem;
             position: sticky;
             top: 0;
             z-index: 100;
@@ -37,37 +21,36 @@
 
         .crm-back-bar a {
             text-decoration: none;
-            color: var(--crm-muted);
+            color: var(--muted);
         }
 
         .crm-back-bar a:hover {
-            color: var(--crm-primary);
+            color: var(--primary);
         }
 
-        /* ── Student header ── */
         .crm-student-header {
-            background: var(--crm-card);
-            border-bottom: 1px solid var(--crm-border);
+            background: var(--light-blue);
+            border-bottom: 1px solid var(--glass-gradient);
             padding: 1.25rem 1.5rem;
         }
 
         .crm-student-header img {
-            width: 72px;
-            height: 72px;
+            width: 150px;
+            height: 150px;
             object-fit: cover;
             border-radius: 12px;
-            border: 2px solid var(--crm-border);
+            border: 2px solid var(--glass-gradient);
         }
 
         .stu-name {
             font-size: 1.2rem;
             font-weight: 700;
-            color: var(--crm-text);
+            color: var(--text);
         }
 
         .stu-meta {
             font-size: .8rem;
-            color: var(--crm-muted);
+            color: var(--muted);
             margin-top: .25rem;
         }
 
@@ -75,16 +58,15 @@
             display: inline-block;
             font-size: .7rem;
             background: #f0f2ff;
-            color: var(--crm-primary);
+            color: var(--primary);
             border-radius: 20px;
             padding: .15rem .55rem;
             margin: .1rem;
         }
 
-        /* ── Stage bar ── */
         .stage-bar {
-            background: var(--crm-card);
-            border-bottom: 1px solid var(--crm-border);
+            background: var(--light-gradient);
+            border-bottom: 1px solid var(--glass-gradient);
             padding: .75rem 1.5rem;
             display: flex;
             align-items: center;
@@ -105,8 +87,7 @@
             padding: .4rem .9rem;
             cursor: pointer;
             white-space: nowrap;
-            position: relative;
-            color: var(--crm-muted);
+            color: var(--muted);
             border: none;
             background: none;
             transition: all .15s;
@@ -115,7 +96,7 @@
         .stage-bar-item::after {
             content: '›';
             font-size: 1.1rem;
-            color: var(--crm-border);
+            color: var(--glass-gradient);
             margin-left: .75rem;
         }
 
@@ -124,7 +105,7 @@
         }
 
         .stage-bar-item.passed {
-            color: var(--crm-success);
+            color: var(--success);
             font-weight: 600;
         }
 
@@ -135,18 +116,6 @@
             font-weight: 700;
         }
 
-        .stage-bar-item.current::after {
-            color: var(--crm-border);
-        }
-
-        @if (!$canEdit)
-            .stage-bar-item {
-                cursor: default;
-                pointer-events: none;
-            }
-        @endif
-
-        /* ── Main layout ── */
         .crm-body {
             display: grid;
             grid-template-columns: 1fr 320px;
@@ -154,16 +123,15 @@
             padding: 1.25rem 1.5rem;
         }
 
-        @media (max-width: 992px) {
+        @media (max-width:992px) {
             .crm-body {
                 grid-template-columns: 1fr;
             }
         }
 
-        /* ── Cards ── */
         .crm-section {
-            background: var(--crm-card);
-            border: 1px solid var(--crm-border);
+            background: var(--light);
+            border: 1px solid var(--dark-gradient);
             border-radius: 12px;
             overflow: hidden;
             margin-bottom: 1.25rem;
@@ -171,12 +139,12 @@
 
         .crm-section-header {
             padding: .75rem 1.1rem;
-            border-bottom: 1px solid var(--crm-border);
+            border-bottom: 1px solid var(--glass-gradient);
             font-size: .8rem;
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: .06em;
-            color: var(--crm-muted);
+            color: var(--muted);
             background: #fafbff;
             display: flex;
             align-items: center;
@@ -187,25 +155,23 @@
             padding: 1rem 1.1rem;
         }
 
-        /* ── Internal notes panel ── */
         .note-display {
             white-space: pre-wrap;
             font-size: .875rem;
-            color: var(--crm-text);
+            color: var(--text);
             line-height: 1.6;
         }
 
         .note-item {
             padding: .65rem .85rem;
-            border: 1px solid var(--crm-border);
+            border: 1px solid var(--glass-gradient);
             border-radius: 8px;
             margin-bottom: .6rem;
-            position: relative;
             font-size: .85rem;
         }
 
         .note-item.pinned {
-            border-left: 3px solid var(--crm-warning);
+            border-left: 3px solid var(--warning);
             background: #fffbeb;
         }
 
@@ -214,20 +180,19 @@
             border: none;
             font-size: .85rem;
             cursor: pointer;
-            color: var(--crm-muted);
+            color: var(--muted);
             padding: 0;
         }
 
         .note-pin-btn:hover {
-            color: var(--crm-warning);
+            color: var(--warning);
         }
 
-        /* ── Tabs ── */
         .crm-tabs {
             display: flex;
-            border-bottom: 2px solid var(--crm-border);
+            border-bottom: 2px solid var(--glass-gradient);
             padding: 0 1.1rem;
-            background: var(--crm-card);
+            background: var(--light-gradient);
         }
 
         .crm-tab {
@@ -237,42 +202,36 @@
             border: none;
             background: none;
             cursor: pointer;
-            color: var(--crm-muted);
+            color: var(--muted);
             border-bottom: 2px solid transparent;
             margin-bottom: -2px;
             transition: all .15s;
         }
 
         .crm-tab.active {
-            color: var(--crm-primary);
-            border-bottom-color: var(--crm-primary);
+            color: var(--primary);
+            border-bottom-color: var(--primary);
         }
 
-        /* ── Today's tasks ── */
-        .task-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: .75rem;
-        }
-
-        @media (max-width: 600px) {
-            .task-grid {
-                grid-template-columns: 1fr;
-            }
+        .tasks-container {
+            display: flex;
+            gap: 1.25rem;
         }
 
         .task-box {
-            border: 1px solid var(--crm-border);
+            border: 1px solid var(--light-gradient);
             border-radius: 10px;
             padding: .85rem 1rem;
+            background: var(--crm-bg);
         }
 
         .task-box-header {
-            font-size: .72rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            color: var(--crm-muted);
-            margin-bottom: .6rem;
+            font-size: .8rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: .75rem;
+            padding-bottom: .5rem;
+            border-bottom: 2px solid var(--glass-gradient);
         }
 
         .task-item {
@@ -280,43 +239,79 @@
             align-items: flex-start;
             gap: .6rem;
             padding: .6rem .75rem;
-            border: 1px solid var(--crm-border);
+            border: 1px solid var(--glass-gradient);
             border-radius: 8px;
             margin-bottom: .5rem;
             font-size: .83rem;
+            transition: all 0.2s;
+        }
+
+        .task-item:hover {
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
         }
 
         .task-item.overdue {
-            border-left: 3px solid var(--crm-danger);
+            border-left: 4px solid var(--danger);
+            background: #fef2f2;
+        }
+
+        .task-item.due {
+            border-left: 4px solid var(--warning);
+            background: #fffbeb;
         }
 
         .task-item.today {
-            border-left: 3px solid var(--crm-warning);
+            border-left: 4px solid var(--success);
+            background: #ecfdf5;
         }
 
         .task-item.upcoming {
-            border-left: 3px solid var(--crm-success);
+            border-left: 4px solid var(--primary);
+            background: #f0f2ff;
+        }
+
+        .task-item.completed {
+            border-left: 4px solid #9ca3af;
+            background: #f9fafb;
+            opacity: 0.8;
         }
 
         .task-check {
-            width: 16px;
-            height: 16px;
+            width: 18px;
+            height: 18px;
             border-radius: 4px;
-            border: 2px solid var(--crm-border);
+            border: 2px solid var(--glass-gradient);
             cursor: pointer;
             flex-shrink: 0;
             margin-top: 2px;
+            background: none;
+            transition: all 0.2s;
+        }
+
+        .task-check:hover {
+            border-color: var(--success);
+            background: var(--success);
         }
 
         .task-title {
-            font-weight: 500;
-            color: var(--crm-text);
+            font-weight: 600;
+            color: var(--text);
+            font-size: .9rem;
         }
 
         .task-meta {
             font-size: .72rem;
-            color: var(--crm-muted);
+            color: var(--muted);
             margin-top: .15rem;
+        }
+
+        .task-description {
+            font-size: .78rem;
+            color: var(--text);
+            margin-top: .35rem;
+            padding: .4rem .6rem;
+            background: var(--crm-bg);
+            border-radius: 6px;
         }
 
         .task-actions {
@@ -326,34 +321,69 @@
             flex-shrink: 0;
         }
 
-        .task-actions button,
-        .task-actions a {
-            font-size: .72rem;
-            padding: .15rem .4rem;
-            border-radius: 4px;
-            cursor: pointer;
-            text-decoration: none;
-        }
-
         .priority-high {
-            color: var(--crm-danger);
+            color: var(--danger);
             font-weight: 600;
         }
 
         .priority-medium {
-            color: var(--crm-warning);
+            color: var(--warning);
             font-weight: 600;
         }
 
         .priority-low {
-            color: var(--crm-success);
+            color: var(--success);
             font-weight: 600;
         }
 
-        /* ── Activity history ── */
+        /* Modal Styles - Page specific */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .modal-header {
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid var(--glass-gradient);
+            font-weight: 700;
+            font-size: 1.1rem;
+            background: #fafbff;
+            border-radius: 12px 12px 0 0;
+        }
+
+        .modal-body {
+            padding: 1.25rem;
+        }
+
+        .modal-footer {
+            padding: 1rem 1.25rem;
+            border-top: 1px solid var(--glass-gradient);
+            display: flex;
+            gap: .75rem;
+            justify-content: flex-end;
+        }
+
         .activity-item {
             padding: .85rem 1rem;
-            border-bottom: 1px solid var(--crm-border);
+            border-bottom: 1px solid var(--glass-gradient);
         }
 
         .activity-item:last-child {
@@ -367,21 +397,20 @@
 
         .activity-item .act-meta {
             font-size: .75rem;
-            color: var(--crm-muted);
+            color: var(--muted);
             margin-top: .2rem;
         }
 
         .activity-item .act-desc {
             font-size: .82rem;
-            color: var(--crm-text);
+            color: var(--text);
             margin-top: .35rem;
             background: var(--crm-bg);
             border-radius: 6px;
             padding: .5rem .75rem;
-            border-left: 3px solid var(--crm-border);
+            border-left: 3px solid var(--glass-gradient);
         }
 
-        /* ── Right sidebar ── */
         .crm-sidebar {
             position: sticky;
             top: 56px;
@@ -396,30 +425,29 @@
             font-size: .72rem;
             text-transform: uppercase;
             letter-spacing: .06em;
-            color: var(--crm-muted);
+            color: var(--muted);
             display: block;
             margin-bottom: .2rem;
         }
 
         .sidebar-field .val {
             font-size: .875rem;
-            color: var(--crm-text);
+            color: var(--text);
             font-weight: 500;
         }
 
-        /* ── Add task form ── */
         .add-task-form {
             background: var(--crm-bg);
             border-radius: 10px;
             padding: 1rem;
-            border: 1px dashed var(--crm-border);
+            border: 1px dashed var(--glass-gradient);
         }
 
         .add-task-form input,
         .add-task-form select,
         .add-task-form textarea {
             font-size: .83rem;
-            border: 1px solid var(--crm-border);
+            border: 1px solid var(--glass-gradient);
             border-radius: 6px;
             padding: .4rem .65rem;
             width: 100%;
@@ -427,7 +455,6 @@
             margin-bottom: .5rem;
         }
 
-        /* read-only badge */
         .read-only-badge {
             background: #fef3c7;
             color: #92400e;
@@ -436,29 +463,67 @@
             padding: .2rem .65rem;
             font-weight: 600;
         }
+
+        .undo-complete {
+            cursor: pointer;
+            color: var(--primary);
+            font-size: .7rem;
+        }
+
+        .undo-complete:hover {
+            text-decoration: underline;
+        }
+
+        .star-rating {
+            display: flex;
+            flex-direction: row-reverse;
+            justify-content: flex-end;
+            gap: 5px;
+        }
+
+        .star-rating input {
+            display: none;
+        }
+
+        .star-rating label {
+            font-size: 32px;
+            color: #ccc;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .star-rating input:checked~label,
+        .star-rating label:hover,
+        .star-rating label:hover~label {
+            color: #ffc107;
+        }
     </style>
 @endpush
 
 @section('content')
 
-    {{-- ── Back bar ── --}}
+    {{-- Back bar --}}
     <div class="crm-back-bar">
         <a href="{{ route('crm.dashboard') }}">◀ Back to Pipeline</a>
         <div class="d-flex align-items-center gap-2">
             @if (!$canEdit)
                 <span class="read-only-badge">👁 Read-only</span>
             @endif
-            @if ($canEdit)
-                <a href="#" class="btn btn-sm btn-outline-danger"
-                    onclick="return confirm('Delete this student?')">Delete</a>
-            @endif
         </div>
     </div>
 
-    {{-- ── Student header ── --}}
+    {{-- Student header --}}
     <div class="crm-student-header">
         <div class="d-flex gap-3 flex-wrap align-items-start">
-            <img src="{{ $student->avatar_url }}" alt="{{ $student->full_name }}">
+            @if ($student->students_photo && Storage::disk('public')->exists($student->students_photo))
+                <img src="{{ Storage::url($student->students_photo) }}" class="rounded object-fit-cover" width="150"
+                    height="150" alt="Photo">
+            @else
+                <div class="rounded bg-primary d-flex align-items-center justify-content-center"
+                    style="width:150px;height:150px;">
+                    <i class="fa-solid fa-user text-white"></i>
+                </div>
+            @endif
             <div class="flex-grow-1">
                 <div class="stu-name">{{ $student->full_name }}</div>
                 <div class="stu-meta">
@@ -471,17 +536,36 @@
                     @endforeach
                 </div>
                 <div class="stu-meta mt-1">
-                    👤 Assigned to: <strong>{{ $student->agent?->name ?? '—' }}</strong>
-                    &nbsp;&bull;&nbsp;
                     📋 Qualification: {{ $student->qualification ?? '—' }}
                     &nbsp;&bull;&nbsp;
                     🌍 Preferred Country: {{ $student->preferred_country ?? '—' }}
                 </div>
+                <div class="stu-meta mt-1">
+                    👤 Student of: <strong>{{ $student->agent?->name ?? '—' }}</strong>
+                </div>
             </div>
+            <div class="col-md-6">
+                <label class="form-label fw-semibold">Rating</label>
+
+                <div class="star-rating">
+                    <input type="radio" name="rating" id="star3" value="3"
+                        {{ old('rating', $student->rating ?? '') == 3 ? 'checked' : '' }}>
+                    <label for="star3">&#9733;</label>
+
+                    <input type="radio" name="rating" id="star2" value="2"
+                        {{ old('rating', $student->rating ?? '') == 2 ? 'checked' : '' }}>
+                    <label for="star2">&#9733;</label>
+
+                    <input type="radio" name="rating" id="star1" value="1"
+                        {{ old('rating', $student->rating ?? '') == 1 ? 'checked' : '' }}>
+                    <label for="star1">&#9733;</label>
+                </div>
+            </div>
+
         </div>
     </div>
 
-    {{-- ── Stage bar ── --}}
+    {{-- Stage bar --}}
     <div class="stage-bar">
         @foreach ($stages as $stg)
             @php
@@ -509,31 +593,26 @@
         @endforeach
     </div>
 
-    {{-- ── Main body ── --}}
+    {{-- Main body --}}
     <div class="crm-body">
 
-        {{-- ═══ LEFT — main content ═══ --}}
+        {{-- LEFT --}}
         <div>
 
-            {{-- Internal notes / extra info panel --}}
+            {{-- Notes --}}
             <div class="crm-section">
                 <div class="crm-section-header">
-                    📝 Internal Notes &amp; Extra Information
-                    @if ($canEdit)
-                        <button class="btn btn-sm btn-outline-primary" onclick="toggleNoteForm()">+ Add Note</button>
-                    @endif
+                    📝 Internal Note
                 </div>
                 <div class="crm-section-body">
 
-                    {{-- Pinned notes first --}}
                     @foreach ($notes->where('is_pinned', true) as $note)
                         <div class="note-item pinned">
                             <div class="d-flex justify-content-between align-items-start">
                                 <div class="note-display">{{ $note->content }}</div>
                                 @if ($canEdit)
                                     <div class="d-flex gap-1 ms-2">
-                                        <button class="note-pin-btn" title="Unpin"
-                                            onclick="togglePin({{ $note->id }}, this)">📌</button>
+                                        <button class="note-pin-btn" onclick="togglePin({{ $note->id }})">📌</button>
                                         <form action="{{ route('crm.notes.destroy', $note) }}" method="POST"
                                             onsubmit="return confirm('Delete note?')">
                                             @csrf @method('DELETE')
@@ -549,15 +628,13 @@
                         </div>
                     @endforeach
 
-                    {{-- Unpinned notes --}}
                     @foreach ($notes->where('is_pinned', false) as $note)
                         <div class="note-item">
                             <div class="d-flex justify-content-between align-items-start">
                                 <div class="note-display">{{ $note->content }}</div>
                                 @if ($canEdit)
                                     <div class="d-flex gap-1 ms-2">
-                                        <button class="note-pin-btn" title="Pin"
-                                            onclick="togglePin({{ $note->id }}, this)">📍</button>
+                                        <button class="note-pin-btn" onclick="togglePin({{ $note->id }})">📍</button>
                                         <form action="{{ route('crm.notes.destroy', $note) }}" method="POST"
                                             onsubmit="return confirm('Delete note?')">
                                             @csrf @method('DELETE')
@@ -576,30 +653,25 @@
                     @if ($notes->isEmpty())
                         <div class="text-muted text-center py-3" style="font-size:.875rem">No notes yet.</div>
                     @endif
-
-                    {{-- Add note form --}}
-                    @if ($canEdit)
-                        <div id="noteForm" style="display:none; margin-top:.75rem">
-                            <form action="{{ route('crm.notes.store') }}" method="POST">
-                                @csrf
-                                <input type="hidden" name="student_id" value="{{ $student->id }}">
-                                <input type="hidden" name="type" value="internal">
-                                <textarea name="content" rows="4" class="form-control form-control-sm mb-2" placeholder="Write an internal note…"
-                                    required></textarea>
-                                <div class="d-flex gap-2">
-                                    <label class="d-flex align-items-center gap-1 small">
-                                        <input type="checkbox" name="is_pinned" value="1"> Pin this note
-                                    </label>
-                                    <button type="submit" class="btn btn-sm btn-primary ms-auto">Save Note</button>
-                                </div>
-                            </form>
-                        </div>
-                    @endif
-
+                    <div id="noteForm">
+                        <form action="{{ route('crm.notes.store') }}" method="POST">
+                            @csrf
+                            <input type="hidden" name="student_id" value="{{ $student->id }}">
+                            <input type="hidden" name="type" value="internal">
+                            <textarea name="content" rows="10" class="form-control form-control-sm mb-2" placeholder="Write an internal note…"
+                                required></textarea>
+                            <div class="d-flex gap-2 justify-content-between align-items-center">
+                                <input style="width:auto;" type="checkbox" name="is_pinned" value="1">
+                                <label>Pin this note
+                                </label>
+                                <button type="submit" class="btn btn-sm btn-primary ms-auto">Save Note</button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             </div>
 
-            {{-- Tabs: Tasks | Documents | History --}}
+            {{-- Tabs --}}
             <div class="crm-section">
                 <div class="crm-tabs">
                     <button class="crm-tab active" onclick="switchTab('tasks', this)">Tasks</button>
@@ -607,132 +679,194 @@
                     <button class="crm-tab" onclick="switchTab('history', this)">History</button>
                 </div>
 
-                {{-- ── TASKS TAB ── --}}
+                {{-- TASKS TAB --}}
                 <div id="tab-tasks">
                     <div class="crm-section-body">
-                        <div class="task-grid">
-
-                            {{-- TODAY'S TASKS --}}
-                            <div class="task-box">
-                                <div class="task-box-header">📅 Today's Tasks ({{ $todayTasks->count() }})</div>
-                                @forelse($todayTasks as $task)
-                                    <div class="task-item today" id="task-{{ $task->id }}">
-                                        @if ($canEdit)
-                                            <form action="{{ route('crm.tasks.complete', $task) }}" method="POST"
-                                                style="display:inline">
-                                                @csrf @method('PATCH')
-                                                <button type="submit" class="task-check" title="Mark done"></button>
-                                            </form>
-                                        @endif
-                                        <div class="flex-grow-1">
-                                            <div class="task-title">{{ $task->title }}</div>
-                                            <div class="task-meta">
-                                                🕐 {{ ucfirst($task->time_slot ?? 'anytime') }}
-                                                &bull;
-                                                <span class="priority-{{ $task->priority }}">
-                                                    {{ $task->priority === 'high' ? '🔴' : ($task->priority === 'medium' ? '🟡' : '🟢') }}
-                                                    {{ ucfirst($task->priority) }}
-                                                </span>
-                                            </div>
+                        <div class="tasks-container">
+                            <div class="task-combined">
+                                {{-- OVERDUE TASKS BOX --}}
+                                @if ($dueTasks->count() > 0)
+                                    <div class="task-box">
+                                        <div class="task-box-header" style="color: var(--danger);">
+                                            ⚠️ Overdue Tasks ({{ $dueTasks->count() }})
                                         </div>
-                                        @if ($canEdit)
-                                            <div class="task-actions">
-                                                <button onclick="openEditTask({{ $task->id }})"
-                                                    class="btn btn-xs btn-outline-secondary">Edit</button>
-                                                <form action="{{ route('crm.tasks.cancel', $task) }}" method="POST"
-                                                    style="display:inline">
-                                                    @csrf @method('PATCH')
-                                                    <button class="btn btn-xs btn-outline-danger">✕</button>
-                                                </form>
+                                        @foreach ($dueTasks as $task)
+                                            @php $priority = $task->meta_data['priority'] ?? 'medium'; @endphp
+                                            <div class="task-item overdue" data-task-id="{{ $task->id }}">
+                                                <button class="task-check"
+                                                    onclick="openCompleteModal({{ $task->id }}, '{{ addslashes($task->subject) }}')"></button>
+                                                <div class="flex-grow-1">
+                                                    <div class="task-title">{{ $task->subject }}</div>
+                                                    <div class="task-meta">
+                                                        {{ $task->activity_icon }} {{ $task->activity_type_label }}
+                                                        &bull; 🕐 {{ ucfirst($task->priority_time_slot ?? 'anytime') }}
+                                                        &bull; <span class="priority-{{ $priority }}">
+                                                            {{ $priority === 'high' ? '🔴' : ($priority === 'medium' ? '🟡' : '🟢') }}
+                                                            {{ ucfirst($priority) }}
+                                                        </span>
+                                                        @if ($task->assignee)
+                                                            &bull; 👤 {{ $task->assignee->name }}
+                                                        @endif
+                                                        &bull; Due:
+                                                        {{ $task->scheduled_at?->format('d M Y') ?? 'No date' }}
+                                                    </div>
+                                                    @if ($task->description)
+                                                        <div class="task-description">{{ $task->description }}</div>
+                                                    @endif
+                                                </div>
+                                                @if ($canEdit)
+                                                    <div class="task-actions">
+                                                        <button
+                                                            onclick="openCancelModal({{ $task->id }}, '{{ addslashes($task->subject) }}')"
+                                                            class="btn btn-sm btn-outline-danger"
+                                                            style="font-size:.72rem;padding:.15rem .4rem">✕ Cancel</button>
+                                                    </div>
+                                                @endif
                                             </div>
-                                        @endif
+                                        @endforeach
                                     </div>
-                                @empty
-                                    <div class="text-muted small text-center py-2">No tasks for today 🎉</div>
-                                @endforelse
-                            </div>
+                                @endif
 
-                            {{-- PLANNED TASKS --}}
-                            <div class="task-box">
-                                <div class="task-box-header">🗓 Planned Activities ({{ $plannedTasks->count() }})</div>
-                                @forelse($plannedTasks as $task)
-                                    <div class="task-item upcoming" id="task-{{ $task->id }}">
-                                        <div class="flex-grow-1">
-                                            <div class="task-title">{{ $task->title }}</div>
-                                            <div class="task-meta">
-                                                For: {{ $task->assignee?->name ?? 'Me' }}
-                                                &bull;
-                                                Due:
-                                                {{ $task->due_date ? \Carbon\Carbon::parse($task->due_date)->diffForHumans() : 'No date' }}
-                                                <span
-                                                    style="color: {{ \Carbon\Carbon::parse($task->due_date)->isPast() ? 'var(--crm-danger)' : 'var(--crm-success)' }}">
-                                                    {{ \Carbon\Carbon::parse($task->due_date)->isPast() ? '🔴' : '🟢' }}
-                                                </span>
-                                            </div>
+
+                                {{-- TODAY'S TASKS BOX --}}
+                                @if ($todayTasks->count() > 0)
+                                    <div class="task-box">
+                                        <div class="task-box-header" style="color: var(--success);">
+                                            📅 Today's Tasks ({{ $todayTasks->count() }})
                                         </div>
-                                        @if ($canEdit)
-                                            <div class="task-actions">
-                                                <form action="{{ route('crm.tasks.complete', $task) }}" method="POST"
-                                                    style="display:inline">
-                                                    @csrf @method('PATCH')
-                                                    <button class="btn btn-xs btn-success">✓ Done</button>
-                                                </form>
-                                                <form action="{{ route('crm.tasks.cancel', $task) }}" method="POST"
-                                                    style="display:inline">
-                                                    @csrf @method('PATCH')
-                                                    <button class="btn btn-xs btn-outline-danger">Cancel</button>
-                                                </form>
+                                        @foreach ($todayTasks as $task)
+                                            @php $priority = $task->meta_data['priority'] ?? 'medium'; @endphp
+                                            <div class="task-item today" data-task-id="{{ $task->id }}">
+                                                <button class="task-check"
+                                                    onclick="openCompleteModal({{ $task->id }}, '{{ addslashes($task->subject) }}')"></button>
+                                                <div class="flex-grow-1">
+                                                    <div class="task-title">{{ $task->subject }}</div>
+                                                    <div class="task-meta">
+                                                        {{ $task->activity_icon }} {{ $task->activity_type_label }}
+                                                        &bull; 🕐 {{ ucfirst($task->priority_time_slot ?? 'anytime') }}
+                                                        &bull; <span class="priority-{{ $priority }}">
+                                                            {{ $priority === 'high' ? '🔴' : ($priority === 'medium' ? '🟡' : '🟢') }}
+                                                            {{ ucfirst($priority) }}
+                                                        </span>
+                                                        @if ($task->assignee)
+                                                            &bull; 👤 {{ $task->assignee->name }}
+                                                        @endif
+                                                    </div>
+                                                    @if ($task->description)
+                                                        <div class="task-description">{{ $task->description }}</div>
+                                                    @endif
+                                                </div>
+                                                @if ($canEdit)
+                                                    <div class="task-actions">
+                                                        <button
+                                                            onclick="openCancelModal({{ $task->id }}, '{{ addslashes($task->subject) }}')"
+                                                            class="btn btn-sm btn-outline-danger"
+                                                            style="font-size:.72rem;padding:.15rem .4rem">✕ Cancel</button>
+                                                    </div>
+                                                @endif
                                             </div>
-                                        @endif
+                                        @endforeach
                                     </div>
-                                @empty
-                                    <div class="text-muted small text-center py-2">No planned activities</div>
-                                @endforelse
+                                @endif
                             </div>
+                            {{-- UPCOMING TASKS BOX --}}
+                            @if ($plannedTasks->count() > 0)
+                                <div class="task-box">
+                                    <div class="task-box-header" style="color: var(--primary);">
+                                        🗓 Upcoming Tasks ({{ $plannedTasks->count() }})
+                                    </div>
+                                    @foreach ($plannedTasks as $task)
+                                        @php $priority = $task->meta_data['priority'] ?? 'medium'; @endphp
+                                        <div class="task-item upcoming" data-task-id="{{ $task->id }}">
+                                            <button class="task-check"
+                                                onclick="openCompleteModal({{ $task->id }}, '{{ addslashes($task->subject) }}')"></button>
+                                            <div class="flex-grow-1">
+                                                <div class="task-title">{{ $task->subject }}</div>
+                                                <div class="task-meta">
+                                                    {{ $task->activity_icon }} {{ $task->activity_type_label }}
+                                                    &bull; 👤 {{ $task->assignee?->name ?? 'Me' }}
+                                                    &bull; Due:
+                                                    {{ $task->scheduled_at?->format('d M Y') ?? 'No date' }}
+                                                    &bull; <span class="priority-{{ $priority }}">
+                                                        {{ $priority === 'high' ? '🔴' : ($priority === 'medium' ? '🟡' : '🟢') }}
+                                                        {{ ucfirst($priority) }}
+                                                    </span>
+                                                </div>
+                                                @if ($task->description)
+                                                    <div class="task-description">{{ $task->description }}</div>
+                                                @endif
+                                            </div>
+                                            @if ($canEdit)
+                                                <div class="task-actions">
+                                                    <button
+                                                        onclick="openCancelModal({{ $task->id }}, '{{ addslashes($task->subject) }}')"
+                                                        class="btn btn-sm btn-outline-danger"
+                                                        style="font-size:.72rem;padding:.15rem .4rem">✕ Cancel</button>
+                                                </div>
+                                            @endif
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @endif
+
+                            @if ($dueTasks->count() == 0 && $todayTasks->count() == 0 && $plannedTasks->count() == 0)
+                                <div class="task-box">
+                                    <div class="text-muted text-center py-4">No pending tasks 🎉</div>
+                                </div>
+                            @endif
                         </div>
 
-                        {{-- Add task form --}}
+                        {{-- Add task --}}
                         @if ($canEdit)
                             <div class="mt-3">
                                 <button class="btn btn-sm btn-outline-primary w-100" onclick="toggleTaskForm()">
                                     + Log New Task / Activity
                                 </button>
-
                                 <div id="addTaskForm" style="display:none; margin-top:.75rem" class="add-task-form">
-
                                     <form action="{{ route('crm.tasks.store') }}" method="POST">
                                         @csrf
                                         <input type="hidden" name="student_id" value="{{ $student->id }}">
-
                                         <div class="row g-2">
-
-                                            <div class="col-12">
-                                                <input type="text" name="title"
-                                                    placeholder="Task title / what to do" required>
-                                            </div>
-
-                                            <div class="col-sm-4">
+                                            <div class="col-sm-6">
                                                 <select name="task_type" required>
-                                                    <option value="">Type…</option>
+                                                    <option value="">Activity Type…</option>
                                                     <option value="call">📞 Call</option>
                                                     <option value="email">✉️ Email</option>
                                                     <option value="whatsapp">💬 WhatsApp</option>
                                                     <option value="meeting">👥 Meeting</option>
-                                                    <option value="document">📄 Document</option>
+                                                    <option value="document_review">📄 Document Review</option>
                                                     <option value="follow_up">⏰ Follow Up</option>
-                                                    <option value="other">📌 Other</option>
+                                                    <option value="counseling">🎓 Counseling</option>
+                                                    <option value="todo">✅ To Do</option>
                                                 </select>
                                             </div>
-
-                                            <div class="col-sm-4">
-                                                <select name="priority" required>
-                                                    <option value="medium">🟡 Medium</option>
-                                                    <option value="high">🔴 High</option>
-                                                    <option value="low">🟢 Low</option>
+                                            <div class="col-sm-6">
+                                                <input type="text" name="title" placeholder="Summary" required>
+                                            </div>
+                                            <div class="col-12">
+                                                <textarea name="description" rows="2" placeholder="Log a note..."></textarea>
+                                            </div>
+                                            <div class="col-sm-6">
+                                                <input type="date" name="due_date" value="{{ date('Y-m-d') }}">
+                                            </div>
+                                            <div class="col-sm-6">
+                                                <select name="assigned_to">
+                                                    <option value="">Assign to…</option>
+                                                    @foreach ($assignableUsers as $u)
+                                                        <option value="{{ $u->id }}" @selected($u->id === auth()->id())>
+                                                            {{ $u->name }} ({{ ucfirst($u->role) }})
+                                                        </option>
+                                                    @endforeach
                                                 </select>
                                             </div>
-
-                                            <div class="col-sm-4">
+                                            <div class="col-sm-6">
+                                                <select name="priority">
+                                                    <option value="medium">🟡 Medium Priority</option>
+                                                    <option value="high">🔴 High Priority</option>
+                                                    <option value="low">🟢 Low Priority</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-sm-6">
                                                 <select name="time_slot">
                                                     <option value="">Any time</option>
                                                     <option value="morning">🌅 Morning</option>
@@ -740,74 +874,68 @@
                                                     <option value="evening">🌙 Evening</option>
                                                 </select>
                                             </div>
-
-                                            <div class="col-sm-6">
-                                                <input type="date" name="due_date" value="{{ date('Y-m-d') }}">
-                                            </div>
-
-                                            <div class="col-sm-6">
-                                                <select name="assigned_to">
-                                                    <option value="">Assign to…</option>
-                                                    @foreach ($assignableUsers as $u)
-                                                        <option value="{{ $u->id }}" @selected($u->id === auth()->id())>
-                                                            {{ $u->name }}
-                                                        </option>
-                                                    @endforeach
-                                                </select>
-                                            </div>
-
-                                            <div class="col-12">
-                                                <textarea name="description" rows="2" placeholder="Optional description…"></textarea>
-                                            </div>
-
                                             <div class="col-12 d-flex gap-2">
-                                                <button type="submit" class="btn btn-sm btn-primary">Save Task</button>
+                                                <button type="submit" class="btn btn-sm btn-primary">Save</button>
                                                 <button type="button" class="btn btn-sm btn-outline-secondary"
-                                                    onclick="toggleTaskForm()">
-                                                    Cancel
-                                                </button>
+                                                    onclick="toggleTaskForm()">Cancel</button>
                                             </div>
-
                                         </div>
                                     </form>
                                 </div>
                             </div>
                         @endif
-                        {{-- ── Activity History ── --}}
+
+                        {{-- COMPLETED TASKS HISTORY --}}
                         <div class="mt-4">
-                            <div class="d-flex align-items-center justify-content-between mb-2">
-                                <strong style="font-size:.85rem">🕒 Activity History</strong>
+                            <div class="task-box-header" style="margin-bottom: 1rem;">
+                                ✅ Completed Tasks History ({{ $completedTasks->total() }})
                             </div>
-                            @forelse($activityHistory as $act)
-                                <div class="activity-item d-flex gap-3">
-                                    <span class="act-icon">{{ $act->task_icon ?? '📌' }}</span>
-                                    <div class="flex-grow-1">
-                                        <div class="fw-medium" style="font-size:.85rem">{{ $act->title }}</div>
-                                        <div class="act-meta">
-                                            By {{ $act->assignee?->name ?? 'Unknown' }}
-                                            &bull;
-                                            {{ $act->completed_at?->format('d M Y, g:i A') ?? $act->updated_at->format('d M Y') }}
+                            <div>
+                                @forelse($completedTasks as $task)
+                                    <div class="activity-item d-flex gap-3">
+                                        <span class="act-icon">{{ $task->activity_icon }}</span>
+                                        <div class="flex-grow-1">
+                                            <div class="fw-medium" style="font-size:.85rem">{{ $task->subject }}
+                                            </div>
+                                            <div class="act-meta">
+                                                By {{ $task->assignee?->name ?? ($task->creator?->name ?? 'Unknown') }}
+                                                &bull; Completed:
+                                                {{ $task->completed_at?->format('d M Y, g:i A') ?? $task->updated_at->format('d M Y') }}
+                                                @if ($task->scheduled_at)
+                                                    &bull; Original Due: {{ $task->scheduled_at->format('d M Y') }}
+                                                @endif
+                                            </div>
+                                            @if ($task->completion_notes)
+                                                <div class="act-desc">
+                                                    <strong>Completion notes:</strong> {{ $task->completion_notes }}
+                                                </div>
+                                            @endif
+                                            @if ($task->description)
+                                                <div class="act-desc mt-1">
+                                                    <strong>Task details:</strong> {{ $task->description }}
+                                                </div>
+                                            @endif
                                         </div>
-                                        @if ($act->description)
-                                            <div class="act-desc">{{ $act->description }}</div>
+                                        @if ($canEdit)
+                                            <button onclick="undoComplete({{ $task->id }})"
+                                                class="undo-complete btn btn-sm btn-outline-secondary"
+                                                style="font-size:.7rem">↩️ Undo</button>
                                         @endif
                                     </div>
-                                    <span class="badge bg-success-subtle text-success align-self-start"
-                                        style="font-size:.7rem">✅ Done</span>
-                                </div>
-                            @empty
-                                <div class="text-muted text-center py-3" style="font-size:.875rem">No completed activities
-                                    yet.</div>
-                            @endforelse
-
-                            @if ($activityHistory->hasPages())
-                                <div class="mt-2">{{ $activityHistory->links() }}</div>
-                            @endif
+                                @empty
+                                    <div class="text-muted text-center py-3" style="font-size:.875rem">No completed
+                                        tasks
+                                        yet.</div>
+                                @endforelse
+                                @if ($completedTasks->hasPages())
+                                    <div class="mt-3">{{ $completedTasks->links() }}</div>
+                                @endif
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                {{-- ── DOCUMENTS TAB ── --}}
+                {{-- DOCUMENTS TAB --}}
                 <div id="tab-documents" style="display:none">
                     <div class="crm-section-body">
                         @forelse($student->documents as $doc)
@@ -819,7 +947,7 @@
                                         {{ $doc->created_at->format('d M Y') }}</div>
                                 </div>
                                 <a href="{{ asset('storage/' . $doc->file_path) }}" target="_blank"
-                                    class="btn btn-xs btn-outline-primary">View</a>
+                                    class="btn btn-sm btn-outline-primary">View</a>
                             </div>
                         @empty
                             <div class="text-muted text-center py-4">No documents uploaded.</div>
@@ -827,7 +955,7 @@
                     </div>
                 </div>
 
-                {{-- ── HISTORY TAB ── --}}
+                {{-- HISTORY TAB --}}
                 <div id="tab-history" style="display:none">
                     <div class="crm-section-body">
                         <div id="stageHistoryContent">
@@ -838,7 +966,7 @@
             </div>
         </div>
 
-        {{-- ═══ RIGHT sidebar ═══ --}}
+        {{-- RIGHT sidebar --}}
         <div class="crm-sidebar">
             <div class="crm-section">
                 <div class="crm-section-header">Student Details</div>
@@ -847,12 +975,13 @@
                         <label>Stage</label>
                         <div class="val">
                             @if ($currentStage)
-                                <span class="stage-pill d-inline-block"
-                                    style="background:{{ $currentStage->color }}20; color:{{ $currentStage->color }}; border-radius:20px; padding:.2rem .65rem; font-size:.8rem; font-weight:600">
+                                <span
+                                    style="background:{{ $currentStage->color }}20;color:{{ $currentStage->color }};border-radius:20px;padding:.2rem .65rem;font-size:.8rem;font-weight:600;display:inline-block">
                                     {{ $currentStage->name }}
                                 </span>
                                 <div class="text-muted mt-1" style="font-size:.72rem">
-                                    {{ $student->days_in_current_stage }} days in this stage</div>
+                                    {{ $student->days_in_current_stage }} days in this stage
+                                </div>
                             @else
                                 <span class="text-muted">Not assigned</span>
                             @endif
@@ -860,7 +989,8 @@
                     </div>
                     <div class="sidebar-field">
                         <label>Date of Birth</label>
-                        <div class="val">{{ $student->dob?->format('d M Y') ?? '—' }} ({{ $student->age }} yrs)</div>
+                        <div class="val">{{ $student->dob?->format('d M Y') ?? '—' }} ({{ $student->age }} yrs)
+                        </div>
                     </div>
                     <div class="sidebar-field">
                         <label>Gender</label>
@@ -880,7 +1010,8 @@
                     </div>
                     <div class="sidebar-field">
                         <label>Qualification</label>
-                        <div class="val">{{ $student->qualification ?? '—' }} ({{ $student->passed_year ?? '—' }})
+                        <div class="val">{{ $student->qualification ?? '—' }}
+                            ({{ $student->passed_year ?? '—' }})
                         </div>
                     </div>
                     <div class="sidebar-field">
@@ -898,10 +1029,12 @@
                     <div class="sidebar-field">
                         <label>Documents</label>
                         <div class="progress" style="height:6px; margin-top:.3rem">
-                            <div class="progress-bar" style="width:{{ $student->completion_percentage }}%"></div>
+                            <div class="progress-bar bg-primary" style="width:{{ $student->completion_percentage }}%">
+                            </div>
                         </div>
-                        <div class="text-muted mt-1" style="font-size:.72rem">{{ $student->completion_percentage }}% —
-                            {{ $student->completion_status }}</div>
+                        <div class="text-muted mt-1" style="font-size:.72rem">
+                            {{ $student->completion_percentage }}% — {{ $student->completion_status }}
+                        </div>
                     </div>
                     <div class="sidebar-field">
                         <label>Remarks</label>
@@ -912,27 +1045,97 @@
         </div>
 
     </div>
+
+    {{-- MODAL FOR MARK AS DONE --}}
+    <div id="completeModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                Mark Task as Completed
+            </div>
+            <form id="completeTaskForm" method="POST">
+                @csrf
+                @method('PATCH')
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Task: <span id="modalTaskTitle"></span></label>
+                    </div>
+                    <div class="form-group">
+                        <label for="completion_notes">Completion Notes / Remarks *</label>
+                        <textarea name="completion_notes" id="completion_notes" rows="4"
+                            placeholder="Please add notes about what was accomplished..." required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="schedule_next">
+                            <input type="checkbox" name="schedule_next" id="schedule_next" value="1">
+                            Schedule next follow-up
+                        </label>
+                    </div>
+                    <div id="nextTaskFields" style="display:none; margin-top: 1rem;">
+                        <div class="form-group">
+                            <label>Next Task Summary</label>
+                            <input type="text" name="next_task_title" placeholder="e.g., Follow up on application">
+                        </div>
+                        <div class="form-group">
+                            <label>Next Due Date</label>
+                            <input type="date" name="next_due_date">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" onclick="closeModal('completeModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Mark as Done</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {{-- MODAL FOR CANCEL TASK --}}
+    <div id="cancelModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                Cancel Task
+            </div>
+            <form id="cancelTaskForm" method="POST">
+                @csrf
+                @method('PATCH')
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Task: <span id="cancelTaskTitle"></span></label>
+                    </div>
+                    <div class="form-group">
+                        <label for="cancellation_reason">Cancellation Reason *</label>
+                        <textarea name="cancellation_reason" id="cancellation_reason" rows="4"
+                            placeholder="Please explain why this task is being cancelled..." required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" onclick="closeModal('cancelModal')">Go
+                        Back</button>
+                    <button type="submit" class="btn btn-danger">Cancel Task</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
 @endsection
 
 @push('scripts')
     <script>
-        // ── Tab switching ──────────────────────────────────────────────
+        let currentTaskId = null;
+
         function switchTab(name, btn) {
             document.querySelectorAll('[id^="tab-"]').forEach(el => el.style.display = 'none');
             document.querySelectorAll('.crm-tab').forEach(el => el.classList.remove('active'));
             document.getElementById('tab-' + name).style.display = 'block';
             btn.classList.add('active');
-
             if (name === 'history') loadHistory();
         }
 
-        // ── Load stage history via fetch ──────────────────────────────
         let historyLoaded = false;
 
         function loadHistory() {
             if (historyLoaded) return;
             historyLoaded = true;
-
             fetch('{{ route('crm.student.history', $student) }}')
                 .then(r => r.json())
                 .then(data => {
@@ -943,29 +1146,23 @@
                         return;
                     }
                     el.innerHTML = data.map(h => `
-                <div style="display:flex; gap:.75rem; padding:.75rem 0; border-bottom:1px solid #e5e9f2">
-                    <span style="font-size:1.1rem">🔄</span>
-                    <div>
-                        <div style="font-size:.85rem; font-weight:500">
-                            <span style="color:#6b7280">${h.from}</span>
-                            <span style="margin:0 .4rem">→</span>
-                            <span style="color:#1a1f36">${h.to}</span>
+                        <div style="display:flex;gap:.75rem;padding:.75rem 0;border-bottom:1px solid #e5e9f2">
+                            <span style="font-size:1.1rem">🔄</span>
+                            <div>
+                                <div style="font-size:.85rem;font-weight:500">
+                                    <span style="color:#6b7280">${h.from}</span>
+                                    <span style="margin:0 .4rem">→</span>
+                                    <span style="color:#1a1f36">${h.to}</span>
+                                </div>
+                                <div style="font-size:.72rem;color:#6b7280;margin-top:.15rem">
+                                    By ${h.changed_by} &bull; ${h.date}
+                                    ${h.days_in_previous ? '&bull; ' + h.days_in_previous + ' days in previous stage' : ''}
+                                </div>
+                                ${h.reason ? '<div style="font-size:.78rem;margin-top:.25rem;color:#4b5563">Reason: ' + h.reason + '</div>' : ''}
+                            </div>
                         </div>
-                        <div style="font-size:.72rem; color:#6b7280; margin-top:.15rem">
-                            By ${h.changed_by} &bull; ${h.date}
-                            ${h.days_in_previous ? '&bull; ' + h.days_in_previous + ' days in previous stage' : ''}
-                        </div>
-                        ${h.reason ? '<div style="font-size:.78rem; margin-top:.25rem; color:#4b5563">Reason: ' + h.reason + '</div>' : ''}
-                    </div>
-                </div>
-            `).join('');
+                    `).join('');
                 });
-        }
-
-        // ── Toggle forms ──────────────────────────────────────────────
-        function toggleNoteForm() {
-            const f = document.getElementById('noteForm');
-            f.style.display = f.style.display === 'none' ? 'block' : 'none';
         }
 
         function toggleTaskForm() {
@@ -973,22 +1170,71 @@
             f.style.display = f.style.display === 'none' ? 'block' : 'none';
         }
 
-        // ── Toggle pin note via fetch ─────────────────────────────────
-        function togglePin(noteId, btn) {
+        function togglePin(noteId) {
             fetch(`/crm/notes/${noteId}/pin`, {
+                method: 'PATCH',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json'
+                }
+            }).then(r => r.json()).then(d => {
+                if (d.success) window.location.reload();
+            });
+        }
+
+        function openCompleteModal(taskId, taskTitle) {
+            currentTaskId = taskId;
+            document.getElementById('modalTaskTitle').innerHTML = taskTitle;
+            const form = document.getElementById('completeTaskForm');
+            form.action = `/crm/tasks/${taskId}/complete`;
+            document.getElementById('completeModal').style.display = 'flex';
+        }
+
+        function openCancelModal(taskId, taskTitle) {
+            currentTaskId = taskId;
+            document.getElementById('cancelTaskTitle').innerHTML = taskTitle;
+            const form = document.getElementById('cancelTaskForm');
+            form.action = `/crm/tasks/${taskId}/cancel`;
+            document.getElementById('cancelModal').style.display = 'flex';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        document.getElementById('schedule_next')?.addEventListener('change', function() {
+            const nextFields = document.getElementById('nextTaskFields');
+            if (this.checked) {
+                nextFields.style.display = 'block';
+            } else {
+                nextFields.style.display = 'none';
+            }
+        });
+
+        function undoComplete(taskId) {
+            if (confirm('Undo mark as completed? This will reopen the task.')) {
+                fetch(`/crm/tasks/${taskId}/undo`, {
                     method: 'PATCH',
                     headers: {
                         'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                        'Accept': 'application/json'
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
                     }
-                })
-                .then(r => r.json())
-                .then(data => {
-                    if (data.success) {
-                        // Reload to reflect pinned/unpinned reordering
+                }).then(r => r.json()).then(d => {
+                    if (d.success) {
                         window.location.reload();
+                    } else {
+                        alert('Failed to undo. Please try again.');
                     }
                 });
+            }
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal-overlay')) {
+                event.target.style.display = 'none';
+            }
         }
     </script>
 @endpush

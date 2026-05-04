@@ -1,219 +1,230 @@
 @extends('layouts.agent')
 
 @section('agent-content')
-
-<div class="container p-2">
-    {{-- Header --}}
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="fw-bold">📄 Application Details</h2>
-        <a href="{{ route('agent.applications.index') }}" class="btn btn-outline-secondary btn-sm">
-            ⬅ Back to Applications
-        </a>
-    </div>
-
-    <div class="card shadow-lg border-0 rounded-3">
-        <div class="card-body">
-
-            {{-- Application Info --}}
-            <div class="d-flex justify-content-between">
-                <h6 class="mb-3 text-primary">
-                    Application Number: {{ $application->application_number ?? 'N/A' }}
-                </h6>
-                <h6 class="mb-3 text-primary">
-                    Submitted On: {{ optional($application->created_at)->format('Y-m-d') ?? 'N/A' }}
-                </h6>
+    <div class="container py-4">
+        {{-- Modern Header with Gradient --}}
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-2">
+                        <li class="breadcrumb-item"><a href="{{ route('agent.dashboard') }}"
+                                class="text-decoration-none">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{{ route('agent.applications.index') }}"
+                                class="text-decoration-none">Applications</a></li>
+                        <li class="breadcrumb-item active">Application #{{ $application->application_number }}</li>
+                    </ol>
+                </nav>
+                <h1 class="display-6 fw-bold mb-0">📄 Application Details</h1>
             </div>
-            {{-- Status Card --}}
-            @php
-            $status; // passed from controller
-            $currentIndex = array_search($application->application_status, $status);
-            if ($currentIndex === false) $currentIndex = 0;
-            $progressPercent = ($currentIndex / (count($status)-1)) * 100;
-            @endphp
-            <div class="status-card">
-                <span class="status-pill">{{ $application->application_status }}</span>
-            </div>
-            {{-- Student & University Info --}}
-            <div class="row g-4">
-                <div class="col-md-6">
-                    <div class="d-flex p-3 gap-2 bg-light justify-content-between rounded-3">
-                        <div class="">
-                            @if ($application->student->students_photo && Storage::disk('public')->exists($application->student->students_photo))
-                            <img src="{{ Storage::url($application->student->students_photo) }}" alt="Profile" class="rounded border" style="width:150px; height:150px; object-fit:cover;">
-                            @else
-                            <div class="rounded bg-secondary d-flex align-items-center justify-content-center border" style="width:150px; height:150px;">
-                                <i class="fa fa-user text-white" style="font-size:24px;"></i>
-                            </div>
-                            @endif
-                        </div>
-                        <div class="">
-                            <h5 class="fw-bold"> Student Info</h5>
-                            <p><strong>Name:</strong> {{ $application->student->first_name ?? 'N/A' }} {{ $application->student->last_name ?? '' }}</p>
-                            <p><strong>Email:</strong> {{ $application->student->email ?? 'N/A' }}</p>
-                            <p><strong>Contact:</strong> {{ $application->student->phone_number ?? 'N/A' }}</p>
-                            <p><strong>Permanent Address:</strong> {{ $application->student->permanent_address ?? 'N/A' }}</p>
-
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-md-6">
-                    <div class="p-3 bg-light rounded-3 h-100">
-                        <h5 class="fw-bold">🏛 University Info</h5>
-                        <p><strong>University:</strong> {{ $application->university->name ?? 'N/A' }} ({{ $application->university->id ?? 'N/A' }})</p>
-                        <p><strong>City:</strong> {{ $application->university->city ?? 'N/A' }}</p>
-                        <p><strong>Course:</strong> {{ $application->course->title ?? $application->course->name ?? 'N/A' }}</p>
-                        <p><strong>Agent Name:</strong> {{ $application->student->agent?->business_name ?? $student->agent?->username ?? 'N/A' }}</p>
-                    </div>
-                </div>
-            </div>
-
-            {{-- Application Progress --}}
-            @php
-            // ordered status (same as your model)
-            $status = \App\Models\Application::STATUSES;
-            $colors = \App\Models\Application::STATUS_COLORS;
-            // current index from DB (0-based). fallback to 0 if not found.
-            $currentIndex = array_search($application->application_status, $status);
-            if ($currentIndex === false) $currentIndex = 0;
-
-            $totalstatus = count($status);
-            // compute progress percent (0..100). Avoid division by zero.
-            $progressPercent = $totalstatus > 1
-            ? round(($currentIndex / ($totalstatus - 1)) * 100, 2)
-            : 100;
-            @endphp
-
-            <div class="app-progress mt-4" style="--status: {{ $totalstatus }}; --progress: {{ $progressPercent }}%;">
-                <div class="progress-bar-wrap">
-                    <!-- Horizontal bar + fill -->
-                    <div class="progress-bar " role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ $progressPercent }}">
-                        <div class="progress-fill" aria-hidden="true"></div>
-
-                        <!-- Center box showing current step title -->
-                        <div class="progress-box bg-warning" aria-hidden="false">
-                            <strong class="progress-box-title">{{ $status[$currentIndex] }}</strong>
-                            <div class="progress-box-sub">Step {{ $currentIndex + 1 }} of {{ $totalstatus }}</div>
-                        </div>
-                    </div>
-
-                    <!-- Step markers (labels under the bar) -->
-                    <ul class="status-list" aria-hidden="false">
-                        @foreach($status as $i => $step)
-                        @php
-                        $state = $i < $currentIndex ? 'completed' : ($i===$currentIndex ? 'current' : 'upcoming' ); @endphp <li class="step-item {{ $state }}" data-step="{{ $i + 1 }}">
-                            <span class="step-dot" aria-hidden="true">
-                                @if($i < $currentIndex) &#10003; {{-- check mark for completed --}} @else {{ $i + 1 }} @endif </span>
-                                    </li>
-                                    @endforeach
-                    </ul>
-
-                </div>
-            </div>
-
-            {{-- SOP Document --}}
-            <div class="row mt-4 p-3 bg-white border rounded">
-                <div class="col-md-6 p-2">
-                    <h5 class="fw-bold">📑 Statement of Purpose (SOP)</h5>
-                    @if($application->sop_file)
-                    <a href="#" data-preview="{{ Storage::url($application->sop_file) }}" target="_blank" class="btn btn-sm btn-outline-primary">
-                        👁️ SOP
-                    </a>
-                    @else
-                    <span class="text-muted">Not uploaded</span>
-                    @endif
-                    <a href="{{ route('agent.documents.index', $application->student->id) }}" class="btn btn-sm btn-outline-secondary mt-1">📁 View All Documents</a>
-                </div>
-                <div class="col-md-6 p-2">
-                    <p>Current Application Status:</p>
-                    <span class="status-pill">{{ $application->application_status }}</span>
-                </div>
-            </div>
-            <div class="mt-4 p-3 bg-white border rounded-3">
-                <h5 class="fw-bold mb-3">💬 Messages</h5>
-                <div class="remarks-thread border rounded-1 p-3 mt-2" style="max-height:400px; overflow:auto;">
-
-                    @forelse($application->messages as $m)
-                    @php
-                    $isAgent = $m->type === 'agent';
-                    $bubbleBg = $isAgent ? '#f1f1f1' : '#1a0262';
-                    $bubbleClr = $isAgent ? '#000' : '#fff';
-                    @endphp
-
-                    <div class="d-flex mb-3 {{ $isAgent ? 'justify-content-start' : 'justify-content-end' }} align-items-center">
-
-                        {{-- 💬 MESSAGE BUBBLE --}}
-                        <div class="position-relative p-2 rounded" style="max-width:70%; background-color:{{ $bubbleBg }}; color:{{ $bubbleClr }};">
-
-                            <p class="mb-1">{{ $m->message }}</p>
-                            <small>
-                                <b>{{ $m->user->name ?? 'Unknown' }}</b> •
-                                {{ $m->created_at->timezone('Asia/Kathmandu')->format('d M Y, H:i') }}
-                            </small>
-                        </div>
-
-                        {{-- 🗑 DELETE BUTTON (right for left bubbles, left for right bubbles) --}}
-                        @if(auth()->user()->is_agent || auth()->id() === $m->user_id)
-                        <form action="{{ route('agent.applications.messages.delete', [$application->id, $m->id]) }}" method="POST" onsubmit="return confirm('Delete this message?')" class="ms-2 me-2">
-                            @csrf
-                            @method('DELETE')
-
-                            <button type="submit" style="background:none; border:none; color:#ff4d4d; font-size:18px; cursor:pointer;">
-                                <i class="fa fa-trash"></i>
-                            </button>
-                        </form>
-                        @endif
-
-                    </div>
-                    @empty
-                    <p class="text-muted">No messages yet.</p>
-                    @endforelse
-
-                </div>{{-- Add new message --}}
-                <form method="POST" action="{{ route('agent.applications.addMessage', $application->id) }}">
-                    @csrf
-                    <div class="d-flex">
-                        <textarea name="message" class="form-control me-2" rows="2" placeholder="Add a message..." required></textarea>
-                        <button type="submit" class="btn btn-success btn-sm">Send</button>
-                    </div>
-                </form>
-            </div>
-
+            <a href="{{ route('agent.applications.index') }}" class="btn btn-outline-secondary btn-lg rounded-pill px-4">
+                <i class="fas fa-arrow-left me-2"></i>Back to Applications
+            </a>
         </div>
 
-        {{-- Actions --}}
-        <div class="m-2 d-flex gap-2 justify-content-between">
-            <a href="{{ route('agent.applications.edit', $application->id) }}" class="btn btn-primary">✏️ Edit Application</a>
+        <div class="row g-4">
+            {{-- Main Content Column --}}
+            <div class="col-lg-8">
+                {{-- Status Card --}}
+                <div class="card border-0 shadow-sm rounded-4 mb-4">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                            <div>
+                                <span class="badge px-4 py-2 rounded-pill fs-6"
+                                    style="background: linear-gradient(135deg, {{ $application->status?->bg_color ?? '#1a0262' }}, {{ $application->status?->bg_color ?? '#1a0262' }}dd);
+                                           color: {{ $application->status?->text_color ?? '#ffffff' }};">
+                                    <i class="fas fa-circle me-1" style="font-size: 8px;"></i>
+                                    {{ $application->status?->name ?? 'No Status' }}
+                                </span>
+                            </div>
+                            <div class="text-muted">
+                                <i class="far fa-calendar-alt me-1"></i>
+                                <strong>Document Completed on:</strong><br>
+                                {{ optional($application->created_at)->format('F j, Y') }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-            @if(!$application->withdrawn_at)
-            <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#withdrawModal">Withdraw Application</button>
-            @endif
+                {{-- Student Information Card --}}
+                <div class="card border-0 shadow-sm rounded-4 mb-4">
+                    <div class="card-header bg-white border-0 pt-4 px-4">
+                        <h5 class="fw-bold mb-0"><i class="fas fa-user-graduate me-2 text-primary"></i>Student Information
+                        </h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="row g-4">
+                            <div class="col-md-4 text-center">
+                                @if ($application->student->students_photo && Storage::disk('public')->exists($application->student->students_photo))
+                                    <img src="{{ Storage::url($application->student->students_photo) }}"
+                                        class="rounded border shadow-sm"
+                                        style="width: 150px; height: 150px; object-fit: cover;">
+                                @else
+                                    <div class="rounded bg-gradient-primary d-flex align-items-center justify-content-center mx-auto shadow-sm"
+                                        style="width: 150px; height: 150px; background: var(--active);">
+                                        <i class="fas fa-user fa-4x text-white"></i>
+                                    </div>
+                                @endif
+                            </div>
+                            <div class="col-md-8">
+                                <div class="row g-3">
+                                    <div class="col-sm-6">
+                                        <label class="text-muted small text-uppercase">Full Name</label>
+                                        <p class="fw-semibold mb-0">{{ $application->student->first_name }}
+                                            {{ $application->student->last_name }}</p>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <label class="text-muted small text-uppercase">Email Address</label>
+                                        <p class="fw-semibold mb-0">{{ $application->student->email }}</p>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <label class="text-muted small text-uppercase">Phone Number</label>
+                                        <p class="fw-semibold mb-0">{{ $application->student->phone_number }}</p>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <label class="text-muted small text-uppercase">Agent</label>
+                                        <p class="fw-semibold mb-0">
+                                            {{ $application->student->agent?->business_name ?? 'N/A' }}</p>
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="text-muted small text-uppercase">Address</label>
+                                        <p class="fw-semibold mb-0">{{ $application->student->permanent_address }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {{-- SOP Card --}}
+                <div class="card border-0 shadow-sm rounded-4">
+                    <div class="card-header bg-white border-0 pt-4 px-4">
+                        <h5 class="fw-bold mb-0"><i class="fas fa-file-alt me-2 text-primary"></i>Statement of Purpose (SOP)
+                        </h5>
+                    </div>
+                    <div class="card-body p-4">
+                        @if ($application->sop_file)
+                            <div class="text-center">
+                                <div class="mb-3">
+                                    <i class="fas fa-file-pdf fa-4x text-danger"></i>
+                                </div>
+                                <p class="mb-3">Click the button below to view the SOP document</p>
+                                <a href="{{ Storage::url($application->sop_file) }}" target="_blank"
+                                    class="btn btn-primary rounded-pill px-4">
+                                    <i class="fas fa-eye me-2"></i>View SOP Document
+                                </a>
+                            </div>
+                        @else
+                            <div class="text-center text-muted py-4">
+                                <i class="fas fa-file-alt fa-4x mb-3 opacity-50"></i>
+                                <p>No SOP document has been uploaded for this application.</p>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            </div>
+
+            {{-- Sidebar Column --}}
+            <div class="col-lg-4">
+                {{-- University & Course Information Card --}}
+
+                <div class="card border-0 shadow-sm rounded-4 mb-4">
+                    <div class="card-header bg-white border-0 pt-4 px-4">
+                        <h5 class="fw-bold mb-0"><i class="fas fa-university me-2 text-primary"></i>University & Course
+                            Details</h5>
+                    </div>
+                    <div class="p-3 bg-light rounded-3">
+                        <div class="d-flex align-items-center mb-3">
+                            <i class="fas fa-building fa-2x text-primary me-3"></i>
+                            <div>
+                                <h6 class="mb-0 fw-bold">{{ $application->university->name ?? 'N/A' }}</h6>
+                                <small class="text-muted">{{ $application->university->city ?? 'N/A' }},
+                                    {{ $application->university->country ?? 'N/A' }}</small>
+                            </div>
+                        </div>
+                        <hr class="my-2">
+                        <div class="mt-2">
+                            <i class="fas fa-graduation-cap me-2 text-primary"></i>
+                            <span class="fw-semibold">Course:</span> {{ $application->course->title ?? 'N/A' }}
+                        </div>
+                        <hr class="my-2">
+                        <div class="mt-2">
+                            <i class="fas fa-file-invoice-dollar me-2 text-primary"></i>
+                            <span class="fw-semibold">Application Fee:</span>
+                            {{ $application->course->application_fee ?? 'N/A' }}
+                        </div>
+
+                        <hr class="my-2">
+
+                        <div class="mt-2">
+                            <i class="fas fa-money-bill-wave me-2 text-success"></i>
+                            <span class="fw-semibold">Course Fee:</span>
+                            {{ $application->course->fee ?? 'N/A' }}
+                        </div>
+
+                        <hr class="my-2">
+
+                        <div class="mt-2">
+                            <i class="fas fa-award me-2 text-primary"></i>
+                            <span class="fw-semibold">Scholarships:</span>
+                            {{ $application->course->scholarships ?? 'N/A' }}
+                        </div>
+                    </div>
+                </div>
+
+
+                {{-- Quick Actions Card --}}
+                <div class="card border-0 shadow-sm rounded-4">
+                    <div class="card-header bg-white border-0 pt-4 px-4">
+                        <h5 class="fw-bold mb-0"><i class="fas fa-bolt me-2 text-primary"></i>Quick Actions</h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="d-grid gap-3">
+                            <a href="{{ route('agent.applications.edit', $application->id) }}"
+                                class="btn btn-outline-primary rounded-pill py-2">
+                                <i class="fas fa-edit me-2"></i>Edit Application
+                            </a>
+
+                            @if (!$application->withdrawn_at)
+                                <button class="btn btn-outline-danger rounded-pill py-2" data-bs-toggle="modal"
+                                    data-bs-target="#withdrawModal">
+                                    <i class="fas fa-ban me-2"></i>Withdraw Application
+                                </button>
+                            @endif
+
+                            <button class="btn btn-outline-secondary rounded-pill py-2" onclick="window.print()">
+                                <i class="fas fa-print me-2"></i>Print Details
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
     {{-- Withdraw Modal --}}
-    <div class="modal fade" id="withdrawModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog">
-            <form method="POST" action="{{ route('agent.applications.withdraw', $application) }}">
-                @csrf
-                @method('PATCH')
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Confirm Withdraw</h5>
+    @if (!$application->withdrawn_at)
+        <div class="modal fade" id="withdrawModal" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content rounded-4">
+                    <div class="modal-header border-0">
+                        <h5 class="modal-title fw-bold">Withdraw Application</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">
-                        <p>Enter your password to confirm withdrawal:</p>
-                        <input type="password" name="password" class="form-control mb-2" required>
-                        <textarea name="reason" class="form-control" placeholder="Reason (optional)"></textarea>
+                        <p>Are you sure you want to withdraw this application?</p>
+                        <p class="text-muted small">This action cannot be undone.</p>
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-danger">Withdraw</button>
+                    <div class="modal-footer border-0">
+                        <button type="button" class="btn btn-light rounded-pill px-4"
+                            data-bs-dismiss="modal">Cancel</button>
+                        <form action="{{ route('agent.applications.withdraw', $application->id) }}" method="POST"
+                            class="d-inline">
+                            @csrf
+                            @method('PUT')
+                            <button type="submit" class="btn btn-danger rounded-pill px-4">Yes, Withdraw</button>
+                        </form>
                     </div>
                 </div>
-            </form>
+            </div>
         </div>
-    </div>
-</div>
+    @endif
 @endsection

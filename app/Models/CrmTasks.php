@@ -25,6 +25,7 @@ class CrmTasks extends Model
         'priority_time_slot',
         'status',
         'completed_at',
+        'completed_by',
         'call_direction',
         'duration_minutes',
         'meta_data',
@@ -36,9 +37,9 @@ class CrmTasks extends Model
         'meta_data'    => 'array',
     ];
 
-    // -------------------------------------------------------------------------
+    // =========================================================================
     // Relationships
-    // -------------------------------------------------------------------------
+    // =========================================================================
 
     public function student()
     {
@@ -55,9 +56,14 @@ class CrmTasks extends Model
         return $this->belongsTo(User::class, 'assigned_to');
     }
 
-    // -------------------------------------------------------------------------
+    public function completer()
+    {
+        return $this->belongsTo(User::class, 'completed_by');
+    }
+
+    // =========================================================================
     // Scopes
-    // -------------------------------------------------------------------------
+    // =========================================================================
 
     public function scopePending($query)
     {
@@ -81,10 +87,7 @@ class CrmTasks extends Model
 
     public function scopeThisWeek($query)
     {
-        return $query->whereBetween('scheduled_at', [
-            now()->startOfWeek(),
-            now()->endOfWeek(),
-        ]);
+        return $query->whereBetween('scheduled_at', [now()->startOfWeek(), now()->endOfWeek()]);
     }
 
     public function scopeByTimeSlot($query, $slot)
@@ -110,67 +113,114 @@ class CrmTasks extends Model
     }
 
     /**
-     * Scope activities visible to the currently authenticated user.
+     * scopeAccessible — mirrors Student::scopeAccessible exactly.
      *
-     * - Admin  → all activities
-     * - Agent  → activities on students they own, or students owned by their staff
-     * - Staff  → only activities they created or are assigned to them,
-     *            restricted to their own students
+     * Additionally: staff always see tasks ASSIGNED TO THEM regardless of student ownership.
+     *
+     * Rules
+     * ─────
+     * Admin           → all tasks
+     * Admin's staff   → all tasks OR tasks assigned to self
+     * Agent           → tasks on own students + staff-under-them students
+     * Agent's staff   → tasks on (own students + parent agent's students) OR assigned to self
      */
     public function scopeAccessible($query)
     {
         $user = Auth::user();
 
+        if (! $user) {
+            return $query->whereRaw('1 = 0');
+        }
+
         if ($user->is_admin) {
             return $query;
         }
 
-        if ($user->is_agent) {
-            return $query->whereHas('student', function ($q) use ($user) {
-                $q->where('agent_id', $user->id)
-                    ->orWhereHas('agent', function ($q) use ($user) {
-                        $q->where('parent_id', $user->id);
-                    });
+        if ($user->is_staff) {
+
+            // Admin's staff → all tasks
+            if ($user->is_admin_staff) {
+                return $query;
+            }
+
+            // Agent's staff → tasks on accessible students OR assigned directly to them
+            if ($user->is_agent_staff) {
+                return $query->where(function ($q) use ($user) {
+                    $q->whereHas('student', function ($sq) use ($user) {
+                        $sq->whereIn('agent_id', [$user->id, $user->parent_id]);
+                    })->orWhere('assigned_to', $user->id);
+                });
+            }
+
+            // Fallback staff → own students' tasks or assigned to self
+            return $query->where(function ($q) use ($user) {
+                $q->whereHas('student', fn($sq) => $sq->where('agent_id', $user->id))
+                    ->orWhere('assigned_to', $user->id);
             });
         }
 
-        if ($user->is_staff) {
-            return $query->whereHas('student', function ($q) use ($user) {
-                $q->where('agent_id', $user->id);
+        if ($user->is_agent) {
+            $staffIds        = User::where('parent_id', $user->id)->where('role', 'staff')->pluck('id')->toArray();
+            $allowedAgentIds = array_merge([$user->id], $staffIds);
+
+            return $query->whereHas('student', function ($q) use ($allowedAgentIds) {
+                $q->whereIn('agent_id', $allowedAgentIds);
             });
         }
 
         return $query->whereRaw('1 = 0');
     }
 
-    // -------------------------------------------------------------------------
+    // =========================================================================
     // Accessors
-    // -------------------------------------------------------------------------
+    // =========================================================================
+
+    /** Friendly alias → $task->title maps to the 'subject' column */
+    public function getTitleAttribute(): string
+    {
+        return $this->subject ?? '';
+    }
+
+    /** $task->priority reads from meta_data['priority'] */
+    public function getPriorityAttribute(): string
+    {
+        return $this->meta_data['priority'] ?? 'medium';
+    }
+
+    /** $task->time_slot maps to priority_time_slot */
+    public function getTimeSlotAttribute(): ?string
+    {
+        return $this->priority_time_slot;
+    }
+
+    /** $task->due_date maps to scheduled_at */
+    public function getDueDateAttribute()
+    {
+        return $this->scheduled_at;
+    }
 
     public function getTimeSlotLabelAttribute(): string
     {
-        $labels = [
-            'morning' => '🌅 Morning (9AM - 12PM)',
-            'day'     => '☀️ Day (12PM - 4PM)',
-            'evening' => '🌙 Evening (4PM - 8PM)',
-        ];
-        return $labels[$this->priority_time_slot] ?? 'Not scheduled';
+        return [
+            'morning' => '🌅 Morning (9AM–12PM)',
+            'day'     => '☀️ Day (12PM–4PM)',
+            'evening' => '🌙 Evening (4PM–8PM)',
+        ][$this->priority_time_slot] ?? 'Not scheduled';
     }
 
     public function getStatusBadgeAttribute(): string
     {
-        $badges = [
+        return [
             'pending'   => 'badge-warning',
             'completed' => 'badge-success',
             'cancelled' => 'badge-danger',
             'missed'    => 'badge-dark',
-        ];
-        return $badges[$this->status] ?? 'badge-secondary';
+        ][$this->status] ?? 'badge-secondary';
     }
 
     public function getActivityIconAttribute(): string
     {
-        $icons = [
+        return [
             'call'            => '📞',
             'email'           => '✉️',
             'meeting'         => '👥',
@@ -181,13 +231,12 @@ class CrmTasks extends Model
             'document_review' => '📄',
             'note'            => '📝',
             'stage_change'    => '🔄',
-        ];
-        return $icons[$this->activity_type] ?? '📌';
+        ][$this->activity_type] ?? '📌';
     }
 
     public function getActivityTypeLabelAttribute(): string
     {
-        $labels = [
+        return [
             'call'            => 'Phone Call',
             'email'           => 'Email',
             'meeting'         => 'Meeting',
@@ -198,8 +247,7 @@ class CrmTasks extends Model
             'document_review' => 'Document Review',
             'note'            => 'Note',
             'stage_change'    => 'Stage Change',
-        ];
-        return $labels[$this->activity_type] ?? ucfirst(str_replace('_', ' ', $this->activity_type));
+        ][$this->activity_type] ?? ucfirst(str_replace('_', ' ', $this->activity_type ?? ''));
     }
 
     public function getIsOverdueAttribute(): bool
@@ -209,40 +257,31 @@ class CrmTasks extends Model
             && $this->scheduled_at->lt(now());
     }
 
-    // -------------------------------------------------------------------------
+    // =========================================================================
     // Methods
-    // -------------------------------------------------------------------------
+    // =========================================================================
 
     public function markAsComplete(): static
     {
-        $this->status       = 'completed';
-        $this->completed_at = now();
-        $this->save();
-
+        $this->update(['status' => 'completed', 'completed_at' => now(), 'completed_by' => Auth::id()]);
         return $this;
     }
 
     public function markAsCancelled(): static
     {
-        $this->status = 'cancelled';
-        $this->save();
-
+        $this->update(['status' => 'cancelled']);
         return $this;
     }
 
     public function markAsMissed(): static
     {
-        $this->status = 'missed';
-        $this->save();
-
+        $this->update(['status' => 'missed']);
         return $this;
     }
 
     public function reassignTo(int $userId): static
     {
-        $this->assigned_to = $userId;
-        $this->save();
-
+        $this->update(['assigned_to' => $userId]);
         return $this;
     }
 }

@@ -31,6 +31,7 @@ use App\Http\Controllers\Admin\{
     UserController as AdminUserController,
     BackupController as AdminBackupController,
     ReminderController as AdminReminderController,
+    ApplicationStatusController as AdminApplicationStatusController
 };
 
 // Agent Controllers
@@ -210,11 +211,30 @@ Route::middleware(['auth', \App\Http\Middleware\IsAdmin::class])
         });
 
         // Applications
+        Route::get('applications/get-courses/{universityId}', [AdminApplicationController::class, 'getCourses'])->name('applications.get-courses');
         Route::get('students/{student}/applications', [AdminApplicationController::class, 'forStudent'])->name('students.applications');
         Route::patch('applications/{application}/withdraw', [AdminApplicationController::class, 'withdraw'])->name('applications.withdraw');
         Route::post('applications/{application}/add-message', [AdminApplicationController::class, 'addMessage'])->name('applications.addMessage');
         Route::delete('applications/{application}/messages/{message}', [AdminApplicationController::class, 'deleteMessage'])->name('applications.messages.delete');
         Route::resource('applications', AdminApplicationController::class);
+
+        /*
+        |--------------------------------------------------------------------------
+        | Application Status Management
+        |--------------------------------------------------------------------------
+        */
+
+        Route::get('application-status', [AdminApplicationStatusController::class, 'index'])
+            ->name('application-status.index');
+
+        Route::post('application-status', [AdminApplicationStatusController::class, 'store'])
+            ->name('application-status.store');
+
+        Route::put('application-status/{id}', [AdminApplicationStatusController::class, 'update'])
+            ->name('application-status.update');
+
+        Route::delete('application-status/{id}', [AdminApplicationStatusController::class, 'destroy'])
+            ->name('application-status.destroy');
     });
 
 /*
@@ -321,7 +341,8 @@ Route::middleware('auth')
         // ── Pipeline dashboard (Kanban / List / Table) ─────────────────────
         Route::get('/', [CrmDashboardController::class, 'index'])->name('dashboard');
         Route::get('/export', [CrmDashboardController::class, 'export'])->name('export');
-
+        Route::put('/student/{id}/update-rating', [CrmDashboardController::class, 'updateRating'])
+            ->name('dashboard.updateRating');
         // ── Student CRM record ─────────────────────────────────────────────
         Route::get('/student/{student}', [CrmStudentController::class, 'show'])->name('student.show');
         Route::post('/student/{student}/stage', [CrmStudentController::class, 'changeStage'])->name('student.stage');
@@ -333,6 +354,7 @@ Route::middleware('auth')
         Route::patch('/tasks/{task}/complete', [CrmTasksController::class, 'complete'])->name('tasks.complete');
         Route::patch('/tasks/{task}/cancel', [CrmTasksController::class, 'cancel'])->name('tasks.cancel');
         Route::delete('/tasks/{task}', [CrmTasksController::class, 'destroy'])->name('tasks.destroy');
+
 
         // ── Notes ──────────────────────────────────────────────────────────
         Route::post('/notes', [CrmStudentNoteController::class, 'store'])->name('notes.store');
