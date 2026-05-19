@@ -1,111 +1,7 @@
 @extends('layouts.agent')
 
 @section('agent-content')
-    <style>
-        .upload-area {
-            background: #f8f9fa;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            border-color: #dee2e6 !important;
-        }
 
-        .upload-area:hover {
-            background: #f1f3f5;
-            border-color: #0d6efd !important;
-        }
-
-        .upload-area.drag-over {
-            background: #e3f2fd;
-            border-color: #0d6efd !important;
-        }
-
-        .cursor-pointer {
-            cursor: pointer;
-        }
-
-        .form-select-lg,
-        .form-select {
-            padding: 0.75rem 1rem;
-        }
-
-        .preview-item {
-            padding: 10px;
-            background: #f8f9fa;
-            border-radius: 8px;
-            margin-bottom: 10px;
-        }
-
-        .preview-label {
-            font-size: 12px;
-            color: #6c757d;
-            text-transform: uppercase;
-            font-weight: 600;
-        }
-
-        .preview-value {
-            font-size: 14px;
-            font-weight: 500;
-            color: #212529;
-            word-break: break-word;
-        }
-
-        /* Button Styles */
-        .btn-submit {
-            transition: all 0.3s ease;
-            min-width: 180px;
-        }
-
-        .btn-submit.btn-incomplete {
-            background-color: #dc3545;
-            border-color: #dc3545;
-            color: white;
-        }
-
-        .btn-submit.btn-incomplete:hover {
-            background-color: #bb2d3b;
-            border-color: #bb2d3b;
-            transform: translateY(-2px);
-        }
-
-        .btn-submit.btn-ready {
-            background-color: #198754;
-            border-color: #198754;
-            color: white;
-        }
-
-        .btn-submit.btn-ready:hover {
-            background-color: #157347;
-            border-color: #146c43;
-            transform: translateY(-2px);
-        }
-
-        .btn-submit:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-
-        .btn-submit i {
-            margin-right: 8px;
-        }
-
-        /* Form Actions Container */
-        .form-actions {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 15px;
-        }
-
-        @media (max-width: 576px) {
-            .form-actions {
-                flex-direction: column-reverse;
-            }
-
-            .form-actions .btn {
-                width: 100%;
-            }
-        }
-    </style>
     <div class="container py-4">
         {{-- Header --}}
         <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
@@ -158,22 +54,25 @@
                                         @forelse($students as $s)
                                             <option value="{{ $s->id }}"
                                                 data-name="{{ $s->first_name }} {{ $s->last_name }}"
-                                                {{ old('student_id') == $s->id ? 'selected' : '' }}>
-                                                {{ $s->first_name }} {{ $s->last_name }} - {{ $s->preferred_country }}
+                                                {{ old('student_id', $selectedStudentId ?? '') == $s->id ? 'selected' : '' }}>
+                                                {{ $s->first_name }} {{ $s->last_name }}
+                                                @if ($s->preferred_country)
+                                                    - {{ $s->preferred_country }}
+                                                @endif
                                             </option>
                                         @empty
-                                            <option value="" disabled>No students available. Please add students
-                                                first.</option>
+                                            <option value="" disabled>No students with complete documents available.
+                                            </option>
                                         @endforelse
                                     </select>
                                     @error('student_id')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
-                                    @if ($students && $students->count() == 0)
+                                    @if (isset($students) && $students->count() == 0)
                                         <div class="alert alert-warning mt-2">
                                             <i class="fas fa-exclamation-triangle me-2"></i>
-                                            No students found. <a href="{{ route('agent.students.create') }}">Create a
-                                                student first</a>
+                                            No students with complete documents found.
+                                            <a href="{{ route('agent.students.create') }}">Create a student first</a>
                                         </div>
                                     @endif
                                 @endif
@@ -192,7 +91,7 @@
                                     @foreach ($universities as $uni)
                                         <option value="{{ $uni->id }}" data-city="{{ $uni->city }}"
                                             data-country="{{ $uni->country }}"
-                                            {{ old('university_id') == $uni->id ? 'selected' : '' }}>
+                                            {{ old('university_id', $selectedUniversityId ?? '') == $uni->id ? 'selected' : '' }}>
                                             {{ $uni->name }} - {{ $uni->city }}, {{ $uni->country }}
                                         </option>
                                     @endforeach
@@ -210,8 +109,18 @@
                                 </label>
                                 <select name="course_id"
                                     class="form-select form-select-lg rounded-3 @error('course_id') is-invalid @enderror"
-                                    id="course_select" required disabled>
-                                    <option value="">-- First select a university --</option>
+                                    id="course_select" {{ empty($selectedUniversityId) ? 'disabled' : '' }} required>
+                                    <option value="">--
+                                        {{ empty($selectedUniversityId) ? 'First select a university' : 'Select Course' }}
+                                        --</option>
+                                    @if (!empty($selectedUniversityId))
+                                        @foreach ($courses as $course)
+                                            <option value="{{ $course->id }}"
+                                                {{ old('course_id', $selectedCourseId ?? '') == $course->id ? 'selected' : '' }}>
+                                                {{ $course->title }}
+                                            </option>
+                                        @endforeach
+                                    @endif
                                 </select>
                                 @error('course_id')
                                     <div class="invalid-feedback">{{ $message }}</div>
@@ -224,7 +133,7 @@
                                     <i class="fas fa-file-alt me-2 text-primary"></i>
                                     Statement of Purpose (SOP) <span class="text-danger">*</span>
                                 </label>
-                                <div class="upload-area border-2 border-dashed rounded-4 p-4 text-center" id="uploadArea">
+                                <div class="bg-light rounded-4 p-4 text-center" id="uploadArea">
                                     <i class="fas fa-cloud-upload-alt fa-3x text-primary mb-3"></i>
                                     <p class="mb-2">Drag & drop your SOP file here or <strong
                                             class="text-primary cursor-pointer">click to browse</strong></p>
@@ -240,13 +149,12 @@
 
                             {{-- Form Actions --}}
                             <div class="mt-5 pt-3 border-top">
-                                <div class="form-actions">
+                                <div class="d-flex justify-content-between ">
                                     <a href="{{ route('agent.applications.index') }}"
-                                        class="btn btn-light rounded-pill px-4 py-2">
+                                        class="btn btn-outline-danger rounded-pill px-4 py-2">
                                         <i class="fas fa-times me-2"></i>Cancel
                                     </a>
-                                    <button type="submit" class="btn btn-submit rounded-pill px-5 py-2 btn-incomplete"
-                                        id="submitBtn" disabled>
+                                    <button type="submit" class="btn rounded px-5 py-2 btn-light" id="submitBtn" disabled>
                                         <i class="fas fa-exclamation-triangle me-2"></i>
                                         <span id="submitBtnText">Incomplete</span>
                                     </button>
@@ -321,6 +229,9 @@
             const form = document.getElementById('applicationForm');
             const livePreview = document.getElementById('livePreview');
 
+            // Variable to track if courses are already loaded
+            let coursesLoaded = false;
+
             // Function to check if all fields are completed
             function checkFormCompletion() {
                 let isComplete = true;
@@ -353,8 +264,8 @@
                 // Update button state
                 if (isComplete) {
                     submitBtn.disabled = false;
-                    submitBtn.classList.remove('btn-incomplete');
-                    submitBtn.classList.add('btn-ready');
+                    submitBtn.classList.remove('btn-light');
+                    submitBtn.classList.add('btn-success');
                     submitBtnText.innerHTML = 'Submit Application';
                     const icon = submitBtn.querySelector('i');
                     if (icon) {
@@ -362,8 +273,8 @@
                     }
                 } else {
                     submitBtn.disabled = true;
-                    submitBtn.classList.remove('btn-ready');
-                    submitBtn.classList.add('btn-incomplete');
+                    submitBtn.classList.remove('btn-success');
+                    submitBtn.classList.add('btn-light');
                     submitBtnText.innerHTML = 'Incomplete';
                     const icon = submitBtn.querySelector('i');
                     if (icon) {
@@ -374,9 +285,10 @@
                 return isComplete;
             }
 
-            // Load courses if university is pre-selected (for validation errors)
-            if (uniSelect && uniSelect.value) {
+            // Load courses if university is pre-selected
+            if (uniSelect && uniSelect.value && !coursesLoaded) {
                 loadCourses(uniSelect.value);
+                coursesLoaded = true;
             }
 
             // University change event
@@ -409,9 +321,6 @@
             function loadCourses(uniId) {
                 if (!courseSelect) return;
 
-                courseSelect.innerHTML = '<option value="">Loading courses...</option>';
-                courseSelect.disabled = true;
-
                 if (!uniId) {
                     courseSelect.innerHTML = '<option value="">-- First select a university --</option>';
                     courseSelect.disabled = true;
@@ -420,8 +329,14 @@
                     return;
                 }
 
+                // Show loading state
+                courseSelect.innerHTML = '<option value="">Loading courses...</option>';
+                courseSelect.disabled = true;
+
                 // Make AJAX request
-                fetch(`/agent/applications/get-courses/${uniId}`)
+                const url = `{{ route('agent.applications.get-courses', ['universityId' => '__ID__']) }}`.replace(
+                    '__ID__', uniId);
+                fetch(url)
                     .then(response => {
                         if (!response.ok) {
                             throw new Error('Network response was not ok');
@@ -430,13 +345,14 @@
                     })
                     .then(data => {
                         let options = '<option value="">-- Select Course --</option>';
+                        const selectedCourseId = '{{ $selectedCourseId ?? '' }}';
 
                         if (Array.isArray(data) && data.length > 0) {
                             data.forEach(course => {
-                                const selected = ({{ old('course_id', 'null') }} == course.id) ?
+                                const selected = (selectedCourseId && selectedCourseId == course.id) ?
                                     'selected' : '';
                                 options +=
-                                    `<option value="${course.id}" ${selected}>${course.title}</option>`;
+                                    `<option value="${course.id}" ${selected}>${escapeHtml(course.title)}</option>`;
                             });
                             courseSelect.disabled = false;
                         } else {
@@ -458,9 +374,16 @@
                     });
             }
 
+            // Helper function to escape HTML
+            function escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
             // Function to get selected student name
             function getSelectedStudentName() {
-                // Check if we're in "passed student" mode (from controller)
+                // Check if we're in "passed student" mode
                 if (studentNameHidden && studentNameHidden.value) {
                     return studentNameHidden.value;
                 }
@@ -468,12 +391,10 @@
                 // Check if we're in normal select mode
                 if (studentSelect && studentSelect.value) {
                     const selectedOption = studentSelect.options[studentSelect.selectedIndex];
-                    // Get name from data-name attribute or parse from text
                     const dataName = selectedOption.getAttribute('data-name');
                     if (dataName) {
                         return dataName;
                     }
-                    // Fallback: extract name from option text (before the dash)
                     const optionText = selectedOption.text;
                     return optionText.split(' -')[0];
                 }
@@ -494,7 +415,8 @@
             // Function to get selected course name
             function getSelectedCourseName() {
                 if (courseSelect && courseSelect.value && courseSelect.options[courseSelect.selectedIndex]) {
-                    return courseSelect.options[courseSelect.selectedIndex].text;
+                    const selectedOption = courseSelect.options[courseSelect.selectedIndex];
+                    return selectedOption.text;
                 }
                 return '';
             }
@@ -514,7 +436,7 @@
                         previewHtml += `
                             <div class="preview-item">
                                 <div class="preview-label">Student</div>
-                                <div class="preview-value">${studentName}</div>
+                                <div class="preview-value">${escapeHtml(studentName)}</div>
                             </div>
                         `;
                     }
@@ -523,7 +445,7 @@
                         previewHtml += `
                             <div class="preview-item">
                                 <div class="preview-label">University</div>
-                                <div class="preview-value">${universityName}</div>
+                                <div class="preview-value">${escapeHtml(universityName)}</div>
                             </div>
                         `;
                     }
@@ -532,12 +454,11 @@
                         previewHtml += `
                             <div class="preview-item">
                                 <div class="preview-label">Course</div>
-                                <div class="preview-value">${courseName}</div>
+                                <div class="preview-value">${escapeHtml(courseName)}</div>
                             </div>
                         `;
                     }
 
-                    // Show missing selections warning
                     if (!studentName) {
                         previewHtml += `
                             <div class="preview-item bg-warning bg-opacity-10">
@@ -565,11 +486,10 @@
                         `;
                     }
 
-                    // Add status
                     if (studentName && universityName && courseName) {
                         previewHtml += `
-                            <div class="alert alert-success mt-3 mb-0">
-                                <i class="fas fa-check-circle me-2"></i> Upload SOP and Submit Application 
+                            <div class="bg-light p-2 text-success rounded mt-3 mb-0">
+                                <i class="fas fa-check-circle me-2"></i> Upload SOP and Submit 
                             </div>
                         `;
                     } else {
@@ -591,7 +511,7 @@
                 }
             }
 
-            // File upload area click handler
+            // File upload handlers (your existing code remains)
             if (uploadArea && sopFile) {
                 uploadArea.addEventListener('click', function(e) {
                     if (e.target !== sopFile) {
@@ -599,7 +519,6 @@
                     }
                 });
 
-                // Drag and drop handlers
                 ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
                     uploadArea.addEventListener(eventName, preventDefaults, false);
                 });
@@ -634,7 +553,6 @@
                     handleFileSelect(files[0]);
                 }
 
-                // File selection handler
                 sopFile.addEventListener('change', function(e) {
                     handleFileSelect(e.target.files[0]);
                     checkFormCompletion();
@@ -671,7 +589,8 @@
                     fileInfo.innerHTML = `
                         <div class="alert alert-success">
                             <i class="fas fa-check-circle me-2"></i>
-                            Selected: ${file.name} (${fileSize.toFixed(2)} MB)
+                            <i class="fas fa-file me-2"></i>
+                            Selected: ${escapeHtml(file.name)} (${fileSize.toFixed(2)} MB)
                         </div>
                     `;
                     checkFormCompletion();
@@ -684,8 +603,8 @@
                     let isValid = true;
                     let errorMessage = '';
 
-                    const studentId = document.querySelector('select[name="student_id"]')?.value || document
-                        .querySelector('input[name="student_id"]')?.value;
+                    const studentId = document.querySelector('select[name="student_id"]')?.value ||
+                        document.querySelector('input[name="student_id"]')?.value;
                     const uniId = uniSelect?.value;
                     const courseId = courseSelect?.value;
                     const sopFileValue = sopFile?.value;
@@ -710,7 +629,6 @@
                         return false;
                     }
 
-                    // Disable submit button to prevent double submission
                     if (submitBtn) {
                         submitBtn.disabled = true;
                         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Submitting...';

@@ -239,7 +239,7 @@
                                             <strong>{{ $docInfo['label'] }}</strong>
                                         </div>
                                         <div>
-                                            <a href="{{ Storage::url($user->$docKey) }}" target="_blank"
+                                            <a href="#" data-preview="{{ Storage::url($user->$docKey) }}"
                                                 class="btn btn-sm btn-outline-primary me-1">
                                                 <i class="fas fa-eye"></i>
                                             </a>
@@ -248,8 +248,9 @@
                                                 <i class="fas fa-download"></i>
                                             </a>
                                             @if ($docKey === 'agreement_file')
-                                                <button type="button" class="btn btn-sm btn-outline-danger"
-                                                    onclick="deleteAgreement({{ $user->id }})">
+                                                <button type="button" class="btn btn-sm btn-outline-danger btn-delete"
+                                                    data-url="{{ route('admin.users.agreement.delete', $user->slug) }}"
+                                                    data-name="Agreement Document for {{ $user->business_name }}">
                                                     <i class="fas fa-trash"></i>
                                                 </button>
                                             @endif
@@ -282,19 +283,19 @@
                             </p>
                             @if ($status['is_online'])
                                 <div ">
-                                                                    <span class=" badge bg-success p-1">
-                                                                    <i class="fas fa-circle me-1"></i> Online
-                                                                    </span>
-                                                                    <small class="text-muted">Active now</small>
-                                                                </div>
+                                                                                <span class=" badge bg-success p-1">
+                                                                                <i class="fas fa-circle me-1"></i> Online
+                                                                                </span>
+                                                                                <small class="text-muted">Active now</small>
+                                                                            </div>
 @else
     <div>
-                                                                    <span class="badge bg-secondary p-1">
-                                                                        <i class="fas fa-circle me-1"></i> Offline
-                                                                    </span>
-                                                                </div>
-                                                                <small class="text-muted">Last seen: {{ $status['last_seen_human'] }}</small>
-                                                                          @if ($status['last_seen_full'])
+                                                                                <span class="badge bg-secondary p-1">
+                                                                                    <i class="fas fa-circle me-1"></i> Offline
+                                                                                </span>
+                                                                            </div>
+                                                                            <small class="text-muted">Last seen: {{ $status['last_seen_human'] }}</small>
+                                                                                         @if ($status['last_seen_full'])
                                     <br><small class="text-muted">{{ $status['last_seen_full'] }}</small>
                             @endif
                             @endif
@@ -558,31 +559,5 @@
             </div>
         </div>
     </div>
-
-    <script>
-        function deleteAgreement(userId) {
-            if (confirm('Are you sure you want to delete the agreement file?')) {
-                fetch(`/admin/users/${userId}/delete-agreement`, {
-                        method: 'DELETE',
-                        headers: {
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                            'Content-Type': 'application/json'
-                        }
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            location.reload();
-                        } else {
-                            alert('Error deleting agreement');
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        alert('Error deleting agreement');
-                    });
-            }
-        }
-    </script>
 
 @endsection

@@ -212,10 +212,32 @@
                                 <h5 class="fw-bold mb-2 mb-sm-0" style="color: var(--primary);">
                                     <i class="fas fa-file-alt me-2"></i> Applications & Communication
                                 </h5>
-                                <a href="{{ route('agent.applications.create', ['student_id' => $student->id]) }}"
-                                    class="btn px-3 shadow-sm" style="background: var(--active); color: white;">
-                                    <i class="fas fa-plus me-1"></i> New Application
-                                </a>
+                                <div>
+                                    @if ($applications->count())
+                                        {{-- Already applied → show view applications --}}
+                                        <div class="d-flex flex-column gap-1">
+                                            <a href="{{ route('agent.students.applications', $student->id) }}"
+                                                class="btn btn-sm btn-outline-primary" title="View Applications">View
+                                                Applications</a>
+                                            <a href="{{ route('agent.applications.create') }}?student_id={{ $student->id }}"
+                                                class="btn btn-sm btn-success" title="Apply">
+                                                Add Another <i class="fa-solid fa-paper-plane"></i>
+                                            </a>
+                                        </div>
+                                    @elseif ($student->uploaded_count >= $totalRequiredDocs)
+                                        {{-- Docs complete → allow apply --}}
+                                        <a href="{{ route('agent.applications.create') }}?student_id={{ $student->id }}"
+                                            class="btn btn-sm btn-success" title="Apply">
+                                            Apply Now <i class="fa-solid fa-paper-plane"></i>
+                                        </a>
+                                    @else
+                                        {{-- Docs incomplete → upload --}}
+                                        <a href="{{ route('agent.documents.index', $student) }}"
+                                            class="btn btn-sm btn-outline-warning" title="Upload Docs">
+                                            Upload Docs <i class="fa-solid fa-folder-open"></i>
+                                        </a>
+                                    @endif
+                                </div>
                             </div>
 
                             @if ($student->applications->isNotEmpty())

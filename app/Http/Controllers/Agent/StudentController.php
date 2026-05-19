@@ -15,6 +15,7 @@ use App\Services\FileUploadService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 
@@ -28,7 +29,7 @@ class StudentController extends Controller
     {
         $perPage = $request->integer('per_page', 15);
 
-        $query = Student::with(['applications.university', 'documents'])
+        $query = Student::with(['applications.university', 'applications.status', 'documents'])
             ->where('agent_id', Auth::id());
 
         // Search
@@ -41,9 +42,11 @@ class StudentController extends Controller
             });
         }
 
-        // Preferred country filter
+        // Country filter
         if ($country = $request->get('country')) {
-            $query->where('preferred_country', $country);
+            $query->whereHas('applications.university', function ($q) use ($country) {
+                $q->where('country', $country);
+            });
         }
 
         // University filter (through applications)
@@ -53,9 +56,11 @@ class StudentController extends Controller
             });
         }
 
-        // Application status filter
-        if ($appStatus = $request->get('application_status')) {
-            $query->whereHas('applications', fn($q) => $q->where('application_status', $appStatus));
+        // Application status filter - FIXED
+        if ($appStatusId = $request->get('application_status_id')) {
+            $query->whereHas('applications', function ($q) use ($appStatusId) {
+                $q->where('application_status_id', $appStatusId);
+            });
         }
 
         // Document status filter using subquery
@@ -76,6 +81,8 @@ class StudentController extends Controller
                 default        => null,
             };
         }
+
+        // Get universities with counts
         $universities = University::whereHas('applications', function ($q) {
             $q->where('agent_id', Auth::id());
         })
@@ -85,16 +92,39 @@ class StudentController extends Controller
             ->orderBy('name')
             ->get();
 
+        // Get application statuses with counts
+        $applicationStatuses = ApplicationStatus::where('is_active', 1)
+            ->orderBy('sort_order')
+            ->get()
+            ->map(function ($status) {
+                $status->applications_count = Application::where('application_status_id', $status->id)
+                    ->whereHas('student', function ($q) {
+                        $q->where('agent_id', Auth::id());
+                    })
+                    ->count();
+                return $status;
+            })
+            ->filter(fn($status) => $status->applications_count > 0)
+            ->values();
+
         $students = $query->orderByDesc('created_at')
             ->paginate($perPage)
             ->withQueryString();
 
-        // Attach document stats from already-loaded relationship (no extra queries)
+        // Attach document stats from already-loaded relationship
         foreach ($students as $student) {
             $stats                     = $student->getDocumentStats();
             $student->document_status   = $stats['status'];
             $student->document_progress = $stats['progress'];
             $student->uploaded_count    = $stats['uploaded_count'];
+
+            // Attach latest application status with colors
+            $latestApp = $student->applications->sortByDesc('created_at')->first();
+            if ($latestApp && $latestApp->status) {
+                $student->latest_status_name = $latestApp->status->name;
+                $student->latest_status_bg_color = $latestApp->status->bg_color;
+                $student->latest_status_text_color = $latestApp->status->text_color;
+            }
         }
 
         // Dashboard stats (cached 5 min)
@@ -105,34 +135,67 @@ class StudentController extends Controller
                 'totalStudents'    => Student::where('agent_id', $agentId)->count(),
                 'totalApplied'     => Student::where('agent_id', $agentId)->whereHas('applications')->count(),
                 'admittedEnrolled' => Student::where('agent_id', $agentId)
-                    ->whereHas('applications', fn($q) => $q->whereIn('application_status', ['Accepted by the University', 'Visa Approved']))
+                    ->whereHas('applications', fn($q) => $q->whereIn('application_status_id', function ($sub) {
+                        $sub->select('id')->from('application_statuses')
+                            ->whereIn('name', ['Accepted by the University', 'Visa Approved']);
+                    }))
                     ->count(),
                 'documentCompleted' => Student::countStudentsWithAllCompulsoryDocuments($agentId),
             ];
         });
 
-        // Country dropdown (cached 1 hour)
+        // Get countries with application counts - FORCED FRESH DATA
         $countries = Cache::remember(
-            'agent_countries_' . Auth::id(),
+            'agent_application_countries_' . Auth::id(),
             3600,
-            fn() =>
-            Student::where('agent_id', Auth::id())
-                ->whereNotNull('preferred_country')
-                ->distinct()
-                ->pluck('preferred_country')
-                ->filter()
-                ->values()
-        );
-        $statuses = ApplicationStatus::orderBy('sort_order')
-            ->where('is_active', 1)
-            ->get();
+            function () {
+                // Query to get countries with their application counts
+                $countryData = Application::where('agent_id', Auth::id())
+                    ->whereNotNull('university_id')
+                    ->join('universities', 'applications.university_id', '=', 'universities.id')
+                    ->select('universities.country', DB::raw('COUNT(*) as application_count'))
+                    ->whereNotNull('universities.country')
+                    ->groupBy('universities.country')
+                    ->orderBy('application_count', 'DESC')
+                    ->get();
 
+                // Convert to collection of objects with name and count
+                return $countryData->map(function ($item) {
+                    return (object) [
+                        'name' => $item->country,
+                        'count' => (int) $item->application_count
+                    ];
+                });
+            }
+        );
+
+        // FORCE clear and refresh if data is in wrong format
+        if ($countries->isNotEmpty() && is_string($countries->first())) {
+            // Clear the bad cache and get fresh data
+            Cache::forget('agent_application_countries_' . Auth::id());
+
+            $countryData = Application::where('agent_id', Auth::id())
+                ->whereNotNull('university_id')
+                ->join('universities', 'applications.university_id', '=', 'universities.id')
+                ->select('universities.country', DB::raw('COUNT(*) as application_count'))
+                ->whereNotNull('universities.country')
+                ->groupBy('universities.country')
+                ->orderBy('application_count', 'DESC')
+                ->get();
+
+            $countries = $countryData->map(function ($item) {
+                return (object) [
+                    'name' => $item->country,
+                    'count' => (int) $item->application_count
+                ];
+            });
+        }
 
         return view('agent.students.index', [
             'students'            => $students,
             'countries'           => $countries,
             'universities'        => $universities,
-            'applicationStatuses' => $statuses,
+            'applicationStatuses' => $applicationStatuses,
             'totalRequiredDocs'   => count(Student::REQUIRED_DOCUMENTS),
             ...$dashboardStats,
         ]);
@@ -186,12 +249,25 @@ class StudentController extends Controller
     {
         $this->authorizeStudent($student);
 
-        $student->load(['documents', 'applications.university', 'applications.course', 'applications.messages.user']);
+        $student->load([
+            'documents',
+            'applications.university',
+            'applications.course',
+            'applications.messages.user'
+        ]);
+
+        $applications = $student->applications;
+
+        $documentStats = $student->getDocumentStats();
+
+        // same logic as index (important for consistency)
+        $student->uploaded_count = $documentStats['uploaded_count'];
 
         return view('agent.students.show', [
-            'student'          => $student,
-            'documentStats'    => $student->getDocumentStats(),
-            'totalRequiredDocs' => count(Student::REQUIRED_DOCUMENTS),
+            'student'            => $student,
+            'applications'       => $applications,
+            'documentStats'      => $documentStats,
+            'totalRequiredDocs'  => count(Student::REQUIRED_DOCUMENTS),
         ]);
     }
 

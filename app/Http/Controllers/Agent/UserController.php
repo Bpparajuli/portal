@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Notification;
 use App\Notifications\AgreementSubmitted;
 use App\Services\FileUploadService;
+use Illuminate\Support\Facades\Log;
 
 class UserController extends Controller
 {
@@ -78,6 +79,7 @@ class UserController extends Controller
 
     /**
      * Update profile (Agent's own profile)
+     * Note: Agreement file cannot be uploaded from here (read-only in form)
      */
     public function update(Request $request, $slug)
     {
@@ -92,47 +94,62 @@ class UserController extends Controller
             'contact'        => 'nullable|string|max:20',
             'address'        => 'nullable|string|max:255',
             'password'       => 'nullable|string|min:6|confirmed',
-
             'business_logo'  => 'nullable|file|mimes:jpg,jpeg,png|max:20480',
             'registration'   => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:20480',
             'pan'            => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:20480',
-            'agreement_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:20480',
+            // agreement_file is NOT included - it's read-only in the form
         ]);
 
+        // Track changes for logging
+        $oldData = [
+            'email' => $user->email,
+            'contact' => $user->contact,
+            'address' => $user->address,
+        ];
+
+        // Update basic info
         $user->email   = $request->email;
         $user->contact = $request->contact;
         $user->address = $request->address;
 
+        // Update password if provided
         if ($request->filled('password')) {
             $user->password = Hash::make($request->password);
         }
 
+        // Ensure slug exists
         if (!$user->slug) {
             $user->slug = strtolower(str_replace(' ', '-', $user->business_name));
         }
 
         $user->save();
 
-        // File uploads
+        // Upload files (logo, registration, pan only - NOT agreement)
         $user->business_logo = FileUploadService::uploadAgentFile($request, $user, 'business_logo', 'logo');
         $user->registration  = FileUploadService::uploadAgentFile($request, $user, 'registration', 'registration');
         $user->pan           = FileUploadService::uploadAgentFile($request, $user, 'pan', 'pan');
 
-        $agreementChanged = false;
-
-        if ($request->hasFile('agreement_file')) {
-            $user->agreement_file   = FileUploadService::uploadAgentFile($request, $user, 'agreement_file', 'agreement');
-            $user->agreement_status = 'uploaded';
-            $agreementChanged = true;
-        }
-
         $user->save();
 
-        if ($agreementChanged) {
-            $admin = User::find(1);
-            if ($admin) {
-                Notification::send($admin, new AgreementSubmitted($user));
-            }
+        // Log profile update activity if anything changed
+        $changes = [];
+        if ($oldData['email'] != $user->email) $changes[] = 'email';
+        if ($oldData['contact'] != $user->contact) $changes[] = 'contact';
+        if ($oldData['address'] != $user->address) $changes[] = 'address';
+
+        if (
+            !empty($changes) || $request->filled('password') || $request->hasFile('business_logo') ||
+            $request->hasFile('registration') || $request->hasFile('pan')
+        ) {
+
+            Activity::create([
+                'user_id' => $user->id,
+                'type' => 'profile_updated',
+                'description' => "Profile updated by {$user->business_name}" . (!empty($changes) ? ". Changes: " . implode(', ', $changes) : ""),
+                'notifiable_id' => $user->id,
+                'notifiable_type' => User::class,
+                'link' => route('agent.users.show', $user->slug),
+            ]);
         }
 
         return redirect()->route('agent.users.show', $user->slug)
@@ -154,6 +171,15 @@ class UserController extends Controller
 
         $user->password = Hash::make($newPassword);
         $user->save();
+
+        // Log password reset
+        Activity::create([
+            'user_id' => $user->id,
+            'type' => 'password_reset',
+            'description' => "Password reset for {$user->business_name}",
+            'notifiable_id' => $user->id,
+            'notifiable_type' => User::class,
+        ]);
 
         return back()->with('success', "Password reset successfully. New password: $newPassword");
     }
@@ -242,6 +268,14 @@ class UserController extends Controller
             'description' => "Staff member {$staff->name} created",
             'notifiable_id' => $staff->id,
             'notifiable_type' => User::class,
+            'link' => route('agent.users.show-staff', $staff->slug),
+        ]);
+
+        Log::info('Staff member created', [
+            'agent_id' => $agent->id,
+            'staff_id' => $staff->id,
+            'staff_email' => $staff->email,
+            'ip' => $request->ip()
         ]);
 
         return redirect()->route('agent.users.show', $agent->slug)
@@ -286,6 +320,13 @@ class UserController extends Controller
             'status'    => 'nullable|boolean',
         ]);
 
+        // Track changes
+        $oldData = [
+            'name' => $staff->name,
+            'email' => $staff->email,
+            'active' => $staff->active,
+        ];
+
         $staff->name = $request->name;
         $staff->email = $request->email;
         $staff->contact = $request->contact;
@@ -299,12 +340,18 @@ class UserController extends Controller
         $staff->save();
 
         // Log activity
+        $changes = [];
+        if ($oldData['name'] != $staff->name) $changes[] = 'name';
+        if ($oldData['email'] != $staff->email) $changes[] = 'email';
+        if ($oldData['active'] != $staff->active) $changes[] = 'status';
+
         Activity::create([
             'user_id' => $agent->id,
             'type' => 'staff_updated',
-            'description' => "Staff member {$staff->name} updated",
+            'description' => "Staff member {$staff->name} updated" . (!empty($changes) ? " (" . implode(', ', $changes) . ")" : ""),
             'notifiable_id' => $staff->id,
             'notifiable_type' => User::class,
+            'link' => route('agent.users.show-staff', $staff->slug),
         ]);
 
         return redirect()->route('agent.users.show', $agent->slug)
@@ -325,9 +372,16 @@ class UserController extends Controller
         }
 
         $staffName = $staff->name;
+        $staffId = $staff->id;
 
         // Check if staff has any related data (students, applications, etc.)
-        // You may want to add checks here before deletion
+        $hasStudents = $staff->students()->exists();
+        $hasApplications = $staff->applications()->exists();
+
+        if ($hasStudents || $hasApplications) {
+            return redirect()->route('agent.users.show', $agent->slug)
+                ->with('error', "Cannot delete {$staffName}. They have associated students or applications.");
+        }
 
         $staff->delete();
 
@@ -336,6 +390,14 @@ class UserController extends Controller
             'user_id' => $agent->id,
             'type' => 'staff_deleted',
             'description' => "Staff member {$staffName} deleted",
+            'notifiable_id' => $staffId,
+            'notifiable_type' => User::class,
+        ]);
+
+        Log::info('Staff member deleted', [
+            'agent_id' => $agent->id,
+            'staff_id' => $staffId,
+            'staff_name' => $staffName
         ]);
 
         return redirect()->route('agent.users.show', $agent->slug)

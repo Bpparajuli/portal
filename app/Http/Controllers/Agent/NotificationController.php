@@ -3,56 +3,107 @@
 namespace App\Http\Controllers\Agent;
 
 use App\Http\Controllers\Controller;
+use App\Models\Notification;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Notifications\DatabaseNotification;
 
 class NotificationController extends Controller
 {
-    // List all notifications
-    public function index()
+    public function index(Request $request)
     {
-        $user = Auth::user();
-        $notifications = $user->notifications()->latest()->paginate(12);
-        $unreadCount = $user->unreadNotifications()->count();
+        $query = Auth::user()->notifications();
 
-        return view('agent.notifications', compact('notifications', 'unreadCount'));
+        // Get regular notifications (excluding messages) - Unread first, then by date
+        $notifications = $query->clone()
+            ->where('type', '!=', 'App\\Notifications\\ApplicationMessageAdded')
+            ->whereJsonDoesntContain('data->type', 'application_message_added')
+            ->orderByRaw('CASE WHEN read_at IS NULL THEN 0 ELSE 1 END') // Unread first (0), read second (1)
+            ->orderBy('created_at', 'desc') // Then by newest first
+            ->paginate(10, ['*'], 'notifications_page')
+            ->withQueryString();
+
+        // Get messages only - Unread first, then by date
+        $messages = $query->clone()
+            ->where(function ($q) {
+                $q->where('type', 'App\\Notifications\\ApplicationMessageAdded')
+                    ->orWhereJsonContains('data->type', 'application_message_added');
+            })
+            ->orderByRaw('CASE WHEN read_at IS NULL THEN 0 ELSE 1 END') // Unread first (0), read second (1)
+            ->orderBy('created_at', 'desc') // Then by newest first
+            ->paginate(5, ['*'], 'messages_page')
+            ->withQueryString();
+
+        return view('agent.notifications', compact('notifications', 'messages'));
     }
 
-    // Mark a single notification as read
+    public function markAll(Request $request)
+    {
+        Auth::user()->unreadNotifications->markAsRead();
+
+        return back()->with('success', 'All notifications marked as read.');
+    }
+
     public function markAsRead($id)
     {
         $notification = Auth::user()->notifications()->findOrFail($id);
         $notification->markAsRead();
 
-        return redirect()->back()->with('status', 'Notification marked as read.');
+        return back()->with('success', 'Notification marked as read.');
     }
 
-    // Mark a single notification as unread
     public function markAsUnread($id)
     {
-        $notification = DatabaseNotification::findOrFail($id);
-        if ($notification->notifiable_id === Auth::id()) {
-            $notification->forceFill(['read_at' => null])->save();
-            return redirect()->back()->with('status', 'Notification marked as unread.');
+        $notification = Auth::user()->notifications()->findOrFail($id);
+        $notification->update(['read_at' => null]);
+
+        return back()->with('success', 'Notification marked as unread.');
+    }
+
+    public function delete($id)
+    {
+        $notification = Auth::user()->notifications()->findOrFail($id);
+        $notification->delete();
+
+        return back()->with('success', 'Notification deleted successfully.');
+    }
+
+    public function deleteAll(Request $request)
+    {
+        $type = $request->get('type', 'all');
+
+        $query = Auth::user()->notifications();
+
+        if ($type === 'messages') {
+            $query->where(function ($q) {
+                $q->where('type', 'App\\Notifications\\ApplicationMessageAdded')
+                    ->orWhereJsonContains('data->type', 'application_message_added');
+            });
+        } elseif ($type === 'notifications') {
+            $query->where('type', '!=', 'App\\Notifications\\ApplicationMessageAdded')
+                ->whereJsonDoesntContain('data->type', 'application_message_added');
         }
 
-        return redirect()->back()->with('status', 'Notification not found.');
+        $query->delete();
+
+        $message = $type === 'messages' ? 'All messages deleted successfully.' : ($type === 'notifications' ? 'All notifications deleted successfully.' : 'All notifications and messages deleted successfully.');
+
+        return back()->with('success', $message);
     }
 
-    // Mark all notifications as read
-    public function markAll()
-    {
-        Auth::user()->unreadNotifications->markAsRead();
-        return redirect()->back()->with('status', 'All notifications marked as read.');
-    }
-
-    // Optional: mark as read and redirect to notification link
     public function readAndRedirect($id)
     {
         $notification = Auth::user()->notifications()->findOrFail($id);
         $notification->markAsRead();
 
-        $link = $notification->data['link'] ?? route('agent.notifications');
-        return redirect($link);
+        $data = $notification->data;
+        $url = null;
+
+        if (!empty($data['application']['id'])) {
+            $url = route('agent.applications.show', $data['application']['id']);
+        } elseif (!empty($data['student']['id'])) {
+            $url = route('agent.students.show', $data['student']['id']);
+        }
+
+        return redirect($url ?? route('agent.notifications'));
     }
 }

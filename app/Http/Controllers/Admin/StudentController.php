@@ -16,6 +16,7 @@ use App\Services\FileUploadService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 
@@ -24,35 +25,33 @@ class StudentController extends Controller
     // -------------------------------------------------------------------------
     // Index
     // -------------------------------------------------------------------------
-
     public function index(Request $request)
     {
         $baseQuery = Student::with(['agent', 'documents', 'applications']);
+
         // Search
         if ($search = $request->get('search')) {
             $baseQuery->where(function ($q) use ($search) {
-
                 $q->where('first_name', 'like', "%{$search}%")
                     ->orWhere('last_name', 'like', "%{$search}%")
                     ->orWhere('email', 'like', "%{$search}%")
-
                     ->orWhereHas('agent', function ($q) use ($search) {
                         $q->where('business_name', 'like', "%{$search}%");
                     })
-
                     ->orWhereHas('applications.university', function ($q) use ($search) {
                         $q->where('name', 'like', "%{$search}%");
                     })
-
                     ->orWhereHas('applications.course', function ($q) use ($search) {
                         $q->where('title', 'like', "%{$search}%");
                     });
             });
         }
+
         $sortBy = $request->get('sort_by', 'created_at');
         $order  = $request->get('order', 'desc');
 
         $baseQuery->orderBy($sortBy, $order);
+
         // Agent filter
         if ($agentId = $request->get('agent')) {
             $baseQuery->where('agent_id', $agentId);
@@ -64,22 +63,24 @@ class StudentController extends Controller
                 $q->where('application_status_id', $status);
             });
         }
+
         if ($university = $request->get('university')) {
             $baseQuery->whereHas('applications', function ($q) use ($university) {
                 $q->where('university_id', $university);
             });
         }
+
         // Preferred country filter
         if ($country = $request->get('country')) {
             $baseQuery->where('preferred_country', $country);
         }
+
         // Quick filter
         match ($request->get('quick_filter')) {
             'applied'     => $baseQuery->whereHas('applications'),
             'not_applied' => $baseQuery->whereDoesntHave('applications'),
             default       => null,
         };
-
 
         // Clone query before applying agent scope split
         $allQuery     = clone $baseQuery;
@@ -92,6 +93,7 @@ class StudentController extends Controller
             ->withCount('applications')
             ->orderBy('name')
             ->get();
+
         $agents = User::agents()
             ->whereHas('students')
             ->withCount('students')
@@ -101,12 +103,22 @@ class StudentController extends Controller
         $applicationStatuses = ApplicationStatus::withCount('applications')
             ->having('applications_count', '>', 0)
             ->get();
-        $countries = University::whereHas('applications')
-            ->whereNotNull('country')
-            ->distinct()
-            ->orderBy('country')
-            ->pluck('country');
 
+        // Get countries with application counts - UPDATED
+        $countries = collect(Application::whereHas('student')
+            ->whereNotNull('university_id')
+            ->join('universities', 'applications.university_id', '=', 'universities.id')
+            ->select('universities.country', DB::raw('COUNT(*) as application_count'))
+            ->whereNotNull('universities.country')
+            ->groupBy('universities.country')
+            ->orderBy('application_count', 'DESC')
+            ->get())
+            ->map(function ($item) {
+                return (object) [
+                    'name' => $item->country,
+                    'count' => (int) $item->application_count
+                ];
+            });
 
         $table1Students = $allQuery
             ->when(!empty($specialAgentIds), function ($q) use ($specialAgentIds) {
@@ -140,11 +152,8 @@ class StudentController extends Controller
             'order'               => $order,
             'countries'           => $countries,
             'applicationStatuses' => $applicationStatuses,
-
-
         ]);
     }
-
     // -------------------------------------------------------------------------
     // Create
     // -------------------------------------------------------------------------
@@ -198,11 +207,17 @@ class StudentController extends Controller
             'applications.messages.user',
             'currentStage',
         ]);
+        $applications = $student->applications;
 
+        $documentStats = $student->getDocumentStats();
+
+        // same logic as index (important for consistency)
+        $student->uploaded_count = $documentStats['uploaded_count'];
         return view('admin.students.show', [
-            'student'           => $student,
-            'documentStats'     => $student->getDocumentStats(),
-            'totalRequiredDocs' => count(Student::REQUIRED_DOCUMENTS),
+            'student'            => $student,
+            'applications'       => $applications,
+            'documentStats'      => $documentStats,
+            'totalRequiredDocs'  => count(Student::REQUIRED_DOCUMENTS),
         ]);
     }
 

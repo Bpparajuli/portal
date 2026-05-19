@@ -2,11 +2,34 @@
 
 @section('title', 'Student Management')
 
-@push('styles')
-    <link rel="stylesheet" href="{{ asset('css/students.css') }}">
-@endpush
 @section('agent-content')
+    <style>
+        .doc-progress-wrap {
+            min-width: 130px;
+        }
 
+        .doc-progress-bar {
+            height: 6px;
+            border-radius: 4px;
+            background: var(--gray-200);
+            overflow: hidden;
+            margin: 3px 0;
+        }
+
+        .doc-progress-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width var(--transition-default);
+        }
+
+        .doc-progress-fill.fill-success {
+            background-color: var(--success);
+        }
+
+        .doc-progress-fill.fill-warning {
+            background-color: var(--warning);
+        }
+    </style>
     <div class="students-page">
         {{-- ================================================================ --}}
         {{-- Page Header --}}
@@ -19,9 +42,7 @@
                 <p class="text-muted mb-0 mt-1 small">Manage your student pipeline</p>
             </div>
             <div class="d-flex gap-2">
-                <button class="btn btn-outline-secondary btn-sm" id="exportBtn">
-                    <i class="fa-solid fa-download me-1"></i> Export
-                </button>
+
                 <a href="{{ route('agent.students.create') }}" class="btn btn-primary btn-sm">
                     <i class="fa-solid fa-plus me-1"></i> Add Student
                 </a>
@@ -64,43 +85,43 @@
                         <div class="col-md-2">
                             <label class="form-label small fw-semibold mb-1">Country</label>
                             <select name="country" class="form-select form-select-sm">
-                                <option value="">All Countries</option>
+                                <option value="">All Countries ({{ $countries->count() }})</option>
                                 @foreach ($countries as $country)
-                                    <option value="{{ $country }}"
-                                        {{ request('country') == $country ? 'selected' : '' }}>
-                                        {{ $country }}
+                                    <option value="{{ $country->name }}"
+                                        {{ request('country') == $country->name ? 'selected' : '' }}>
+                                        {{ $country->name }} ({{ $country->count }})
                                     </option>
                                 @endforeach
                             </select>
                         </div>
                         <div class="col-md-2">
                             <label class="form-label small fw-semibold mb-1">University</label>
-
                             <select name="university" class="form-select form-select-sm">
-                                <option value=""> Applied Universities-{{ $universities->count() }}
-                                </option>
-
+                                <option value="">All Universities ({{ $universities->count() }})</option>
                                 @foreach ($universities as $uni)
-                                    <option value="{{ $uni->id }}">
-                                        {{ $uni->name }}– {{ $uni->city }} ({{ $uni->applications_count }})
+                                    <option value="{{ $uni->id }}"
+                                        {{ request('university') == $uni->id ? 'selected' : '' }}>
+                                        {{ $uni->name }} ({{ $uni->applications_count }})
                                     </option>
                                 @endforeach
                             </select>
                         </div>
                         <div class="col-md-2">
-                            <label class="form-label small fw-semibold mb-1">App Status</label>
-                            <select name="application_status" class="form-select form-select-sm">
-                                <option value="">All</option>
+                            <label class="form-label small fw-semibold mb-1">Application Status</label>
+                            <select name="application_status_id" class="form-select form-select-sm">
+                                <option value="">All Statuses
+                                    ({{ $applicationStatuses->sum('applications_count') }})
+                                </option>
                                 @foreach ($applicationStatuses as $status)
-                                    <option value="{{ $status }}"
-                                        {{ request('application_status') == $status ? 'selected' : '' }}>
-                                        {{ ucfirst($status) }}
+                                    <option value="{{ $status->id }}"
+                                        {{ request('application_status_id') == $status->id ? 'selected' : '' }}>
+                                        {{ $status->name }} ({{ $status->applications_count }})
                                     </option>
                                 @endforeach
                             </select>
                         </div>
                         <div class="col-md-2">
-                            <label class="form-label small fw-semibold mb-1">Doc Status</label>
+                            <label class="form-label small fw-semibold mb-1">Document Status</label>
                             <select name="document_status" class="form-select form-select-sm">
                                 <option value="">All</option>
                                 @foreach (['Not Uploaded', 'Incomplete', 'Completed'] as $ds)
@@ -112,9 +133,6 @@
                             </select>
                         </div>
                         <div class="col-md-1 d-flex gap-1">
-                            <button type="submit" class="btn btn-primary btn-sm flex-fill">
-                                <i class="fa-solid fa-magnifying-glass"></i>
-                            </button>
                             <a href="{{ route('agent.students.index') }}" class="btn btn-outline-danger btn-sm">
                                 <i class="fa-solid fa-xmark"></i>
                             </a>
@@ -219,22 +237,26 @@
                                 {{-- Applications --}}
                                 <td>
                                     @if ($applications->count())
-                                        <div class="d-flex flex-column gap-1">
-                                            @foreach ($applications as $app)
-                                                <a href="{{ route('agent.applications.show', $app) }}"
-                                                    class="d-flex align-items-center justify-content-between text-decoration-none p-2 rounded-1 border small">
-                                                    <span
-                                                        class="badge {{ $app->status_class ?? 'bg-secondary' }} text-truncate">
-                                                        {{ ucfirst($app->application_status ?? 'Pending') }}
+                                        <div class="d-flex flex-column border border-2 border-light p-2 rounded gap-2">
+                                            @foreach ($applications->take(2) as $app)
+                                                <div class="d-flex align-items-center justify-content-between">
+                                                    <span class="status-badge"
+                                                        style="background-color: {{ $app->status->bg_color ?? '#6c757d' }}40; color: {{ $app->status->text_color ?? '#6c757d' }}; border-left: 5px solid {{ $app->status->bg_color ?? '#6c757d' }}; border-right: 5px solid {{ $app->status->bg_color ?? '#6c757d' }}; color:{{ $app->status->bg_color ?? '#6c757d' }};">
+                                                        {{ $app->status->name ?? ucfirst($app->application_status ?? 'Pending') }}
                                                     </span>
-                                                    <span class="text-muted ms-2 text-truncate" style="max-width:100px;">
+                                                    <small class="text-muted ms-2">
                                                         {{ optional($app->university)->short_name ?? 'N/A' }}
-                                                    </span>
-                                                </a>
+                                                    </small>
+                                                </div>
                                             @endforeach
+                                            @if ($applications->count() > 2)
+                                                <small class="text-muted">
+                                                    +{{ $applications->count() - 2 }} more
+                                                </small>
+                                            @endif
                                         </div>
                                     @else
-                                        <span class="badge bg-light text-muted border">Not started</span>
+                                        <span class="badge bg-light text-muted border">No applications</span>
                                     @endif
                                 </td>
 
@@ -344,13 +366,56 @@
 
 @push('scripts')
     <script>
-        document.getElementById('filterForm').addEventListener('submit', function() {
-            document.getElementById('loadingOverlay').style.display = 'flex';
+        // Function to reset all filters except the one that was just changed
+        function resetOtherFilters(changedFieldName) {
+            const fields = ['search', 'country', 'university', 'application_status_id', 'document_status'];
+
+            fields.forEach(fieldName => {
+                if (fieldName !== changedFieldName) {
+                    const field = document.querySelector(`#filterForm [name="${fieldName}"]`);
+                    if (field) {
+                        field.value = '';
+                    }
+                }
+            });
+        }
+
+        // Auto-submit with reset behavior
+        document.querySelectorAll('#filterForm select, #filterForm input[name="search"]').forEach(field => {
+            field.addEventListener('change', function(e) {
+                // Reset all other filters
+                resetOtherFilters(this.name);
+
+                // Submit the form
+                document.getElementById('loadingOverlay').style.display = 'flex';
+                document.getElementById('filterForm').submit();
+            });
         });
 
-        document.getElementById('exportBtn').addEventListener('click', function() {
-            const params = new URLSearchParams(new FormData(document.getElementById('filterForm'))).toString();
-            window.location.href = '{{ route('agent.students.index') }}?' + params;
-        });
+        // Special handling for search input
+        let searchTimeout;
+        const searchInput = document.querySelector('#filterForm input[name="search"]');
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    resetOtherFilters('search');
+                    document.getElementById('loadingOverlay').style.display = 'flex';
+                    document.getElementById('filterForm').submit();
+                }, 500);
+            });
+        }
+
+        // Reset button (to clear everything including the active filter)
+        const resetBtn = document.getElementById('resetAllBtn');
+        if (resetBtn) {
+            resetBtn.addEventListener('click', function() {
+                document.querySelectorAll('#filterForm input, #filterForm select').forEach(field => {
+                    field.value = '';
+                });
+                document.getElementById('loadingOverlay').style.display = 'flex';
+                document.getElementById('filterForm').submit();
+            });
+        }
     </script>
 @endpush

@@ -8,9 +8,11 @@ use App\Models\University;
 use App\Models\Course;
 use App\Models\Student;
 use App\Models\Activity;
+use App\Models\ApplicationStatus;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
@@ -18,69 +20,68 @@ class DashboardController extends Controller
     {
         $agentId = Auth::id();
 
-        // ---------- METRICS ----------
+        // ---------- BASIC METRICS ----------
         $totalStudents = Student::where('agent_id', $agentId)->count();
-        $applications = Application::where('agent_id', $agentId)->get();
-        $totalApplications = $applications->count();
-        // Get the start and end of current month
+
+        $totalApplications = Application::where('agent_id', $agentId)->count();
+
         $startOfMonth = Carbon::now()->startOfMonth();
         $endOfMonth = Carbon::now()->endOfMonth();
 
-
-        // Only this user's applications this month
         $recentApplications = Application::where('agent_id', $agentId)
             ->whereBetween('created_at', [$startOfMonth, $endOfMonth])
-            ->get();
+            ->count();
 
-        $visaApproved = $applications->where('application_status', 'Visa Approved')->count();
-        $visaConversionPercent = $totalApplications > 0 ? round(($visaApproved / $totalApplications) * 100, 1) : 0;
-
-        $totalApproved = $applications->whereIn('application_status', ['Accepted by the University', 'Visa Approved'])->count();
-        $totalRejected = $applications->whereIn('application_status', ['Rejected by the University', 'Visa Rejected', 'Lost'])->count();
         $totalUniversities = University::count();
 
-        // ---------- APPLICATION STATUS COUNTS ----------
-        $statuses = [
-            'Application started',
-            'Application viewed by Admin',
-            'Applied to University',
-            'Need to give the test',
-            'Accepted by the University',
-            'Rejected by the University',
-            'Applied to another university',
-            'Application forwarded to embassy',
-            'Is on waiting list on Embassy',
-            'Visa Approved',
-            'Visa Rejected',
-            'Lost'
-        ];
+        // ---------- VISA CONVERSION ----------
+        $visaApprovedStatusId = ApplicationStatus::where('name', 'Visa Approved')->value('id');
 
-        $applicationStatusCounts = $applications
-            ->groupBy('application_status')
-            ->map(fn($group) => $group->count());
+        $visaApproved = Application::where('agent_id', $agentId)
+            ->where('application_status_id', $visaApprovedStatusId)
+            ->count();
 
-        $statusCounts = [];
-        foreach ($statuses as $s) {
-            $statusCounts[] = $applicationStatusCounts->get($s, 0);
+        $visaConversionPercent = $totalApplications > 0
+            ? round(($visaApproved / $totalApplications) * 100, 1)
+            : 0;
+
+        // ---------- STATUS (ONLY WITH APPLICATIONS) ----------
+        $statuses = ApplicationStatus::where('is_active', 1)
+            ->whereHas('applications', function ($q) use ($agentId) {
+                $q->where('agent_id', $agentId);
+            })
+            ->withCount(['applications' => function ($q) use ($agentId) {
+                $q->where('agent_id', $agentId);
+            }])
+            ->orderBy('sort_order')
+            ->get();
+
+        $statusLabels = $statuses->pluck('name')->values();
+        $statusCounts = $statuses->pluck('applications_count')->values();
+        $statusColors = $statuses->map(function ($status) {
+            return $status->bg_color ?? '#6b7280';
+        })->values();
+
+        // Get ALL active statuses ordered by sort_order
+        $pipelineStatuses = ApplicationStatus::where('is_active', 1)
+            ->orderBy('sort_order')
+            ->get(['id', 'name', 'bg_color', 'text_color', 'sort_order']);
+
+        // Get counts for each status based on agent
+        $pipelineCounts = [];
+        foreach ($pipelineStatuses as $status) {
+            $pipelineCounts[$status->id] = Application::where('agent_id', $agentId)
+                ->where('application_status_id', $status->id)
+                ->count();
         }
 
-        $statusColors = [
-            '#3b82f6', // Application started - Blue
-            '#60a5fa', // Viewed by Admin - Light Blue
-            '#818cf8', // Applied to University - Indigo
-            '#facc15', // Need to give the test - Yellow
-            '#22c55e', // Accepted by University - Green
-            '#ef4444', // Rejected by University - Red
-            '#8b5cf6', // Applied to another university - Purple
-            '#f97316', // Forwarded to embassy - Orange
-            '#0ea5e9', // On waiting list at embassy - Sky Blue
-            '#16a34a', // Visa Approved - Dark Green
-            '#b91c1c', // Visa Rejected - Dark Red
-            '#6b7280'  // Lost - Gray
-        ];
+        // Create a mapping of sort_order to status for easy lookup in blade
+        $statusByOrder = [];
+        foreach ($pipelineStatuses as $status) {
+            $statusByOrder[$status->sort_order] = $status;
+        }
 
-
-        // ---------- MONTHLY AGGREGATES ----------
+        // ---------- MONTHLY APPLICATIONS ----------
         $monthlyApplications = Application::where('agent_id', $agentId)
             ->selectRaw('MONTH(created_at) as month, COUNT(*) as count')
             ->groupBy('month')
@@ -91,30 +92,21 @@ class DashboardController extends Controller
             $monthlyArr[] = $monthlyApplications->get($m, 0);
         }
 
-        // ---------- COUNTRY-WISE APPLICATIONS ----------
-        $countryLabels = University::select('country')->distinct()->pluck('country')->toArray();
-        $countryCounts = [];
-        foreach ($countryLabels as $c) {
-            $countryCounts[] = Application::where('agent_id', $agentId)
-                ->whereHas('university', function ($q) use ($c) {
-                    $q->where('country', $c);
-                })->count();
-        }
-
-        // ---------- COURSE TYPE CHART DATA ----------
-        $courseTypeCounts = Application::where('agent_id', $agentId)
-            ->with('course')
-            ->get()
-            ->groupBy(function ($app) {
-                return $app->course->course_type ?? 'Unknown';
-            })
-            ->map(fn($group) => $group->count());
-
-        $courseTypeLabels = $courseTypeCounts->keys()->toArray();
-        $courseTypeValues = $courseTypeCounts->values()->toArray();
+        // ---------- UNIVERSITY CHART ----------
+        $universityChartData = $this->applicationsByUniversityChart($agentId);
 
 
-        // ---------- RECENT ACTIVITIES ----------
+        // ---------- COURSE TYPE CHART (OPTIMIZED) ----------
+        $courseTypeData = Application::where('agent_id', $agentId)
+            ->join('courses', 'applications.course_id', '=', 'courses.id')
+            ->select('courses.course_type', DB::raw('COUNT(*) as total'))
+            ->groupBy('courses.course_type')
+            ->get();
+
+        $courseTypeLabels = $courseTypeData->pluck('course_type')->toArray();
+        $courseTypeValues = $courseTypeData->pluck('total')->toArray();
+
+        // ---------- ACTIVITIES ----------
         $studentActivities = Activity::where('user_id', $agentId)
             ->whereIn('type', ['student_added', 'student_deleted'])
             ->latest()->take(5)->get();
@@ -129,25 +121,32 @@ class DashboardController extends Controller
 
         $today = Carbon::today();
 
-        $todayStudentCount = Activity::where('user_id', $agentId)
-            ->whereIn('type', ['student_added', 'student_deleted'])
+        $todayActivitiesCount = Activity::where('user_id', $agentId)
+            ->whereIn('type', [
+                'student_added',
+                'student_deleted',
+                'document_uploaded',
+                'document_deleted',
+                'application_submitted',
+                'application_withdrawn'
+            ])
             ->whereDate('created_at', $today)
             ->count();
 
-        $todayDocumentCount = Activity::where('user_id', $agentId)
-            ->whereIn('type', ['document_uploaded', 'document_deleted'])
-            ->whereDate('created_at', $today)
-            ->count();
+        // ---------- TOP UNIVERSITIES ----------
+        $topUniversities = University::select('universities.id', 'universities.name', 'universities.short_name')
+            ->join('applications', 'applications.university_id', '=', 'universities.id')
+            ->where('applications.agent_id', $agentId)
+            ->selectRaw('COUNT(applications.id) as applications_count')
+            ->groupBy('universities.id', 'universities.name', 'universities.short_name')
+            ->orderByDesc('applications_count')
+            ->limit(5)
+            ->get();
 
-        $todayApplicationCount = Activity::where('user_id', $agentId)
-            ->whereIn('type', ['application_submitted', 'application_withdrawn'])
-            ->whereDate('created_at', $today)
-            ->count();
-
-        $todayActivitiesCount = $todayStudentCount + $todayDocumentCount + $todayApplicationCount;
-        // ---------- FILTER DATA ----------
+        // ---------- FILTERS ----------
         $countries = University::select('country')->distinct()->pluck('country');
         $query = University::with('courses');
+
         if ($request->filled('search')) {
             $keyword = $request->search;
             $query->where(function ($q) use ($keyword) {
@@ -155,10 +154,14 @@ class DashboardController extends Controller
                     ->orWhereHas('courses', fn($qc) => $qc->where('title', 'like', "%{$keyword}%"));
             });
         }
+
         if ($request->filled('country')) $query->where('country', $request->country);
         if ($request->filled('city')) $query->where('city', $request->city);
         if ($request->filled('university_id')) $query->where('id', $request->university_id);
-        if ($request->filled('course_id')) $query->whereHas('courses', fn($q) => $q->where('id', $request->course_id));
+        if ($request->filled('course_id')) {
+            $query->whereHas('courses', fn($q) => $q->where('id', $request->course_id));
+        }
+
         $universities = $query->paginate(10)->withQueryString();
 
         return view('agent.dashboard', compact(
@@ -168,15 +171,15 @@ class DashboardController extends Controller
             'recentApplications',
             'visaApproved',
             'visaConversionPercent',
-            'totalApproved',
-            'totalRejected',
             'statuses',
-            'applicationStatusCounts',
+            'statusLabels',
             'statusCounts',
             'statusColors',
+            'pipelineStatuses',
+            'pipelineCounts',
+            'statusByOrder',
             'monthlyArr',
-            'countryLabels',
-            'countryCounts',
+            'universityChartData',
             'studentActivities',
             'documentActivities',
             'applicationActivities',
@@ -184,9 +187,65 @@ class DashboardController extends Controller
             'countries',
             'universities',
             'courseTypeLabels',
-            'courseTypeValues'
+            'courseTypeValues',
+            'topUniversities'
         ));
     }
+
+    /**
+     * Applications by University Chart Data
+     */
+    private function applicationsByUniversityChart($agentId)
+    {
+        $data = DB::table('applications')
+            ->join('universities', 'applications.university_id', '=', 'universities.id')
+            ->where('applications.agent_id', $agentId)
+            ->select(
+                'universities.short_name',
+                DB::raw('COUNT(applications.id) as count')
+            )
+            ->groupBy('universities.short_name')
+            ->orderByDesc('count')
+            ->limit(10)
+            ->get();
+
+        $labels = $data->pluck('short_name')->toArray();
+        $counts = $data->pluck('count')->toArray();
+
+        $baseColors = [
+            '#3b82f6',
+            '#60a5fa',
+            '#818cf8',
+            '#facc15',
+            '#22c55e',
+            '#ef4444',
+            '#8b5cf6',
+            '#f97316',
+            '#0ea5e9',
+            '#16a34a'
+        ];
+
+        $colors = [];
+        foreach ($labels as $i => $label) {
+            $colors[] = $baseColors[$i % count($baseColors)];
+        }
+
+        return [
+            'labels' => $labels,
+            'datasets' => [[
+                'label' => 'Applications',
+                'data' => $counts,
+                'backgroundColor' => $colors,
+                'borderColor' => '#fff',
+                'borderWidth' => 2
+            ]]
+        ];
+    }
+
+    /**
+     * Get default color for status if not set in DB
+     */
+
 
     // ---------- AJAX FILTERS ----------
     public function getCities($country)

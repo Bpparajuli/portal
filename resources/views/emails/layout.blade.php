@@ -77,6 +77,32 @@
                 margin: 10px auto;
             }
         }
+
+        /* Custom styles for agreement reminder */
+        .email-info-bar {
+            background: #e7f3ff;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #2196f3;
+        }
+
+        .warning-box {
+            margin: 25px 0;
+            padding: 15px;
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            border-radius: 4px;
+        }
+
+        .warning-box strong {
+            color: #bd951a;
+        }
+
+        .warning-box p {
+            margin: 5px 0 0 0;
+            color: #bd951a;
+        }
     </style>
 </head>
 
@@ -90,39 +116,43 @@
 
         {{-- Body --}}
         <div class="email-body">
-            {{-- Greeting --}}
-            <h2>{{ $greeting ?? 'Hello!' }}</h2>
+            {{-- Check if we have custom content (for agreement reminder) --}}
+            @if (isset($customContent))
+                {!! $customContent !!}
+            @else
+                {{-- Default content for backward compatibility --}}
+                <h2>{{ $greeting ?? 'Hello!' }}</h2>
 
-            {{-- Intro Lines --}}
-            @if (isset($introLines))
-                @foreach ($introLines as $line)
-                    <p>{!! $line !!}</p>
-                @endforeach
+                @if (isset($introLines))
+                    @foreach ($introLines as $line)
+                        <p>{!! $line !!}</p>
+                    @endforeach
+                @endif
+
+                @isset($actionText)
+                    <div class="email-button">
+                        <a href="{{ $actionUrl }}">{{ $actionText }}</a>
+                    </div>
+                @endisset
+
+                @if (isset($outroLines))
+                    @foreach ($outroLines as $line)
+                        <p style="font-size:14px; color:#777;">{!! $line !!}</p>
+                    @endforeach
+                @endif
+
+                <p style="font-size:14px; color:#4b5563;">Thanks,</p>
+                <p><strong>IDEA Consultancy Team</strong></p>
+                <p><strong>Contact: 01-4547547/01-5318333</strong></p>
             @endif
-
-            {{-- Action Button --}}
-            @isset($actionText)
-                <div class="email-button">
-                    <a href="{{ $actionUrl }}">{{ $actionText }}</a>
-                </div>
-            @endisset
-
-            {{-- Outro Lines --}}
-            @if (isset($outroLines))
-                @foreach ($outroLines as $line)
-                    <p style="font-size:14px; color:#777;">{!! $line !!}</p>
-                @endforeach
-            @endif
-
-            {{-- Signature --}}
-            <p style="font-size:14px; color:#4b5563;">Thanks,</p>
-            <p><strong>IDEA Consultancy Team</strong></p>
-            <p><strong>Contact: 01-4547547/01-5318333</strong></p>
         </div>
 
         {{-- Footer --}}
         <div class="email-footer">
             © {{ date('Y') }} IDEA Consultancy. All rights reserved.
+            @if (!isset($customContent))
+                <p style="margin: 5px 0 0 0; font-size: 11px;">This is an automated message. Please do not reply.</p>
+            @endif
         </div>
     </div>
 </body>

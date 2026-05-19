@@ -22,24 +22,6 @@ use App\Services\FileUploadService;
 
 class ApplicationController extends Controller
 {
-    // -------------------------------
-    // Required document types
-    // -------------------------------
-    private function allDocumentTypes(): array
-    {
-        return [
-            'passport',
-            '10th_certificate',
-            '10th_transcript',
-            '11th_transcript',
-            '12th_certificate',
-            '12th_transcript',
-            'cv',
-            'moi',
-            'lor',
-            'ielts_pte_language_certificate',
-        ];
-    }
 
     // -------------------------------
     // List applications
@@ -165,19 +147,85 @@ class ApplicationController extends Controller
         ));
     }
 
+
+    // -------------------------------
+    // Required document types
+    // -------------------------------
+    private function allDocumentTypes(): array
+    {
+        return [
+            'passport',
+            '10th_certificate',
+            '10th_transcript',
+            '11th_transcript',
+            '12th_certificate',
+            '12th_transcript',
+            'cv',
+            'moi',
+            'lor',
+            'ielts_pte_language_certificate',
+        ];
+    }
+
+    // -------------------------------
+    // Quick Start - Redirect to create with session data
+    // -------------------------------
+    public function quickStart(Request $request)
+    {
+        // Store the pre-selected values in session
+        if ($request->has('course_id')) {
+            session(['quick_start_course_id' => $request->course_id]);
+
+            // Also get the university from this course
+            $course = Course::find($request->course_id);
+            if ($course) {
+                session(['quick_start_university_id' => $course->university_id]);
+            }
+        } elseif ($request->has('university_id')) {
+            session(['quick_start_university_id' => $request->university_id]);
+            session()->forget('quick_start_course_id');
+        }
+
+        return redirect()->route('agent.applications.create');
+    }
+
     // -------------------------------
     // Create form
     // -------------------------------
     public function create(Request $request)
     {
         $universities = University::with('courses')->get();
-        $courses = Course::where('id', $request->course_id)->get();
 
+        // Get pre-selected values from session or request
+        $selectedUniversityId = session('quick_start_university_id') ?? $request->query('university_id');
+        $selectedCourseId = session('quick_start_course_id') ?? $request->query('course_id');
 
-        $selectedUniversityId = $request->query('university_id');
-        $selectedCourseId = $request->query('course_id');
+        // Clear session data after retrieving
+        if (session()->has('quick_start_university_id')) {
+            session()->forget('quick_start_university_id');
+        }
+        if (session()->has('quick_start_course_id')) {
+            session()->forget('quick_start_course_id');
+        }
 
-        // If coming from student
+        // Get courses if university is selected
+        $courses = collect();
+        if ($selectedUniversityId) {
+            $courses = Course::where('university_id', $selectedUniversityId)->get();
+        }
+
+        // If only course_id is provided (without university)
+        if ($selectedCourseId && !$selectedUniversityId) {
+            $courses = Course::where('id', $selectedCourseId)->get();
+            $course = $courses->first();
+            if ($course) {
+                $selectedUniversityId = $course->university_id;
+                // Reload courses with the correct university
+                $courses = Course::where('university_id', $selectedUniversityId)->get();
+            }
+        }
+
+        // If coming from student page
         if ($request->has('student_id')) {
             $student = Student::where('id', $request->student_id)
                 ->where('agent_id', Auth::id())
@@ -192,18 +240,22 @@ class ApplicationController extends Controller
             ));
         }
 
-        // Only students with required docs
+        // Get students with required documents
         $requiredTypes = $this->allDocumentTypes();
 
+        // Alternative: Get all students and check documents in view
         $students = Student::where('agent_id', Auth::id())
-            ->where(function ($query) use ($requiredTypes) {
-                foreach ($requiredTypes as $type) {
-                    $query->whereHas('documents', function ($q) use ($type) {
-                        $q->where('document_type', $type);
-                    });
-                }
-            })
+            ->with(['documents' => function ($query) use ($requiredTypes) {
+                $query->whereIn('document_type', $requiredTypes);
+            }])
             ->get();
+
+        // Filter students who have all required documents
+        $students = $students->filter(function ($student) use ($requiredTypes) {
+            $studentDocTypes = $student->documents->pluck('document_type')->toArray();
+            $missingDocs = array_diff($requiredTypes, $studentDocTypes);
+            return empty($missingDocs);
+        });
 
         return view('agent.applications.create', compact(
             'students',
@@ -247,6 +299,7 @@ class ApplicationController extends Controller
             'course_id' => $request->course_id,
             'agent_id' => Auth::id(),
             'application_status' => 'Application started',
+            'application_status_id' => 1,
         ]);
 
         // Generate application number

@@ -1,471 +1,1019 @@
-{{-- resources/views/agent/dashboard.blade.php --}}
+{{-- Agent Dashboard Blade --}}
 @extends('layouts.agent')
 @section('title', 'Agent Dashboard')
 
 @section('agent-content')
+    <style>
+        /* ============================================================
+                                                                                       AGENT DASHBOARD – ONLY UNIQUE/SPECIFIC STYLES
+                                                                                    ============================================================ */
 
-<div class="full-width">
-    <div>
-        <h2>Hi {{ auth()->user()->name }}, Welcome Back!</h2>
-        <p class="sub-text">Here's a quick overview of your students & applications.</p>
-    </div>
-    <div>
-        <img src="{{ asset('images/pfh-notice.png') }}" alt="Application Pipeline">
-    </div>
-    <div class="actions">
-        <a href="{{ route('agent.students.create') }}" class="btn primary"><i class="fa fa-user"></i> Add Student</a>
-        <a href="{{ route('agent.applications.create') }}" class="btn secondary"><i class="fa fa-vcard"></i> New Application</a>
-    </div>
-</div>
-<div class="uni-filter p-4">
-    @include('partials.uni_filter')
-</div>
-
-<div class="container">
-    <div class="content">
-        {{-- LEFT COLUMN --}}
-        <div class="left-column">
-            {{-- STAT CARDS --}}
-            <div class="card">
-                <div class="stats-row">
-                    <a href="{{ route('agent.students.index') }}" class="stat-link">
-                        <div class="stat-card">
-                            <div class="stat-left">
-                                <h6>Total Students</h6>
-                                <h2>{{ $totalStudents ?? 0 }}</h2>
-                            </div>
-                            <div class="icon text-primary"><i class="fa fa-users"></i></div>
-                        </div>
-                    </a>
-                    <a href="{{ route('agent.applications.index') }}" class="stat-link">
-                        <div class="stat-card">
-                            <div class="stat-left">
-                                <h6>Applications Submitted</h6>
-                                <h2>{{ $totalApplications ?? 0 }}</h2>
-                            </div>
-                            <div class="icon text-secondary"><i class="fa fa-vcard"></i></div>
-                        </div>
-                    </a>
-                    <a href="{{ route('agent.universities.index') }}" class="stat-link">
-                        <div class="stat-card">
-                            <div class="stat-left">
-                                <h6>Available Universities</h6>
-                                <h2>{{ $totalUniversities ?? 0 }}</h2>
-                            </div>
-                            <div class="icon text-primary"><i class="fa fa-university"></i></div>
-                        </div>
-                    </a>
-                </div>
-            </div>
-            {{-- MONTHLY CHART --}}
-            <div class="card chart-card">
-                <h6>Monthly Applications (Last 12 months)</h6>
-                <canvas id="monthlyChart" class="canvas-medium"></canvas>
-            </div>
-            {{-- COUNTRY CHART --}}
-            <div class="card chart-card">
-                <h6>Applications by Country</h6>
-                <canvas id="countryChart" class="canvas-medium"></canvas>
-            </div>
-            {{-- APPLICATION PIPELINE --}}
-            <div class="card pipeline-card">
-                <h6>Student Application Pipeline</h6>
-                <img src="{{ asset('images/pipeline.png') }}" alt="Application Pipeline">
-            </div>
-        </div>
-
-        {{-- RIGHT COLUMN --}}
-        <div class="right-content">
-            {{-- APPLICATION PROGRESS --}}
-            <div class="card progress-card">
-                <h6>Application Progress</h6>
-                <canvas id="progressChart" class="canvas-small"></canvas>
-                <div class="progress-stats grid-two-columns">
-                    @foreach($statuses as $i => $s)
-                    <div class="stat" style="background-color: {{ $statusColors[$i] }}; color: #fff; font-weight: bold;">
-                        {{ $s }}
-                    </div>
-                    @endforeach
-                </div>
-            </div>
-            {{-- VISA APPROVED CONVERSION
-            <div class="card">
-                <h6>Visa Approved Conversion</h6>
-                <canvas id="conversionChart" class="canvas-small"></canvas>
-                <p class="sub-text-bold">{{ $visaConversionPercent ?? 0 }}% Visa Approved</p>
-        </div> --}}
-
-
-        {{-- Course Type Comparison --}}
-
-        <div class="card chart-card">
-            <h6>Applications by Course Type</h6>
-            <canvas id="courseTypeChart" class="canvas-small"></canvas>
-        </div>
-
-        {{-- UPCOMING EVENTS --}}
-      <div class="card events-card">
-            <h6 class="gradient section-title">Upcoming Trainings </h6>
-            <ul>
-                <li>✅Students Meetup – Feb 19 Idea Baneshwor</li>
-                <li>✅PFH University 1 to 1 Counselling-Feb 19</li>
-                <li>✅Agent Meetup – Feb 21 Sip & Skip</li>
-                <li>✅Agent Meetup – Feb 23 Siddhartha Cottage Butwal</li>
-                <li>✅Agent Portal Training – March 10</li>
-                <li>✅Embassy Portal Training – March 11</li>
-                <li>✅University Portal Training – March 12</li>
-            </ul>
-        </div>
-        <div class="card events-card">
-            <h6 class="gradient section-title">Upcoming Counselling</h6>
-            <ul>
-                <li>✅Interview Preperation – Feb 23-28</li>
-                <li>✅Germany Counselling – Feb 28</li>
-                <li>✅German University Counselling– March 9</li>
-                <li>✅Dubai Counselling – March 11</li>
-                <li>✅Dubai University Counselling– March 13</li>
-                <li>✅Other Countries Counselling– March 16</li>
-            </ul>
-        </div>
-    </div>
-</div>
-
-{{-- WIDGETS ROW --}}
-<div class="card widgets-card">
-    <div class="widgets-row">
-        <div class="widget">
-            <div>
-                <div class="widget-title">Today's Activities</div>
-                <div class="widget-value">{{ $todayActivitiesCount ?? 0 }}</div>
-            </div>
-        </div>
-
-        <div class="widget">
-            <div class="widget-title">Applications this month</div>
-            <div class="d-flex justify-content-between">
-                <div class="widget-value">{{ $recentApplications->count() ?? 0 }}</div>
-                <div class="widget-link">
-                    <a href="{{ route('agent.applications.index') }}">View</a>
-                </div>
-            </div>
-        </div>
-        <div class="widget">
-            <div>
-                <div class="widget-title">Quick Actions</div>
-                <div class="quick-actions">
-                    <a href="{{ route('agent.applications.index') }}" class="btn primary mini-btn">Check Applications</a>
-                    <a href="{{ route('agent.students.index') }}" class="btn secondary mini-btn">Student Status</a>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-{{-- ACTIVITIES ROW --}}
-<div class="activities-row">
-    <div class="activity-card card">
-        <h6>Students Activities</h6>
-        <ul>
-            @forelse($studentActivities as $act)
-            <li>
-                <div>
-                    @if($act->notifiable_id)
-                    <a href="{{ route('agent.students.show', $act->notifiable_id) }}">{{ $act->description }}</a>
-                    @else
-                    {{ $act->description }}
-                    @endif
-                    <div class="time-text">{{ $act->created_at->diffForHumans() }}</div>
-                </div>
-            </li>
-            @empty
-            <li>No students activities</li>
-            @endforelse
-        </ul>
-    </div>
-
-    <div class="activity-card card">
-        <h6>Documents</h6>
-        <ul>
-            @forelse($documentActivities as $act)
-            <li>
-                <div>
-                    @if($act->notifiable_id)
-                    <a href="{{ route('agent.documents.index', $act->notifiable_id) }}">
-                        {{ $act->description }}
-                    </a>
-                    @else
-                    {{ $act->description }}
-                    @endif
-                    <div class="time-text">{{ $act->created_at->diffForHumans() }}</div>
-                </div>
-            </li>
-            @empty
-            <li>No document activities</li>
-            @endforelse
-        </ul>
-    </div>
-
-
-
-    <div class="activity-card card">
-        <h6>Applications</h6>
-        <ul>
-            @forelse($applicationActivities as $act)
-            <li>
-                <div>
-                    @if($act->notifiable_id)
-                    <a href="{{ route('agent.applications.show', $act->notifiable_id) }}">{{ $act->description }}</a>
-                    @else
-                    {{ $act->description }}
-                    @endif
-                    <div class="time-text">{{ $act->created_at->diffForHumans() }}</div>
-                </div>
-            </li>
-            @empty
-            <li>No applications yet</li>
-            @endforelse
-        </ul>
-    </div>
-</div>
-
-{{-- CALENDAR + TASKS
-    <div class="grid-two-columns">
-        <div class="card calendar-card">
-            <h6>Calendar</h6>
-            <div class="calendar">Calendar placeholder</div>
-        </div>
-        <div class="card tasks-card">
-            <h6>Tasks / Reminders</h6>
-            <div class="tasks">
-                <div class="task"><input type="checkbox"> Follow up with University A — Sept 12</div>
-                <div class="task"><input type="checkbox"> Send documents to student B — Sept 11</div>
-                <div class="task"><input type="checkbox"> Prepare SOP template review</div>
-            </div>
-        </div>
-    </div> --}}
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-
-@php
-// Status chart data
-$statusCounts = [];
-foreach ($statuses as $s) { $statusCounts[] = $applicationStatusCounts->get($s, 0); }
-$statusColors = [
-'#3b82f6', // Application started - Blue
-'#60a5fa', // Viewed by Admin - Light Blue
-'#818cf8', // Applied to University - Indigo
-'#facc15', // Need to give the test - Yellow
-'#22c55e', // Accepted by University - Green
-'#ef4444', // Rejected by University - Red
-'#8b5cf6', // Applied to another university - Purple
-'#f97316', // Forwarded to embassy - Orange
-'#0ea5e9', // On waiting list at embassy - Sky Blue
-'#16a34a', // Visa Approved - Dark Green
-'#b91c1c', // Visa Rejected - Dark Red
-'#6b7280' // Lost - Gray
-];
-@endphp
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-
-        // ==========================================================
-        // Helper Function: Fallback Doughnut (for empty datasets)
-        // ==========================================================
-        function createFallbackDoughnut(ctx, message = "No Data") {
-            return new Chart(ctx, {
-                type: "doughnut"
-                , data: {
-                    labels: [message]
-                    , datasets: [{
-                        data: [1], // single slice
-                        backgroundColor: ["#e5e7eb"], // light gray
-                        borderWidth: 0
-                    }]
-                }
-                , options: {
-                    cutout: "70%"
-                    , plugins: {
-                        legend: {
-                            display: false
-                        }
-                        , tooltip: {
-                            enabled: false
-                        }
-                    }
-                }
-            });
+        /* === 1. Custom Agent Font Override === */
+        .agent-dash {
+            font-family: 'Plus Jakarta Sans', sans-serif;
         }
 
-        // ==========================================================
-        // VISA CONVERSION CHART
-        // ==========================================================
-        // const visaData = [
-        //     @json($visaApproved)
-        //     , Math.max(@json($totalApplications) - @json($visaApproved), 0)
-        // ];
+        /* === 2. Banner (hero section) – completely custom === */
+        .ag-banner {
+            background: linear-gradient(135deg, #1a0262 0%, #2d1270 35%, #820b5c 100%);
+            padding: 1.75rem 2rem 4rem;
+            position: relative;
+            overflow: hidden;
+            margin-bottom: -2.5rem;
+        }
 
-        // const hasVisaData = visaData.reduce((a, b) => a + b, 0) > 0;
+        .ag-banner::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -100px;
+            width: 400px;
+            height: 400px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.03);
+        }
 
-        // if (!hasVisaData) {
-        //     createFallbackDoughnut(document.getElementById('conversionChart'), "No Data");
-        // } else {
-        //     new Chart(document.getElementById('conversionChart'), {
-        //         type: 'doughnut'
-        //         , data: {
-        //             labels: ['Visa Approved', 'Remaining']
-        //             , datasets: [{
-        //                 data: visaData
-        //                 , backgroundColor: ['#22c55e', '#e5e7eb']
-        //             }]
-        //         }
-        //         , options: {
-        //             cutout: '70%'
-        //             , plugins: {
-        //                 legend: {
-        //                     display: false
-        //                 }
-        //             }
-        //         }
-        //     });
-        // }
+        .ag-banner::after {
+            content: '';
+            position: absolute;
+            bottom: -100px;
+            left: 15%;
+            width: 250px;
+            height: 250px;
+            border-radius: 50%;
+            background: rgba(6, 182, 212, 0.08);
+        }
 
-        // ==========================================================
-        // APPLICATION PROGRESS CHART
-        // ==========================================================
-        const statusCounts = @json($statusCounts);
-        const statusLabels = @json($statuses);
-        const statusColors = @json($statusColors);
+        .ag-banner-inner {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+        }
 
-        const hasProgressData = statusCounts.reduce((a, b) => a + b, 0) > 0;
+        .ag-welcome h2 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 0.3rem;
+        }
 
-        if (!hasProgressData) {
-            createFallbackDoughnut(document.getElementById('progressChart'), "No Applications");
-        } else {
-            new Chart(document.getElementById('progressChart'), {
-                type: 'doughnut'
-                , data: {
-                    labels: statusLabels
-                    , datasets: [{
-                        data: statusCounts
-                        , backgroundColor: statusColors
-                        , borderWidth: 1
-                        , borderColor: '#fff'
-                        , hoverOffset: 8
+        .ag-welcome p {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.9rem;
+        }
+
+        .ag-banner-logo {
+            max-height: 100px;
+            object-fit: contain;
+            opacity: 0.9;
+        }
+
+        .ag-banner-actions {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        /* Custom banner buttons (not in global) */
+        .ag-action-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.65rem 1.2rem;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s;
+            color: #fff;
+        }
+
+        .ag-action-btn.outline {
+            border: 1.5px solid rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .ag-action-btn.solid {
+            background: var(--secondary);
+            border: none;
+        }
+
+        .ag-action-btn:hover {
+            transform: translateY(-2px);
+            color: #fff;
+        }
+
+        .ag-action-btn.outline:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .ag-action-btn.solid:hover {
+            background: #0891b2;
+        }
+
+        /* === 3. Main Body Wrapper === */
+        .ag-body {
+            padding: 0 1.5rem 2rem;
+        }
+
+        /* === 4. Custom Stats Row Layout === */
+        .ag-stats-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.25rem;
+        }
+
+        @media (max-width: 768px) {
+            .ag-stats-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Stats cards – custom layout only, colors from global */
+        .ag-stat-card {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1.4rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .ag-stat-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: var(--sc-color, rgba(130, 11, 92, 0.06));
+            transform: translate(30px, -30px);
+        }
+
+        .ag-stat-icon {
+            width: 54px;
+            height: 54px;
+            border-radius: 14px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+        }
+
+        .ag-stat-label {
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        .ag-stat-value {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 2.2rem;
+            font-weight: 700;
+            line-height: 1;
+            margin: 0.2rem 0 0;
+        }
+
+        /* === 5. Custom Card Header (unique to agent) === */
+        .ag-card-header {
+            padding: 1.1rem 1.4rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .ag-card-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        .ag-card-icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            background: linear-gradient(135deg, var(--secondary), var(--primary));
+            color: #fff;
+        }
+
+        .ag-card-body {
+            padding: 1.4rem;
+        }
+
+        /* === 6. Main Grid Layout === */
+        .ag-main-grid {
+            display: grid;
+            grid-template-columns: 1fr 360px;
+            gap: 1.25rem;
+            margin-bottom: 1.25rem;
+        }
+
+        @media (max-width: 1100px) {
+            .ag-main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .ag-left {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        .ag-right {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        /* === 7. Filter Section === */
+        .ag-filter-section {
+            padding: 1.25rem 1.4rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .ag-filter-section h6 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* === 8. Status Grid (2 columns) === */
+        .status-grid-2 {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        /* Custom status pill (not in global) */
+        .ag-status-pill {
+            padding: 0.45rem 0.6rem;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 0.7rem;
+            font-weight: 700;
+            transition: transform 0.15s;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .ag-status-pill:hover {
+            transform: scale(1.04);
+        }
+
+        /* === 9. Widget Row Layout === */
+        .ag-widget-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.25rem;
+        }
+
+        @media (max-width: 768px) {
+            .ag-widget-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .ag-widget {
+            padding: 1.2rem;
+        }
+
+        .ag-widget-label {
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 0.5rem;
+        }
+
+        .ag-widget-value {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.9rem;
+            font-weight: 700;
+        }
+
+        /* === 10. Activity Grid Layout === */
+        .ag-activity-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.25rem;
+        }
+
+        @media (max-width: 992px) {
+            .ag-activity-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .ag-activity-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .ag-activity-item {
+            padding: 0.8rem 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.82rem;
+        }
+
+        .ag-activity-item:last-child {
+            border-bottom: none;
+        }
+
+        .ag-activity-link {
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .ag-activity-time {
+            font-size: 0.72rem;
+            margin-top: 0.25rem;
+        }
+
+        /* === 11. Event Lists (custom) === */
+        .ag-event-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .ag-event-item {
+            padding: 0.65rem 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.82rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .ag-event-item:last-child {
+            border-bottom: none;
+        }
+
+        .ag-event-dot-primary {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--primary);
+            flex-shrink: 0;
+        }
+
+        .ag-event-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--secondary);
+            flex-shrink: 0;
+        }
+
+        /* === 12. Top Universities List (custom) === */
+        .ag-uni-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.65rem 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .ag-uni-item:last-child {
+            border-bottom: none;
+        }
+
+        .ag-uni-rank {
+            width: 26px;
+            height: 26px;
+            border-radius: 7px;
+            background: linear-gradient(135deg, var(--secondary), var(--primary));
+            color: #fff;
+            font-size: 0.72rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .ag-uni-name {
+            flex: 1;
+            font-size: 0.83rem;
+            font-weight: 600;
+        }
+
+        .ag-uni-short {
+            font-size: 0.72rem;
+        }
+
+        .ag-uni-count {
+            background: linear-gradient(135deg, var(--secondary), var(--primary));
+            color: #fff;
+            border-radius: 20px;
+            padding: 0.15rem 0.6rem;
+            font-size: 0.72rem;
+            font-weight: 700;
+        }
+
+        /* === 13. Pipeline Image === */
+        .pipeline-img {
+            width: 100%;
+            border-radius: 10px;
+        }
+
+        /* === 14. Visa Conversion Widget === */
+        .visa-conversion-ring {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            padding: 1rem 0;
+        }
+
+        .ring-value {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--success);
+        }
+
+        .ring-label {
+            font-size: 0.78rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* === 15. Mobile Responsive === */
+        @media (max-width: 640px) {
+            .ag-banner {
+                padding: 1.25rem 1rem 3.5rem;
+            }
+
+            .ag-welcome h2 {
+                font-size: 1.3rem;
+            }
+
+            .ag-body {
+                padding: 0 1rem 2rem;
+            }
+        }
+    </style>
+
+    <div class="agent-dash">
+        {{-- BANNER --}}
+        <div class="ag-banner">
+            <div class="ag-banner-inner">
+                <div class="ag-welcome">
+                    <h2>Hi {{ auth()->user()->name }}! 👋</h2>
+                    <p>Here's your dashboard overview — students, applications & more.</p>
+                </div>
+                <img src="{{ asset('images/pfh-notice.png') }}" class="ag-banner-logo bg-white rounded" alt="Portal">
+                <div class="ag-banner-actions">
+                    <a href="{{ route('agent.students.create') }}" class="ag-action-btn outline"><i
+                            class="fa fa-user-plus"></i> Add Student</a>
+                    <a href="{{ route('agent.applications.create') }}" class="ag-action-btn solid"><i
+                            class="fa fa-plus"></i> New Application</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="ag-body">
+            {{-- STATS ROW --}}
+            <div class="ag-stats-row">
+                <a href="{{ route('agent.students.index') }}" class="ag-stat-card card"
+                    style="--sc-color:rgba(130,11,92,0.08);">
+                    <div class="ag-stat-icon" style="background:rgba(130,11,92,0.1);color:#820b5c;"><i
+                            class="fa fa-users"></i></div>
+                    <div>
+                        <div class="ag-stat-label text-muted">Total Students</div>
+                        <div class="ag-stat-value">{{ $totalStudents ?? 0 }}</div>
+                    </div>
+                </a>
+                <a href="{{ route('agent.applications.index') }}" class="ag-stat-card card"
+                    style="--sc-color:rgba(26,2,98,0.08);">
+                    <div class="ag-stat-icon" style="background:rgba(26,2,98,0.1);color:#1a0262;"><i
+                            class="fa fa-file-alt"></i></div>
+                    <div>
+                        <div class="ag-stat-label text-muted">Applications</div>
+                        <div class="ag-stat-value">{{ $totalApplications ?? 0 }}</div>
+                    </div>
+                </a>
+                <a href="{{ route('agent.universities.index') }}" class="ag-stat-card card"
+                    style="--sc-color:rgba(6,182,212,0.08);">
+                    <div class="ag-stat-icon" style="background:rgba(6,182,212,0.1);color:#0891b2;"><i
+                            class="fa fa-university"></i></div>
+                    <div>
+                        <div class="ag-stat-label text-muted">Universities</div>
+                        <div class="ag-stat-value">{{ $totalUniversities ?? 0 }}</div>
+                    </div>
+                </a>
+            </div>
+
+            {{-- FILTER --}}
+            <div class="ag-filter-section card">
+                <h6><i class="fas fa-search me-1"></i> Find Universities & Courses</h6>
+                @include('partials.uni_filter')
+            </div>
+
+            {{-- MAIN GRID --}}
+            <div class="ag-main-grid">
+
+                {{-- LEFT COLUMN --}}
+                <div class="ag-left">
+                    <div class="card">
+                        <div class="ag-card-header">
+                            <h5 class="ag-card-title"><span class="ag-card-icon"><i class="fas fa-chart-line"></i></span>
+                                Monthly Applications ({{ date('Y') }})</h5>
+                        </div>
+                        <div class="ag-card-body"><canvas id="monthlyChart" height="120"></canvas></div>
+                    </div>
+
+                    <div class="card">
+                        <div class="ag-card-header">
+                            <h5 class="ag-card-title"><span class="ag-card-icon"><i class="fas fa-university"></i></span>
+                                Applications by University</h5>
+                        </div>
+                        <div class="ag-card-body"><canvas id="universityChart" height="120"></canvas></div>
+                    </div>
+                    <div class="card">
+                        <div class="ag-card-header">
+                            <h5 class="ag-card-title"><span class="ag-card-icon"><i class="fas fa-stream"></i></span>
+                                Application Pipeline</h5>
+                        </div>
+                        <div class="ag-card-body" style="padding:1rem;">
+                            <img src="{{ asset('images/pipeline.png') }}" class="pipeline-img" alt="Pipeline">
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <div class="card ">
+                            <div class="ag-card-header">
+                                <h5 class="ag-card-title"><span class="ag-card-icon"><i class="fas fa-calendar"></i></span>
+                                    Upcoming Trainings</h5>
+                            </div>
+                            <div class="ag-card-body" style="padding:1rem;">
+                                <ul class="ag-event-list">
+                                    <li class="ag-event-item">
+                                        <div class="ag-event-dot-primary"></div> Students Meetup – Feb 19 Idea Baneshwor
+                                    </li>
+                                    <li class="ag-event-item">
+                                        <div class="ag-event-dot-primary"></div> PFH University 1-to-1 Counselling – Feb 19
+                                    </li>
+                                    <li class="ag-event-item">
+                                        <div class="ag-event-dot-primary"></div> Agent Meetup – Feb 21 Sip &amp; Skip
+                                    </li>
+                                    <li class="ag-event-item">
+                                        <div class="ag-event-dot-primary"></div> Agent Portal Training – March 10
+                                    </li>
+                                    <li class="ag-event-item">
+                                        <div class="ag-event-dot-primary"></div> Embassy Portal Training – March 11
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="card col-md-6">
+                            <div class="ag-card-header">
+                                <h5 class="ag-card-title"><span class="ag-card-icon"
+                                        style="background:linear-gradient(135deg,#0d9488,#06b6d4);"><i
+                                            class="fas fa-comments"></i></span> Upcoming Counselling</h5>
+                            </div>
+                            <div class="ag-card-body" style="padding:1rem;">
+                                <ul class="ag-event-list">
+                                    <li class="ag-event-item">
+                                        <div class="ag-event-dot"></div> Interview Preparation
+                                        –
+                                        Feb 23-28
+                                    </li>
+                                    <li class="ag-event-item">
+                                        <div class="ag-event-dot"></div> Germany Counselling –
+                                        Feb
+                                        28
+                                    </li>
+                                    <li class="ag-event-item">
+                                        <div class="ag-event-dot"></div> Dubai Counselling –
+                                        March
+                                        11
+                                    </li>
+                                    <li class="ag-event-item">
+                                        <div class="ag-event-dot"></div> Dubai University
+                                        Counselling – March 13
+                                    </li>
+                                    <li class="ag-event-item">
+                                        <div class="ag-event-dot"></div> Other Countries
+                                        Counselling – March 16
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- RIGHT COLUMN --}}
+                <div class="ag-right">
+                    <div class="card">
+                        <div class="ag-card-header">
+                            <h5 class="ag-card-title"><span class="ag-card-icon"><i
+                                        class="fas fa-check-circle"></i></span>
+                                Visa Conversion</h5>
+                        </div>
+                        <div class="ag-card-body">
+                            <div class="visa-conversion-ring">
+                                <div class="ring-value">{{ $visaConversionPercent }}%</div>
+                                <div class="ring-label text-muted">Visa Approved Rate</div>
+                                <div style="margin-top:0.5rem;font-size:0.8rem;" class="text-muted">{{ $visaApproved }}
+                                    out
+                                    of {{ $totalApplications }} applications</div>
+                            </div>
+                            <div
+                                style="height:8px;background:var(--bg-hover);border-radius:8px;overflow:hidden;margin-top:0.75rem;">
+                                <div
+                                    style="height:100%;width:{{ $visaConversionPercent }}%;background:linear-gradient(90deg,#10b981,#059669);border-radius:8px;transition:width 1s ease;">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="ag-card-header">
+                            <h5 class="ag-card-title"><span class="ag-card-icon"><i class="fas fa-chart-pie"></i></span>
+                                Application Progress</h5>
+                        </div>
+                        <div class="ag-card-body">
+                            <canvas id="progressChart" height="120"></canvas>
+                            <div class="status-grid-2">
+                                @foreach ($statuses as $status)
+                                    <div class="ag-status-pill"
+                                        style="background:{{ $status->bg_color ?? '#6b7280' }};color:{{ $status->text_color ?? '#fff' }};">
+                                        {{ $status->name }}: {{ $statusCounts[$loop->index] ?? 0 }}
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="ag-card-header">
+                            <h5 class="ag-card-title"><span class="ag-card-icon"><i
+                                        class="fas fa-book"></i></span>Applications By Course Type</h5>
+                        </div>
+                        <div class="ag-card-body"><canvas id="courseTypeChart" height="180"></canvas></div>
+                    </div>
+
+                    <div class="card">
+                        <div class="ag-card-header">
+                            <h5 class="ag-card-title"><span class="ag-card-icon"><i class="fas fa-trophy"></i></span>
+                                Your Top Universities</h5>
+                        </div>
+                        <div class="ag-card-body" style="padding:1rem;">
+                            @forelse($topUniversities as $i => $uni)
+                                <div class="ag-uni-item">
+                                    <div class="ag-uni-rank">{{ $i + 1 }}</div>
+                                    <div style="flex:1;min-width:0;">
+                                        <div class="ag-uni-name">{{ $uni->name }}</div>
+                                        <div class="ag-uni-short text-muted">{{ $uni->short_name }}</div>
+                                    </div>
+                                    <div class="ag-uni-count">{{ $uni->applications_count }} apps</div>
+                                </div>
+                            @empty
+                                <p class="text-center text-muted py-3">No data yet</p>
+                            @endforelse
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            {{-- WIDGETS ROW --}}
+            <div class="ag-widget-row">
+                <div class="ag-widget card">
+                    <div class="ag-widget-label text-muted">Today's Activities</div>
+                    <div class="ag-widget-value">{{ $todayActivitiesCount ?? 0 }}</div>
+                    <div class="text-muted" style="font-size:0.75rem;margin-top:0.25rem;">all actions combined</div>
+                </div>
+                <div class="ag-widget card">
+                    <div class="ag-widget-label text-muted">Applications This Month</div>
+                    <div style="display:flex;align-items:center;justify-content:space-between;">
+                        <div class="ag-widget-value">{{ $recentApplications ?? 0 }}</div>
+                        <a href="{{ route('agent.applications.index') }}" class="text-primary"
+                            style="font-size:0.8rem;font-weight:600;text-decoration:none;">View all →</a>
+                    </div>
+                </div>
+                <div class="ag-widget card">
+                    <div class="ag-widget-label text-muted">Quick Actions</div>
+                    <div style="display:flex;gap:0.5rem;margin-top:0.5rem;flex-wrap:wrap;">
+                        <a href="{{ route('agent.applications.index') }}" class="btn btn-primary btn-sm">Check Apps</a>
+                        <a href="{{ route('agent.students.index') }}" class="btn btn-secondary btn-sm">Students</a>
+                    </div>
+                </div>
+            </div>
+
+            {{-- ACTIVITIES GRID --}}
+            <div class="ag-activity-grid">
+                <div class="card">
+                    <div class="ag-card-header">
+                        <h5 class="ag-card-title"><span class="ag-card-icon"><i class="fas fa-graduation-cap"></i></span>
+                            Student Activities</h5>
+                    </div>
+                    <div class="ag-card-body" style="padding:0.75rem 1.25rem;">
+                        <ul class="ag-activity-list">
+                            @forelse($studentActivities as $act)
+                                <li class="ag-activity-item">
+                                    @if ($act->notifiable_id)
+                                        <a href="{{ route('agent.students.show', $act->notifiable_id) }}"
+                                            class="ag-activity-link text-secondary">{{ $act->description }}</a>
+                                    @else
+                                        <span>{{ $act->description }}</span>
+                                    @endif
+                                    <div class="ag-activity-time text-muted">{{ $act->created_at->diffForHumans() }}</div>
+                                </li>
+                            @empty
+                                <li class="ag-activity-item text-muted">No student activities</li>
+                            @endforelse
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="ag-card-header">
+                        <h5 class="ag-card-title"><span class="ag-card-icon"
+                                style="background:linear-gradient(135deg,#0d9488,#06b6d4);"><i
+                                    class="fas fa-folder-open"></i></span> Documents</h5>
+                    </div>
+                    <div class="ag-card-body" style="padding:0.75rem 1.25rem;">
+                        <ul class="ag-activity-list">
+                            @forelse($documentActivities as $act)
+                                <li class="ag-activity-item">
+                                    @if ($act->notifiable_id)
+                                        <a href="{{ route('agent.documents.index', $act->notifiable_id) }}"
+                                            class="ag-activity-link text-secondary">{{ $act->description }}</a>
+                                    @else
+                                        <span>{{ $act->description }}</span>
+                                    @endif
+                                    <div class="ag-activity-time text-muted">{{ $act->created_at->diffForHumans() }}</div>
+                                </li>
+                            @empty
+                                <li class="ag-activity-item text-muted">No document activities</li>
+                            @endforelse
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="ag-card-header">
+                        <h5 class="ag-card-title"><span class="ag-card-icon"
+                                style="background:linear-gradient(135deg,#f59e0b,#ef4444);"><i
+                                    class="fas fa-file-alt"></i></span> Applications</h5>
+                    </div>
+                    <div class="ag-card-body" style="padding:0.75rem 1.25rem;">
+                        <ul class="ag-activity-list">
+                            @forelse($applicationActivities as $act)
+                                <li class="ag-activity-item">
+                                    @if ($act->notifiable_id)
+                                        <a href="{{ route('agent.applications.show', $act->notifiable_id) }}"
+                                            class="ag-activity-link text-secondary">{{ $act->description }}</a>
+                                    @else
+                                        <span>{{ $act->description }}</span>
+                                    @endif
+                                    <div class="ag-activity-time text-muted">{{ $act->created_at->diffForHumans() }}</div>
+                                </li>
+                            @empty
+                                <li class="ag-activity-item text-muted">No application activities</li>
+                            @endforelse
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script>
+        // (Chart.js initialization remains exactly the same as your original)
+        document.addEventListener('DOMContentLoaded', function() {
+            Chart.defaults.font.family = "'Plus Jakarta Sans', sans-serif";
+            Chart.defaults.color = '#64748b';
+
+            function fallbackDoughnut(ctx, msg = 'No Data') {
+                return new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: [msg],
+                        datasets: [{
+                            data: [1],
+                            backgroundColor: ['#e5e7eb'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        cutout: '70%',
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                enabled: false
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Progress Chart
+            const statusCounts = @json($statusCounts);
+            const statusLabels = @json($statusLabels);
+            const statusColors = @json($statusColors);
+            const hasProgress = statusCounts.length && statusCounts.reduce((a, b) => a + b, 0) > 0;
+            if (!hasProgress) {
+                fallbackDoughnut(document.getElementById('progressChart'));
+            } else {
+                new Chart(document.getElementById('progressChart'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: statusLabels,
+                        datasets: [{
+                            data: statusCounts,
+                            backgroundColor: statusColors,
+                            borderWidth: 2,
+                            borderColor: '#fff',
+                            hoverOffset: 6
+                        }]
+                    },
+                    options: {
+                        cutout: '0%',
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: ctx => {
+                                        const total = statusCounts.reduce((a, b) => a + b, 0);
+                                        const p = total ? Math.round(ctx.raw / total * 100) : 0;
+                                        return `${ctx.label}: ${ctx.raw} (${p}%)`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Course Type
+            const ctLabels = @json($courseTypeLabels);
+            const ctValues = @json($courseTypeValues);
+            const hasCT = ctValues.length && ctValues.reduce((a, b) => a + b, 0) > 0;
+            if (!hasCT) {
+                fallbackDoughnut(document.getElementById('courseTypeChart'));
+            } else {
+                new Chart(document.getElementById('courseTypeChart'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: ctLabels,
+                        datasets: [{
+                            data: ctValues,
+                            backgroundColor: ['#1a0262', '#820b5c', '#f97316', '#0ea5e9', '#ef4444',
+                                '#10b981'
+                            ],
+                            borderWidth: 2,
+                            borderColor: '#fff'
+                        }]
+                    },
+                    options: {
+                        cutout: '60%',
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    font: {
+                                        size: 11
+                                    },
+                                    padding: 10
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Monthly
+            new Chart(document.getElementById('monthlyChart'), {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov',
+                        'Dec'
+                    ],
+                    datasets: [{
+                        label: 'Applications',
+                        data: @json($monthlyArr),
+                        borderColor: '#820b5c',
+                        backgroundColor: 'rgba(130,11,92,0.08)',
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 4,
+                        pointBackgroundColor: '#820b5c'
                     }]
-                }
-                , options: {
-                    cutout: '0%'
-                    , plugins: {
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
                         legend: {
                             display: false
                         }
-                        , tooltip: {
-                            callbacks: {
-                                label: ctx => {
-                                    const total = statusCounts.reduce((a, b) => a + b, 0);
-                                    const pct = total ? Math.round(ctx.raw / total * 100) : 0;
-                                    return `${ctx.label}: ${ctx.raw} (${pct}%)`;
-                                }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(0,0,0,0.04)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
                             }
                         }
                     }
                 }
             });
-        }
 
-        // ==========================================================
-        // COURSE TYPE DONUT CHART
-        // ==========================================================
-        const courseTypeLabels = @json($courseTypeLabels);
-        const courseTypeValues = @json($courseTypeValues);
-
-        if (!courseTypeValues || courseTypeValues.reduce((a, b) => a + b, 0) === 0) {
-            createFallbackDoughnut(document.getElementById('courseTypeChart'), "No Data");
-        } else {
-            new Chart(document.getElementById('courseTypeChart'), {
-                type: 'doughnut'
-                , data: {
-                    labels: courseTypeLabels
-                    , datasets: [{
-                        data: courseTypeValues
-                        , backgroundColor: [
-                            '#1a0262', '#820b5c', '#f97316', '#0ea5e9', '#ef4444', '#f97316', '#10b981'
-                        ]
-                    }]
+            // University
+            const uniData = @json($universityChartData ?? ['labels' => [], 'datasets' => [['data' => []]]]);
+            if (uniData.labels && uniData.labels.length > 0) {
+                if (uniData.datasets[0]) {
+                    uniData.datasets[0].maxBarThickness = 40;
+                    uniData.datasets[0].categoryPercentage = 0.6;
+                    uniData.datasets[0].barPercentage = 0.7;
                 }
-                , options: {
-                    cutout: '65%'
-                    , plugins: {
-                        legend: {
-                            display: false
+                new Chart(document.getElementById('universityChart'), {
+                    type: 'bar',
+                    data: uniData,
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: ctx => `${ctx.parsed.y} Applications`
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    stepSize: 1
+                                },
+                                grid: {
+                                    color: 'rgba(0,0,0,0.04)'
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    display: false
+                                },
+                                ticks: {
+                                    font: {
+                                        size: 12
+                                    }
+                                }
+                            }
                         }
                     }
-                }
-            });
-        }
-
-        // ==========================================================
-        // MONTHLY APPLICATION LINE CHART
-        // ==========================================================
-        new Chart(document.getElementById('monthlyChart'), {
-            type: 'line'
-            , data: {
-                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-                , datasets: [{
-                    label: 'Applications'
-                    , data: @json($monthlyArr)
-                    , borderColor: '#820b5c'
-                    , backgroundColor: 'rgba(79,70,229,0.18)'
-                    , fill: true
-                    , tension: 0.32
-                    , pointRadius: 3
-                }]
-            }
-            , options: {
-                responsive: true
-                , scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                }
-                , plugins: {
-                    legend: {
-                        display: false
-                    }
-                }
+                });
+            } else {
+                document.getElementById('universityChart').closest('.ag-card-body').innerHTML =
+                    '<p class="text-center text-muted py-3">No university data yet</p>';
             }
         });
-
-        // ==========================================================
-        // COUNTRY BAR CHART
-        // ==========================================================
-        new Chart(document.getElementById('countryChart'), {
-            type: 'bar'
-            , data: {
-                labels: @json($countryLabels)
-                , datasets: [{
-                    label: 'Applications'
-                    , data: @json($countryCounts)
-                    , backgroundColor: '#1a0262'
-                }]
-            }
-            , options: {
-                responsive: true
-                , scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                }
-                , plugins: {
-                    legend: {
-                        display: false
-                    }
-                }
-            }
-        });
-
-    });
-
-</script>
+    </script>
 @endsection

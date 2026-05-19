@@ -223,69 +223,84 @@
 
         </div>
 
-        {{-- Filters Card --}}
-        <div class="card shadow-sm mb-4">
-            <div class="card-body">
-                <form method="GET" action="{{ route('admin.applications.index') }}" class="row g-3">
-                    {{-- Search --}}
-                    <div class="col-md-4">
-                        <div class="input-group">
-                            <span class="input-group-text bg-white">
-                                <i class="fas fa-search text-muted"></i>
-                            </span>
-                            <input type="text" name="search" class="form-control"
-                                placeholder="Search by student name, email, course or university..."
-                                value="{{ request('search') }}">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body p-3">
+                <form method="GET" action="{{ route('admin.students.index') }}" id="filterForm">
+                    <div class="row g-2 align-items-end">
+                        <div class="col-md-3">
+                            <label class="form-label small fw-semibold mb-1">Search</label>
+                            <input type="text" name="search" value="{{ request('search') }}"
+                                class="form-control form-control-sm" placeholder="Name or email…" id="searchInput"
+                                onkeyup="debounceSubmit()">
                         </div>
-                    </div>
+                        <div class="col-md-2">
+                            <label class="form-label small fw-semibold mb-1">Applied Country</label>
+                            <select name="applied_country" class="form-select form-select-sm"
+                                onchange="submitWithSingleFilter('applied_country', this.value)" id="appliedCountrySelect">
+                                <option value="">Applied Countries ({{ $countries->count() }})</option>
+                                @foreach ($countries as $country)
+                                    <option value="{{ $country->name }}"
+                                        {{ request('applied_country') == $country->name ? 'selected' : '' }}>
+                                        {{ $country->name }} ({{ $country->count }} apps)
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small fw-semibold mb-1">Applied University</label>
+                            <select name="university" class="form-select form-select-sm"
+                                onchange="submitWithSingleFilter('university', this.value)" id="universitySelect">
+                                <option value="">All Universities ({{ $universities->count() }})</option>
+                                @foreach ($universities as $uni)
+                                    <option value="{{ $uni->id }}"
+                                        {{ request('university') == $uni->id ? 'selected' : '' }}>
+                                        {{ $uni->name }}– {{ $uni->city }} ({{ $uni->applications_count }})
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small fw-semibold mb-1">Agent</label>
+                            <select name="agent" class="form-select form-select-sm"
+                                onchange="submitWithSingleFilter('agent', this.value)" id="agentSelect">
+                                <option value="">Applying Agents ({{ $agents->count() }})</option>
+                                @foreach ($agents as $agent)
+                                    <option value="{{ $agent->id }}"
+                                        {{ request('agent') == $agent->id ? 'selected' : '' }}>
+                                        {{ $agent->business_name ?? $agent->username }}
+                                        ({{ $agent->students_count }})
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small fw-semibold mb-1">Application Status</label>
+                            <select name="status" class="form-select form-select-sm"
+                                onchange="submitWithSingleFilter('status', this.value)" id="statusSelect">
+                                <option value="">All Status ({{ $statuses->count() }})</option>
+                                @foreach ($statuses as $status)
+                                    <option value="{{ $status->id }}"
+                                        {{ request('status') == $status->id ? 'selected' : '' }}>
+                                        {{ $status->name }} ({{ $status->applications_count }})
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
 
-                    {{-- Status Filter --}}
-                    <div class="col-md-3">
-                        <select name="status_filter" class="form-select" onchange="this.form.submit()">
-                            <option value="">All Statuses</option>
-                            @foreach ($statuses as $status)
-                                <option value="{{ $status->id }}"
-                                    {{ request('status_filter') == $status->id ? 'selected' : '' }}>
-                                    {{ $status->name }} ({{ $status->applications_count }})
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    {{-- University Filter --}}
-                    <div class="col-md-3">
-                        <select name="university_filter" class="form-select" onchange="this.form.submit()">
-                            <option value="">All Universities</option>
-                            @foreach ($universities as $university)
-                                <option value="{{ $university->id }}"
-                                    {{ request('university_filter') == $university->id ? 'selected' : '' }}>
-                                    {{ $university->short_name }}-{{ $university->city }}
-                                    ({{ $university->applications_count }})
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    {{-- Search Button --}}
-                    <div class="col-md-1">
-                        <button type="submit" class="btn btn-primary w-100">
-                            <i class="fas fa-search"></i>
-                        </button>
-                    </div>
-
-                    {{-- Reset Button --}}
-                    {{-- Reset Button --}}
-                    @if (request()->filled('search') ||
-                            request()->filled('status_filter') ||
-                            request()->filled('university_filter') ||
-                            request()->filled('status'))
                         <div class="col-md-1">
-                            <a href="{{ route('admin.applications.index') }}" class="btn btn-outline-secondary w-100">
-                                <i class="fas fa-redo"></i>
-                            </a>
+                            @if (request()->hasAny(['search', 'status', 'agent', 'university', 'applied_country']))
+                                <a href="{{ request()->url() }}" class="btn btn-sm btn-outline-danger w-100"
+                                    onclick="return clearAllFilters()">
+                                    Clear Filters
+                                </a>
+                            @endif
                         </div>
-                    @endif
+                    </div>
 
+                    {{-- Preserve quick_filter in filter form --}}
+                    @if (request('quick_filter'))
+                        <input type="hidden" name="quick_filter" value="{{ request('quick_filter') }}">
+                    @endif
                 </form>
             </div>
         </div>
@@ -462,76 +477,23 @@
         </div>
     </div>
 
-    {{-- SOP View Modal --}}
-    <div class="modal fade" id="sopModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">
-                        <i class="fas fa-file-alt me-2 text-primary"></i>
-                        Statement of Purpose - <span id="sopStudentName"></span>
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div id="sopContent">
-                        <div class="text-center py-5">
-                            <div class="spinner-border text-primary" role="status">
-                                <span class="visually-hidden">Loading...</span>
-                            </div>
-                            <p class="mt-3">Loading document...</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <a href="#" id="downloadSopBtn" class="btn btn-primary" download>
-                        <i class="fas fa-download me-2"></i>Download
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
-@endsection
-
-@push('scripts')
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-        // SOP Modal Handler
-        document.querySelectorAll('.view-sop').forEach(button => {
-            button.addEventListener('click', function(e) {
-                // Prevent if clicked from dropdown
-                e.stopPropagation();
-
-                const sopUrl = this.getAttribute('data-sop-url');
-                const studentName = this.getAttribute('data-student-name');
-
-                document.getElementById('sopStudentName').textContent = studentName;
-                const downloadBtn = document.getElementById('downloadSopBtn');
-                downloadBtn.href = sopUrl;
-
-                const sopContent = document.getElementById('sopContent');
-
-                // Check file extension
-                const fileExtension = sopUrl.split('.').pop().toLowerCase();
-
-                if (fileExtension === 'pdf') {
-                    sopContent.innerHTML =
-                        `<iframe src="${sopUrl}" style="width: 100%; height: 500px; border: none;"></iframe>`;
-                } else {
-                    sopContent.innerHTML = `
-                    <div class="text-center py-5">
-                        <i class="fas fa-file-word fa-4x text-primary mb-3"></i>
-                        <p>Click the download button to view this document.</p>
-                        <a href="${sopUrl}" target="_blank" class="btn btn-primary">
-                            <i class="fas fa-external-link-alt me-2"></i>Open in New Tab
-                        </a>
-                    </div>
-                `;
-                }
-
-                new bootstrap.Modal(document.getElementById('sopModal')).show();
+        // Auto-submit form when any select filter changes
+        document.querySelectorAll(
+            'select[name="status_filter"], select[name="university_filter"], select[name="agent_filter"], select[name="country_filter"]'
+        ).forEach(select => {
+            select.addEventListener('change', function() {
+                this.closest('form').submit();
             });
         });
+
+        // Optional: Debounced search input
+        let searchTimeout;
+        document.querySelector('input[name="search"]').addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                this.closest('form').submit();
+            }, 500);
+        });
     </script>
-@endpush
+@endsection

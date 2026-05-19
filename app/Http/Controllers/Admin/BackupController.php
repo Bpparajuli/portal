@@ -27,7 +27,7 @@ class BackupController extends Controller
             abort(403, 'Unauthorized action.');
         }
 
-        $hashFile = storage_path('app/backup_files_hash.txt');
+        $hashFile = storage_path('app/public/backup_files_hash.txt');
 
         // Calculate current folder hash
         $currentHash = $this->folderHash(base_path());
@@ -45,7 +45,7 @@ class BackupController extends Controller
 
         // Create ZIP backup
         $zip = new ZipArchive;
-        $zipFile = storage_path('app/project_backup_' . date('Y-m-d_His') . '.zip');
+        $zipFile = storage_path('app/public/project_backup_' . date('Y-m-d_His') . '.zip');
 
         if ($zip->open($zipFile, ZipArchive::CREATE | ZipArchive::OVERWRITE)) {
             $this->zipFolder(base_path(), $zip);

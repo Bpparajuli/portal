@@ -21,6 +21,7 @@ use App\Notifications\UserRegistered;
 use App\Notifications\UserApproved;
 use App\Notifications\AgreementSubmitted;
 use App\Notifications\AgreementVerified;
+use Illuminate\Support\Facades\Log;
 
 class UserController extends Controller
 {
@@ -439,7 +440,6 @@ class UserController extends Controller
         if ($request->hasFile('agreement_file')) {
             $user->agreement_file = FileUploadService::uploadAgentFile($request, $user, 'agreement_file', 'agreement');
             $user->agreement_status = 'uploaded';
-            $user->notify(new AgreementSubmitted($user));
         } else {
             $user->agreement_status = $request->agreement_status ?? 'not_uploaded';
         }
@@ -547,7 +547,6 @@ class UserController extends Controller
             if ($oldFile && Storage::disk('public')->exists($oldFile)) {
                 Storage::disk('public')->delete($oldFile);
             }
-            $user->notify(new AgreementSubmitted($user));
         } elseif ($request->has('agreement_status') && !$request->hasFile('agreement_file')) {
             $user->agreement_status = $request->agreement_status;
         }
@@ -624,16 +623,25 @@ class UserController extends Controller
      */
     public function deleteAgreement(User $user)
     {
-        if ($user->agreement_file && Storage::disk('public')->exists($user->agreement_file)) {
-            Storage::disk('public')->delete($user->agreement_file);
+        try {
+            // Delete the file
+            if ($user->agreement_file && Storage::disk('public')->exists($user->agreement_file)) {
+                Storage::disk('public')->delete($user->agreement_file);
+            }
+
+            // Update the user record
+            $user->update([
+                'agreement_file' => null,
+                'agreement_status' => 'not_uploaded'
+            ]);
+
+            // Return redirect with success message
+            return redirect()->back()->with('success', 'Agreement deleted successfully.');
+        } catch (\Exception $e) {
+            Log::error('Agreement deletion error: ' . $e->getMessage());
+
+            return redirect()->back()->with('error', 'Error deleting agreement: ' . $e->getMessage());
         }
-
-        $user->update([
-            'agreement_file' => null,
-            'agreement_status' => 'not_uploaded'
-        ]);
-
-        return response()->json(['success' => true, 'message' => 'Agreement deleted successfully.']);
     }
 
     /**

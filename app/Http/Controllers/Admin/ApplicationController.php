@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use App\Notifications\ApplicationMessageAdded;
 use App\Notifications\ApplicationStatusUpdated;
+use Illuminate\Support\Facades\DB;
 
 class ApplicationController extends Controller
 {
@@ -84,6 +85,28 @@ class ApplicationController extends Controller
 
         /*
     |--------------------------------------------------------------------------
+    | Agent Filter
+    |--------------------------------------------------------------------------
+    */
+        if ($request->filled('agent_filter')) {
+            $query->where('agent_id', $request->agent_filter);
+        }
+
+        /*
+    |--------------------------------------------------------------------------
+    | Applied University Country Filter
+    |--------------------------------------------------------------------------
+    */
+        if ($request->filled('country_filter')) {
+            $query->whereHas('university', function ($q) use ($request) {
+                $q->where('country_id', $request->country_filter);
+                // If you don't have country_id in universities table, use:
+                // $q->where('country', $request->country_filter);
+            });
+        }
+
+        /*
+    |--------------------------------------------------------------------------
     | Only show statuses having applications
     |--------------------------------------------------------------------------
     */
@@ -98,12 +121,42 @@ class ApplicationController extends Controller
     | Only show universities having applications
     |--------------------------------------------------------------------------
     */
-
-
         $universities = University::whereHas('applications')
             ->withCount('applications')
             ->orderBy('name')
             ->get();
+
+        /*
+    |--------------------------------------------------------------------------
+    | Get all agents (users with agent role) for filter
+    |--------------------------------------------------------------------------
+    */
+
+        $agents = User::agents()
+            ->whereHas('students')
+            ->withCount('students')
+            ->orderBy('business_name')
+            ->get();
+        /*
+    |--------------------------------------------------------------------------
+    | Get countries where universities have applications
+    |--------------------------------------------------------------------------
+    */
+        // Get countries with application counts - UPDATED
+        $countries = collect(Application::whereHas('student')
+            ->whereNotNull('university_id')
+            ->join('universities', 'applications.university_id', '=', 'universities.id')
+            ->select('universities.country', DB::raw('COUNT(*) as application_count'))
+            ->whereNotNull('universities.country')
+            ->groupBy('universities.country')
+            ->orderBy('application_count', 'DESC')
+            ->get())
+            ->map(function ($item) {
+                return (object) [
+                    'name' => $item->country,
+                    'count' => (int) $item->application_count
+                ];
+            });
         /*
     |--------------------------------------------------------------------------
     | Statistics Count Cards
@@ -126,6 +179,8 @@ class ApplicationController extends Controller
             'applications',
             'statuses',
             'universities',
+            'agents',
+            'countries',
             'acceptedCount',
             'rejectedCount',
             'lostCount'

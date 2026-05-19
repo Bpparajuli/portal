@@ -104,7 +104,6 @@
     <script src="{{ asset('js/login.js') }}"></script>
     <script src="{{ asset('js/header.js') }}"></script>
     <script src="{{ asset('js/filter.js') }}"></script>
-    <script src="{{ asset('js/file-modal.js') }}"></script>
     @stack('scripts')
 </body>
 

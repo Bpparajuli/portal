@@ -63,4 +63,77 @@ class ReminderController extends Controller
 
         return back()->with('success', $users->count() . ' reminder emails sent successfully.');
     }
+    /**
+     * Get email preview
+     */
+    public function previewEmail(Request $request)
+    {
+        try {
+            $userIds = $request->input('user_ids', []);
+            $isBulk = $request->input('is_bulk', false);
+
+            if (is_string($userIds)) {
+                $userIds = [$userIds];
+            }
+
+            $userIds = array_map('intval', $userIds);
+
+            // Get first user for preview
+            $user = User::find($userIds[0]);
+
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User not found'
+                ]);
+            }
+
+            // Generate the same custom content as your notification
+            $userName = $user->business_name ?? $user->username ?? $user->name;
+
+            $customContent = '
+        <div>
+            <p>Dear <strong>' . e($userName) . '</strong>,</p>
+            
+            <p>This is a friendly reminder to submit your agreement document to complete your registration process.
+            
+            <p>Please log in to your account and upload the required agreement document as soon as possible.</p>
+            
+            <div style="margin: 25px 0; padding: 15px; background-color: #fff3cd; border-left: 4px solid #ffc107; border-radius: 4px;">
+                <strong style="color: #bd951a;">⚠️ Important:</strong>
+                <p style="margin: 5px 0 0 0; color: #bd951a;">Your account will not be fully activated until the agreement is verified.</p>
+            </div>
+            
+            <div style="margin-top: 25px; text-align: center;">
+                <a href="' . route('login') . '"
+                    style="display: inline-block; background-color: #1a0262; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+                    Login to Upload Agreement
+                </a>
+            </div>
+        </div>
+        
+        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
+            <p>Best regards,<br>
+                <strong>' . e(config('app.name')) . ' Team</strong>
+            </p>
+        </div>';
+
+            // Use your existing layout
+            $html = view('emails.layout', [
+                'subject' => 'Agreement Upload Reminder',
+                'customContent' => $customContent
+            ])->render();
+
+            return response()->json([
+                'success' => true,
+                'html' => $html
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Email preview error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to generate email preview: ' . $e->getMessage()
+            ]);
+        }
+    }
 }

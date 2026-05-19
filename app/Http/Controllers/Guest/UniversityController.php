@@ -37,7 +37,7 @@ class UniversityController extends Controller
         if ($request->filled('university_id')) $query->where('id', $request->university_id);
         if ($request->filled('course_id')) $query->whereHas('courses', fn($q) => $q->where('id', $request->course_id));
 
-        $universities = $query->paginate(16)->withQueryString();
+        $universities = $query->paginate(15)->withQueryString();
 
         return view('guest.universities.index', compact('universities', 'countries'));
     }

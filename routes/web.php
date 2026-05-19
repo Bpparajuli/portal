@@ -174,6 +174,8 @@ Route::middleware(['auth', \App\Http\Middleware\IsAdmin::class])
         Route::post('notifications/{id}/read', [AdminNotificationController::class, 'markAsRead'])->name('notifications.markRead');
         Route::post('notifications/{id}/unread', [AdminNotificationController::class, 'markAsUnread'])->name('notifications.markUnread');
         Route::get('notifications/{id}/redirect', [AdminNotificationController::class, 'readAndRedirect'])->name('notifications.readAndRedirect');
+        Route::delete('/{id}', [AdminNotificationController::class, 'delete'])->name('notifications.delete');
+        Route::delete('/', [AdminNotificationController::class, 'deleteAll'])->name('notifications.deleteAll');
 
         // Users — special routes BEFORE resource
         Route::get('users/waiting', [AdminUserController::class, 'waiting'])->name('users.waiting');
@@ -186,6 +188,7 @@ Route::middleware(['auth', \App\Http\Middleware\IsAdmin::class])
         Route::get('users/get-parents', [AdminUserController::class, 'getParents'])->name('users.get-parents');
         Route::resource('users', AdminUserController::class)->parameters(['users' => 'user:slug']);
 
+        Route::post('/users/reminder/preview', [AdminReminderController::class, 'previewEmail'])->name('reminder.preview');
         // Dynamic Data
         Route::get('get-cities/{country}', [AdminUniversityController::class, 'getCities'])->name('get-cities');
         Route::get('get-universities/{city}', [AdminUniversityController::class, 'getUniversities'])->name('get-universities');
@@ -276,6 +279,8 @@ Route::middleware(['auth', \App\Http\Middleware\IsAgent::class])
         Route::post('notifications/{id}/read', [AgentNotificationController::class, 'markAsRead'])->name('notifications.markRead');
         Route::post('notifications/{id}/unread', [AgentNotificationController::class, 'markAsUnread'])->name('notifications.markUnread');
         Route::get('notifications/{id}/redirect', [AgentNotificationController::class, 'readAndRedirect'])->name('notifications.readAndRedirect');
+        Route::delete('notifications/{id}/delete', [AgentNotificationController::class, 'delete'])->name('notifications.delete');
+        Route::delete('notifications/delete-all', [AgentNotificationController::class, 'deleteAll'])->name('notifications.deleteAll');
 
         // Dynamic data
         Route::get('universities', [AgentUniversityController::class, 'index'])->name('universities.index');
@@ -305,6 +310,21 @@ Route::middleware(['auth', \App\Http\Middleware\IsAgent::class])
         Route::delete('/staff/{user:slug}', [AgentUserController::class, 'destroyStaff'])->name('staff.destroy');
         Route::get('/staff/{user:slug}', [AgentUserController::class, 'showStaff'])->name('staff.show');
 
+        // Applications - special routes BEFORE resource
+        Route::get('students/{student}/applications', [AgentApplicationController::class, 'forStudent'])->name('students.applications');
+
+        // Quick start route - MUST be before the resource routes
+        Route::get('applications/quick-start', [AgentApplicationController::class, 'quickStart'])->name('applications.quick-start');
+
+        // Additional application routes (place BEFORE resource to avoid conflicts)
+        Route::get('applications/get-courses/{universityId}', [AgentApplicationController::class, 'getCourses'])->name('applications.get-courses');
+        Route::patch('applications/{application}/withdraw', [AgentApplicationController::class, 'withdraw'])->name('applications.withdraw');
+        Route::post('applications/{application}/add-message', [AgentApplicationController::class, 'addMessage'])->name('applications.addMessage');
+        Route::delete('applications/{application}/messages/{message}', [AgentApplicationController::class, 'deleteMessage'])->name('applications.messages.delete');
+
+        // Application resource routes (only once!)
+        Route::resource('applications', AgentApplicationController::class);
+
         // Documents
         Route::prefix('students/{student}')->group(function () {
             Route::get('documents', [AgentDocumentController::class, 'index'])->name('documents.index');
@@ -314,16 +334,7 @@ Route::middleware(['auth', \App\Http\Middleware\IsAgent::class])
             Route::delete('documents/{document}', [AgentDocumentController::class, 'destroy'])->name('documents.destroy');
             Route::get('documents/{document}/download', [AgentDocumentController::class, 'download'])->name('documents.download');
         });
-
-        // Applications — special routes BEFORE resource
-        Route::get('students/{student}/applications', [AgentApplicationController::class, 'forStudent'])->name('students.applications');
-        Route::get('applications/get-courses/{universityId}', [AgentApplicationController::class, 'getCourses'])->name('applications.get-courses');
-        Route::patch('applications/{application}/withdraw', [AgentApplicationController::class, 'withdraw'])->name('applications.withdraw');
-        Route::post('applications/{application}/add-message', [AgentApplicationController::class, 'addMessage'])->name('applications.addMessage');
-        Route::delete('applications/{application}/messages/{message}', [AgentApplicationController::class, 'deleteMessage'])->name('applications.messages.delete');
-        Route::resource('applications', AgentApplicationController::class);
     });
-
 /*
 |--------------------------------------------------------------------------
 | CRM Routes
