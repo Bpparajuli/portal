@@ -11,6 +11,7 @@ return new class extends Migration
         Schema::create('students', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->unsignedBigInteger('agent_id')->nullable()->index('fk_agent');
+            $table->string('source')->nullable();
             $table->string('first_name');
             $table->string('last_name');
             $table->string('students_photo')->nullable();

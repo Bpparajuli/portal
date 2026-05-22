@@ -26,6 +26,10 @@ class CrmTasks extends Model
         'status',
         'completed_at',
         'completed_by',
+        'completion_note',      // ADD THIS - was missing
+        'cancelled_at',         // ADD THIS - was missing
+        'cancelled_by',         // ADD THIS - was missing
+        'cancellation_note',    // ADD THIS - was missing
         'call_direction',
         'duration_minutes',
         'meta_data',
@@ -34,6 +38,7 @@ class CrmTasks extends Model
     protected $casts = [
         'scheduled_at' => 'datetime',
         'completed_at' => 'datetime',
+        'cancelled_at' => 'datetime',  // ADD THIS
         'meta_data'    => 'array',
     ];
 
@@ -56,9 +61,14 @@ class CrmTasks extends Model
         return $this->belongsTo(User::class, 'assigned_to');
     }
 
-    public function completer()
+    public function completedBy()
     {
         return $this->belongsTo(User::class, 'completed_by');
+    }
+
+    public function cancelledBy()
+    {
+        return $this->belongsTo(User::class, 'cancelled_by');
     }
 
     // =========================================================================
@@ -73,6 +83,11 @@ class CrmTasks extends Model
     public function scopeCompleted($query)
     {
         return $query->where('status', 'completed');
+    }
+
+    public function scopeCancelled($query)
+    {
+        return $query->where('status', 'cancelled');
     }
 
     public function scopeToday($query)
@@ -203,7 +218,7 @@ class CrmTasks extends Model
     {
         return [
             'morning' => '🌅 Morning (9AM–12PM)',
-            'day'     => '☀️ Day (12PM–4PM)',
+            'afternoon' => '☀️ Afternoon (12PM–4PM)',
             'evening' => '🌙 Evening (4PM–8PM)',
         ][$this->priority_time_slot] ?? 'Not scheduled';
     }
@@ -261,15 +276,25 @@ class CrmTasks extends Model
     // Methods
     // =========================================================================
 
-    public function markAsComplete(): static
+    public function markAsComplete(?string $note = null): static
     {
-        $this->update(['status' => 'completed', 'completed_at' => now(), 'completed_by' => Auth::id()]);
+        $this->update([
+            'status' => 'completed',
+            'completed_at' => now(),
+            'completed_by' => Auth::id(),
+            'completion_note' => $note,
+        ]);
         return $this;
     }
 
-    public function markAsCancelled(): static
+    public function markAsCancelled(?string $reason = null): static
     {
-        $this->update(['status' => 'cancelled']);
+        $this->update([
+            'status' => 'cancelled',
+            'cancelled_at' => now(),
+            'cancelled_by' => Auth::id(),
+            'cancellation_note' => $reason,
+        ]);
         return $this;
     }
 

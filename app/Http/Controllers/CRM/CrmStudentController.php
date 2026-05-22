@@ -74,6 +74,10 @@ class CrmStudentController extends Controller
             ->latest()
             ->get();
 
+        $staffUsers = User::where('role', 'staff')
+            ->orderBy('name')
+            ->get(['id', 'name', 'role', 'business_logo']);
+
         $stages       = StudentStage::active()->ordered()->get();
         $currentStage = $student->currentStage;
 
@@ -116,7 +120,8 @@ class CrmStudentController extends Controller
             'stages',
             'currentStage',
             'assignableUsers',
-            'canEdit'
+            'canEdit',
+            'staffUsers'
         ));
     }
 

@@ -666,7 +666,9 @@
                         <i class="fas fa-bullhorn"></i>
                         <div class="notice-text">
                             <span>
-                                Applications are now open for Germany September/October 2026 intake. As this is the main intake, agents are encouraged to advise students to apply early to avoid last-minute hassles and ensure timely processing of admissions, documents, and visas.
+                                Applications are now open for Germany September/October 2026 intake. As this is the main
+                                intake, agents are encouraged to advise students to apply early to avoid last-minute hassles
+                                and ensure timely processing of admissions, documents, and visas.
                             </span>
                         </div>
                     </div>
@@ -851,6 +853,9 @@
                                 </a>
                                 <a href="{{ route('admin.application-status.index') }}" class="panel-item">
                                     <i class="fas fa-layer-group"></i> Application Status
+                                </a>
+                                <a href="{{ route('admin.qr-code') }}" class="panel-item">
+                                    <i class="fas fa-qrcode"></i> ADD Student QR
                                 </a>
                             @endif
                             <a href="#" class="panel-item text-danger"

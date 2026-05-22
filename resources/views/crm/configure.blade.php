@@ -1,5 +1,5 @@
 {{-- resources/views/crm/configure.blade.php --}}
-@extends('layouts.app')
+@extends('layouts.crm')
 
 @section('title', 'CRM — Configure Stages')
 
@@ -335,15 +335,21 @@
                         {{-- Create form --}}
                         <form id="stageCreateForm" action="{{ route('crm.configure.store') }}" method="POST">
                             @csrf
-                            @include('crm.partials._stage_form', ['stage' => null])
-                            <button type="submit" class="btn btn-primary w-100 mt-2">Create Stage</button>
+                            @include('crm.partials._stage_form', [
+                                'stage' => null,
+                                'mode' => 'create',
+                            ])
+                            <button type="submit" class="btn btn-primary w-100 mt-2">Create
+                                Stage</button>
                         </form>
 
                         {{-- Edit form (hidden until Edit clicked) --}}
                         <form id="stageEditForm" style="display:none" method="POST">
                             @csrf @method('PUT')
-                            @include('crm.partials._stage_form', ['stage' => null])
-                            <div class="d-flex gap-2 mt-2">
+                            @include('crm.partials._stage_form', [
+                                'stage' => null,
+                                'mode' => 'edit',
+                            ]) <div class="d-flex gap-2 mt-2">
                                 <button type="submit" class="btn btn-primary flex-grow-1">Update Stage</button>
                                 <button type="button" class="btn btn-outline-secondary"
                                     onclick="showCreateForm()">Cancel</button>
@@ -430,15 +436,5 @@
                     window.location.reload();
                 });
         }
-
-        // ── Color picker init ────────────────────────────────────────────
-        document.querySelectorAll('.color-swatch').forEach(swatch => {
-            swatch.addEventListener('click', function() {
-                const form = this.closest('form');
-                form.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
-                this.classList.add('selected');
-                form.querySelector('[name="color"]').value = this.dataset.color;
-            });
-        });
     </script>
 @endpush

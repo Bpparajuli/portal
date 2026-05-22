@@ -2,6 +2,12 @@
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Http\Request;
+use App\Models\UserStatus;
+use App\Models\User;
+use App\Http\Controllers\StudentIntakeController;
+
 
 // Guest Controllers
 use App\Http\Controllers\Guest\{
@@ -31,7 +37,8 @@ use App\Http\Controllers\Admin\{
     UserController as AdminUserController,
     BackupController as AdminBackupController,
     ReminderController as AdminReminderController,
-    ApplicationStatusController as AdminApplicationStatusController
+    ApplicationStatusController as AdminApplicationStatusController,
+    QRController as AdminQRController
 };
 
 // Agent Controllers
@@ -62,9 +69,6 @@ use App\Http\Controllers\CRM\{
     StudentStageController,
     StudentStageHistoryController,
 };
-
-use App\Models\UserStatus;
-use App\Models\User;
 
 /*
 |--------------------------------------------------------------------------
@@ -156,6 +160,16 @@ Route::middleware(['auth', \App\Http\Middleware\IsAdmin::class])
 
         Route::get('/backup-files', [AdminBackupController::class, 'backupFilesIfChanged'])
             ->name('backup.files');
+
+        // QR Code page
+        Route::get('/qr-code', function () {
+            if (!Auth::check() || !Auth::user()->is_admin) {
+                abort(403, 'Admin access required');
+            }
+            return view('admin.qr-js');
+        })->name('qr-code');
+
+
 
         // Dashboard
         Route::get('dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
@@ -349,15 +363,18 @@ Route::middleware('auth')
     ->name('crm.')
     ->group(function () {
 
-        // ── Pipeline dashboard (Kanban / List / Table) ─────────────────────
+        // ── Pipeline dashboard ─────────────────────────────────────────────
         Route::get('/', [CrmDashboardController::class, 'index'])->name('dashboard');
         Route::get('/export', [CrmDashboardController::class, 'export'])->name('export');
-        Route::put('/student/{id}/update-rating', [CrmDashboardController::class, 'updateRating'])
-            ->name('dashboard.updateRating');
+        Route::put('/student/{id}/update-rating', [CrmDashboardController::class, 'updateRating'])->name('dashboard.updateRating');
+        Route::put('/students/{student}/add-tag', [CrmDashboardController::class, 'addTag'])->name('student.addTag');
+        Route::delete('/students/{student}/remove-tag', [CrmDashboardController::class, 'removeTag'])->name('student.removeTag');
+        Route::get('/popular-tags', [CrmDashboardController::class, 'getPopularTags'])->name('student.popularTags');
+        Route::put('/students/{student}/stage', [CrmDashboardController::class, 'updateStage'])->name('student.update-stage');
+
         // ── Student CRM record ─────────────────────────────────────────────
         Route::get('/student/{student}', [CrmStudentController::class, 'show'])->name('student.show');
         Route::post('/student/{student}/stage', [CrmStudentController::class, 'changeStage'])->name('student.stage');
-        Route::post('/student/{student}/note', [CrmStudentController::class, 'saveNote'])->name('student.note');
 
         // ── Tasks ──────────────────────────────────────────────────────────
         Route::post('/tasks', [CrmTasksController::class, 'store'])->name('tasks.store');
@@ -365,7 +382,10 @@ Route::middleware('auth')
         Route::patch('/tasks/{task}/complete', [CrmTasksController::class, 'complete'])->name('tasks.complete');
         Route::patch('/tasks/{task}/cancel', [CrmTasksController::class, 'cancel'])->name('tasks.cancel');
         Route::delete('/tasks/{task}', [CrmTasksController::class, 'destroy'])->name('tasks.destroy');
-
+        Route::patch('/tasks/{task}/undo', [CrmTasksController::class, 'undoComplete'])->name('tasks.undo');
+        Route::patch('/tasks/{task}/undo-cancel', [CrmTasksController::class, 'undoCancel'])->name('tasks.undo-cancel');
+        Route::get('/tasks/{task}/data', [CrmTasksController::class, 'getTaskData'])->name('tasks.data');
+        Route::patch('/tasks/{task}/reschedule', [CrmTasksController::class, 'reschedule'])->name('tasks.reschedule');
 
         // ── Notes ──────────────────────────────────────────────────────────
         Route::post('/notes', [CrmStudentNoteController::class, 'store'])->name('notes.store');
@@ -373,10 +393,10 @@ Route::middleware('auth')
         Route::patch('/notes/{note}/pin', [CrmStudentNoteController::class, 'togglePin'])->name('notes.pin');
         Route::delete('/notes/{note}', [CrmStudentNoteController::class, 'destroy'])->name('notes.destroy');
 
-        // ── Stage history (JSON — used by History tab fetch) ───────────────
+        // ── Stage history (JSON) ───────────────────────────────────────────
         Route::get('/student/{student}/history', [StudentStageHistoryController::class, 'forStudent'])->name('student.history');
 
-        // ── Configure (admin only — enforced inside controller constructor) ─
+        // ── Configure (admin only) ─────────────────────────────────────────
         Route::prefix('configure')->name('configure.')->group(function () {
             Route::get('/', [StudentStageController::class, 'index'])->name('index');
             Route::post('/', [StudentStageController::class, 'store'])->name('store');
@@ -386,7 +406,6 @@ Route::middleware('auth')
             Route::delete('/{stage}', [StudentStageController::class, 'destroy'])->name('destroy');
         });
     });
-
 /*
 |--------------------------------------------------------------------------
 | Utility / Dev Routes
@@ -401,3 +420,33 @@ Route::get('/fix-user-status', function () {
     }
     return "User statuses created successfully!";
 });
+
+
+
+// ============================================
+// STUDENT INTAKE FORM - Public Form
+// ============================================
+
+// Show the web form
+Route::get('/student-intake-form', [StudentIntakeController::class, 'showForm'])
+    ->name('student.intake.form');
+
+// Quick add via GET (for testing)
+Route::get('/student/quick-add', [StudentIntakeController::class, 'quickAdd'])
+    ->name('student.quick.add');
+
+// API endpoint for all submissions (WhatsApp, Facebook, Web Form)
+Route::post('/api/student/intake', [StudentIntakeController::class, 'intake'])
+    ->name('api.student.intake');
+// Thank You Page
+Route::get('/thank-you', function () {
+    // Get the last created student from session or parameter
+    $student = session('last_student');
+
+    if (!$student) {
+        // If no student in session, redirect to form
+        return redirect()->route('student.intake.form');
+    }
+
+    return view('intake.thank-you', compact('student'));
+})->name('thank-you');
