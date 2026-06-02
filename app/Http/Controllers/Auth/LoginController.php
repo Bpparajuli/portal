@@ -56,7 +56,7 @@ class LoginController extends Controller
         }
 
         if ($user->is_staff) {
-            return redirect()->intended('/crm');
+            return redirect()->route('crm.dashboard', ['assignee_id' => $user->id]);
         }
 
         if ($user->is_agent) {

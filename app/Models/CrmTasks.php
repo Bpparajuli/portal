@@ -21,22 +21,22 @@ class CrmTasks extends Model
         'activity_type',
         'subject',
         'description',
-        'scheduled_at',
+        'scheduled_for',
         'priority_time_slot',
         'status',
         'completed_at',
         'completed_by',
-        'completion_note',      // ADD THIS - was missing
-        'cancelled_at',         // ADD THIS - was missing
-        'cancelled_by',         // ADD THIS - was missing
-        'cancellation_note',    // ADD THIS - was missing
+        'completion_note',
+        'cancelled_at',
+        'cancelled_by',
+        'cancellation_note',
         'call_direction',
         'duration_minutes',
         'meta_data',
     ];
 
     protected $casts = [
-        'scheduled_at' => 'datetime',
+        'scheduled_for' => 'datetime',
         'completed_at' => 'datetime',
         'cancelled_at' => 'datetime',  // ADD THIS
         'meta_data'    => 'array',
@@ -92,17 +92,17 @@ class CrmTasks extends Model
 
     public function scopeToday($query)
     {
-        return $query->whereDate('scheduled_at', today());
+        return $query->whereDate('scheduled_for', today());
     }
 
     public function scopeTomorrow($query)
     {
-        return $query->whereDate('scheduled_at', Carbon::tomorrow());
+        return $query->whereDate('scheduled_for', Carbon::tomorrow());
     }
 
     public function scopeThisWeek($query)
     {
-        return $query->whereBetween('scheduled_at', [now()->startOfWeek(), now()->endOfWeek()]);
+        return $query->whereBetween('scheduled_for', [now()->startOfWeek(), now()->endOfWeek()]);
     }
 
     public function scopeByTimeSlot($query, $slot)
@@ -113,8 +113,8 @@ class CrmTasks extends Model
     public function scopeOverdue($query)
     {
         return $query->where('status', 'pending')
-            ->whereNotNull('scheduled_at')
-            ->where('scheduled_at', '<', now());
+            ->whereNotNull('scheduled_for')
+            ->where('scheduled_for', '<', now());
     }
 
     public function scopeForUser($query, $userId)
@@ -208,10 +208,10 @@ class CrmTasks extends Model
         return $this->priority_time_slot;
     }
 
-    /** $task->due_date maps to scheduled_at */
+    /** $task->due_date maps to scheduled_for */
     public function getDueDateAttribute()
     {
-        return $this->scheduled_at;
+        return $this->scheduled_for;
     }
 
     public function getTimeSlotLabelAttribute(): string
@@ -268,8 +268,8 @@ class CrmTasks extends Model
     public function getIsOverdueAttribute(): bool
     {
         return $this->status === 'pending'
-            && $this->scheduled_at !== null
-            && $this->scheduled_at->lt(now());
+            && $this->scheduled_for !== null
+            && $this->scheduled_for->lt(now());
     }
 
     // =========================================================================

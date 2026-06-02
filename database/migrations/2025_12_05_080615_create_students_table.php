@@ -25,6 +25,7 @@ return new class extends Migration
             $table->string('passport_number', 100)->nullable();
             $table->date('passport_expiry')->nullable();
             $table->enum('marital_status', ['Single', 'Married', 'Other'])->nullable();
+            $table->string('applying_for')->nullable();
             $table->string('qualification')->nullable();
             $table->integer('passed_year')->nullable();
             $table->integer('gap')->nullable();
@@ -37,6 +38,9 @@ return new class extends Migration
             $table->text('remarks')->nullable();
             $table->unsignedBigInteger('current_stage_id')->default(1);
             $table->json('tags')->nullable();
+            $table->boolean('pinned')->default(0);
+            $table->integer('rating')->nullable();
+
             $table->timestamps();
             $table->softDeletes();
 

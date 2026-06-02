@@ -15,15 +15,19 @@ class StudentNote extends Model
     protected $fillable = [
         'student_id',
         'created_by',
+        'updated_by',
         'content',
+        'title',
         'type',
         'is_pinned',
+        'is_log',
         'remind_at',
         'reminder_time_slot'
     ];
 
     protected $casts = [
         'is_pinned' => 'boolean',
+        'is_log' => 'boolean',
         'remind_at' => 'datetime',
     ];
 
@@ -50,7 +54,12 @@ class StudentNote extends Model
 
     public function scopeInternal($query)
     {
-        return $query->where('type', 'internal');
+        return $query->where('type', 'internal')->where('is_log', false);
+    }
+
+    public function scopeLogs($query)
+    {
+        return $query->where('is_log', true);
     }
 
     public function scopeCustomerVisible($query)
@@ -84,6 +93,10 @@ class StudentNote extends Model
      */
     public function getTypeBadgeAttribute()
     {
+        if ($this->is_log) {
+            return 'badge-primary';
+        }
+
         $badges = [
             'internal' => 'badge-secondary',
             'customer_visible' => 'badge-info',
@@ -94,6 +107,10 @@ class StudentNote extends Model
 
     public function getTypeLabelAttribute()
     {
+        if ($this->is_log) {
+            return 'Activity Log';
+        }
+
         $labels = [
             'internal' => 'Internal Note',
             'customer_visible' => 'Customer Visible',
@@ -111,5 +128,15 @@ class StudentNote extends Model
         $this->save();
 
         return $this;
+    }
+
+    public function isLog(): bool
+    {
+        return (bool) $this->is_log;
+    }
+
+    public function isInternal(): bool
+    {
+        return !$this->is_log && $this->type === 'internal';
     }
 }

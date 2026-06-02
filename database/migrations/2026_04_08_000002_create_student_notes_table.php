@@ -19,6 +19,9 @@ class CreateStudentNotesTable extends Migration
             $table->foreignId('created_by')
                 ->constrained('users')
                 ->cascadeOnDelete();
+            $table->foreignId('updated_by')->nullable()
+                ->constrained('users')
+                ->nullOnDelete();
 
             // Note Content
             $table->text('content');

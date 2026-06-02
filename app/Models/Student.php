@@ -39,6 +39,7 @@ class Student extends Model
     protected $fillable = [
         'agent_id',
         'first_name',
+        'source',
         'last_name',
         'students_photo',
         'dob',
@@ -51,6 +52,7 @@ class Student extends Model
         'passport_number',
         'passport_expiry',
         'marital_status',
+        'applying_for',
         'qualification',
         'passed_year',
         'gap',
@@ -64,6 +66,9 @@ class Student extends Model
         'current_stage_id',
         'rating',
         'tags',
+        'expected_revenue',
+        'received_revenue',
+        'pin',
     ];
 
     // -------------------------------------------------------------------------
@@ -74,8 +79,11 @@ class Student extends Model
         'dob'             => 'date',
         'passport_expiry' => 'date',
         'tags'            => 'array',
+        'pinned'          => 'boolean',
         'passed_year'     => 'integer',
         'gap'             => 'integer',
+        'expected_revenue' => 'decimal:2',
+        'received_revenue' => 'decimal:2',
     ];
 
     // -------------------------------------------------------------------------
@@ -107,6 +115,27 @@ class Student extends Model
         return $this->hasOne(Application::class)->latestOfMany();
     }
 
+    // Relationship with revenues
+
+    // Add these methods to your Student model
+
+    public function revenues()
+    {
+        return $this->hasMany(Revenue::class);
+    }
+
+    public function updateReceivedRevenue()
+    {
+        $total = $this->revenues()->sum('amount');
+        $this->received_revenue = $total;
+        $this->saveQuietly();
+    }
+
+    public function getRemainingDueAttribute()
+    {
+        return max(0, ($this->expected_revenue ?? 0) - ($this->received_revenue ?? 0));
+    }
+    
     // ========================================================================
     // CRM Relationships
     // ========================================================================
@@ -143,9 +172,9 @@ class Student extends Model
     public function todayActivities()
     {
         return $this->hasMany(CrmTasks::class)
-            ->whereDate('scheduled_at', today())
+            ->whereDate('scheduled_for', today())
             ->orderBy('priority_time_slot')
-            ->orderBy('scheduled_at');
+            ->orderBy('scheduled_for');
     }
 
     /**
@@ -156,10 +185,10 @@ class Student extends Model
         return $this->hasMany(CrmTasks::class)
             ->where('status', 'pending')
             ->where(function ($q) {
-                $q->whereNull('scheduled_at')
-                    ->orWhere('scheduled_at', '>=', now());
+                $q->whereNull('scheduled_for')
+                    ->orWhere('scheduled_for', '>=', now());
             })
-            ->orderBy('scheduled_at');
+            ->orderBy('scheduled_for');
     }
 
     /**
@@ -169,9 +198,9 @@ class Student extends Model
     {
         return $this->hasMany(CrmTasks::class)
             ->where('status', 'pending')
-            ->whereNotNull('scheduled_at')
-            ->where('scheduled_at', '<', now())
-            ->orderBy('scheduled_at');
+            ->whereNotNull('scheduled_for')
+            ->where('scheduled_for', '<', now())
+            ->orderBy('scheduled_for');
     }
 
     /**
@@ -249,9 +278,9 @@ class Student extends Model
     public function getNextFollowUpAttribute()
     {
         return $this->followUps()
-            ->whereNotNull('scheduled_at')
-            ->where('scheduled_at', '>=', now())
-            ->orderBy('scheduled_at')
+            ->whereNotNull('scheduled_for')
+            ->where('scheduled_for', '>=', now())
+            ->orderBy('scheduled_for')
             ->first();
     }
 
@@ -326,8 +355,8 @@ class Student extends Model
         return $query->whereHas('activities', function ($q) {
             $q->where('status', 'pending')
                 ->where(function ($sq) {
-                    $sq->whereNull('scheduled_at')
-                        ->orWhere('scheduled_at', '>=', now());
+                    $sq->whereNull('scheduled_for')
+                        ->orWhere('scheduled_for', '>=', now());
                 });
         });
     }
@@ -339,8 +368,8 @@ class Student extends Model
     {
         return $query->whereHas('activities', function ($q) {
             $q->where('status', 'pending')
-                ->whereNotNull('scheduled_at')
-                ->where('scheduled_at', '<', now());
+                ->whereNotNull('scheduled_for')
+                ->where('scheduled_for', '<', now());
         });
     }
     /**
@@ -459,8 +488,8 @@ class Student extends Model
     public function getPendingFollowUps()
     {
         return $this->followUps()
-            ->whereNotNull('scheduled_at')
-            ->orderBy('scheduled_at')
+            ->whereNotNull('scheduled_for')
+            ->orderBy('scheduled_for')
             ->get();
     }
 
@@ -470,7 +499,7 @@ class Student extends Model
     public function getTodayFollowUps()
     {
         return $this->followUps()
-            ->whereDate('scheduled_at', today())
+            ->whereDate('scheduled_for', today())
             ->orderBy('priority_time_slot')
             ->get();
     }

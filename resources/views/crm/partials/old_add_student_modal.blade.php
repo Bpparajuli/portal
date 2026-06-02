@@ -38,37 +38,40 @@
 
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Preferred Country</label>
-                            <select class="form-select" id="modal_country" name="country">
-                                <option value="">Select Country</option>
-                                <option value="Australia">🇦🇺 Australia</option>
-                                <option value="Canada">🇨🇦 Canada</option>
-                                <option value="United Kingdom">🇬🇧 United Kingdom</option>
-                                <option value="USA">🇺🇸 USA</option>
-                                <option value="New Zealand">🇳🇿 New Zealand</option>
-                                <option value="Germany">🇩🇪 Germany</option>
-                                <option value="Ireland">🇮🇪 Ireland</option>
-                            </select>
+                            <input type="text" class="form-control" id="modal_country" name="preferred_country"
+                                placeholder="e.g., Canada, UK, Australia">
                         </div>
 
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Preferred Course</label>
-                            <input type="text" class="form-control" id="modal_course" name="course"
+                            <input type="text" class="form-control" id="modal_course" name="preferred_course"
                                 placeholder="e.g., Business, IT, Engineering">
                         </div>
 
-                        <div class="col-md-12 mb-3">
+                        <div class="col-md-6 mb-3">
                             <label class="form-label">Qualification</label>
-                            <select class="form-select" id="modal_qualification" name="qualification">
-                                <option value="">Select Highest Qualification</option>
-                                <option value="High School">High School</option>
-                                <option value="Bachelor's Degree">Bachelor's Degree</option>
-                                <option value="Master's Degree">Master's Degree</option>
-                                <option value="PhD">PhD</option>
+                            <input type="text" class="form-control" id="modal_qualification" name="qualification"
+                                placeholder="e.g., High School, Bachelor's">
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Applying For</label>
+                            <select name="applying_for" id="modal_applying_for" class="form-select">
+                                <option value="">Select Program Type</option>
+                                <option value="Bachelor">Bachelor</option>
+                                <option value="Master">Master</option>
                                 <option value="Diploma">Diploma</option>
+                                <option value="Language Course">Language Course</option>
                             </select>
                         </div>
 
-                        <div class="col-md-12 mb-3">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Source</label>
+                            <input type="text" class="form-control" id="modal_source" name="source"
+                                placeholder="e.g., Referral, Online, Walk-in">
+                        </div>
+
+                        <div class="col-md-16 mb-3">
                             <label class="form-label">Assign to Agent</label>
                             <select class="form-select" id="modal_agent_id" name="agent_id">
                                 <option value="">Auto-assign</option>
@@ -78,7 +81,8 @@
                                 @endforeach
                             </select>
                         </div>
-                    </div>
+
+                        <div </div>
                 </form>
             </div>
 
@@ -109,14 +113,15 @@
                 // Clear previous message
                 messageDiv.innerHTML = '';
 
-                // Get form data
+                // Get form data - FIXED: Use correct element IDs
                 const formData = {
                     full_name: document.getElementById('modal_full_name').value,
                     phone_number: document.getElementById('modal_phone_number').value,
                     email: document.getElementById('modal_email').value,
-                    country: document.getElementById('modal_country').value,
-                    course: document.getElementById('modal_course').value,
+                    preferred_country: document.getElementById('modal_country').value,
+                    preferred_course: document.getElementById('modal_course').value,
                     qualification: document.getElementById('modal_qualification').value,
+                    applying_for: document.getElementById('modal_applying_for').value,
                     agent_id: document.getElementById('modal_agent_id').value || null,
                     source: 'crm_modal',
                     return_format: 'json'
@@ -167,8 +172,12 @@
                             location.reload();
                         }, 2000);
                     } else {
+                        let errorMessage = result.message || 'Please try again';
+                        if (result.errors) {
+                            errorMessage = Object.values(result.errors).flat().join('<br>');
+                        }
                         messageDiv.innerHTML =
-                            `<div class="alert alert-danger">❌ Error: ${result.message || 'Please try again'}</div>`;
+                            `<div class="alert alert-danger">❌ Error: ${errorMessage}</div>`;
                         submitBtn.disabled = false;
                         submitBtn.innerHTML = '<i class="fas fa-save"></i> Add Student';
                     }

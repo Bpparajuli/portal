@@ -222,6 +222,9 @@ class StudentController extends Controller
         $data['tags']     = $this->parseTags($request->get('tags', ''));
         $data['agent_id'] = Auth::id();
 
+        // FORCE STAGE ID
+        $data['current_stage_id'] = 6;
+
         $student = Student::create($data);
 
         if ($request->hasFile('students_photo')) {

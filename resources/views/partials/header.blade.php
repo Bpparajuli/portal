@@ -693,6 +693,12 @@
                                 <li class="{{ request()->is('admin/applications*') ? 'active' : '' }}"><a
                                         href="{{ route('admin.applications.index') }}"><i class="fas fa-file-alt"></i>
                                         Applications</a></li>
+                                <li class="{{ request()->is('crm') ? 'active' : '' }}">
+                                    <a href="{{ route('crm.dashboard') }}">
+                                        <i class="fas fa-chart-line"></i> CRM
+                                    </a>
+
+                                </li>
                             </ul>
                         </nav>
                     </div>
@@ -848,9 +854,6 @@
                                 <i class="fas fa-user-circle"></i> My Profile
                             </a>
                             @if ($user->is_admin)
-                                <a href="{{ route('crm.dashboard') }}" class="panel-item">
-                                    <i class="fas fa-chart-line"></i> CRM
-                                </a>
                                 <a href="{{ route('admin.application-status.index') }}" class="panel-item">
                                     <i class="fas fa-layer-group"></i> Application Status
                                 </a>

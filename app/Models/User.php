@@ -35,6 +35,7 @@ class User extends Authenticatable
         'is_admin',
         'is_agent',
         'active',
+        'crm_notification_preferences'
     ];
 
     protected $hidden = ['password', 'remember_token'];
@@ -44,6 +45,7 @@ class User extends Authenticatable
         'is_agent' => 'boolean',
         'active'   => 'boolean',
         'agreement_uploaded_at' => 'datetime',
+        'crm_notification_preferences' => 'array',
 
     ];
 
@@ -151,10 +153,6 @@ class User extends Authenticatable
         return $parent && $parent->is_agent;
     }
 
-
-    /**
-     * Relationships
-     */
     // =========================================================================
     // Relationships
     // =========================================================================
@@ -279,6 +277,62 @@ class User extends Authenticatable
         return $messageText;
     }
 
+    // =========================================================================
+    // Format and All CRM NOtifications 
+    // =========================================================================
+
+
+    public function formatCrmNotification($notification)
+    {
+        $data = $notification->data;
+        $subtype = $data['subtype'] ?? 'unknown';
+
+        $icons = [
+            'assigned' => '📋',
+            'due_today' => '⚠️',
+            'upcoming' => '🔔',
+            'overdue' => '❌',
+        ];
+
+        $icon = $icons[$subtype] ?? '📌';
+        $message = $data['message'] ?? 'Task notification';
+
+        // Add student name if available
+        if (!empty($data['student_name'])) {
+            $message .= " for student: {$data['student_name']}";
+        }
+
+        return [
+            'icon' => $icon,
+            'message' => $message,
+            'link' => $data['link'] ?? '#',
+            'task_title' => $data['task_title'] ?? '',
+            'student_name' => $data['student_name'] ?? '',
+        ];
+    }
+
+    /**
+     * Get default notification preferences
+     */
+    public function getNotificationPreferencesAttribute()
+    {
+        return $this->crm_notification_preferences ?? [
+            'task_assigned' => true,
+            'task_due_today' => true,
+            'task_upcoming' => true,
+            'task_overdue' => true,
+            'email_notifications' => false,
+        ];
+    }
+
+    /**
+     * Check if user wants to receive a specific notification type
+     */
+    public function wantsNotification($type)
+    {
+        $preferences = $this->notification_preferences;
+        return $preferences[$type] ?? true;
+    }
 
     /**
      * Helper for query and listings 

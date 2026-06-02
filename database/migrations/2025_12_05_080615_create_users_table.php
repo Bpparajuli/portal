@@ -57,6 +57,7 @@ return new class extends Migration
                 'verified'
             ])->default('not_uploaded');
             $table->timestamp('agreement_uploaded_at')->nullable();
+            $table->json('crm_notification_preferences')->nullable();
 
             // Status
             $table->boolean('active')->default(true);

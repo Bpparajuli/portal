@@ -62,13 +62,18 @@ use App\Http\Controllers\Staff\{
 
 // CRM Controllers
 use App\Http\Controllers\CRM\{
-    DashboardController as CrmDashboardController,
+    CrmNotificationController,
     CrmStudentController,
     CrmTasksController,
+    DashboardController as CrmDashboardController,
+    RevenueController as CrmRevenueController,
     StudentNoteController as CrmStudentNoteController,
-    StudentStageController,
-    StudentStageHistoryController,
+    StudentStageController as CrmStudentStageController,
+    StudentStageHistoryController as CrmStudentStageHistoryController,
 };
+use App\Models\CrmTasks;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Schema;
 
 /*
 |--------------------------------------------------------------------------
@@ -349,13 +354,10 @@ Route::middleware(['auth', \App\Http\Middleware\IsAgent::class])
             Route::get('documents/{document}/download', [AgentDocumentController::class, 'download'])->name('documents.download');
         });
     });
+
 /*
 |--------------------------------------------------------------------------
 | CRM Routes
-|
-| Accessible by: admin (full) | agent (read-only) | staff (full, own students)
-| Access control is handled inside each controller — no single-role middleware.
-| URL: /crm/...   Names: crm.*
 |--------------------------------------------------------------------------
 */
 Route::middleware('auth')
@@ -363,64 +365,96 @@ Route::middleware('auth')
     ->name('crm.')
     ->group(function () {
 
-        // ── Pipeline dashboard ─────────────────────────────────────────────
+        // ========== DASHBOARD ROUTES ==========
         Route::get('/', [CrmDashboardController::class, 'index'])->name('dashboard');
         Route::get('/export', [CrmDashboardController::class, 'export'])->name('export');
-        Route::put('/student/{id}/update-rating', [CrmDashboardController::class, 'updateRating'])->name('dashboard.updateRating');
+        Route::put('/student/{id}/update-rating', [CrmStudentController::class, 'updateRating'])->name('dashboard.updateRating');
+        Route::put('/students/{id}/rating-simple', [CrmDashboardController::class, 'updateRatingSimple'])->name('dashboard.updateRatingSimple');
+        Route::put('/students/{student}/toggle-pin', [CrmDashboardController::class, 'togglePin'])->name('student.toggle-pin');
+
+        // ========== TAG MANAGEMENT ==========
         Route::put('/students/{student}/add-tag', [CrmDashboardController::class, 'addTag'])->name('student.addTag');
         Route::delete('/students/{student}/remove-tag', [CrmDashboardController::class, 'removeTag'])->name('student.removeTag');
         Route::get('/popular-tags', [CrmDashboardController::class, 'getPopularTags'])->name('student.popularTags');
         Route::put('/students/{student}/stage', [CrmDashboardController::class, 'updateStage'])->name('student.update-stage');
 
-        // ── Student CRM record ─────────────────────────────────────────────
+        // ========== STUDENT CRM RECORDS ==========
+        Route::put('/students/{student}/mini-update', [CrmStudentController::class, 'miniUpdate'])->name('student.miniUpdate');
+        Route::get('/student/{student}/edit', [CrmStudentController::class, 'edit'])->name('student.edit');
+        Route::put('/student/{student}', [CrmStudentController::class, 'update'])->name('student.update');
         Route::get('/student/{student}', [CrmStudentController::class, 'show'])->name('student.show');
+        Route::delete('/student/{student}', [CrmStudentController::class, 'destroy'])->name('student.destroy');
+        Route::post('/student/store', [CrmStudentController::class, 'store'])->name('student.store');
         Route::post('/student/{student}/stage', [CrmStudentController::class, 'changeStage'])->name('student.stage');
+        Route::post('/student/{student}/note', [CrmStudentController::class, 'saveNote'])->name('student.saveNote');
 
-        // ── Tasks ──────────────────────────────────────────────────────────
+        // ========== REVENUE ROUTES ==========
+        Route::post('/students/{student}/revenues', [CrmRevenueController::class, 'store'])->name('student.revenues.store');
+        Route::get('/students/{student}/revenues/{revenue}', [CrmRevenueController::class, 'show'])->name('student.revenues.show');
+        Route::put('/students/{student}/revenues/{revenue}', [CrmRevenueController::class, 'update'])->name('student.revenues.update');
+        Route::delete('/students/{student}/revenues/{revenue}', [CrmRevenueController::class, 'destroy'])->name('student.revenues.destroy');
+
+        // ========== TASKS ROUTES ==========
         Route::post('/tasks', [CrmTasksController::class, 'store'])->name('tasks.store');
         Route::put('/tasks/{task}', [CrmTasksController::class, 'update'])->name('tasks.update');
+        Route::delete('/tasks/{task}', [CrmTasksController::class, 'destroy'])->name('tasks.destroy');
         Route::patch('/tasks/{task}/complete', [CrmTasksController::class, 'complete'])->name('tasks.complete');
         Route::patch('/tasks/{task}/cancel', [CrmTasksController::class, 'cancel'])->name('tasks.cancel');
-        Route::delete('/tasks/{task}', [CrmTasksController::class, 'destroy'])->name('tasks.destroy');
         Route::patch('/tasks/{task}/undo', [CrmTasksController::class, 'undoComplete'])->name('tasks.undo');
         Route::patch('/tasks/{task}/undo-cancel', [CrmTasksController::class, 'undoCancel'])->name('tasks.undo-cancel');
-        Route::get('/tasks/{task}/data', [CrmTasksController::class, 'getTaskData'])->name('tasks.data');
+        Route::get('/tasks/{task}/data', [CrmTasksController::class, 'getEditData'])->name('tasks.data');
         Route::patch('/tasks/{task}/reschedule', [CrmTasksController::class, 'reschedule'])->name('tasks.reschedule');
+        Route::post('/tasks/check-due', [CrmTasksController::class, 'checkDueTasks'])->name('tasks.check-due');
+        Route::delete('/tasks/{task}', [CrmTasksController::class, 'destroy'])
+            ->name('tasks.destroy');
+        Route::post('/tasks/check-duplicate/{studentId}', [CrmTasksController::class, 'checkDuplicate'])
+            ->name('tasks.check-duplicate');
 
-        // ── Notes ──────────────────────────────────────────────────────────
+
+        // ========== TASK STATISTICS ROUTES ==========
+        Route::get('/task-stats', [CrmDashboardController::class, 'getTaskStats'])->name('task-stats');
+        Route::get('/task-stats/details/{type}', [CrmDashboardController::class, 'getTaskDetails'])->name('task-stats.details');
+        Route::get('/today-task-students', [CrmStudentController::class, 'getTodayTaskStudentIds'])
+            ->name('today-task-students');
+
+
+        // ========== NOTES ROUTES ==========
         Route::post('/notes', [CrmStudentNoteController::class, 'store'])->name('notes.store');
         Route::put('/notes/{note}', [CrmStudentNoteController::class, 'update'])->name('notes.update');
         Route::patch('/notes/{note}/pin', [CrmStudentNoteController::class, 'togglePin'])->name('notes.pin');
         Route::delete('/notes/{note}', [CrmStudentNoteController::class, 'destroy'])->name('notes.destroy');
 
-        // ── Stage history (JSON) ───────────────────────────────────────────
-        Route::get('/student/{student}/history', [StudentStageHistoryController::class, 'forStudent'])->name('student.history');
+        // ========== STAGE HISTORY ==========
+        Route::get('/student/{student}/history', [CrmStudentStageHistoryController::class, 'forStudent'])->name('student.history');
 
-        // ── Configure (admin only) ─────────────────────────────────────────
+        // ========== CALENDAR ROUTES ==========
+        Route::get('/weekly-tasks', [CrmDashboardController::class, 'weeklyTasks'])->name('weekly.tasks');
+        Route::get('/calendar/staff-tasks', [CrmDashboardController::class, 'staffTasksForDate'])->name('calendar.staff-tasks');
+        Route::post('/calendar/events', [CrmDashboardController::class, 'calendarEvents'])->name('calendar.events');
+
+        // ========== CRM NOTIFICATION ROUTES ==========
+        Route::prefix('notifications')->name('notifications.')->group(function () {
+            Route::get('/fetch', [CrmNotificationController::class, 'fetch'])->name('fetch');
+            Route::post('/mark-all-read', [CrmNotificationController::class, 'markAllAsRead'])->name('mark-all-read');
+            Route::post('/{id}/mark-read', [CrmNotificationController::class, 'markAsRead'])->name('mark-read');
+            Route::get('/{id}/redirect', [CrmNotificationController::class, 'markAsReadAndRedirect'])->name('redirect');
+            Route::delete('/{id}', [CrmNotificationController::class, 'destroy'])->name('destroy');
+            Route::delete('/read/all', [CrmNotificationController::class, 'destroyRead'])->name('destroy-read');
+            Route::get('/settings', [CrmNotificationController::class, 'settings'])->name('settings');
+            Route::post('/settings', [CrmNotificationController::class, 'updateSettings'])->name('update-settings');
+            Route::get('/all', [CrmNotificationController::class, 'all'])->name('all');
+        });
+
+        // ========== CONFIGURE ROUTES (Admin only) ==========
         Route::prefix('configure')->name('configure.')->group(function () {
-            Route::get('/', [StudentStageController::class, 'index'])->name('index');
-            Route::post('/', [StudentStageController::class, 'store'])->name('store');
-            Route::put('/{stage}', [StudentStageController::class, 'update'])->name('update');
-            Route::patch('/{stage}/toggle', [StudentStageController::class, 'toggleActive'])->name('toggle');
-            Route::post('/reorder', [StudentStageController::class, 'reorder'])->name('reorder');
-            Route::delete('/{stage}', [StudentStageController::class, 'destroy'])->name('destroy');
+            Route::get('/', [CrmStudentStageController::class, 'index'])->name('index');
+            Route::post('/', [CrmStudentStageController::class, 'store'])->name('store');
+            Route::put('/{stage}', [CrmStudentStageController::class, 'update'])->name('update');
+            Route::patch('/{stage}/toggle', [CrmStudentStageController::class, 'toggleActive'])->name('toggle');
+            Route::post('/reorder', [CrmStudentStageController::class, 'reorder'])->name('reorder');
+            Route::delete('/{stage}', [CrmStudentStageController::class, 'destroy'])->name('destroy');
         });
     });
-/*
-|--------------------------------------------------------------------------
-| Utility / Dev Routes
-|--------------------------------------------------------------------------
-*/
-Route::get('/fix-user-status', function () {
-    foreach (User::all() as $user) {
-        UserStatus::firstOrCreate(
-            ['user_id' => $user->id],
-            ['is_online' => false, 'last_seen' => now()]
-        );
-    }
-    return "User statuses created successfully!";
-});
-
 
 
 // ============================================
@@ -450,3 +484,19 @@ Route::get('/thank-you', function () {
 
     return view('intake.thank-you', compact('student'));
 })->name('thank-you');
+
+
+/*
+|--------------------------------------------------------------------------
+| Utility / Dev Routes
+|--------------------------------------------------------------------------
+*/
+Route::get('/fix-user-status', function () {
+    foreach (User::all() as $user) {
+        UserStatus::firstOrCreate(
+            ['user_id' => $user->id],
+            ['is_online' => false, 'last_seen' => now()]
+        );
+    }
+    return "User statuses created successfully!";
+});

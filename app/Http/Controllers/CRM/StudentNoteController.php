@@ -8,45 +8,35 @@ use App\Models\StudentNote;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class StudentNoteController extends Controller
 {
-    // =========================================================================
-    // STORE
-    // =========================================================================
-
     public function store(Request $request)
     {
-        $this->denyAgents();
-
         $validated = $request->validate([
-            'student_id'         => ['required', 'exists:students,id'],
-            'content'            => ['required', 'string'],
-            'type'               => ['required', 'in:internal,customer_visible,reminder'],
-            'is_pinned'          => ['boolean'],
-            'remind_at'          => ['nullable', 'date', 'required_if:type,reminder'],
-            'reminder_time_slot' => ['nullable', 'in:morning,day,evening'],
+            'student_id' => 'required|exists:students,id',
+            'content' => 'required|string',
+            'type' => 'nullable|in:internal,log',
+            'is_pinned' => 'nullable|boolean',
+            'title' => 'nullable|string|max:255',
         ]);
 
-        $this->authorizeStudentAccess((int) $validated['student_id']);
+        $isLog = $request->input('type') === 'log';
 
         $note = StudentNote::create([
-            ...$validated,
+            'student_id' => $validated['student_id'],
+            'content' => $validated['content'], // SAME AS NORMAL
             'created_by' => Auth::id(),
-            'is_pinned'  => $request->boolean('is_pinned'),
+            'is_pinned' => $request->boolean('is_pinned', false),
+            'is_log' => $isLog,
+            'title' => $validated['title'] ?? null, // SAME AS NORMAL
+            'type' => $validated['type'] ?? 'internal', // NO OVERRIDE
         ]);
+        $message = $note->is_log ? 'Activity logged successfully.' : 'Note added successfully.';
 
-        if ($request->expectsJson()) {
-            $note->load('creator');
-            return response()->json(['success' => true, 'note' => $note]);
-        }
-
-        return back()->with('success', 'Note saved.');
+        return redirect()->back()->with('success', $message);
     }
-
-    // =========================================================================
-    // UPDATE
-    // =========================================================================
 
     public function update(Request $request, StudentNote $note)
     {
@@ -54,24 +44,44 @@ class StudentNoteController extends Controller
         $this->authorizeNote($note);
 
         $validated = $request->validate([
-            'content'            => ['required', 'string'],
-            'type'               => ['required', 'in:internal,customer_visible,reminder'],
-            'is_pinned'          => ['boolean'],
-            'remind_at'          => ['nullable', 'date'],
-            'reminder_time_slot' => ['nullable', 'in:morning,day,evening'],
+            'content' => ['required', 'string'],
+            'title' => ['nullable', 'string', 'max:255'],
+            'type' => ['nullable', 'in:internal,log'],
+            'is_pinned' => ['boolean'],
         ]);
 
+        $oldContent = $note->content;
+
         $note->update([
-            ...$validated,
-            'is_pinned' => $request->boolean('is_pinned'),
+            'content' => $validated['content'],
+            'title' => $validated['title'] ?? $note->title,
+            'updated_by' => Auth::id(),
         ]);
+
+        if ($request->filled('type')) {
+            $note->update(['type' => $validated['type']]);
+        }
+
+        // Log the edit
+        Log::info('Note edited', [
+            'note_id' => $note->id,
+            'student_id' => $note->student_id,
+            'edited_by' => Auth::id(),
+            'old_content_length' => strlen($oldContent),
+            'new_content_length' => strlen($validated['content'])
+        ]);
+
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Note updated successfully',
+                'last_editor' => Auth::user()->name,
+                'updated_at' => $note->updated_at->format('d M Y, g:i A')
+            ]);
+        }
 
         return back()->with('success', 'Note updated.');
     }
-
-    // =========================================================================
-    // TOGGLE PIN
-    // =========================================================================
 
     public function togglePin(StudentNote $note)
     {
@@ -82,10 +92,6 @@ class StudentNoteController extends Controller
 
         return response()->json(['success' => true, 'is_pinned' => $note->is_pinned]);
     }
-
-    // =========================================================================
-    // DESTROY
-    // =========================================================================
 
     public function destroy(StudentNote $note)
     {
@@ -99,10 +105,6 @@ class StudentNoteController extends Controller
 
         return back()->with('success', 'Note deleted.');
     }
-
-    // =========================================================================
-    // Helpers
-    // =========================================================================
 
     private function denyAgents(): void
     {

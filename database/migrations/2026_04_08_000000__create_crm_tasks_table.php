@@ -43,7 +43,7 @@ return new class extends Migration
             $table->string('subject');
             $table->text('description')->nullable();
 
-            $table->timestamp('scheduled_at')->nullable();
+            $table->timestamp('scheduled_for')->nullable();
 
             $table->enum('priority_time_slot', [
                 'morning',
@@ -97,7 +97,7 @@ return new class extends Migration
             // Indexes for performance
             $table->index('student_id');
             $table->index('assigned_to');
-            $table->index('scheduled_at');
+            $table->index('scheduled_for');
             $table->index('status');
             $table->index('activity_type');
             $table->index('priority_time_slot');
