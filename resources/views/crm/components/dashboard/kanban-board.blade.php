@@ -2,8 +2,8 @@
 @push('styles')
     <style>
         /* ============================================
-                        KANBAN LAYOUT
-                        ============================================ */
+                            KANBAN LAYOUT
+                            ============================================ */
         .kanban-wrapper {
             position: relative;
             margin-top: 1rem;
@@ -64,8 +64,8 @@
         }
 
         /* ============================================
-                        COLUMN
-                        ============================================ */
+                            COLUMN
+                            ============================================ */
         .kanban-col {
             min-width: 300px;
             width: 300px;
@@ -85,8 +85,8 @@
         }
 
         /* ============================================
-                        COLUMN HEADER
-                        ============================================ */
+                            COLUMN HEADER
+                            ============================================ */
         .kanban-col-header {
             padding: 0.6rem 0.85rem;
             font-weight: 600;
@@ -124,8 +124,8 @@
         }
 
         /* ============================================
-                        PROGRESS BAR TASK SUMMARY
-                        ============================================ */
+                            PROGRESS BAR TASK SUMMARY
+                            ============================================ */
         .col-progress-bar-wrap {
             padding: 6px 8px 5px;
             background: #f9fafb;
@@ -200,8 +200,8 @@
         }
 
         /* ============================================
-                        COLUMN BODY
-                        ============================================ */
+                            COLUMN BODY
+                            ============================================ */
         .kanban-col-body {
             padding: 0.6rem;
             display: flex;
@@ -219,8 +219,8 @@
         }
 
         /* ============================================
-                        STUDENT CARD
-                        ============================================ */
+                            STUDENT CARD
+                            ============================================ */
         .student-card {
             background: white;
             border: 1px solid #e5e7eb;
@@ -347,8 +347,8 @@
         }
 
         /* ============================================
-                        STAR RATING - 3 STARS ONLY
-                        ============================================ */
+                            STAR RATING - 3 STARS ONLY
+                            ============================================ */
         .rating-area {
             position: relative;
             z-index: 10;
@@ -412,8 +412,8 @@
         }
 
         /* ============================================
-                        TAGS
-                    ============================================ */
+                            TAGS
+                        ============================================ */
         .tags-list {
             display: flex;
             flex-wrap: wrap;
@@ -644,10 +644,26 @@
                                     <i class="fas fa-phone-alt"></i>
                                     {{ $student->phone_number ?? '—' }}
                                 </div>
-                                @if (isset($isAdmin) && $isAdmin && $student->agent)
-                                    <div class="small text-muted mt-1">
-                                        <i class="fas fa-user-tie"></i> {{ $student->agent->name }}
-                                    </div>
+                                @if ($isAdmin)
+                                    @php
+                                        // Get unique assignees from all pending tasks
+                                        $assignees = $student->pendingActivities
+                                            ->pluck('assignee')
+                                            ->filter()
+                                            ->unique('id');
+                                    @endphp
+                                    @if ($assignees->count() > 0)
+                                        <div class="small text-muted mt-1">
+                                            <i class="fas fa-user-tie"></i>
+                                            @foreach ($assignees as $assignee)
+                                                <span class="badge bg-secondary me-1">{{ $assignee->name }}</span>
+                                            @endforeach
+                                        </div>
+                                    @else
+                                        <div class="small text-muted mt-1">
+                                            <i class="fas fa-user-tie"></i> Unassigned
+                                        </div>
+                                    @endif
                                 @endif
                             </a>
 

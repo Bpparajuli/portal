@@ -215,6 +215,12 @@
             z-index: 9999;
             min-width: 300px;
         }
+
+        /* Search button */
+        .search-btn {
+            border-radius: 10px;
+            padding: 0.375rem 1rem;
+        }
     </style>
 
     @stack('head')
@@ -359,6 +365,7 @@
             </div>
         @endif
     </div>
+
     <div class="crm-wrapper">
         {{-- TOP NAVIGATION BAR --}}
         <nav class="crm-navbar">
@@ -369,7 +376,7 @@
                         <i class="fas fa-chalkboard-user text-primary fs-4"></i>
                         @if (auth()->user()->is_admin)
                             <a href="{{ route('crm.dashboard') }}" class="text-decoration-none">
-                                <span class="fw-semibold text-dark fs-5 d-none d-sm-inline">CRM</span>
+                                <span class="fw-semibold text-dark fs-5 d-sm-inline">CRM</span>
                             </a>
                         @else
                             <a href="{{ url('/crm?view=list') }}" class="text-decoration-none">
@@ -377,17 +384,22 @@
                             </a>
                         @endif
 
-                        {{-- Desktop Search --}}
-                        <div class="header-search-wrapper d-none d-lg-block">
-                            <i class="fas fa-search"></i>
-                            <input type="text" id="quickSearch" class="form-control"
-                                placeholder="Search students...">
+                        {{-- Desktop Search with Search Button --}}
+                        <div class="d-flex gap-2">
+                            <div class="header-search-wrapper">
+                                <i class="fas fa-search"></i>
+                                <input type="text" id="quickSearch" class="form-control"
+                                    placeholder="Search students...">
+                            </div>
+                            <button id="quickSearchBtn" class="btn btn-primary btn-sm search-btn" type="button">
+                                <i class="fas fa-search"></i> Search
+                            </button>
                         </div>
                     </div>
 
                     {{-- Right Section --}}
                     <div class="col-auto ms-auto d-flex align-items-center gap-3">
-                        {{-- Mobile Search --}}
+                        {{-- Mobile Search Button --}}
                         <div class="d-lg-none">
                             <button class="btn btn-link text-dark p-0" id="mobileSearchBtn" type="button">
                                 <i class="fas fa-search fs-5"></i>
@@ -397,15 +409,15 @@
                         {{-- Admin Links --}}
                         @if (auth()->user()->is_admin)
                             <a href="{{ route('crm.configure.index') }}"
-                                class="btn btn-sm btn-outline-secondary d-none d-md-inline-block">
+                                class="btn btn-sm btn-outline-secondary d-md-inline-block">
                                 <i class="fas fa-cog"></i> Configure
                             </a>
                             <a href="{{ route('crm.export') }}?{{ http_build_query(request()->query()) }}"
-                                class="btn btn-sm btn-outline-secondary d-none d-md-inline-block">
+                                class="btn btn-sm btn-outline-secondary d-md-inline-block">
                                 <i class="fas fa-download"></i> Export
                             </a>
-                            <a href="{{ route('admin.dashboard') }}"
-                                class="btn btn-sm btn-primary d-none d-md-inline-block">
+                            <a href="{{ route('admin.dashboard') }}" class="btn btn-sm d-md-inline-block text-white"
+                                style="background-color: #820b5c; ">
                                 <i class="fas fa-upload"></i> Portal
                             </a>
                         @endif
@@ -512,7 +524,7 @@
                             <button class="btn btn-link text-dark p-0 d-flex align-items-center gap-2" type="button"
                                 data-bs-toggle="dropdown">
                                 <div class="user-avatar">{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}</div>
-                                <span class="d-none d-md-inline text-dark">{{ auth()->user()->name }}</span>
+                                <span class="d-md-inline text-dark">{{ auth()->user()->name }}</span>
                                 <i class="fas fa-chevron-down text-muted small"></i>
                             </button>
                             <ul class="dropdown-menu dropdown-menu-end">
@@ -545,10 +557,16 @@
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content">
                     <div class="modal-body p-3">
-                        <div class="header-search-wrapper w-100">
-                            <i class="fas fa-search"></i>
-                            <input type="text" id="mobileQuickSearch" class="form-control"
-                                placeholder="Search students...">
+                        <div class="d-flex gap-2">
+                            <div class="header-search-wrapper w-100">
+                                <i class="fas fa-search"></i>
+                                <input type="text" id="mobileQuickSearch" class="form-control"
+                                    placeholder="Search students...">
+                            </div>
+                            <button id="mobileQuickSearchBtn" class="btn btn-primary btn-sm search-btn"
+                                type="button">
+                                <i class="fas fa-search"></i>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -593,22 +611,41 @@
             });
         }, 5000);
 
-        // ==================== QUICK SEARCH ====================
-        let searchTimeout;
-
-        function setupHeaderSearch(inputElement) {
+        // ==================== QUICK SEARCH - Search on button click or Enter key ====================
+        function setupHeaderSearch(inputElement, searchButtonElement) {
             if (!inputElement) return;
-            inputElement.addEventListener('input', function(e) {
-                clearTimeout(searchTimeout);
-                const search = e.target.value.trim();
-                if (search.length < 2) return;
-                searchTimeout = setTimeout(() => {
-                    window.location.href = '/crm?search=' + encodeURIComponent(search) +
-                        '&search_type=name';
-                }, 500);
+
+            // Search function to perform the actual search
+            function performSearch() {
+                const search = inputElement.value.trim();
+                if (search.length === 0) {
+                    return;
+                }
+
+                const params = new URLSearchParams(window.location.search);
+                params.set('search', search);
+                params.set('search_type', 'name');
+                window.location.href = window.location.pathname + '?' + params.toString();
+            }
+
+            // Search on Enter key
+            inputElement.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    performSearch();
+                }
             });
+
+            // Search on button click
+            if (searchButtonElement) {
+                searchButtonElement.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    performSearch();
+                });
+            }
         }
 
+        // ==================== CRM NOTIFICATIONS ====================
         // ==================== CRM NOTIFICATIONS ====================
         let lastNotificationCount = 0;
 
@@ -658,8 +695,9 @@
 
             container.innerHTML = notifications.map(notif => {
                 const isUnread = !notif.read_at;
-                const message = notif.data?.message || 'Task notification';
-                // Use the redirect route instead of direct link
+                // Fix: Safely get message from data
+                const message = notif.data?.message || notif.data?.task_title || 'Task notification';
+                // Fix: Use correct redirect URL
                 const link = `/crm/notifications/${notif.id}/redirect`;
 
                 let icon = '📌';
@@ -670,14 +708,22 @@
                 else if (subtype === 'overdue') icon = '❌';
 
                 return `
-            <a href="${link}" class="dropdown-item notification-item ${isUnread ? 'unread' : ''}" style="white-space: normal;">
+            <div class="notification-item ${isUnread ? 'unread' : ''}" style="white-space: normal; position: relative;">
                 <div class="d-flex align-items-start">
                     <div class="flex-grow-1">
-                        <p class="small mb-1 text-dark">${icon} ${escapeHtmlCustom(message)}</p>
-                        <p class="small text-muted mb-0">${formatNotificationDate(notif.created_at)}</p>
+                        <a href="${link}" class="text-decoration-none">
+                            <p class="small mb-1 text-dark">${icon} ${escapeHtmlCustom(message)}</p>
+                            <p class="small text-muted mb-0">${formatNotificationDate(notif.created_at)}</p>
+                        </a>
                     </div>
+                    <button class="btn btn-sm btn-link text-danger delete-notification-btn" 
+                            data-id="${notif.id}" 
+                            onclick="event.preventDefault(); deleteNotification('${notif.id}')"
+                            style="font-size: 12px; padding: 0;">
+                        <i class="fas fa-times"></i>
+                    </button>
                 </div>
-            </a>
+            </div>
         `;
             }).join('');
         }
@@ -709,45 +755,30 @@
             }
         }
 
-        function showNotificationToast(count) {
-            const toastContainer = document.getElementById('toastContainer');
-            if (!toastContainer) return;
+        async function deleteNotification(notificationId) {
+            if (!confirm('Delete this notification?')) return;
 
-            const toastHtml = `
-            <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="true" data-bs-delay="5000">
-                <div class="toast-header bg-primary text-white">
-                    <i class="fas fa-bell me-2"></i>
-                    <strong class="me-auto">New Notification${count > 1 ? 's' : ''}</strong>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
-                </div>
-                <div class="toast-body">
-                    You have ${count} new task notification${count > 1 ? 's' : ''}
-                </div>
-            </div>
-        `;
-
-            toastContainer.innerHTML = toastHtml;
-            setTimeout(() => {
-                const toast = toastContainer.querySelector('.toast');
-                if (toast) toast.remove();
-            }, 5000);
-        }
-
-        async function markCrmNotificationRead(id) {
             try {
-                const response = await fetch(`/crm/notifications/${id}/mark-read`, {
-                    method: 'POST',
+                const response = await fetch(`/crm/notifications/${notificationId}/delete-ajax`, {
+                    method: 'DELETE',
                     headers: {
                         'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': csrfToken,
                         'Accept': 'application/json'
                     }
                 });
-                if (response.ok) {
-                    fetchNotifications();
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showToastMessage('Notification deleted', 'success');
+                    fetchNotifications(); // Refresh the list
+                } else {
+                    showToastMessage(data.error || 'Failed to delete notification', 'error');
                 }
             } catch (error) {
-                console.error('Error marking read:', error);
+                console.error('Error deleting notification:', error);
+                showToastMessage('Failed to delete notification', 'error');
             }
         }
 
@@ -761,9 +792,12 @@
                         'Accept': 'application/json'
                     }
                 });
-                if (response.ok) {
+                const data = await response.json();
+                if (data.success) {
                     fetchNotifications();
-                    showToastMessage('All notifications marked as read', 'success');
+                    showToastMessage(data.message || 'All notifications marked as read', 'success');
+                } else {
+                    showToastMessage(data.error || 'Failed to mark notifications as read', 'error');
                 }
             } catch (error) {
                 console.error('Error marking all read:', error);
@@ -783,9 +817,12 @@
                         'Accept': 'application/json'
                     }
                 });
-                if (response.ok) {
-                    fetchNotifications();
-                    showToastMessage('Read notifications cleared', 'success');
+                const data = await response.json();
+                if (data.success) {
+                    showToastMessage(data.message || 'Read notifications cleared', 'success');
+                    fetchNotifications(); // Refresh the notification list
+                } else {
+                    showToastMessage(data.error || 'Failed to clear notifications', 'error');
                 }
             } catch (error) {
                 console.error('Error clearing read:', error);
@@ -802,17 +839,17 @@
                 'fa-info-circle');
 
             const toastHtml = `
-            <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="true" data-bs-delay="3000">
-                <div class="toast-header ${bgClass} text-white">
-                    <i class="fas ${icon} me-2"></i>
-                    <strong class="me-auto">${type.charAt(0).toUpperCase() + type.slice(1)}</strong>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+                <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="true" data-bs-delay="3000">
+                    <div class="toast-header ${bgClass} text-white">
+                        <i class="fas ${icon} me-2"></i>
+                        <strong class="me-auto">${type.charAt(0).toUpperCase() + type.slice(1)}</strong>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+                    </div>
+                    <div class="toast-body">
+                        ${message}
+                    </div>
                 </div>
-                <div class="toast-body">
-                    ${message}
-                </div>
-            </div>
-        `;
+            `;
 
             toastContainer.innerHTML = toastHtml;
             setTimeout(() => {
@@ -836,7 +873,6 @@
                 return data;
             } catch (error) {
                 console.error('Task stats error:', error);
-                // Set default values on error
                 updateTaskStatsUI({
                     success: false,
                     stats: {
@@ -858,7 +894,6 @@
                 stats
             } = data;
 
-            // Update main badge
             const taskBadge = document.getElementById('taskBadge');
             if (taskBadge) {
                 const total = (stats.late || 0) + (stats.today || 0) + (stats.future || 0);
@@ -866,7 +901,6 @@
                 taskBadge.className = `badge rounded-pill ${total > 0 ? 'bg-danger' : 'bg-secondary'}`;
             }
 
-            // Update dropdown counts
             const lateCountElem = document.getElementById('dropdownLateCount');
             const todayCountElem = document.getElementById('dropdownTodayCount');
             const futureCountElem = document.getElementById('dropdownFutureCount');
@@ -883,8 +917,6 @@
                 futureCountElem.textContent = stats.future || 0;
                 futureCountElem.className = `badge ${(stats.future || 0) > 0 ? 'bg-success' : 'bg-secondary'}`;
             }
-
-            console.log('Task stats updated:', stats);
         }
 
         // ==================== AUTO-TRIGGER TASK CHECKS ====================
@@ -925,14 +957,24 @@
         document.addEventListener('DOMContentLoaded', function() {
             console.log('DOM loaded, initializing...');
 
-            // Search
-            setupHeaderSearch(document.getElementById('quickSearch'));
-            setupHeaderSearch(document.getElementById('mobileQuickSearch'));
+            // Setup Desktop Search (with button and Enter key)
+            const desktopSearchInput = document.getElementById('quickSearch');
+            const desktopSearchBtn = document.getElementById('quickSearchBtn');
+            if (desktopSearchInput) {
+                setupHeaderSearch(desktopSearchInput, desktopSearchBtn);
+            }
 
-            // Mobile search modal
-            const mobileSearchBtn = document.getElementById('mobileSearchBtn');
-            if (mobileSearchBtn) {
-                mobileSearchBtn.addEventListener('click', function() {
+            // Setup Mobile Search (with button and Enter key)
+            const mobileSearchInput = document.getElementById('mobileQuickSearch');
+            const mobileSearchBtn = document.getElementById('mobileQuickSearchBtn');
+            if (mobileSearchInput) {
+                setupHeaderSearch(mobileSearchInput, mobileSearchBtn);
+            }
+
+            // Mobile search modal trigger
+            const mobileSearchBtnTrigger = document.getElementById('mobileSearchBtn');
+            if (mobileSearchBtnTrigger) {
+                mobileSearchBtnTrigger.addEventListener('click', function() {
                     const modal = new bootstrap.Modal(document.getElementById('mobileSearchModal'));
                     modal.show();
                     setTimeout(() => document.getElementById('mobileQuickSearch')?.focus(), 500);

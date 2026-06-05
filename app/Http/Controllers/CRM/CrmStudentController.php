@@ -18,6 +18,58 @@ use Carbon\Carbon;
 
 class CrmStudentController extends Controller
 {
+    public function debugAllTasksForStaff()
+    {
+        $user = Auth::user();
+        $today = Carbon::today();
+
+        // ALL tasks for today (including completed)
+        $allTasks = CrmTasks::whereDate('scheduled_for', $today)
+            ->whereNotNull('student_id')
+            ->get();
+
+        // Tasks assigned to this staff
+        $myTasks = CrmTasks::whereDate('scheduled_for', $today)
+            ->where('assigned_to', $user->id)
+            ->whereNotNull('student_id')
+            ->get();
+
+        // Group by student
+        $studentsWithMyTasks = $myTasks->groupBy('student_id')->map(function ($tasks) {
+            return [
+                'task_ids' => $tasks->pluck('id'),
+                'statuses' => $tasks->pluck('status'),
+                'count' => $tasks->count()
+            ];
+        });
+
+        // Check if student 89 has tasks assigned to others
+        $student89Tasks = CrmTasks::where('student_id', 89)
+            ->whereDate('scheduled_for', $today)
+            ->get();
+
+        return response()->json([
+            'staff_id' => $user->id,
+            'all_tasks_today_count' => $allTasks->count(),
+            'my_tasks_count' => $myTasks->count(),
+            'students_with_my_tasks' => $studentsWithMyTasks,
+            'student_89_tasks' => $student89Tasks->map(function ($task) {
+                return [
+                    'task_id' => $task->id,
+                    'assigned_to' => $task->assigned_to,
+                    'status' => $task->status
+                ];
+            }),
+            'all_tasks_raw' => $allTasks->map(function ($task) {
+                return [
+                    'task_id' => $task->id,
+                    'student_id' => $task->student_id,
+                    'assigned_to' => $task->assigned_to,
+                    'status' => $task->status
+                ];
+            })
+        ]);
+    }
     /**
      * Get navigation for students with tasks today (with role-based filtering)
      * 
@@ -30,113 +82,78 @@ class CrmStudentController extends Controller
             $user = Auth::user();
             $today = Carbon::today();
 
-            // Build query based on user role
-            $tasksQuery = CrmTasks::where('status', '!=', 'completed')
-                ->where('status', '!=', 'cancelled')
-                ->whereDate('scheduled_for', $today)
-                ->whereNotNull('student_id');
+            // SIMPLE ROLE CHECK - ONLY use role, ignore is_admin_staff completely
+            $isStaff = ($user->role === 'staff');
+            $isAdmin = ($user->role === 'admin');
 
-            // STAFF: Only see tasks assigned to them
-            if ($user->is_staff && !$user->is_admin && !$user->is_admin_staff) {
-                $tasksQuery->where('assigned_to', $user->id);
-            }
-            // AGENT STAFF: Only see tasks assigned to them or their staff
-            elseif ($user->is_agent_staff) {
-                $staffIds = User::where('parent_id', $user->parent_id ?? $user->id)
-                    ->where('role', 'staff')
-                    ->pluck('id')
+
+            // Get student IDs based on role
+            if ($isStaff) {
+                // STAFF: Get ALL students with tasks assigned to THEM for today (including completed)
+                // We want the student to stay in navigation even after all tasks are completed
+                $studentIdsWithTodayTasks = CrmTasks::whereDate('scheduled_for', $today)
+                    ->where('assigned_to', $user->id)  // ONLY their assigned tasks
+                    ->whereNotNull('student_id')
+                    ->distinct()
+                    ->pluck('student_id')
                     ->toArray();
-                $tasksQuery->whereIn('assigned_to', array_merge([$user->id], $staffIds));
-            }
-            // AGENT: See tasks assigned to them or their staff
-            elseif ($user->is_agent) {
-                $staffIds = User::where('parent_id', $user->id)
-                    ->where('role', 'staff')
-                    ->pluck('id')
+            } elseif ($isAdmin) {
+                // ADMIN: Get ALL students with any tasks today
+                $studentIdsWithTodayTasks = CrmTasks::whereDate('scheduled_for', $today)
+                    ->whereNotNull('student_id')
+                    ->distinct()
+                    ->pluck('student_id')
                     ->toArray();
-                $tasksQuery->whereIn('assigned_to', array_merge([$user->id], $staffIds));
+
+                Log::info('Admin students (all students with tasks today)', [
+                    'student_ids' => $studentIdsWithTodayTasks
+                ]);
+            } else {
+                // Other roles - treat as staff for safety
+                $studentIdsWithTodayTasks = CrmTasks::whereDate('scheduled_for', $today)
+                    ->where('assigned_to', $user->id)
+                    ->whereNotNull('student_id')
+                    ->distinct()
+                    ->pluck('student_id')
+                    ->toArray();
             }
-            // ADMIN & ADMIN_STAFF: See ALL tasks (no filter)
 
-            // Get distinct student IDs with their task counts
-            $studentsWithTasks = $tasksQuery->select('student_id')
-                ->distinct()
-                ->get()
-                ->map(function ($item) use ($tasksQuery, $today, $user) {
-                    // Get task count for this student
-                    $taskCountQuery = CrmTasks::where('student_id', $item->student_id)
-                        ->where('status', '!=', 'completed')
-                        ->where('status', '!=', 'cancelled')
-                        ->whereDate('scheduled_for', $today)
-                        ->whereNotNull('student_id');
-
-                    // Apply same role filter for count
-                    if ($user->is_staff && !$user->is_admin && !$user->is_admin_staff) {
-                        $taskCountQuery->where('assigned_to', $user->id);
-                    } elseif ($user->is_agent_staff) {
-                        $staffIds = User::where('parent_id', $user->parent_id ?? $user->id)
-                            ->where('role', 'staff')
-                            ->pluck('id')
-                            ->toArray();
-                        $taskCountQuery->whereIn('assigned_to', array_merge([$user->id], $staffIds));
-                    } elseif ($user->is_agent) {
-                        $staffIds = User::where('parent_id', $user->id)
-                            ->where('role', 'staff')
-                            ->pluck('id')
-                            ->toArray();
-                        $taskCountQuery->whereIn('assigned_to', array_merge([$user->id], $staffIds));
-                    }
-
-                    return [
-                        'student_id' => $item->student_id,
-                        'tasks_count' => $taskCountQuery->count()
-                    ];
-                })
-                ->filter(function ($item) {
-                    return $item['tasks_count'] > 0;
-                })
-                ->values();
-
-            $studentIdsWithTodayTasks = $studentsWithTasks->pluck('student_id')->toArray();
-
-            // If no students with today's tasks, return null
             if (empty($studentIdsWithTodayTasks)) {
                 return null;
             }
 
-            // Find current student's position in the array
+            // Find current student position
             $currentIndex = array_search($currentStudentId, $studentIdsWithTodayTasks);
-
-            // If current student doesn't have tasks today, return null
             if ($currentIndex === false) {
                 return null;
             }
 
-            // Get previous and next student IDs
             $prevStudentId = $studentIdsWithTodayTasks[$currentIndex - 1] ?? null;
             $nextStudentId = $studentIdsWithTodayTasks[$currentIndex + 1] ?? null;
 
-            // Get task counts for current student
-            $currentStudentTaskCount = $studentsWithTasks->where('student_id', $currentStudentId)->first()['tasks_count'] ?? 0;
+            // Count tasks for display (count ALL tasks for today, regardless of status)
+            $currentStudentTaskCount = CrmTasks::where('student_id', $currentStudentId)
+                ->whereDate('scheduled_for', $today)
+                ->count();
 
             $navigation = [
                 'prev' => null,
                 'next' => null,
                 'total' => count($studentIdsWithTodayTasks),
                 'current_position' => $currentIndex + 1,
-                'current_student_has_tasks' => true,
                 'current_student_tasks_count' => $currentStudentTaskCount,
             ];
 
-            // Load previous student data
+            // Load previous student
             if ($prevStudentId) {
                 $prevStudent = Student::find($prevStudentId);
-                $prevTaskCount = $studentsWithTasks->where('student_id', $prevStudentId)->first()['tasks_count'] ?? 0;
-
                 if ($prevStudent) {
+                    $prevTaskCount = CrmTasks::where('student_id', $prevStudentId)
+                        ->whereDate('scheduled_for', $today)
+                        ->count();
+
                     $navigation['prev'] = [
                         'id' => $prevStudent->id,
-                        'name' => $prevStudent->first_name . ' ' . $prevStudent->last_name,
                         'first_name' => $prevStudent->first_name,
                         'last_name' => $prevStudent->last_name,
                         'tasks_count' => $prevTaskCount
@@ -144,15 +161,16 @@ class CrmStudentController extends Controller
                 }
             }
 
-            // Load next student data
+            // Load next student
             if ($nextStudentId) {
                 $nextStudent = Student::find($nextStudentId);
-                $nextTaskCount = $studentsWithTasks->where('student_id', $nextStudentId)->first()['tasks_count'] ?? 0;
-
                 if ($nextStudent) {
+                    $nextTaskCount = CrmTasks::where('student_id', $nextStudentId)
+                        ->whereDate('scheduled_for', $today)
+                        ->count();
+
                     $navigation['next'] = [
                         'id' => $nextStudent->id,
-                        'name' => $nextStudent->first_name . ' ' . $nextStudent->last_name,
                         'first_name' => $nextStudent->first_name,
                         'last_name' => $nextStudent->last_name,
                         'tasks_count' => $nextTaskCount
@@ -162,23 +180,10 @@ class CrmStudentController extends Controller
 
             return $navigation;
         } catch (\Exception $e) {
-            Log::warning('Failed to get today task navigation: ' . $e->getMessage());
+            Log::error('Navigation error: ' . $e->getMessage());
             return null;
         }
     }
-
-    /**
-     * Clear the today tasks navigation cache
-     */
-    public function clearTodayTasksCache()
-    {
-        $today = Carbon::today();
-        $cacheKey = 'today_task_students_' . $today->format('Y-m-d') . '_user_' . Auth::id();
-        Cache::forget($cacheKey);
-
-        return response()->json(['success' => true, 'message' => 'Cache cleared']);
-    }
-
     /**
      * Display student details page
      */
@@ -424,15 +429,21 @@ class CrmStudentController extends Controller
                     ->withInput();
             }
 
+            // Force agent_id to 12 unless explicitly provided in the request
+            if (!$request->has('agent_id') || empty($request->agent_id)) {
+                $request->merge(['agent_id' => 12]);
+            }
+
             $student = StudentService::saveStudent($request);
 
             $successMessage = sprintf(
-                "✅ Student added successfully!\n\nStudent: %s %s\nPhone: %s\nEmail: %s\nSource: %s",
+                "✅ Student added successfully!\n\nStudent: %s %s\nPhone: %s\nEmail: %s\nSource: %s\nAgent ID: %s",
                 $student->first_name,
                 $student->last_name,
                 $student->phone_number ?? 'Not provided',
                 $student->email ?? 'Not provided',
-                $student->source ?? 'manual'
+                $student->source ?? 'manual',
+                $student->agent_id ?? 'Not assigned'
             );
 
             Log::info('Student created via CRM modal', [
@@ -871,45 +882,17 @@ class CrmStudentController extends Controller
     {
         abort_if(Auth::user()->is_agent, 403, 'Agents have read-only CRM access.');
     }
-
-    // Add this method to your CrmStudentController
-    public function debugTaskVisibility(Student $student)
+    /**
+     * Clear CRM task-related caches
+     */
+    private function clearTodayTasksCache(): void
     {
-        $user = Auth::user();
+        Cache::forget('crm_today_tasks');
+        Cache::forget('crm_dashboard_stats');
+        Cache::forget('crm_task_stats');
 
-        $allTasks = CrmTasks::where('student_id', $student->id)
-            ->where('status', '!=', 'completed')
-            ->where('status', '!=', 'cancelled')
-            ->get();
-
-        $myTasks = CrmTasks::where('student_id', $student->id)
-            ->where('assigned_to', $user->id)
-            ->where('status', '!=', 'completed')
-            ->where('status', '!=', 'cancelled')
-            ->get();
-
-        $debug = [
-            'user' => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'is_admin' => $user->is_admin,
-                'is_staff' => $user->is_staff,
-                'is_admin_staff' => $user->is_admin_staff,
-                'is_agent' => $user->is_agent,
-            ],
-            'student_id' => $student->id,
-            'all_tasks_count' => $allTasks->count(),
-            'my_tasks_count' => $myTasks->count(),
-            'tasks' => $allTasks->map(function ($task) use ($user) {
-                return [
-                    'id' => $task->id,
-                    'subject' => $task->subject,
-                    'assigned_to' => $task->assigned_to,
-                    'is_mine' => $task->assigned_to == $user->id,
-                ];
-            })
-        ];
-
-        return response()->json($debug);
+        Log::info('CRM cache cleared', [
+            'user_id' => Auth::id()
+        ]);
     }
 }

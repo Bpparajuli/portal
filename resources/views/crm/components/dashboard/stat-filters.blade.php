@@ -189,11 +189,12 @@
         </div>
     </div>
     <div class="col-6 col-md-4 col-lg-2">
-        <div class="stat-card" style="--card-color: #8b5cf6">
+        <div class="stat-card" style="--card-color: #8b5cf6"
+            onclick="window.location.href='{{ route('crm.dashboard', ['view' => 'list', 'activity_filter' => auth()->user()->role !== 'admin' ? 'my_completed_today' : 'completed_today']) }}'">
             <div class="stat-content">
                 <div class="stat-left">
                     <div class="stat-number">
-                        {{ auth()->user()->role !== 'admin' ? $stats['completed_today'] ?? 0 : $stats['completed_today'] ?? 0 }}
+                        {{ auth()->user()->role !== 'admin' ? $stats['my_completed_today'] ?? 0 : $stats['completed_today'] ?? 0 }}
                     </div>
                     <div class="stat-label">Completed Today</div>
                 </div>
@@ -201,6 +202,7 @@
             </div>
         </div>
     </div>
+
     @if (auth()->user()->role == 'admin')
         <!-- Completed This Week Card -->
         <div class="col-6 col-md-4 col-lg-2">
@@ -265,14 +267,16 @@
                         <option value="overdue" @selected(request('activity_filter') == 'overdue')>Overdue Tasks</option>
                         <option value="today" @selected(request('activity_filter') == 'today')>Today's Tasks</option>
                         <option value="upcoming" @selected(request('activity_filter') == 'upcoming')>Upcoming Tasks</option>
+                        <option value="completed_today" @selected(request('activity_filter') == 'completed_today')>Completed Today</option>
                     @else
                         <!-- For Staff: Show both regular and my options -->
                         <option value="overdue" @selected(request('activity_filter') == 'overdue')>Has Overdue</option>
                         <option value="today" @selected(request('activity_filter') == 'today')>Active Today</option>
                         <option value="upcoming" @selected(request('activity_filter') == 'upcoming')>Has Upcoming</option>
                         <option value="my_overdue" @selected(request('activity_filter') == 'my_overdue')>My Overdue Tasks</option>
-                        <option value="my_today" @selected(request('activity_filter') == 'my_today')>My Today's Tasks</option>
+                        <option value="my_today" @selected(request('activity_filter') == 'my_today')>My To-do Today's Tasks</option>
                         <option value="my_upcoming" @selected(request('activity_filter') == 'my_upcoming')>My Upcoming Tasks</option>
+                        <option value="my_completed_today" @selected(request('activity_filter') == 'my_completed_today')>My Completed Today</option>
                     @endif
                 </select>
 

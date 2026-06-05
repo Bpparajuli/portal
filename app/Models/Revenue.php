@@ -1,9 +1,9 @@
 <?php
-// app/Models/Revenue.php
 
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Revenue extends Model
 {
@@ -20,20 +20,41 @@ class Revenue extends Model
 
     protected $casts = [
         'amount' => 'decimal:2',
-        'transaction_date' => 'date',
+        'transaction_date' => 'datetime', // Change from 'date' to 'datetime'
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
     ];
 
-    public function student()
+    // Add a mutator to ensure date is properly set
+    public function setTransactionDateAttribute($value)
+    {
+        if ($value instanceof \DateTime) {
+            $this->attributes['transaction_date'] = $value->format('Y-m-d');
+        } else {
+            $this->attributes['transaction_date'] = $value;
+        }
+    }
+
+    // Add accessor to always return a Carbon instance
+    public function getTransactionDateAttribute($value)
+    {
+        if ($value) {
+            return \Carbon\Carbon::parse($value);
+        }
+        return null;
+    }
+
+    public function student(): BelongsTo
     {
         return $this->belongsTo(Student::class);
     }
 
-    public function creator()
+    public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
     }
 
-    // Fix: Use proper event handling to update student's received revenue
+    // Boot events
     protected static function booted()
     {
         static::created(function ($revenue) {
@@ -51,8 +72,10 @@ class Revenue extends Model
 
     public function updateStudentReceivedRevenue()
     {
-        $total = $this->student->revenues()->sum('amount');
-        $this->student->received_revenue = $total;
-        $this->student->saveQuietly(); // Use saveQuietly to avoid infinite loops
+        if ($this->student) {
+            $total = $this->student->revenues()->sum('amount');
+            $this->student->received_revenue = $total;
+            $this->student->saveQuietly();
+        }
     }
 }

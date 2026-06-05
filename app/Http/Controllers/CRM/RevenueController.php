@@ -1,5 +1,4 @@
 <?php
-// app/Http/Controllers/CRM/RevenueController.php
 
 namespace App\Http\Controllers\CRM;
 
@@ -7,24 +6,40 @@ use App\Http\Controllers\Controller;
 use App\Models\Revenue;
 use App\Models\Student;
 use App\Models\StudentNote;
+use App\Services\FileUploadService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class RevenueController extends Controller
 {
+    protected $currentAgent;
+
     public function __construct()
     {
         $this->middleware('auth');
-        $this->middleware('admin')->only(['destroy']);
+        $this->middleware(\App\Http\Middleware\IsAdmin::class)->only(['destroy']);
+
+        $this->middleware(function ($request, $next) {
+            $this->currentAgent = Auth::user();
+            return $next($request);
+        });
     }
 
+    /**
+     * Store a newly created revenue record.
+     */
     public function store(Request $request, Student $student)
     {
         try {
+            while (ob_get_level()) {
+                ob_end_clean();
+            }
+
             $validated = $request->validate([
-                'amount' => 'required|numeric|min:0',
+                'amount' => 'required|numeric|min:0|regex:/^\d+(\.\d{1,2})?$/',
                 'method' => 'required|in:cash,bank_transfer,credit_card,cheque,online_payment',
                 'transaction_date' => 'required|date',
                 'reference_number' => 'nullable|string|max:255',
@@ -32,41 +47,68 @@ class RevenueController extends Controller
                 'receipt_file' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
             ]);
 
+            // Clean and format the amount
+            $amount = round((float) $validated['amount'], 2);
+
+            // Log the amount for debugging
+            Log::info('Revenue amount received', [
+                'original' => $validated['amount'],
+                'formatted' => $amount
+            ]);
+
+            // Handle receipt file upload with custom naming
             $receiptPath = null;
             if ($request->hasFile('receipt_file')) {
-                $receiptPath = $request->file('receipt_file')->store('revenue-receipts', 'public');
+                try {
+                    $receiptPath = $this->uploadRevenueReceiptWithCustomName($request->file('receipt_file'), $student);
+                } catch (\InvalidArgumentException $e) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => $e->getMessage()
+                    ], 422);
+                }
             }
 
             $revenue = $student->revenues()->create([
-                'amount' => $validated['amount'],
+                'amount' => $amount, // Use the formatted amount
                 'method' => $validated['method'],
                 'transaction_date' => $validated['transaction_date'],
-                'reference_number' => $validated['reference_number'],
-                'description' => $validated['description'],
+                'reference_number' => $validated['reference_number'] ?? null,
+                'description' => $validated['description'] ?? null,
                 'receipt_file' => $receiptPath,
                 'created_by' => Auth::id(),
             ]);
 
-            // Create activity log
-            StudentNote::create([
-                'student_id' => $student->id,
-                'content' => "💰 Revenue added: $" . number_format($revenue->amount, 2) . " via " . ucfirst(str_replace('_', ' ', $revenue->method)),
-                'type' => 'log',
-                'title' => 'Revenue Added',
-                'created_by' => Auth::id(),
-                'is_log' => true,
+            // Verify what was saved
+            Log::info('Revenue saved', [
+                'amount_saved' => $revenue->amount
             ]);
 
-            // Return JSON response for AJAX
+            try {
+                StudentNote::create([
+                    'student_id' => $student->id,
+                    'content' => "💰 Revenue added: $" . number_format($revenue->amount, 2) . " via " . ucfirst(str_replace('_', ' ', $revenue->method)),
+                    'type' => 'log',
+                    'title' => 'Revenue Added',
+                    'created_by' => Auth::id(),
+                    'is_log' => true,
+                ]);
+            } catch (\Exception $e) {
+                Log::warning('Failed to create revenue log: ' . $e->getMessage());
+            }
+
+            $student->refresh();
+            $formattedRevenue = $this->formatRevenueData($revenue);
+
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
                     'success' => true,
                     'message' => 'Revenue added successfully',
-                    'data' => $revenue,
+                    'data' => $formattedRevenue,
                     'student' => [
-                        'expected_revenue' => $student->expected_revenue,
-                        'received_revenue' => $student->received_revenue,
-                        'remaining_due' => $student->remaining_due
+                        'expected_revenue' => (float) $student->expected_revenue,
+                        'received_revenue' => (float) $student->received_revenue,
+                        'remaining_due' => (float) $student->remaining_due
                     ]
                 ]);
             }
@@ -74,6 +116,7 @@ class RevenueController extends Controller
             return redirect()->back()->with('success', 'Revenue added successfully');
         } catch (\Exception $e) {
             Log::error('Revenue store error: ' . $e->getMessage());
+            Log::error($e->getTraceAsString());
 
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
@@ -86,11 +129,25 @@ class RevenueController extends Controller
         }
     }
 
+    /**
+     * Update the specified revenue record.
+     */
     public function update(Request $request, Student $student, Revenue $revenue)
     {
         try {
+            while (ob_get_level()) {
+                ob_end_clean();
+            }
+
+            if ($revenue->student_id !== $student->id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Revenue record does not belong to this student'
+                ], 400);
+            }
+
             $validated = $request->validate([
-                'amount' => 'required|numeric|min:0',
+                'amount' => 'required|numeric|min:0|regex:/^\d+(\.\d{1,2})?$/',
                 'method' => 'required|in:cash,bank_transfer,credit_card,cheque,online_payment',
                 'transaction_date' => 'required|date',
                 'reference_number' => 'nullable|string|max:255',
@@ -98,24 +155,70 @@ class RevenueController extends Controller
                 'receipt_file' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
             ]);
 
-            if ($request->hasFile('receipt_file')) {
+            // Clean and format the amount
+            $amount = round((float) $validated['amount'], 2);
+
+            $updateData = [
+                'amount' => $amount,
+                'method' => $validated['method'],
+                'transaction_date' => $validated['transaction_date'],
+                'reference_number' => $validated['reference_number'] ?? null,
+                'description' => $validated['description'] ?? null,
+            ];
+
+            if ($request->has('remove_receipt') && $request->remove_receipt == '1') {
                 if ($revenue->receipt_file && Storage::disk('public')->exists($revenue->receipt_file)) {
                     Storage::disk('public')->delete($revenue->receipt_file);
                 }
-                $validated['receipt_file'] = $request->file('receipt_file')->store('revenue-receipts', 'public');
+                $updateData['receipt_file'] = null;
+                Log::info('Receipt removed for revenue ID: ' . $revenue->id);
             }
 
-            $revenue->update($validated);
+            if ($request->hasFile('receipt_file')) {
+                try {
+                    if ($revenue->receipt_file && Storage::disk('public')->exists($revenue->receipt_file)) {
+                        Storage::disk('public')->delete($revenue->receipt_file);
+                    }
+                    $updateData['receipt_file'] = $this->uploadRevenueReceiptWithCustomName($request->file('receipt_file'), $student);
+                } catch (\InvalidArgumentException $e) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => $e->getMessage()
+                    ], 422);
+                }
+            }
+
+            $revenue->update($updateData);
+            $student->refresh();
+
+            try {
+                $logMessage = "✏️ Revenue updated: $" . number_format($revenue->amount, 2) . " via " . ucfirst(str_replace('_', ' ', $revenue->method));
+                if ($request->has('remove_receipt') && $request->remove_receipt == '1') {
+                    $logMessage .= " (Receipt removed)";
+                }
+                StudentNote::create([
+                    'student_id' => $student->id,
+                    'content' => $logMessage,
+                    'type' => 'log',
+                    'title' => 'Revenue Updated',
+                    'created_by' => Auth::id(),
+                    'is_log' => true,
+                ]);
+            } catch (\Exception $e) {
+                Log::warning('Failed to create revenue update log: ' . $e->getMessage());
+            }
+
+            $formattedRevenue = $this->formatRevenueData($revenue->fresh());
 
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
                     'success' => true,
                     'message' => 'Revenue updated successfully',
-                    'data' => $revenue,
+                    'data' => $formattedRevenue,
                     'student' => [
-                        'expected_revenue' => $student->expected_revenue,
-                        'received_revenue' => $student->received_revenue,
-                        'remaining_due' => $student->remaining_due
+                        'expected_revenue' => (float) $student->expected_revenue,
+                        'received_revenue' => (float) $student->received_revenue,
+                        'remaining_due' => (float) $student->remaining_due
                     ]
                 ]);
             }
@@ -123,6 +226,7 @@ class RevenueController extends Controller
             return redirect()->back()->with('success', 'Revenue updated successfully');
         } catch (\Exception $e) {
             Log::error('Revenue update error: ' . $e->getMessage());
+            Log::error($e->getTraceAsString());
 
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
@@ -135,48 +239,209 @@ class RevenueController extends Controller
         }
     }
 
+    /**
+     * Display the specified revenue record.
+     */
     public function show(Student $student, Revenue $revenue)
     {
-        return response()->json([
-            'success' => true,
-            'data' => $revenue
-        ]);
+        try {
+            while (ob_get_level()) {
+                ob_end_clean();
+            }
+
+            if ($revenue->student_id !== $student->id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Revenue record not found'
+                ], 404);
+            }
+
+            $formattedRevenue = $this->formatRevenueData($revenue);
+            $formattedRevenue['receipt_url'] = $revenue->receipt_file
+                ? $this->getReceiptUrl($revenue->receipt_file)
+                : null;
+
+            return response()->json([
+                'success' => true,
+                'data' => $formattedRevenue
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Revenue show error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch revenue: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
+    /**
+     * Remove the specified revenue record.
+     */
     public function destroy(Student $student, Revenue $revenue)
     {
         try {
+            while (ob_get_level()) {
+                ob_end_clean();
+            }
+
+            if ($revenue->student_id !== $student->id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Revenue record does not belong to this student'
+                ], 400);
+            }
+
             if ($revenue->receipt_file && Storage::disk('public')->exists($revenue->receipt_file)) {
                 Storage::disk('public')->delete($revenue->receipt_file);
+                Log::info('Receipt file deleted for revenue ID: ' . $revenue->id);
             }
 
             $amount = $revenue->amount;
+            $method = $revenue->method;
             $revenue->delete();
+            $student->refresh();
 
-            if (request()->ajax() || request()->wantsJson()) {
-                return response()->json([
-                    'success' => true,
-                    'message' => "Revenue of $" . number_format($amount, 2) . " deleted successfully",
-                    'student' => [
-                        'expected_revenue' => $student->expected_revenue,
-                        'received_revenue' => $student->received_revenue,
-                        'remaining_due' => $student->remaining_due
-                    ]
+            try {
+                StudentNote::create([
+                    'student_id' => $student->id,
+                    'content' => "🗑️ Revenue deleted: $" . number_format($amount, 2) . " via " . ucfirst(str_replace('_', ' ', $method)),
+                    'type' => 'log',
+                    'title' => 'Revenue Deleted',
+                    'created_by' => Auth::id(),
+                    'is_log' => true,
                 ]);
+            } catch (\Exception $e) {
+                Log::warning('Failed to create revenue deletion log: ' . $e->getMessage());
             }
 
-            return redirect()->back()->with('success', "Revenue of $" . number_format($amount, 2) . " deleted successfully");
+            return response()->json([
+                'success' => true,
+                'message' => "Revenue of $" . number_format($amount, 2) . " deleted successfully",
+                'student' => [
+                    'expected_revenue' => (float) $student->expected_revenue,
+                    'received_revenue' => (float) $student->received_revenue,
+                    'remaining_due' => (float) $student->remaining_due
+                ]
+            ]);
         } catch (\Exception $e) {
             Log::error('Revenue delete error: ' . $e->getMessage());
+            Log::error($e->getTraceAsString());
 
-            if (request()->ajax() || request()->wantsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Failed to delete revenue: ' . $e->getMessage()
-                ], 500);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete revenue: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Download receipt file
+     */
+    public function downloadReceipt(Student $student, Revenue $revenue)
+    {
+        try {
+            if ($revenue->student_id !== $student->id) {
+                abort(404, 'Receipt not found');
             }
 
-            return redirect()->back()->with('error', 'Failed to delete revenue: ' . $e->getMessage());
+            if (!$revenue->receipt_file || !Storage::disk('public')->exists($revenue->receipt_file)) {
+                abort(404, 'Receipt file not found');
+            }
+
+            return Storage::disk('public')->download($revenue->receipt_file);
+        } catch (\Exception $e) {
+            Log::error('Receipt download error: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Failed to download receipt: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Upload revenue receipt with custom naming (student name + receipt)
+     * 
+     * @param \Illuminate\Http\UploadedFile $file
+     * @param Student $student
+     * @return string
+     * @throws \InvalidArgumentException
+     */
+    private function uploadRevenueReceiptWithCustomName($file, Student $student): string
+    {
+        $agent = Auth::user();
+
+        if (!$agent) {
+            throw new \InvalidArgumentException('No authenticated user found');
+        }
+
+        // Create student name for filename
+        $studentName = Str::slug($student->first_name . '-' . $student->last_name);
+        $extension = $file->getClientOriginalExtension();
+
+        // Create filename: student-name_receipt_timestamp.extension
+        $timestamp = date('Y-m-d_H-i-s');
+        $customFileName = "{$studentName}_receipt_{$timestamp}.{$extension}";
+
+        // Agent slug
+        $agentSlug = $agent->slug;
+
+        // Student folder name
+        $studentFolder = Str::slug($student->first_name . ' ' . $student->last_name);
+
+        // Full folder path
+        $folder = "agents/{$agentSlug}/{$studentFolder}/receipts";
+
+        // Ensure directory exists
+        if (!Storage::disk('public')->exists($folder)) {
+            Storage::disk('public')->makeDirectory($folder, 0755, true);
+        }
+
+        // Store file with custom name
+        $path = $file->storeAs($folder, $customFileName, 'public');
+
+        Log::info('Receipt uploaded for student ' . $student->id . ': ' . $path);
+
+        return $path;
+    }
+
+    /**
+     * Format revenue data for JSON response
+     * 
+     * @param Revenue $revenue
+     * @return array
+     */
+    private function formatRevenueData(Revenue $revenue): array
+    {
+        return [
+            'id' => $revenue->id,
+            'student_id' => $revenue->student_id,
+            'amount' => (float) $revenue->amount,
+            'method' => $revenue->method,
+            'transaction_date' => $revenue->transaction_date instanceof \DateTime
+                ? $revenue->transaction_date->format('Y-m-d')
+                : ($revenue->transaction_date ?? date('Y-m-d')),
+            'reference_number' => $revenue->reference_number,
+            'description' => $revenue->description,
+            'receipt_file' => $revenue->receipt_file,
+            'receipt_url' => $revenue->receipt_file ? $this->getReceiptUrl($revenue->receipt_file) : null,
+            'created_by' => $revenue->created_by,
+            'created_at' => $revenue->created_at ? $revenue->created_at->format('Y-m-d H:i:s') : null,
+            'updated_at' => $revenue->updated_at ? $revenue->updated_at->format('Y-m-d H:i:s') : null,
+        ];
+    }
+    /**
+     * Get receipt URL with proper handling (avoid 403)
+     */
+    private function getReceiptUrl($path)
+    {
+        if (!$path) {
+            return null;
+        }
+
+        // Check if file exists
+        if (!Storage::disk('public')->exists($path)) {
+            Log::warning('Receipt file not found: ' . $path);
+            return null;
+        }
+
+        // Use route instead of direct storage URL to avoid 403
+        return route('receipt.view', ['path' => $path]);
     }
 }

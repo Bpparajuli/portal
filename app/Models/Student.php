@@ -116,9 +116,6 @@ class Student extends Model
     }
 
     // Relationship with revenues
-
-    // Add these methods to your Student model
-
     public function revenues()
     {
         return $this->hasMany(Revenue::class);
@@ -131,10 +128,21 @@ class Student extends Model
         $this->saveQuietly();
     }
 
+    public function getReceivedRevenueAttribute()
+    {
+        return $this->revenues()->sum('amount');
+    }
+
     public function getRemainingDueAttribute()
     {
-        return max(0, ($this->expected_revenue ?? 0) - ($this->received_revenue ?? 0));
+        return max(0, $this->expected_revenue - $this->received_revenue);
     }
+
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+  
     
     // ========================================================================
     // CRM Relationships

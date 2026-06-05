@@ -113,22 +113,46 @@
                             </span>
                         </td>
                         @if ($isAdmin)
-                            <td>{{ $student->agent?->name ?? 'Unassigned' }}</td>
+                            <td>
+                                @php
+                                    // Get unique assignees from all pending tasks
+                                    $assignees = $student->pendingActivities->pluck('assignee')->filter()->unique('id');
+                                @endphp
+                                @if ($assignees->count() > 0)
+                                    <div class="d-flex flex-wrap gap-1">
+                                        @foreach ($assignees as $assignee)
+                                            <span class="badge bg-secondary">
+                                                <i class="fas fa-user-tie me-1"></i> {{ $assignee->name }}
+                                            </span>
+                                        @endforeach
+                                    </div>
+                                @else
+                                    <span class="badge bg-light text-muted">Unassigned</span>
+                                @endif
+                            </td>
                         @endif
                         <td>
                             <div class="d-flex flex-column gap-1">
                                 @php
                                     $overdueCount = $student->overdueActivities->count();
                                     $upcomingCount = $student->upcomingActivities->count();
+                                    $completedTodayCount = $student
+                                        ->activities()
+                                        ->where('status', 'completed')
+                                        ->whereDate('completed_at', today())
+                                        ->count();
                                 @endphp
                                 @if ($overdueCount > 0)
-                                    <span class="badge bg-danger">{{ $overdueCount }} To-do</span>
+                                    <span class="badge bg-danger">{{ $overdueCount }} Overdue</span>
                                 @endif
                                 @if ($upcomingCount > 0)
                                     <span class="badge bg-success">{{ $upcomingCount }} Upcoming</span>
                                 @endif
-                                @if ($overdueCount == 0 && $upcomingCount == 0)
-                                    <span class="badge bg-light text-dark">No pending tasks</span>
+                                @if ($completedTodayCount > 0)
+                                    <span class="badge bg-info">✓ {{ $completedTodayCount }} Completed Today</span>
+                                @endif
+                                @if ($overdueCount == 0 && $upcomingCount == 0 && $completedTodayCount == 0)
+                                    <span class="badge bg-light text-dark">No tasks</span>
                                 @endif
                             </div>
                         </td>

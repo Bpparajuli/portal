@@ -97,15 +97,15 @@
             const currentView = '{{ $view ?? 'kanban' }}';
 
             // Auto-submit search on input
-            const searchInput = document.querySelector('input[name="search"]');
-            if (searchInput) {
-                searchInput.addEventListener('input', function() {
-                    clearTimeout(searchTimer);
-                    searchTimer = setTimeout(() => {
-                        document.getElementById('crmFilterForm')?.submit();
-                    }, 500);
-                });
-            }
+            // const searchInput = document.querySelector('input[name="search"]');
+            // if (searchInput) {
+            //     searchInput.addEventListener('input', function() {
+            //         clearTimeout(searchTimer);
+            //         searchTimer = setTimeout(() => {
+            //             document.getElementById('crmFilterForm')?.submit();
+            //         }, 500);
+            //     });
+            // }
 
             // Listen for view change events
             window.addEventListener('crm:beforeViewChange', function(e) {

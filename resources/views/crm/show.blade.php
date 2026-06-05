@@ -9,45 +9,51 @@
 
 @section('content')
 
-    {{-- NEXT PREVIOUS BUTTON FOR TODAYS TASK --}}
-
+    {{-- NEXT PREVIOUS BUTTON FOR TODAY'S TASK --}}
     @if (isset($todayTaskNavigation) &&
             $todayTaskNavigation &&
             ($todayTaskNavigation['prev'] || $todayTaskNavigation['next']))
         <div
-            style="background: linear-gradient(135deg, #1a0262 0%, #820b5c 100%); padding: 6px 12px;  display: flex; align-items: center; justify-content: space-between; gap: 12px;">
-            <div style="display: flex; align-items: center; gap: 8px; white-space: nowrap;">
+            style="background: linear-gradient(135deg, #1a0262 0%, #820b5c 100%); padding: 8px 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; border-radius: 8px; margin-bottom: 16px;">
+            <div style="display: flex; align-items: center; gap: 12px; white-space: nowrap;">
                 <span
-                    style="background: rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 20px; font-size: 11px; color: white;">📅
-                    Today</span>
-                <span
-                    style="color: white; font-size: 12px; font-weight: 500;">{{ $todayTaskNavigation['current_position'] }}/{{ $todayTaskNavigation['total'] }}</span>
+                    style="background: rgba(255,255,255,0.2); padding: 4px 10px; border-radius: 20px; font-size: 12px; color: white;">
+                    📅 Today's Tasks
+                </span>
+                <span style="color: white; font-size: 13px; font-weight: 500;">
+                    {{ $todayTaskNavigation['current_position'] }}/{{ $todayTaskNavigation['total'] }}
+                </span>
                 <div
-                    style="width: 60px; height: 3px; background: rgba(255,255,255,0.2); border-radius: 2px; overflow: hidden;">
+                    style="width: 100px; height: 4px; background: rgba(255,255,255,0.2); border-radius: 2px; overflow: hidden;">
                     <div
-                        style="width: {{ ($todayTaskNavigation['current_position'] / $todayTaskNavigation['total']) * 100 }}%; height: 100%; background: white;">
+                        style="width: {{ ($todayTaskNavigation['current_position'] / $todayTaskNavigation['total']) * 100 }}%; height: 100%; background: white; border-radius: 2px;">
                     </div>
                 </div>
             </div>
-            <div style="display: flex; gap: 6px;">
+            <div style="display: flex; gap: 8px;">
                 @if ($todayTaskNavigation['prev'])
                     <a href="{{ route('crm.student.show', $todayTaskNavigation['prev']['id']) }}"
-                        style="background: white; color: #1a0262; padding: 3px 10px; border-radius: 6px; text-decoration: none; font-size: 11px; font-weight: 500; display: flex; align-items: center; gap: 4px;">
+                        style="background: white; color: #1a0262; padding: 4px 12px; border-radius: 6px; text-decoration: none; font-size: 12px; font-weight: 500; display: flex; align-items: center; gap: 5px;">
                         ← {{ $todayTaskNavigation['prev']['first_name'] }}
+                        <span
+                            style="background: #e0e0e0; padding: 0px 5px; border-radius: 10px; font-size: 10px;">{{ $todayTaskNavigation['prev']['tasks_count'] }}</span>
                     </a>
                 @else
                     <span
-                        style="background: rgba(255,255,255,0.2); color: rgb(255, 255, 255); padding: 3px 10px; border-radius: 6px; font-size: 11px;">←
-                        Prev</span>
+                        style="background: rgba(255,255,255,0.2); color: rgba(255,255,255,0.6); padding: 4px 12px; border-radius: 6px; font-size: 12px;">←
+                        Previous</span>
                 @endif
+
                 @if ($todayTaskNavigation['next'])
                     <a href="{{ route('crm.student.show', $todayTaskNavigation['next']['id']) }}"
-                        style="background: white; color: #1a0262; padding: 3px 10px; border-radius: 6px; text-decoration: none; font-size: 11px; font-weight: 500; display: flex; align-items: center; gap: 4px;">
+                        style="background: white; color: #1a0262; padding: 4px 12px; border-radius: 6px; text-decoration: none; font-size: 12px; font-weight: 500; display: flex; align-items: center; gap: 5px;">
+                        <span
+                            style="background: #e0e0e0; padding: 0px 5px; border-radius: 10px; font-size: 10px;">{{ $todayTaskNavigation['next']['tasks_count'] }}</span>
                         {{ $todayTaskNavigation['next']['first_name'] }} →
                     </a>
                 @else
                     <span
-                        style="background: rgba(255,255,255,0.2); color: rgba(255,255,255); padding: 3px 10px; border-radius: 6px; font-size: 11px;">Next
+                        style="background: rgba(255,255,255,0.2); color: rgba(255,255,255,0.6); padding: 4px 12px; border-radius: 6px; font-size: 12px;">Next
                         →</span>
                 @endif
             </div>
@@ -60,8 +66,11 @@
             !$todayTaskNavigation['prev'] &&
             !$todayTaskNavigation['next'] &&
             $todayTaskNavigation['total'] == 1)
-        <div style="background: #e3f2fd; border-radius: 6px; padding: 4px 10px; margin-bottom: 12px;">
-            <small style="color: #1976d2; font-size: 11px;">📅 Only student with tasks today</small>
+        <div
+            style="background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); border-radius: 8px; padding: 8px 16px; margin-bottom: 16px;">
+            <small style="color: #2e7d32; font-size: 12px;">📅 You have
+                {{ $todayTaskNavigation['current_student_tasks_count'] }} task(s) for this student today. This is the only
+                student with tasks.</small>
         </div>
     @endif
     {{-- Back bar --}}

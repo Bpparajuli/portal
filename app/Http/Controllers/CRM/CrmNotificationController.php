@@ -44,10 +44,17 @@ class CrmNotificationController extends Controller
             return response()->json([
                 'unread_count' => $unreadCount,
                 'notifications' => $notifications->map(function ($notification) {
+                    $data = $notification->data;
+
+                    // Ensure message exists
+                    if (!isset($data['message']) && isset($data['task_title'])) {
+                        $data['message'] = $data['task_title'];
+                    }
+
                     return [
                         'id' => $notification->id,
                         'read_at' => $notification->read_at,
-                        'data' => $notification->data,
+                        'data' => $data,
                         'created_at' => $notification->created_at->toIso8601String(),
                     ];
                 })
@@ -91,7 +98,14 @@ class CrmNotificationController extends Controller
 
             // Get redirect URL from notification data
             $data = $notification->data;
+
+            // Fix: Check both 'link' and 'url' keys
             $url = $data['link'] ?? $data['url'] ?? route('crm.dashboard');
+
+            // Fix: If URL is relative, make it absolute
+            if (strpos($url, '/') === 0) {
+                $url = url($url);
+            }
 
             return redirect($url);
         } catch (\Exception $e) {
@@ -103,7 +117,7 @@ class CrmNotificationController extends Controller
     /**
      * Mark single notification as read (AJAX)
      */
-    public function markAsRead($id)
+    public function markAsRead(Request $request, $id)
     {
         try {
             $user = Auth::user();
@@ -124,11 +138,7 @@ class CrmNotificationController extends Controller
             $notification->read_at = now();
             $notification->save();
 
-            if ($request->wantsJson()) {
-                return response()->json(['success' => true]);
-            }
-
-            return back()->with('success', 'Notification marked as read.');
+            return response()->json(['success' => true]);
         } catch (\Exception $e) {
             Log::error('Mark as read error: ' . $e->getMessage());
             return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
@@ -155,7 +165,7 @@ class CrmNotificationController extends Controller
                 ->update(['read_at' => now()]);
 
             if ($request->wantsJson()) {
-                return response()->json(['success' => true]);
+                return response()->json(['success' => true, 'message' => 'All notifications marked as read']);
             }
 
             return back()->with('success', 'All notifications marked as read.');
@@ -166,15 +176,62 @@ class CrmNotificationController extends Controller
     }
 
     /**
-     * Delete a notification
+     * Delete all read notifications
      */
-    public function destroy($id)
+    public function destroyRead(Request $request)
     {
         try {
             $user = Auth::user();
 
             if (!$user) {
-                return back()->with('error', 'User not authenticated');
+                if ($request->wantsJson()) {
+                    return response()->json(['success' => false, 'error' => 'User not authenticated'], 401);
+                }
+                return redirect()->route('login');
+            }
+
+            // Delete only read notifications
+            $count = DatabaseNotification::where('notifiable_id', $user->id)
+                ->where('notifiable_type', get_class($user))
+                ->whereNotNull('read_at')
+                ->where('type', 'App\\Notifications\\CrmTaskNotification')
+                ->delete();
+
+            Log::info('Read notifications cleared', [
+                'user_id' => $user->id,
+                'count' => $count
+            ]);
+
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => "{$count} read notifications cleared successfully",
+                    'count' => $count
+                ]);
+            }
+
+            return back()->with('success', "{$count} read notifications cleared.");
+        } catch (\Exception $e) {
+            Log::error('Destroy read error: ' . $e->getMessage());
+
+            if ($request->wantsJson()) {
+                return response()->json(['success' => false, 'error' => 'Failed to clear notifications'], 500);
+            }
+
+            return back()->with('error', 'Failed to clear notifications: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Delete a notification via AJAX
+     */
+    public function deleteNotification(Request $request, $id)
+    {
+        try {
+            $user = Auth::user();
+
+            if (!$user) {
+                return response()->json(['success' => false, 'error' => 'Unauthenticated'], 401);
             }
 
             $notification = DatabaseNotification::where('id', $id)
@@ -182,64 +239,22 @@ class CrmNotificationController extends Controller
                 ->where('notifiable_type', get_class($user))
                 ->first();
 
-            if ($notification) {
-                $notification->delete();
-                return back()->with('success', 'Notification deleted.');
+            if (!$notification) {
+                return response()->json(['success' => false, 'error' => 'Notification not found'], 404);
             }
 
-            return back()->with('error', 'Notification not found');
+            $notification->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Notification deleted successfully'
+            ]);
         } catch (\Exception $e) {
             Log::error('Delete notification error: ' . $e->getMessage());
-            return back()->with('error', 'Failed to delete notification');
-        }
-    }
-
-    /**
-     * Delete all read notifications
-     */
-    public function destroyRead()
-    {
-        try {
-            $user = Auth::user();
-
-            if (!$user) {
-                return back()->with('error', 'User not authenticated');
-            }
-
-            $count = DatabaseNotification::where('notifiable_id', $user->id)
-                ->where('notifiable_type', get_class($user))
-                ->whereNotNull('read_at')
-                ->where('type', 'App\\Notifications\\CrmTaskNotification')
-                ->delete();
-
-            return back()->with('success', "{$count} read notifications cleared.");
-        } catch (\Exception $e) {
-            Log::error('Destroy read error: ' . $e->getMessage());
-            return back()->with('error', 'Failed to clear notifications');
-        }
-    }
-
-    /**
-     * Delete all CRM notifications
-     */
-    public function destroyAll()
-    {
-        try {
-            $user = Auth::user();
-
-            if (!$user) {
-                return back()->with('error', 'User not authenticated');
-            }
-
-            $count = DatabaseNotification::where('notifiable_id', $user->id)
-                ->where('notifiable_type', get_class($user))
-                ->where('type', 'App\\Notifications\\CrmTaskNotification')
-                ->delete();
-
-            return back()->with('success', "{$count} CRM notifications deleted.");
-        } catch (\Exception $e) {
-            Log::error('Destroy all error: ' . $e->getMessage());
-            return back()->with('error', 'Failed to delete notifications');
+            return response()->json([
+                'success' => false,
+                'error' => 'Failed to delete notification: ' . $e->getMessage()
+            ], 500);
         }
     }
 

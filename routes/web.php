@@ -393,7 +393,7 @@ Route::middleware('auth')
         Route::get('/students/{student}/revenues/{revenue}', [CrmRevenueController::class, 'show'])->name('student.revenues.show');
         Route::put('/students/{student}/revenues/{revenue}', [CrmRevenueController::class, 'update'])->name('student.revenues.update');
         Route::delete('/students/{student}/revenues/{revenue}', [CrmRevenueController::class, 'destroy'])->name('student.revenues.destroy');
-
+        Route::get('/students/{student}/revenues/{revenue}/download', [CrmRevenueController::class, 'downloadReceipt'])->name('student.revenues.download');
         // ========== TASKS ROUTES ==========
         Route::post('/tasks', [CrmTasksController::class, 'store'])->name('tasks.store');
         Route::put('/tasks/{task}', [CrmTasksController::class, 'update'])->name('tasks.update');
@@ -407,16 +407,16 @@ Route::middleware('auth')
         Route::post('/tasks/check-due', [CrmTasksController::class, 'checkDueTasks'])->name('tasks.check-due');
         Route::delete('/tasks/{task}', [CrmTasksController::class, 'destroy'])
             ->name('tasks.destroy');
+        Route::get('/my-today-tasks', [CrmStudentController::class, 'getMyTodayTasksStudents'])
+            ->name('my-today-tasks');
         Route::post('/tasks/check-duplicate/{studentId}', [CrmTasksController::class, 'checkDuplicate'])
             ->name('tasks.check-duplicate');
-
 
         // ========== TASK STATISTICS ROUTES ==========
         Route::get('/task-stats', [CrmDashboardController::class, 'getTaskStats'])->name('task-stats');
         Route::get('/task-stats/details/{type}', [CrmDashboardController::class, 'getTaskDetails'])->name('task-stats.details');
         Route::get('/today-task-students', [CrmStudentController::class, 'getTodayTaskStudentIds'])
             ->name('today-task-students');
-
 
         // ========== NOTES ROUTES ==========
         Route::post('/notes', [CrmStudentNoteController::class, 'store'])->name('notes.store');
@@ -438,8 +438,11 @@ Route::middleware('auth')
             Route::post('/mark-all-read', [CrmNotificationController::class, 'markAllAsRead'])->name('mark-all-read');
             Route::post('/{id}/mark-read', [CrmNotificationController::class, 'markAsRead'])->name('mark-read');
             Route::get('/{id}/redirect', [CrmNotificationController::class, 'markAsReadAndRedirect'])->name('redirect');
-            Route::delete('/{id}', [CrmNotificationController::class, 'destroy'])->name('destroy');
+
+            // Important: Put delete routes BEFORE any wildcard routes
             Route::delete('/read/all', [CrmNotificationController::class, 'destroyRead'])->name('destroy-read');
+            Route::delete('/{id}/delete-ajax', [CrmNotificationController::class, 'deleteNotification'])->name('delete-ajax');
+
             Route::get('/settings', [CrmNotificationController::class, 'settings'])->name('settings');
             Route::post('/settings', [CrmNotificationController::class, 'updateSettings'])->name('update-settings');
             Route::get('/all', [CrmNotificationController::class, 'all'])->name('all');
@@ -454,6 +457,10 @@ Route::middleware('auth')
             Route::post('/reorder', [CrmStudentStageController::class, 'reorder'])->name('reorder');
             Route::delete('/{stage}', [CrmStudentStageController::class, 'destroy'])->name('destroy');
         });
+
+        Route::get('/debug/staff-role', [CrmStudentController::class, 'debugStaffRole'])->name('debug.staff-role');
+
+        Route::get('/debug/task-visibility/{student}', [CrmStudentController::class, 'debugAllTasksForStaff'])->name('debug.task-visibility');
     });
 
 
@@ -500,3 +507,33 @@ Route::get('/fix-user-status', function () {
     }
     return "User statuses created successfully!";
 });
+// Add this at the end of your web.php file, before the closing PHP tag if any
+Route::get('/receipt-view/{path}', function ($path) {
+    $fullPath = storage_path('app/public/' . $path);
+
+    if (!file_exists($fullPath)) {
+        abort(404, 'File not found');
+    }
+
+    // Get file extension
+    $extension = strtolower(pathinfo($fullPath, PATHINFO_EXTENSION));
+
+    // Set appropriate headers based on file type
+    $contentTypes = [
+        'pdf' => 'application/pdf',
+        'jpg' => 'image/jpeg',
+        'jpeg' => 'image/jpeg',
+        'png' => 'image/png',
+        'gif' => 'image/gif',
+        'webp' => 'image/webp',
+    ];
+
+    $contentType = $contentTypes[$extension] ?? 'application/octet-stream';
+
+    return response()->file($fullPath, [
+        'Content-Type' => $contentType,
+        'Content-Disposition' => 'inline',
+        'Cache-Control' => 'public, max-age=3600',
+        'X-Content-Type-Options' => 'nosniff'
+    ]);
+})->where('path', '.*')->name('receipt.view');

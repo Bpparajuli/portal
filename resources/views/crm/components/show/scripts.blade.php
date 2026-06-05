@@ -489,41 +489,85 @@
     }
 
     // ========== REVENUE FUNCTIONS ==========
+    // ========== REVENUE FUNCTIONS WITH POPUP PREVIEW ==========
+
+    let currentReceiptUrl = null;
+    let currentRevenueIdForReceipt = null;
+
     function openRevenueModal(studentId, revenueId = null) {
         currentRevenueId = revenueId;
+        currentRevenueIdForReceipt = revenueId;
         const modal = document.getElementById('revenueModal');
         const title = document.getElementById('revenueModalTitle');
         const form = document.getElementById('revenueForm');
+        const methodInput = document.querySelector('#revenueForm input[name="_method"]');
+        const currentReceiptContainer = document.getElementById('current_receipt_container');
+        const receiptFileInput = document.getElementById('receipt_file_input');
+
+        // Reset current receipt display
+        if (currentReceiptContainer) {
+            currentReceiptContainer.style.display = 'none';
+        }
+        if (receiptFileInput) {
+            receiptFileInput.value = '';
+        }
+        currentReceiptUrl = null;
 
         if (revenueId) {
+            // EDIT MODE
             title.textContent = 'Edit Revenue';
+            form.action = `/crm/students/${studentId}/revenues/${revenueId}`;
+            if (methodInput) methodInput.value = 'PUT';
+
+            // Show loading state
+            showToast('Loading revenue data...', 'info');
+
             fetch(`/crm/students/${studentId}/revenues/${revenueId}`, {
                     headers: {
                         'Accept': 'application/json',
-                        'X-CSRF-TOKEN': getCsrfToken()
+                        'X-CSRF-TOKEN': getCsrfToken(),
+                        'X-Requested-With': 'XMLHttpRequest'
                     }
                 })
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        document.getElementById('revenue_amount').value = data.data.amount;
-                        document.getElementById('revenue_method').value = data.data.method;
-                        document.getElementById('revenue_date').value = data.data.transaction_date;
-                        document.getElementById('revenue_description').value = data.data.description || '';
-                        document.getElementById('revenue_reference').value = data.data.reference_number || '';
+                        const revenue = data.data;
+                        document.getElementById('revenue_amount').value = revenue.amount;
+                        document.getElementById('revenue_method').value = revenue.method;
+                        let transactionDate = revenue.transaction_date;
+                        if (transactionDate && transactionDate.includes(' ')) {
+                            transactionDate = transactionDate.split(' ')[0];
+                        }
+                        document.getElementById('revenue_date').value = transactionDate;
+                        document.getElementById('revenue_description').value = revenue.description || '';
+                        document.getElementById('revenue_reference').value = revenue.reference_number || '';
+
+                        // Show current receipt if exists
+                        if (revenue.receipt_file && revenue.receipt_url) {
+                            currentReceiptUrl = revenue.receipt_url;
+                            const filename = revenue.receipt_file.split('/').pop();
+                            document.getElementById('current_receipt_filename').textContent = filename;
+                            if (currentReceiptContainer) {
+                                currentReceiptContainer.style.display = 'block';
+                            }
+                        }
+                    } else {
+                        showToast(data.message || 'Failed to load revenue data', 'error');
+                        closeRevenueModal();
                     }
                 })
                 .catch(error => {
                     console.error('Error fetching revenue:', error);
                     showToast('Failed to load revenue data', 'error');
+                    closeRevenueModal();
                 });
-            form.action = `/crm/students/${studentId}/revenues/${revenueId}`;
-            document.querySelector('input[name="_method"]').value = 'PUT';
         } else {
+            // ADD MODE
             title.textContent = 'Add Revenue';
             form.reset();
             form.action = `/crm/students/${studentId}/revenues`;
-            document.querySelector('input[name="_method"]').value = 'POST';
+            if (methodInput) methodInput.value = 'POST';
             document.getElementById('revenue_date').value = new Date().toISOString().split('T')[0];
         }
 
@@ -533,6 +577,110 @@
     function closeRevenueModal() {
         const modal = document.getElementById('revenueModal');
         if (modal) modal.style.display = 'none';
+        currentReceiptUrl = null;
+    }
+
+    function previewReceipt() {
+        if (!currentReceiptUrl) {
+            showToast('No receipt available to preview', 'warning');
+            return;
+        }
+
+        const previewModal = document.getElementById('receiptPreviewModal');
+        const previewContent = document.getElementById('receipt_preview_content');
+
+        if (!previewModal || !previewContent) return;
+
+        // Show loading
+        previewContent.innerHTML = `
+        <div style="text-align: center;">
+            <div class="spinner" style="border: 3px solid #f3f3f3; border-top: 3px solid #667eea; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 20px auto;"></div>
+            <p>Loading preview...</p>
+        </div>
+    `;
+
+        previewModal.style.display = 'flex';
+
+        // Determine file type and display accordingly
+        const fileExtension = currentReceiptUrl.split('.').pop().toLowerCase();
+
+        if (fileExtension === 'pdf') {
+            previewContent.innerHTML = `
+            <iframe src="${currentReceiptUrl}" class="receipt-pdf" style="width: 100%; height: 70vh; border: none;"></iframe>
+        `;
+        } else if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExtension)) {
+            const img = new Image();
+            img.onload = function() {
+                previewContent.innerHTML = `
+                <img src="${currentReceiptUrl}" class="receipt-image" alt="Receipt Preview" style="max-width: 100%; max-height: 70vh; object-fit: contain;">
+            `;
+            };
+            img.onerror = function() {
+                previewContent.innerHTML = `
+                <div style="text-align: center; padding: 40px;">
+                    <span style="font-size: 48px;">🖼️</span>
+                    <p>Failed to load image. <a href="${currentReceiptUrl}" target="_blank">Open directly</a></p>
+                </div>
+            `;
+            };
+            img.src = currentReceiptUrl;
+        } else {
+            previewContent.innerHTML = `
+            <div style="text-align: center; padding: 40px;">
+                <span style="font-size: 48px;">📄</span>
+                <p>Preview not available for this file type.</p>
+                <a href="${currentReceiptUrl}" target="_blank" class="btn btn-primary mt-2">Download File</a>
+            </div>
+        `;
+        }
+    }
+
+    function closeReceiptPreviewModal() {
+        const modal = document.getElementById('receiptPreviewModal');
+        if (modal) modal.style.display = 'none';
+    }
+
+    function downloadCurrentReceipt() {
+        if (!currentReceiptUrl) {
+            showToast('No receipt available to download', 'warning');
+            return;
+        }
+
+        // Create temporary link to download
+        const link = document.createElement('a');
+        link.href = currentReceiptUrl;
+        link.download = currentReceiptUrl.split('/').pop();
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        showToast('Download started...', 'success');
+    }
+
+    function removeCurrentReceipt() {
+        if (!confirm('Remove the current receipt? You can upload a new one.')) {
+            return;
+        }
+
+        // Clear the receipt display
+        const container = document.getElementById('current_receipt_container');
+        if (container) {
+            container.style.display = 'none';
+        }
+        currentReceiptUrl = null;
+
+        // Add a hidden input to mark receipt for deletion
+        const form = document.getElementById('revenueForm');
+        let removeReceiptInput = form.querySelector('input[name="remove_receipt"]');
+        if (!removeReceiptInput) {
+            removeReceiptInput = document.createElement('input');
+            removeReceiptInput.type = 'hidden';
+            removeReceiptInput.name = 'remove_receipt';
+            form.appendChild(removeReceiptInput);
+        }
+        removeReceiptInput.value = '1';
+
+        showToast('Receipt marked for removal', 'info');
     }
 
     function deleteRevenue(studentId, revenueId, amount) {
@@ -545,68 +693,159 @@
                 headers: {
                     'X-CSRF-TOKEN': getCsrfToken(),
                     'Accept': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Content-Type': 'application/json'
                 }
             })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    showToast('Revenue deleted successfully');
-                    setTimeout(() => window.location.reload(), 1000);
+                    showToast(data.message || 'Revenue deleted successfully');
+                    // Remove the revenue item from DOM
+                    const revenueItem = document.querySelector(`.revenue-item[data-revenue-id="${revenueId}"]`);
+                    if (revenueItem) {
+                        revenueItem.remove();
+                        if (data.student) {
+                            updateRevenueDisplay(data.student);
+                        }
+                        const revenueList = document.querySelector('.revenue-list');
+                        if (revenueList && revenueList.querySelectorAll('.revenue-item').length === 0) {
+                            const emptyMessage = document.querySelector('.revenue-list .text-muted');
+                            if (!emptyMessage) {
+                                revenueList.innerHTML +=
+                                    '<div class="text-muted text-center py-3">No revenue records yet.</div>';
+                            }
+                        }
+                    } else {
+                        setTimeout(() => window.location.reload(), 1000);
+                    }
                 } else {
                     showToast(data.message || 'Failed to delete revenue', 'error');
                 }
             })
             .catch(error => {
                 console.error('Error deleting revenue:', error);
-                showToast('An error occurred', 'error');
+                showToast('An error occurred: ' + error.message, 'error');
             });
     }
 
-    function updateRevenueDisplay(studentData) {
-        const expectedEl = document.querySelector('.revenue-stats-value:first-child');
-        const collectedEl = document.querySelector('.revenue-stats-value:nth-child(2)');
-        const dueEl = document.querySelector('.revenue-stats-value:last-child');
-
-        if (expectedEl) expectedEl.textContent = `$${parseFloat(studentData.expected_revenue).toFixed(2)}`;
-        if (collectedEl) collectedEl.textContent = `$${parseFloat(studentData.received_revenue).toFixed(2)}`;
-        if (dueEl) dueEl.textContent = `$${parseFloat(studentData.remaining_due).toFixed(2)}`;
-    }
-
+    // Revenue form submission handler with receipt removal support
     document.addEventListener('DOMContentLoaded', function() {
         const revenueForm = document.getElementById('revenueForm');
         if (revenueForm) {
             revenueForm.addEventListener('submit', function(e) {
                 e.preventDefault();
+
+                // Show loading state on submit button
+                const submitBtn = revenueForm.querySelector('button[type="submit"]');
+                const originalText = submitBtn.innerHTML;
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = 'Saving...';
+
                 const formData = new FormData(this);
                 const url = this.action;
-                const method = document.querySelector('input[name="_method"]').value;
 
                 fetch(url, {
-                        method: method === 'PUT' ? 'POST' : 'POST',
+                        method: 'POST',
                         body: formData,
                         headers: {
                             'X-CSRF-TOKEN': getCsrfToken(),
-                            'X-Requested-With': 'XMLHttpRequest'
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json'
                         }
                     })
                     .then(response => response.json())
                     .then(data => {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = originalText;
+
                         if (data.success) {
                             showToast(data.message);
                             closeRevenueModal();
                             setTimeout(() => window.location.reload(), 1000);
                         } else {
-                            showToast(data.message, 'error');
+                            showToast(data.message || 'Error saving revenue', 'error');
                         }
                     })
                     .catch(error => {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = originalText;
                         console.error('Error saving revenue:', error);
-                        showToast('An error occurred', 'error');
+                        showToast('An error occurred: ' + error.message, 'error');
                     });
             });
         }
     });
+
+    function updateRevenueDisplay(studentData) {
+        const statsValues = document.querySelectorAll('.revenue-stats-value');
+        if (statsValues.length >= 3) {
+            statsValues[0].textContent = `$${parseFloat(studentData.expected_revenue || 0).toFixed(2)}`;
+            statsValues[1].textContent = `$${parseFloat(studentData.received_revenue || 0).toFixed(2)}`;
+            statsValues[2].textContent = `$${parseFloat(studentData.remaining_due || 0).toFixed(2)}`;
+        }
+    }
+    // ========== RECEIPT PREVIEW FROM LIST ==========
+
+    // ========== RECEIPT PREVIEW FROM LIST ==========
+    function viewReceiptFromList(receiptUrl, filename) {
+        if (!receiptUrl) {
+            showToast('No receipt available to preview', 'warning');
+            return;
+        }
+
+        currentReceiptUrl = receiptUrl;
+        const previewModal = document.getElementById('receiptPreviewModal');
+        const previewContent = document.getElementById('receipt_preview_content');
+
+        if (!previewModal || !previewContent) return;
+
+        // Show loading
+        previewContent.innerHTML = `
+        <div style="text-align: center;">
+            <div class="spinner" style="border: 3px solid #f3f3f3; border-top: 3px solid #667eea; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 20px auto;"></div>
+            <p>Loading preview...</p>
+        </div>
+    `;
+
+        previewModal.style.display = 'flex';
+
+        // Determine file type from URL or filename
+        const fileExtension = filename.split('.').pop().toLowerCase();
+
+        if (fileExtension === 'pdf') {
+            // For PDF, embed using iframe
+            previewContent.innerHTML = `
+            <iframe src="${receiptUrl}" class="receipt-pdf" style="width: 100%; height: 70vh; border: none;"></iframe>
+        `;
+        } else if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'].includes(fileExtension)) {
+            // For images, create img tag
+            const img = new Image();
+            img.onload = function() {
+                previewContent.innerHTML = `
+                <img src="${receiptUrl}" class="receipt-image" alt="Receipt Preview" style="max-width: 100%; max-height: 70vh; object-fit: contain;">
+            `;
+            };
+            img.onerror = function() {
+                previewContent.innerHTML = `
+                <div style="text-align: center; padding: 40px;">
+                    <span style="font-size: 48px;">🖼️</span>
+                    <p>Failed to load image. <a href="${receiptUrl}" target="_blank">Open directly</a></p>
+                </div>
+            `;
+            };
+            img.src = receiptUrl;
+        } else {
+            previewContent.innerHTML = `
+            <div style="text-align: center; padding: 40px;">
+                <span style="font-size: 48px;">📄</span>
+                <p>Preview not available for this file type.</p>
+                <p style="font-size: 12px; color: #666;">File: ${filename}</p>
+                <a href="${receiptUrl}" target="_blank" class="btn btn-primary mt-2">Download File</a>
+            </div>
+        `;
+        }
+    }
 
     // ========== MINI EDIT MODAL ==========
     function openMiniEditModal() {
@@ -746,16 +985,6 @@
             });
 
         return false;
-    }
-    const createTaskForm = document.querySelector('#newTaskModal form');
-    if (createTaskForm) {
-        createTaskForm.addEventListener('submit', function() {
-            const submitBtn = document.getElementById('createTaskSubmitBtn');
-            if (submitBtn) {
-                submitBtn.disabled = true;
-                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Creating...';
-            }
-        });
     }
 
     function submitTaskForm(formData) {

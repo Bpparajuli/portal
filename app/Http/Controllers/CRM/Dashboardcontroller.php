@@ -87,7 +87,7 @@ class DashboardController extends Controller
             });
         }
 
-        // Activity filter - UPDATED to support both regular and "my_" filters
+        // Activity filter - ADDED 'completed_today' filter
         if ($request->filled('activity_filter')) {
             $filter = $request->activity_filter;
 
@@ -95,28 +95,47 @@ class DashboardController extends Controller
             $isMyFilter = str_starts_with($filter, 'my_');
             $baseFilter = $isMyFilter ? substr($filter, 3) : $filter; // Remove 'my_' prefix
 
-            // Build the task query for filtering students
-            $taskQuery = CrmTasks::where('status', 'pending');
+            // Handle completed today filter
+            if ($baseFilter === 'completed_today') {
+                // Build query for completed tasks today
+                $taskQuery = CrmTasks::where('status', 'completed')
+                    ->whereDate('completed_at', today());
 
-            // Apply user filter for "my_" prefixed filters
-            if ($isMyFilter) {
-                $taskQuery->where('assigned_to', $user->id);
+                // Apply user filter for "my_" prefixed filters
+                if ($isMyFilter) {
+                    $taskQuery->where('assigned_to', $user->id);
+                }
+
+                // Get student IDs that have completed tasks today
+                $studentIdsWithTasks = $taskQuery->whereNotNull('student_id')->pluck('student_id')->unique();
+
+                // Filter students by those IDs
+                $query->whereIn('id', $studentIdsWithTasks);
             }
+            // Handle regular task filters (overdue, today, upcoming)
+            else {
+                $taskQuery = CrmTasks::whereIn('status', ['pending',]);
 
-            // Apply date filter
-            if ($baseFilter === 'overdue') {
-                $taskQuery->whereDate('scheduled_for', '<', today());
-            } elseif ($baseFilter === 'today') {
-                $taskQuery->whereDate('scheduled_for', today());
-            } elseif ($baseFilter === 'upcoming') {
-                $taskQuery->whereDate('scheduled_for', '>', today());
+                // Apply user filter for "my_" prefixed filters
+                if ($isMyFilter) {
+                    $taskQuery->where('assigned_to', $user->id);
+                }
+
+                // Apply date filter
+                if ($baseFilter === 'overdue') {
+                    $taskQuery->whereDate('scheduled_for', '<', today());
+                } elseif ($baseFilter === 'today') {
+                    $taskQuery->whereDate('scheduled_for', today());
+                } elseif ($baseFilter === 'upcoming') {
+                    $taskQuery->whereDate('scheduled_for', '>', today());
+                }
+
+                // Get student IDs that have matching tasks
+                $studentIdsWithTasks = $taskQuery->whereNotNull('student_id')->pluck('student_id')->unique();
+
+                // Filter students by those IDs
+                $query->whereIn('id', $studentIdsWithTasks);
             }
-
-            // Get student IDs that have matching tasks
-            $studentIdsWithTasks = $taskQuery->whereNotNull('student_id')->pluck('student_id')->unique();
-
-            // Filter students by those IDs
-            $query->whereIn('id', $studentIdsWithTasks);
         }
 
         // View type
@@ -161,11 +180,21 @@ class DashboardController extends Controller
             $taskBase = CrmTasks::whereIn('student_id', $accessibleStudentIds);
         }
 
-
         // Calculate completed this week
         $mycompletedThisWeek = CrmTasks::where('assigned_to', $user->id)
             ->where('status', 'completed')
             ->whereBetween('completed_at', [now()->startOfWeek(), now()->endOfWeek()])
+            ->count();
+
+        // NEW: Count completed today tasks
+        $myCompletedToday = CrmTasks::where('assigned_to', $user->id)
+            ->where('status', 'completed')
+            ->whereDate('completed_at', today())
+            ->count();
+
+        $allCompletedToday = CrmTasks::whereIn('student_id', $accessibleStudentIds)
+            ->where('status', 'completed')
+            ->whereDate('completed_at', today())
             ->count();
 
         $stats = [
@@ -175,7 +204,7 @@ class DashboardController extends Controller
             // My tasks (assigned to current user)
             'my_today' => CrmTasks::where('assigned_to', $user->id)
                 ->whereDate('scheduled_for', today())
-                ->where('status', 'pending')
+                ->whereIn('status', ['pending'])
                 ->count(),
 
             'my_overdue' => CrmTasks::where('assigned_to', $user->id)
@@ -188,16 +217,14 @@ class DashboardController extends Controller
                 ->where('status', 'pending')
                 ->count(),
 
+            'my_completed_today' => $myCompletedToday, // NEW
+
             // All accessible tasks (existing)
-            'today' => (clone $taskBase)->whereDate('scheduled_for', today())->where('status', 'pending')->count(),
+            'today' => (clone $taskBase)->whereDate('scheduled_for', today())->where('status', ['pending', 'completed'])->count(),
             'overdue' => (clone $taskBase)->whereDate('scheduled_for', '<', today())->where('status', 'pending')->count(),
             'upcoming' => (clone $taskBase)->whereDate('scheduled_for', '>', today())->where('status', 'pending')->count(),
 
-            'completed_today' => CrmTasks::whereIn('student_id', $accessibleStudentIds)
-                ->where('status', 'completed')
-                ->whereDate('completed_at', today())
-                ->count(),
-
+            'completed_today' => $allCompletedToday, // UPDATED
             'my_completed_this_week' => $mycompletedThisWeek,
             'completed_this_week' => CrmTasks::whereIn('student_id', $accessibleStudentIds)
                 ->where('status', 'completed')

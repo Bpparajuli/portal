@@ -473,10 +473,9 @@
         </div>
     </div>
 </div>
-
 {{-- REVENUE MODAL --}}
 <div id="revenueModal" class="modal-overlay">
-    <div class="modal-content">
+    <div class="modal-content" style="max-width: 600px;">
         <div class="modal-header">
             <span id="revenueModalTitle">Add Revenue</span>
             <button onclick="closeRevenueModal()"
@@ -517,8 +516,33 @@
                 </div>
                 <div class="form-group">
                     <label>Receipt (Optional)</label>
-                    <input type="file" name="receipt_file" class="form-control" accept="image/*,.pdf">
+                    <input type="file" name="receipt_file" class="form-control" accept="image/*,.pdf"
+                        id="receipt_file_input">
                     <small class="text-muted">Max 5MB. JPG, PNG, PDF</small>
+
+                    {{-- Current receipt display area --}}
+                    <div id="current_receipt_container" style="margin-top: 10px; display: none;">
+                        <div
+                            style="background: #f8f9fa; padding: 8px 12px; border-radius: 6px; border: 1px solid #e2e8f0;">
+                            <div style="display: flex; align-items: center; justify-content: space-between;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span>📎</span>
+                                    <span id="current_receipt_filename"
+                                        style="font-size: 13px; color: #4a5568;"></span>
+                                </div>
+                                <div style="display: flex; gap: 8px;">
+                                    <button type="button" class="btn btn-sm btn-outline-primary"
+                                        onclick="previewReceipt()">
+                                        👁️ Preview
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-danger"
+                                        onclick="removeCurrentReceipt()">
+                                        ✕ Remove
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="modal-footer">
@@ -529,6 +553,60 @@
         </form>
     </div>
 </div>
+
+{{-- RECEIPT PREVIEW POPUP MODAL --}}
+<div id="receiptPreviewModal" class="modal-overlay" style="display: none; z-index: 10000;">
+    <div class="modal-content" style="max-width: 90%; width: auto; max-height: 90%; overflow: hidden;">
+        <div class="modal-header">
+            <span>📄 Receipt Preview</span>
+            <button onclick="closeReceiptPreviewModal()"
+                style="background:none; border:none; font-size:1.5rem; cursor:pointer;">&times;</button>
+        </div>
+        <div class="modal-body" style="padding: 0; text-align: center; overflow: auto; max-height: 80vh;">
+            <div id="receipt_preview_content"
+                style="min-height: 300px; display: flex; align-items: center; justify-content: center;">
+                <div style="text-align: center;">
+                    <div class="spinner"
+                        style="border: 3px solid #f3f3f3; border-top: 3px solid #667eea; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 20px auto;">
+                    </div>
+                    <p>Loading preview...</p>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-outline-secondary"
+                onclick="closeReceiptPreviewModal()">Close</button>
+            <button type="button" class="btn btn-primary" id="download_receipt_btn"
+                onclick="downloadCurrentReceipt()">
+                📥 Download
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+    @keyframes spin {
+        0% {
+            transform: rotate(0deg);
+        }
+
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+
+    .receipt-image {
+        max-width: 100%;
+        max-height: 70vh;
+        object-fit: contain;
+    }
+
+    .receipt-pdf {
+        width: 100%;
+        height: 70vh;
+        border: none;
+    }
+</style>
 
 {{-- MINI EDIT MODAL --}}
 <div id="miniEditModal" class="modal-overlay" style="display: none;">

@@ -3,13 +3,11 @@
 
 namespace App\Notifications;
 
-use App\Models\CRM\CrmTask;
+use App\Models\CrmTasks;
 use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 use Illuminate\Notifications\Messages\MailMessage;
-use App\Helpers\ActivityLogger;
-use App\Models\CrmTasks;
 use Illuminate\Support\Facades\Auth;
 
 class CrmTaskNotification extends Notification
@@ -52,7 +50,7 @@ class CrmTaskNotification extends Notification
             return [];
         }
 
-        return ['database']; // Add 'mail' if you want email notifications too
+        return ['database'];
     }
 
     public function toMail($notifiable)
@@ -79,22 +77,15 @@ class CrmTaskNotification extends Notification
 
         return (new MailMessage)
             ->subject($messages[$this->type] ?? 'Task Notification')
-            ->view('emails.layout', [
-                'subject'    => $messages[$this->type] ?? 'Task Notification',
-                'greeting'   => "Hello {$notifiable->name},",
-                'introLines' => array_filter([
-                    $descriptions[$this->type] ?? 'Task update',
-                    "<strong>Task:</strong> {$this->task->subject}",
-                    $studentName ? "<strong>Student:</strong> {$studentName}" : null,
-                    "<strong>Due Date:</strong> " . ($this->task->scheduled_for ? $this->task->scheduled_for->format('F j, Y') : 'Not set'),
-                ]),
-                'actionText' => 'View Task',
-                'actionUrl'  => route('crm.student.show', $this->task->student_id) . "#task-{$this->task->id}",
-                'outroLines' => [
-                    "Please take necessary action on this task."
-                ]
-            ]);
+            ->greeting("Hello {$notifiable->name},")
+            ->line($descriptions[$this->type] ?? 'Task update')
+            ->line("**Task:** {$this->task->subject}")
+            ->when($studentName, fn($mail) => $mail->line("**Student:** {$studentName}"))
+            ->line("**Due Date:** " . ($this->task->scheduled_for ? $this->task->scheduled_for->format('F j, Y') : 'Not set'))
+            ->action('View Task', route('crm.student.show', $this->task->student_id) . "#task-{$this->task->id}")
+            ->line('Please take necessary action on this task.');
     }
+
     public function toArray($notifiable)
     {
         // Check if a similar notification was sent in the last hour
@@ -107,10 +98,8 @@ class CrmTaskNotification extends Notification
 
         // Prevent duplicate notifications within 1 hour
         if ($existingNotification && in_array($this->type, ['due_today', 'upcoming'])) {
-            return []; // Don't send duplicate
+            return [];
         }
-
-        // For overdue, allow every 24 hours (handled in controller)
 
         $messages = [
             'assigned' => "📋 New task assigned: {$this->task->subject}",
@@ -119,23 +108,13 @@ class CrmTaskNotification extends Notification
             'overdue' => "❌ Task is OVERDUE: {$this->task->subject}",
         ];
 
-        $link = route('crm.student.show', $this->task->student_id) . "#task-{$this->task->id}";
+        // Build the correct URL
+        $url = route('crm.student.show', $this->task->student_id) . "#task-{$this->task->id}";
 
         // Get student name safely
         $studentName = '';
         if ($this->task->student) {
             $studentName = $this->task->student->full_name ?? ($this->task->student->first_name . ' ' . $this->task->student->last_name);
-        }
-
-        // Log activity
-        if ($this->triggeredBy) {
-            ActivityLogger::log(
-                'crm_task_' . $this->type,
-                $messages[$this->type] ?? "Task update: {$this->task->subject}",
-                $this->task->id,
-                $link,
-                $this->triggeredBy->id ?? null
-            );
         }
 
         return [
@@ -147,9 +126,9 @@ class CrmTaskNotification extends Notification
             'student_name' => $studentName,
             'due_date' => $this->task->scheduled_for ? $this->task->scheduled_for->format('Y-m-d') : null,
             'message' => $messages[$this->type] ?? "Task update: {$this->task->subject}",
-            'link' => $link,
+            'link' => $url,  // Important: Use 'link' key
+            'url' => $url,   // Also keep 'url' for compatibility
             'triggered_by' => $this->triggeredBy ? $this->triggeredBy->name : null,
-            'url' => $link,
         ];
     }
 }
