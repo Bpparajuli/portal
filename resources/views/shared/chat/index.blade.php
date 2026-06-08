@@ -28,13 +28,13 @@
 
 <div class="chat-wrapper" id="chatWrapper">
     <div class="sidebar-overlay" id="chatSidebarOverlay"></div>
-    @include('chat.partials.sidebar')
+    @include('shared.chat.partials.sidebar')
     <div class="chat-main" id="chatMain">
-        @include('chat.partials.placeholder')
+        @include('shared.chat.partials.placeholder')
         <div id="chatActive" class="d-none" style="display:none;flex-direction:column;height:100%;min-height:0;">
-            @include('chat.partials.chat-header')
-            @include('chat.partials.message-box')
-            @include('chat.partials.chat-footer')
+            @include('shared.chat.partials.chat-header')
+            @include('shared.chat.partials.message-box')
+            @include('shared.chat.partials.chat-footer')
         </div>
     </div>
 </div>

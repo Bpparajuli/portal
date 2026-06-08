@@ -25,19 +25,17 @@
             </div>
         </div>
 
-        <!-- DELETE BUTTON (SEPARATE FORM) -->
+        <!-- DELETE COURSE -->
         <div class="mt-3 mb-3">
             @if (in_array(auth()->id(), [1, 2]))
-                <form action="{{ route('admin.courses.destroy', $course->id) }}" method="POST"
-                    onsubmit="return confirmDelete('{{ $course->id }}', '{{ $course->course_code }}', '{{ $course->title }}');">
-
-                    @csrf
-                    @method('DELETE')
-
-                    <button type="submit" class="btn btn-danger btn-sm">
-                        🗑 Delete Course
-                    </button>
-                </form>
+                <x-confirm-delete
+                    action="admin.courses.destroy"
+                    :id="$course->id"
+                    label="Delete Course"
+                    message="Are you sure you want to delete course {{ $course->course_code }} - {{ $course->title }}? This action cannot be undone!"
+                    mode="native"
+                    class="btn btn-danger btn-sm"
+                />
             @endif
         </div>
 
@@ -178,16 +176,4 @@
 
     </div>
 
-    <!-- DELETE CONFIRM SCRIPT -->
-    <script>
-        function confirmDelete(id, code, title) {
-            return confirm(
-                "⚠️ Are you sure you want to delete this course?\n\n" +
-                "ID: " + id + "\n" +
-                "Code: " + code + "\n" +
-                "Title: " + title + "\n\n" +
-                "This action cannot be undone!"
-            );
-        }
-    </script>
 @endsection

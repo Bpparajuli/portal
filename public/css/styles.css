@@ -2526,3 +2526,79 @@ h6 {
     padding: 0.25rem 0.5rem !important;
     font-size: 0.75rem !important;
 }
+
+/* =============================================================
+   Alert System — Unified Global Alerts
+   ============================================================= */
+.alert-custom {
+    border: none;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    margin-bottom: 1rem;
+}
+.alert-custom .alert-icon {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+.alert-success .alert-icon { background: rgba(25,135,84,.15); }
+.alert-danger  .alert-icon { background: rgba(220,53,69,.15); }
+.alert-warning .alert-icon { background: rgba(255,193,7,.15); }
+.alert-info    .alert-icon { background: rgba(13,202,240,.15); }
+
+/* Toast animation */
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* =============================================================
+   File Preview Modal
+   ============================================================= */
+.modal-content {
+    border: none;
+    border-radius: 0.5rem;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+.modal-header {
+    background: var(--primary) !important;
+    color: white;
+    border-bottom: none;
+}
+.modal-header .modal-title {
+    color: white;
+}
+.modal-header .modal-title i {
+    color: white !important;
+}
+.modal-header .btn-close {
+    filter: brightness(0) invert(1);
+}
+.modal-footer {
+    border-top: 1px solid #dee2e6;
+    background-color: #f8f9fa;
+    border-radius: 0 0 0.5rem 0.5rem;
+}
+.transition-transform {
+    transition: transform 0.25s ease;
+}
+.preview-iframe {
+    width: 100%;
+    min-height: 70vh;
+    border: none;
+}
+.preview-image {
+    max-height: 70vh;
+    width: auto;
+    transform: scale(1);
+    cursor: grab;
+}
+@keyframes fadeInScale {
+    from { opacity: 0; transform: scale(0.95); }
+    to   { opacity: 1; transform: scale(1); }
+}

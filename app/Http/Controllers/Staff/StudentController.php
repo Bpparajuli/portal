@@ -101,7 +101,7 @@ class StudentController extends Controller
 
     public function chat()
     {
-        return view('chat.index');
+        return view('shared.chat.index');
     }
 
     public function notifications()

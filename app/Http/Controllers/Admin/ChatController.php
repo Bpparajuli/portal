@@ -18,7 +18,7 @@ class ChatController extends Controller
 {
     public function usersListView()
     {
-        return view('chat.index');
+        return view('shared.chat.index');
     }
 
     public function usersList()

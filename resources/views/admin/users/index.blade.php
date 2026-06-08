@@ -323,9 +323,15 @@
                                                         <li>
                                                             <hr class="dropdown-divider">
                                                         </li>
-                                                        <li><button class="dropdown-item py-2 text-danger"
-                                                                onclick="confirmDelete('{{ route('admin.users.destroy', $admin->slug) }}', '{{ $admin->business_name }}')"><i
-                                                                    class="fas fa-trash me-2"></i> Delete</button></li>
+                                                        <li>
+                                                                <x-confirm-delete
+                                                                    url="{{ route('admin.users.destroy', $admin->slug) }}"
+                                                                    message="You are about to delete &quot;{{ $admin->business_name }}&quot;. This action cannot be undone!"
+                                                                    label="Delete"
+                                                                    :icon="false"
+                                                                    class="dropdown-item py-2 text-danger"
+                                                                />
+                                                            </li>
                                                     @endif
                                                 </ul>
                                             </div>
@@ -428,9 +434,15 @@
                                                         <li>
                                                             <hr class="dropdown-divider">
                                                         </li>
-                                                        <li><button class="dropdown-item py-2 text-danger"
-                                                                onclick="confirmDelete('{{ route('admin.users.destroy', $staff->slug) }}', '{{ $staff->business_name }}')"><i
-                                                                    class="fas fa-trash me-2"></i> Delete</button></li>
+                                                        <li>
+                                                                <x-confirm-delete
+                                                                    url="{{ route('admin.users.destroy', $staff->slug) }}"
+                                                                    message="You are about to delete &quot;{{ $staff->business_name }}&quot;. This action cannot be undone!"
+                                                                    label="Delete"
+                                                                    :icon="false"
+                                                                    class="dropdown-item py-2 text-danger"
+                                                                />
+                                                            </li>
                                                     @endif
                                                 </ul>
                                             </div>
@@ -580,9 +592,15 @@
                                                         <li>
                                                             <hr class="dropdown-divider">
                                                         </li>
-                                                        <li><button class="dropdown-item py-2 text-danger"
-                                                                onclick="confirmDelete('{{ route('admin.users.destroy', $agent->slug) }}', '{{ $agent->business_name }}')"><i
-                                                                    class="fas fa-trash me-2"></i> Delete</button></li>
+                                                        <li>
+                                                                <x-confirm-delete
+                                                                    url="{{ route('admin.users.destroy', $agent->slug) }}"
+                                                                    message="You are about to delete &quot;{{ $agent->business_name }}&quot;. This action cannot be undone!"
+                                                                    label="Delete"
+                                                                    :icon="false"
+                                                                    class="dropdown-item py-2 text-danger"
+                                                                />
+                                                            </li>
                                                     @endif
                                                 </ul>
                                             </div>
@@ -696,31 +714,7 @@
             window.location.href = url.toString();
         }
 
-        // Confirm delete with SweetAlert
-        function confirmDelete(deleteUrl, userName) {
-            Swal.fire({
-                title: 'Are you sure?',
-                text: `You are about to delete "${userName}". This action cannot be undone!`,
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                cancelButtonColor: '#3085d6',
-                confirmButtonText: 'Yes, delete it!',
-                cancelButtonText: 'Cancel'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    const form = document.createElement('form');
-                    form.method = 'POST';
-                    form.action = deleteUrl;
-                    form.innerHTML = `
-                    @csrf
-                    @method('DELETE')
-                `;
-                    document.body.appendChild(form);
-                    form.submit();
-                }
-            });
-        }
+
 
         // Export functionality
         function exportData(type) {

@@ -571,17 +571,15 @@
                                         class="btn btn-sm btn-outline-warning" title="Edit Staff">
                                         <i class="fas fa-edit"></i>
                                     </a>
-                                    <button type="button" class="btn btn-sm btn-outline-danger" title="Delete Staff"
-                                        onclick="confirmDeleteStaff('{{ $staff->slug }}', '{{ addslashes($staff->name) }}')">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-
-                                    <form id="delete-staff-form-{{ $staff->slug }}"
-                                        action="{{ route('agent.staff.destroy', $staff->slug) }}" method="POST"
-                                        style="display: none;">
-                                        @csrf
-                                        @method('DELETE')
-                                    </form>
+                                    <x-confirm-delete
+                                        url="{{ route('agent.staff.destroy', $staff->slug) }}"
+                                        message="Are you sure you want to delete staff member &quot;{{ $staff->name }}&quot;? This action cannot be undone!"
+                                        label=""
+                                        :icon="true"
+                                        mode="swal"
+                                        class="btn btn-sm btn-outline-danger"
+                                        title="Delete Staff"
+                                    />
                                 </div>
                             </div>
                         @endforeach
@@ -882,13 +880,5 @@
             </div>
         </div>
     </div>
-
-    <script>
-        function confirmDeleteStaff(slug, name) {
-            if (confirm(`Are you sure you want to delete staff member "${name}"? This action cannot be undone.`)) {
-                document.getElementById(`delete-staff-form-${slug}`).submit();
-            }
-        }
-    </script>
 
 @endsection
