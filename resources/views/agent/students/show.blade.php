@@ -502,7 +502,7 @@
                                         @endphp
                                         <div class="col-md-4 col-lg-4">
                                             <div class="card h-60 border-0 shadow-sm rounded-4 hover-scale transition">
-                                                <a href="#" data-preview="{{ $fileUrl }}">
+                                                <a href="{{ $fileUrl }}" class="previewable">
                                                     <div class="position-relative">
 
                                                         @if ($isImage)

@@ -86,7 +86,7 @@
             <div class="card shadow-sm h-100">
                 <div class="card-header bg-white py-2 d-flex justify-content-between align-items-center">
                     <h6 class="fw-bold mb-0">Recent Applications</h6>
-                    <a href="{{ route('staff.applications') }}" class="btn btn-sm btn-outline-primary">View All</a>
+                    <a href="{{ route('staff.applications.index') }}" class="btn btn-sm btn-outline-primary">View All</a>
                 </div>
                 <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0 small">

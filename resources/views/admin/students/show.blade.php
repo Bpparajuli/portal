@@ -538,7 +538,7 @@
                                             @endphp
                                             <div class="col-md-4 col-lg-4">
                                                 <div class="doc-card">
-                                                    <a href="#" data-preview="{{ $fileUrl }}">
+                                                    <a href="{{ $fileUrl }}" class="previewable">
                                                         <div style="position:relative;">
                                                             @if ($isImage)
                                                                 <img src="{{ $fileUrl }}"

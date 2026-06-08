@@ -87,7 +87,7 @@
                             </div>
                         @endforelse
                         <div class="dropdown-divider m-0"></div>
-                        <a href="{{ $user->is_admin ? route('admin.notifications') : route('agent.notifications') }}"
+                        <a href="{{ $user->is_admin ? route('admin.notifications.index') : route('agent.notifications.index') }}"
                            class="dropdown-item text-center small py-2">
                             View all notifications
                         </a>

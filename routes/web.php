@@ -6,6 +6,11 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Http\Request;
 use App\Models\UserStatus;
 use App\Models\User;
+use App\Http\Controllers\DocumentController;
+use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\CourseController;
+use App\Http\Controllers\UniversityController;
+use App\Http\Controllers\ApplicationController;
 use App\Http\Controllers\StudentIntakeController;
 
 
@@ -28,14 +33,9 @@ use App\Http\Controllers\Auth\{
 
 // Admin Controllers
 use App\Http\Controllers\Admin\{
-    ApplicationController as AdminApplicationController,
     ChatController as AdminChatController,
-    CourseController as AdminCourseController,
     DashboardController as AdminDashboardController,
-    DocumentController as AdminDocumentController,
-    NotificationController as AdminNotificationController,
     StudentController as AdminStudentController,
-    UniversityController as AdminUniversityController,
     UserController as AdminUserController,
     BackupController as AdminBackupController,
     ReminderController as AdminReminderController,
@@ -48,14 +48,9 @@ use App\Http\Controllers\Admin\{
 
 // Agent Controllers
 use App\Http\Controllers\Agent\{
-    ApplicationController as AgentApplicationController,
     ChatController as AgentChatController,
-    CourseController as AgentCourseController,
     DashboardController as AgentDashboardController,
-    DocumentController as AgentDocumentController,
-    NotificationController as AgentNotificationController,
     StudentController as AgentStudentController,
-    UniversityController as AgentUniversityController,
     UserController as AgentUserController
 };
 
@@ -201,13 +196,13 @@ Route::middleware(['auth', \App\Http\Middleware\IsAdmin::class])
         Route::post('chat/typing', [AdminChatController::class, 'typing'])->name('chat.typing');
 
         // Notifications
-        Route::get('notifications', [AdminNotificationController::class, 'index'])->name('notifications');
-        Route::post('notifications/mark-all', [AdminNotificationController::class, 'markAll'])->name('notifications.markAll');
-        Route::post('notifications/{id}/read', [AdminNotificationController::class, 'markAsRead'])->name('notifications.markRead');
-        Route::post('notifications/{id}/unread', [AdminNotificationController::class, 'markAsUnread'])->name('notifications.markUnread');
-        Route::get('notifications/{id}/redirect', [AdminNotificationController::class, 'readAndRedirect'])->name('notifications.readAndRedirect');
-        Route::delete('/{id}', [AdminNotificationController::class, 'delete'])->name('notifications.delete');
-        Route::delete('/', [AdminNotificationController::class, 'deleteAll'])->name('notifications.deleteAll');
+        Route::get('notifications', [NotificationController::class, 'index'])->name('notifications.index');
+        Route::post('notifications/mark-all', [NotificationController::class, 'markAll'])->name('notifications.markAll');
+        Route::post('notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('notifications.markRead');
+        Route::post('notifications/{id}/unread', [NotificationController::class, 'markAsUnread'])->name('notifications.markUnread');
+        Route::get('notifications/{id}/redirect', [NotificationController::class, 'readAndRedirect'])->name('notifications.readAndRedirect');
+        Route::delete('notifications/{id}', [NotificationController::class, 'delete'])->name('notifications.delete');
+        Route::delete('notifications', [NotificationController::class, 'deleteAll'])->name('notifications.deleteAll');
 
         // Users — special routes BEFORE resource
         Route::get('users/waiting', [AdminUserController::class, 'waiting'])->name('users.waiting');
@@ -222,41 +217,39 @@ Route::middleware(['auth', \App\Http\Middleware\IsAdmin::class])
 
         Route::post('/users/reminder/preview', [AdminReminderController::class, 'previewEmail'])->name('reminder.preview');
         // Dynamic Data
-        Route::get('get-cities/{country}', [AdminUniversityController::class, 'getCities'])->name('get-cities');
-        Route::get('get-universities/{city}', [AdminUniversityController::class, 'getUniversities'])->name('get-universities');
-        Route::get('get-course-types/{universityId}', [AdminUniversityController::class, 'getCourseTypes'])->name('get-course-types');
-        Route::get('get-courses-by-type/{universityId}/{type}', [AdminUniversityController::class, 'getCoursesByType'])->name('get-courses-by-type');
+        Route::get('get-cities/{country}', [UniversityController::class, 'getCities'])->name('get-cities');
+        Route::get('get-universities/{city}', [UniversityController::class, 'getUniversities'])->name('get-universities');
+        Route::get('get-course-types/{universityId}', [UniversityController::class, 'getCourseTypes'])->name('get-course-types');
+        Route::get('get-courses-by-type/{universityId}/{type}', [UniversityController::class, 'getCoursesByType'])->name('get-courses-by-type');
 
         // Resources
         Route::resources([
-            'courses'      => AdminCourseController::class,
+            'courses'      => CourseController::class,
             'students'     => AdminStudentController::class,
-            'universities' => AdminUniversityController::class,
+            'universities' => UniversityController::class,
         ]);
 
         // Documents
         Route::prefix('students/{student}')->group(function () {
-            Route::get('documents', [AdminDocumentController::class, 'index'])->name('documents.index');
-            Route::get('documents/create', [AdminDocumentController::class, 'create'])->name('documents.create');
-            Route::post('documents', [AdminDocumentController::class, 'store'])->name('documents.store');
-            Route::post('documents/other', [AdminDocumentController::class, 'storeOther'])->name('documents.storeOther');
-            Route::patch('documents/{document}/status', [AdminDocumentController::class, 'updateStatus'])->name('documents.updateStatus');
-            Route::delete('documents/{document}/destroy', [AdminDocumentController::class, 'destroy'])->name('documents.destroy');
-            Route::get('documents/{document}/download', [AdminDocumentController::class, 'download'])->name('documents.download');
-            Route::get('documents/download-all', [AdminDocumentController::class, 'downloadAll'])->name('documents.downloadAll');
+            Route::get('documents', [DocumentController::class, 'index'])->name('documents.index');
+            Route::post('documents', [DocumentController::class, 'store'])->name('documents.store');
+            Route::post('documents/other', [DocumentController::class, 'storeOther'])->name('documents.storeOther');
+            Route::delete('documents/{document}/destroy', [DocumentController::class, 'destroy'])->name('documents.destroy');
+            Route::get('documents/{document}/download', [DocumentController::class, 'download'])->name('documents.download');
+            Route::get('documents/download-all', [DocumentController::class, 'downloadAll'])->name('documents.downloadAll');
         });
 
         // Applications
-        Route::get('applications/get-courses/{universityId}', [AdminApplicationController::class, 'getCourses'])->name('applications.get-courses');
-        Route::get('students/{student}/applications', [AdminApplicationController::class, 'forStudent'])->name('students.applications');
-        Route::patch('applications/{application}/withdraw', [AdminApplicationController::class, 'withdraw'])->name('applications.withdraw');
-        Route::post('applications/{application}/add-message', [AdminApplicationController::class, 'addMessage'])->name('applications.addMessage');
-        Route::delete('applications/{application}/messages/{message}', [AdminApplicationController::class, 'deleteMessage'])->name('applications.messages.delete');
-        Route::resource('applications', AdminApplicationController::class);
+        Route::get('applications/get-courses/{universityId}', [ApplicationController::class, 'getCourses'])->name('applications.get-courses');
+        Route::get('students/{student}/applications', [ApplicationController::class, 'forStudent'])->name('students.applications');
+        Route::patch('applications/{application}/withdraw', [ApplicationController::class, 'withdraw'])->name('applications.withdraw');
+        Route::post('applications/{application}/add-message', [ApplicationController::class, 'addMessage'])->name('applications.addMessage');
+        Route::delete('applications/{application}/messages/{message}', [ApplicationController::class, 'deleteMessage'])->name('applications.messages.delete');
+        Route::resource('applications', ApplicationController::class);
 
         // Export routes
         Route::get('students/export', [AdminStudentController::class, 'export'])->name('students.export');
-        Route::get('applications/export', [AdminApplicationController::class, 'export'])->name('applications.export');
+        Route::get('applications/export', [ApplicationController::class, 'export'])->name('applications.export');
         Route::get('exports', [\App\Http\Controllers\Admin\ExportController::class, 'index'])->name('exports.index');
         Route::post('exports/export', [\App\Http\Controllers\Admin\ExportController::class, 'export'])->name('exports.export');
 
@@ -349,25 +342,34 @@ Route::middleware(['auth', \App\Http\Middleware\IsStaff::class])
 
         // Staff document management
         Route::prefix('student/{student}/documents')->name('documents.')->group(function () {
-            Route::get('/', [\App\Http\Controllers\Staff\DocumentController::class, 'index'])->name('index');
-            Route::post('/', [\App\Http\Controllers\Staff\DocumentController::class, 'store'])->name('store');
-            Route::post('/other', [\App\Http\Controllers\Staff\DocumentController::class, 'storeOther'])->name('storeOther');
-            Route::delete('{document}', [\App\Http\Controllers\Staff\DocumentController::class, 'destroy'])->name('destroy');
-            Route::get('{document}/download', [\App\Http\Controllers\Staff\DocumentController::class, 'download'])->name('download');
+            Route::get('/', [DocumentController::class, 'index'])->name('index');
+            Route::post('/', [DocumentController::class, 'store'])->name('store');
+            Route::post('/other', [DocumentController::class, 'storeOther'])->name('storeOther');
+            Route::delete('{document}', [DocumentController::class, 'destroy'])->name('destroy');
+            Route::get('{document}/download', [DocumentController::class, 'download'])->name('download');
+            Route::get('download-all', [DocumentController::class, 'downloadAll'])->name('downloadAll');
         });
 
         // University & Course - read only
-        Route::get('/universities', [StaffStudentController::class, 'universities'])->name('universities');
-        Route::get('/courses', [StaffStudentController::class, 'courses'])->name('courses');
+        Route::get('/universities', [UniversityController::class, 'index'])->name('universities');
+        Route::get('/universities/{university}', [UniversityController::class, 'show'])->name('universities.show');
+        Route::get('/courses', [CourseController::class, 'index'])->name('courses');
+        Route::get('/courses/{course}', [CourseController::class, 'show'])->name('courses.show');
 
-        // University & Course - edit (staff can edit, not delete)
-        Route::get('/universities/{id}/edit', [\App\Http\Controllers\Admin\UniversityController::class, 'edit'])->name('universities.edit');
-        Route::put('/universities/{id}', [\App\Http\Controllers\Admin\UniversityController::class, 'update'])->name('universities.update');
-        Route::get('/courses/{id}/edit', [\App\Http\Controllers\Admin\CourseController::class, 'edit'])->name('courses.edit');
-        Route::put('/courses/{id}', [\App\Http\Controllers\Admin\CourseController::class, 'update'])->name('courses.update');
+        // University & Course - edit & create (staff can edit/create, not delete)
+        Route::get('/universities/create', [UniversityController::class, 'create'])->name('universities.create');
+        Route::post('/universities', [UniversityController::class, 'store'])->name('universities.store');
+        Route::get('/universities/{university}/edit', [UniversityController::class, 'edit'])->name('universities.edit');
+        Route::put('/universities/{university}', [UniversityController::class, 'update'])->name('universities.update');
+        Route::get('/courses/create', [CourseController::class, 'create'])->name('courses.create');
+        Route::post('/courses', [CourseController::class, 'store'])->name('courses.store');
+        Route::get('/courses/{course}/edit', [CourseController::class, 'edit'])->name('courses.edit');
+        Route::put('/courses/{course}', [CourseController::class, 'update'])->name('courses.update');
 
         // Applications
-        Route::get('/applications', [StaffStudentController::class, 'applications'])->name('applications');
+        Route::get('/applications', [ApplicationController::class, 'index'])->name('applications.index');
+        Route::get('/applications/{application}', [ApplicationController::class, 'show'])->name('applications.show');
+        Route::patch('/applications/{application}/status', [ApplicationController::class, 'updateStatus'])->name('applications.updateStatus');
 
         // Chat
         Route::prefix('chat')->name('chat.')->group(function () {
@@ -383,12 +385,12 @@ Route::middleware(['auth', \App\Http\Middleware\IsStaff::class])
 
         // Notifications
         Route::prefix('notifications')->name('notifications.')->group(function () {
-            Route::get('/', [\App\Http\Controllers\Staff\NotificationController::class, 'index'])->name('index');
-            Route::post('/mark-all', [\App\Http\Controllers\Staff\NotificationController::class, 'markAll'])->name('markAll');
-            Route::post('/{id}/mark-read', [\App\Http\Controllers\Staff\NotificationController::class, 'markAsRead'])->name('markRead');
-            Route::get('/{id}/redirect', [\App\Http\Controllers\Staff\NotificationController::class, 'readAndRedirect'])->name('readAndRedirect');
-            Route::delete('/{id}', [\App\Http\Controllers\Staff\NotificationController::class, 'delete'])->name('delete');
-            Route::delete('/all/delete', [\App\Http\Controllers\Staff\NotificationController::class, 'deleteAll'])->name('deleteAll');
+            Route::get('/', [NotificationController::class, 'index'])->name('index');
+            Route::post('/mark-all', [NotificationController::class, 'markAll'])->name('markAll');
+            Route::post('/{id}/mark-read', [NotificationController::class, 'markAsRead'])->name('markRead');
+            Route::get('/{id}/redirect', [NotificationController::class, 'readAndRedirect'])->name('readAndRedirect');
+            Route::delete('/{id}', [NotificationController::class, 'delete'])->name('delete');
+            Route::delete('/all/delete', [NotificationController::class, 'deleteAll'])->name('deleteAll');
         });
     });
 
@@ -415,25 +417,25 @@ Route::middleware(['auth', \App\Http\Middleware\IsAgent::class])
         Route::post('chat/typing', [AgentChatController::class, 'typing'])->name('chat.typing');
 
         // Notifications
-        Route::get('notifications', [AgentNotificationController::class, 'index'])->name('notifications');
-        Route::post('notifications/mark-all', [AgentNotificationController::class, 'markAll'])->name('notifications.markAll');
-        Route::post('notifications/{id}/read', [AgentNotificationController::class, 'markAsRead'])->name('notifications.markRead');
-        Route::post('notifications/{id}/unread', [AgentNotificationController::class, 'markAsUnread'])->name('notifications.markUnread');
-        Route::get('notifications/{id}/redirect', [AgentNotificationController::class, 'readAndRedirect'])->name('notifications.readAndRedirect');
-        Route::delete('notifications/{id}/delete', [AgentNotificationController::class, 'delete'])->name('notifications.delete');
-        Route::delete('notifications/delete-all', [AgentNotificationController::class, 'deleteAll'])->name('notifications.deleteAll');
+        Route::get('notifications', [NotificationController::class, 'index'])->name('notifications.index');
+        Route::post('notifications/mark-all', [NotificationController::class, 'markAll'])->name('notifications.markAll');
+        Route::post('notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('notifications.markRead');
+        Route::post('notifications/{id}/unread', [NotificationController::class, 'markAsUnread'])->name('notifications.markUnread');
+        Route::get('notifications/{id}/redirect', [NotificationController::class, 'readAndRedirect'])->name('notifications.readAndRedirect');
+        Route::delete('notifications/{id}', [NotificationController::class, 'delete'])->name('notifications.delete');
+        Route::delete('notifications', [NotificationController::class, 'deleteAll'])->name('notifications.deleteAll');
 
         // Dynamic data
-        Route::get('universities', [AgentUniversityController::class, 'index'])->name('universities.index');
-        Route::get('get-cities/{country}', [AgentUniversityController::class, 'getCities'])->name('get-cities');
-        Route::get('get-universities/{city}', [AgentUniversityController::class, 'getUniversities'])->name('get-universities');
-        Route::get('get-course-types/{universityId}', [AgentUniversityController::class, 'getCourseTypes'])->name('get-course-types');
-        Route::get('get-courses-by-type/{universityId}/{type}', [AgentUniversityController::class, 'getCoursesByType'])->name('get-courses-by-type');
+        Route::get('universities', [UniversityController::class, 'index'])->name('universities.index');
+        Route::get('get-cities/{country}', [UniversityController::class, 'getCities'])->name('get-cities');
+        Route::get('get-universities/{city}', [UniversityController::class, 'getUniversities'])->name('get-universities');
+        Route::get('get-course-types/{universityId}', [UniversityController::class, 'getCourseTypes'])->name('get-course-types');
+        Route::get('get-courses-by-type/{universityId}/{type}', [UniversityController::class, 'getCoursesByType'])->name('get-courses-by-type');
 
         // Resources (agents get full CRUD on students, read-only on universities/courses)
         Route::resource('students', AgentStudentController::class);
-        Route::resource('universities', AgentUniversityController::class)->only(['index', 'show']);
-        Route::resource('courses', AgentCourseController::class)->only(['index', 'show']);
+        Route::get('universities/{university}', [UniversityController::class, 'show'])->name('universities.show');
+        Route::resource('courses', CourseController::class)->only(['index', 'show']);
 
         // User management (own profile + staff)
         Route::get('/users/{user:slug}', [AgentUserController::class, 'show'])->name('users.show');
@@ -450,28 +452,24 @@ Route::middleware(['auth', \App\Http\Middleware\IsAgent::class])
         Route::get('/staff/{user:slug}', [AgentUserController::class, 'showStaff'])->name('staff.show');
 
         // Applications - special routes BEFORE resource
-        Route::get('students/{student}/applications', [AgentApplicationController::class, 'forStudent'])->name('students.applications');
-
         // Quick start route - MUST be before the resource routes
-        Route::get('applications/quick-start', [AgentApplicationController::class, 'quickStart'])->name('applications.quick-start');
+        Route::get('applications/quick-start', [ApplicationController::class, 'quickStart'])->name('applications.quick-start');
 
-        // Additional application routes (place BEFORE resource to avoid conflicts)
-        Route::get('applications/get-courses/{universityId}', [AgentApplicationController::class, 'getCourses'])->name('applications.get-courses');
-        Route::patch('applications/{application}/withdraw', [AgentApplicationController::class, 'withdraw'])->name('applications.withdraw');
-        Route::post('applications/{application}/add-message', [AgentApplicationController::class, 'addMessage'])->name('applications.addMessage');
-        Route::delete('applications/{application}/messages/{message}', [AgentApplicationController::class, 'deleteMessage'])->name('applications.messages.delete');
+        Route::get('students/{student}/applications', [ApplicationController::class, 'forStudent'])->name('students.applications');
+        Route::get('applications/get-courses/{universityId}', [ApplicationController::class, 'getCourses'])->name('applications.get-courses');
+        Route::patch('applications/{application}/withdraw', [ApplicationController::class, 'withdraw'])->name('applications.withdraw');
+        Route::post('applications/{application}/add-message', [ApplicationController::class, 'addMessage'])->name('applications.addMessage');
+        Route::delete('applications/{application}/messages/{message}', [ApplicationController::class, 'deleteMessage'])->name('applications.messages.delete');
 
-        // Application resource routes (only once!)
-        Route::resource('applications', AgentApplicationController::class);
+        Route::resource('applications', ApplicationController::class);
 
         // Documents
         Route::prefix('students/{student}')->group(function () {
-            Route::get('documents', [AgentDocumentController::class, 'index'])->name('documents.index');
-            Route::get('documents/create', [AgentDocumentController::class, 'create'])->name('documents.create');
-            Route::post('documents', [AgentDocumentController::class, 'store'])->name('documents.store');
-            Route::post('documents/other', [AgentDocumentController::class, 'storeOther'])->name('documents.storeOther');
-            Route::delete('documents/{document}', [AgentDocumentController::class, 'destroy'])->name('documents.destroy');
-            Route::get('documents/{document}/download', [AgentDocumentController::class, 'download'])->name('documents.download');
+            Route::get('documents', [DocumentController::class, 'index'])->name('documents.index');
+            Route::post('documents', [DocumentController::class, 'store'])->name('documents.store');
+            Route::post('documents/other', [DocumentController::class, 'storeOther'])->name('documents.storeOther');
+            Route::delete('documents/{document}', [DocumentController::class, 'destroy'])->name('documents.destroy');
+            Route::get('documents/{document}/download', [DocumentController::class, 'download'])->name('documents.download');
         });
     });
 

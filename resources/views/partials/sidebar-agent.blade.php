@@ -21,7 +21,7 @@
 <a href="{{ route('agent.chat') }}" class="nav-link {{ request()->routeIs('agent.chat') ? 'active' : '' }}">
     <i class="fas fa-comments"></i> <span>Chat</span>
 </a>
-<a href="{{ route('agent.notifications') }}" class="nav-link {{ request()->routeIs('agent.notifications') ? 'active' : '' }}">
+<a href="{{ route('agent.notifications.index') }}" class="nav-link {{ request()->routeIs('agent.notifications.*') ? 'active' : '' }}">
     <i class="fas fa-bell"></i> <span>Notifications</span>
 </a>
 

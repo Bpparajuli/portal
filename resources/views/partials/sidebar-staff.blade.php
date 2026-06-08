@@ -7,7 +7,7 @@
 <a href="{{ route('staff.students.index') }}" class="nav-link {{ request()->routeIs('staff.students.*') || request()->routeIs('staff.student.*') ? 'active' : '' }}">
     <i class="fas fa-user-graduate"></i> <span>Students</span>
 </a>
-<a href="{{ route('staff.applications') }}" class="nav-link {{ request()->routeIs('staff.applications') ? 'active' : '' }}">
+<a href="{{ route('staff.applications.index') }}" class="nav-link {{ request()->routeIs('staff.applications.*') ? 'active' : '' }}">
     <i class="fas fa-file-alt"></i> <span>Applications</span>
 </a>
 <a href="{{ route('staff.universities') }}" class="nav-link {{ request()->routeIs('staff.universities') ? 'active' : '' }}">

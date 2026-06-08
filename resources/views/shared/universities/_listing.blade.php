@@ -2,10 +2,10 @@
     $prefix = $prefix ?? match(true) {
         request()->routeIs('admin.*') => 'admin',
         request()->routeIs('agent.*') => 'agent',
-        request()->routeIs('staff.*') => 'admin',
+        request()->routeIs('staff.*') => 'staff',
         default => 'guest',
     };
-    $showAdminActions = Auth::check() && in_array(Auth::user()->role, ['admin', 'superadmin']);
+    $showAdminActions = Auth::check() && (Auth::user()->is_admin || Auth::user()->is_staff);
 @endphp
 
 {{-- Hero --}}
@@ -59,7 +59,7 @@
 <div class="container mt-3 mb-2">
     <div class="d-flex justify-content-between align-items-center bg-white p-3 rounded-3 shadow-sm border">
         <h5 class="mb-0 fw-bold"><i class="fas fa-university text-primary me-2"></i>Universities</h5>
-        <a href="{{ route('admin.universities.create') }}" class="btn btn-primary">
+        <a href="{{ route($prefix . '.universities.create') }}" class="btn btn-primary">
             <i class="fas fa-plus me-1"></i> Add New
         </a>
     </div>

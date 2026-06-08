@@ -38,29 +38,37 @@
 
         @auth
             @php $user = auth()->user(); @endphp
-            @if(in_array($user->role, ['admin', 'superadmin']))
+            @if($user->is_admin)
             <div class="d-flex gap-1 mb-2 flex-wrap">
-                <a href="{{ route('admin.courses.edit', $course->id) }}" class="btn btn-sm btn-outline-warning">
+                <a href="{{ route($prefix . '.courses.edit', $course) }}" class="btn btn-sm btn-outline-warning">
                     <i class="fas fa-edit"></i> Edit
                 </a>
-                <form action="{{ route('admin.courses.destroy', $course->id) }}" method="POST" onsubmit="return confirm('Delete this course?');" class="d-inline">
-                    @csrf @method('DELETE')
-                    <button class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i></button>
-                </form>
+                @can('delete', $course)
+                <x-confirm-delete
+                    action="{{ $prefix }}.courses.destroy"
+                    :id="$course->id"
+                    label="Delete"
+                    title="Delete {{ $course->course_code }}?"
+                    message="This action cannot be undone."
+                    class="btn btn-sm btn-outline-danger"
+                />
+                @endcan
             </div>
-            @elseif($user->role === 'agent')
+            @elseif($user->is_agent)
             <div class="d-flex gap-1 mb-2">
                 <a href="{{ route('agent.applications.quick-start', ['course_id' => $course->id]) }}"
                    class="btn btn-sm btn-success">
                     <i class="fas fa-paper-plane me-1"></i>Apply
                 </a>
             </div>
-            @elseif($user->role === 'staff')
-            <div class="d-flex gap-1 mb-2">
-                <a href="{{ route('staff.courses.edit', $course->id) }}" class="btn btn-sm btn-outline-warning">
-                    <i class="fas fa-edit"></i> Edit
-                </a>
-            </div>
+            @elseif($user->is_staff)
+                @can('update', $course)
+                <div class="d-flex gap-1 mb-2">
+                    <a href="{{ route($prefix . '.courses.edit', $course) }}" class="btn btn-sm btn-outline-warning">
+                        <i class="fas fa-edit"></i> Edit
+                    </a>
+                </div>
+                @endcan
             @endif
         @endauth
 

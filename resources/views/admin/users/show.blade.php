@@ -239,8 +239,8 @@
                                             <strong>{{ $docInfo['label'] }}</strong>
                                         </div>
                                         <div>
-                                            <a href="#" data-preview="{{ Storage::url($user->$docKey) }}"
-                                                class="btn btn-sm btn-outline-primary me-1">
+                                            <a href="{{ Storage::url($user->$docKey) }}"
+                                                class="btn btn-sm btn-outline-primary me-1 previewable">
                                                 <i class="fas fa-eye"></i>
                                             </a>
                                             <a href="{{ Storage::url($user->$docKey) }}" download

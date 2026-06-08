@@ -8,7 +8,7 @@
     $extension = pathinfo($value, PATHINFO_EXTENSION);
     @endphp
     <div class="file-preview border rounded p-2 mb-2 d-flex align-items-center gap-3 bg-light">
-        <a href="#" class="preview-link" data-preview="{{ asset('storage/' . $value) }}">
+        <a href="{{ asset('storage/' . $value) }}" class="preview-link previewable">
             @if(in_array(strtolower($extension), ['jpg','jpeg','png','gif']))
             <img src="{{ asset('storage/' . $value) }}" style="width:70px; height:70px; object-fit:cover; border-radius:6px;">
             @elseif(strtolower($extension) === 'pdf')

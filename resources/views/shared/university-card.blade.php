@@ -49,29 +49,39 @@
 
         @auth
             @php $user = auth()->user(); @endphp
-            @if(in_array($user->role, ['admin', 'superadmin']))
+            @if($user->is_admin)
             <div class="mt-2 d-flex gap-1">
-                <a href="{{ route('admin.universities.edit', $uni->id) }}" class="btn btn-sm btn-outline-warning">
+                @can('update', $uni)
+                <a href="{{ route($prefix . '.universities.edit', $uni) }}" class="btn btn-sm btn-outline-warning">
                     <i class="fas fa-edit"></i> Edit
                 </a>
-                <form action="{{ route('admin.universities.destroy', $uni->id) }}" method="POST" onsubmit="return confirm('Delete this university and all its courses?');" class="d-inline">
-                    @csrf @method('DELETE')
-                    <button class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i> Delete</button>
-                </form>
+                @endcan
+                @can('delete', $uni)
+                <x-confirm-delete
+                    action="{{ $prefix }}.universities.destroy"
+                    :id="$uni->id"
+                    label="Delete"
+                    title="Delete {{ $uni->name }}?"
+                    message="This will permanently delete this university and all its courses."
+                    class="btn btn-sm btn-outline-danger"
+                />
+                @endcan
             </div>
-            @elseif($user->role === 'agent')
+            @elseif($user->is_agent)
             <div class="mt-2 d-flex gap-1">
                 <a href="{{ route('agent.applications.quick-start', ['university_id' => $uni->id]) }}"
                    class="btn btn-sm btn-success">
                     <i class="fas fa-paper-plane me-1"></i> Apply for Course
                 </a>
             </div>
-            @elseif($user->role === 'staff')
-            <div class="mt-2 d-flex gap-1">
-                <a href="{{ route('staff.universities.edit', $uni->id) }}" class="btn btn-sm btn-outline-warning">
-                    <i class="fas fa-edit"></i> Edit
-                </a>
-            </div>
+            @elseif($user->is_staff)
+                @can('update', $uni)
+                <div class="mt-2 d-flex gap-1">
+                    <a href="{{ route($prefix . '.universities.edit', $uni) }}" class="btn btn-sm btn-outline-warning">
+                        <i class="fas fa-edit"></i> Edit
+                    </a>
+                </div>
+                @endcan
             @endif
         @endauth
     </div>
@@ -165,12 +175,16 @@
                                 <td>
                                     @auth
                                         @php $u = auth()->user(); @endphp
-                                        @if(in_array($u->role, ['admin', 'superadmin']))
-                                            <a href="{{ route('admin.courses.edit', $course->id) }}" class="btn btn-sm btn-outline-warning"><i class="fas fa-edit"></i></a>
-                                        @elseif($u->role === 'agent')
+                                        @if($u->is_admin)
+                                            @can('update', $course)
+                                            <a href="{{ route($prefix . '.courses.edit', $course) }}" class="btn btn-sm btn-outline-warning"><i class="fas fa-edit"></i></a>
+                                            @endcan
+                                        @elseif($u->is_agent)
                                             <a href="{{ route('agent.applications.quick-start', ['course_id' => $course->id]) }}" class="btn btn-sm btn-success"><i class="fas fa-paper-plane"></i></a>
-                                        @elseif($u->role === 'staff')
-                                            <a href="{{ route('staff.courses.edit', $course->id) }}" class="btn btn-sm btn-outline-warning"><i class="fas fa-edit"></i></a>
+                                        @elseif($u->is_staff)
+                                            @can('update', $course)
+                                            <a href="{{ route($prefix . '.courses.edit', $course) }}" class="btn btn-sm btn-outline-warning"><i class="fas fa-edit"></i></a>
+                                            @endcan
                                         @endif
                                     @endauth
                                 </td>

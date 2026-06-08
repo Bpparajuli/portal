@@ -49,8 +49,8 @@
 <a href="{{ route('admin.chat') }}" class="nav-link {{ request()->routeIs('admin.chat') ? 'active' : '' }}">
     <i class="fas fa-comments"></i> <span>Chat</span>
 </a>
-<a href="{{ route('admin.notifications') }}"
-    class="nav-link {{ request()->routeIs('admin.notifications') ? 'active' : '' }}">
+<a href="{{ route('admin.notifications.index') }}"
+    class="nav-link {{ request()->routeIs('admin.notifications*') ? 'active' : '' }}">
     <i class="fas fa-bell"></i> <span>Notifications</span>
 </a>
 <a href="{{ route('admin.enquiries.index') }}"

@@ -83,7 +83,7 @@
                                 <div class="notif-loading text-center py-3"><small class="text-muted">Loading...</small></div>
                             </div>
                             <div class="notif-footer">
-                                <a href="{{ Auth::user()->is_admin ? route('admin.notifications') : (Auth::user()->is_agent ? route('agent.notifications') : (Auth::user()->is_staff ? route('staff.notifications.index') : '#')) }}" class="notif-view-all">
+                                <a href="{{ Auth::user()->is_admin ? route('admin.notifications.index') : (Auth::user()->is_agent ? route('agent.notifications.index') : (Auth::user()->is_staff ? route('staff.notifications.index') : '#')) }}" class="notif-view-all">
                                     <i class="fas fa-list me-1"></i>View All Notifications
                                 </a>
                             </div>
@@ -118,7 +118,7 @@
         </main>
     </div>
 
-    @include('components.file-modal')
+    @include('components.file-preview-modal')
     @include('shared.delete-modal')
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
