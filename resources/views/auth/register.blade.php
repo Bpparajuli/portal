@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.guest')
 @section('title', 'Become an IDEA Agent')
 
 @section('content')

@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.guest')
 @section('title', 'Login - Idea Consultancy')
 
 @section('content')
@@ -309,7 +309,7 @@
                     </button>
 
                     <div class="login-links">
-                        <small><a href="{{ route('auth.contact') }}"><i class="fas fa-question-circle me-1"></i> Forgot
+                        <small><a href="{{ route('guest.enquiries.create') }}"><i class="fas fa-question-circle me-1"></i> Forgot
                                 Password?</a></small>
                         <small>Don't have an account? <a href="{{ route('register') }}">Register</a></small>
                     </div>

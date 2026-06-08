@@ -1,74 +1,43 @@
 <div class="row">
-    <div class="col-md-6 mb-2">
-        <label for="name" class="form-label">University Name <span class="text-danger">*</span></label>
-        <input type="text" class="form-control @error('name') is-invalid @enderror" id="name" name="name" value="{{ old('name', $university->name ?? '') }}" required>
-        @error('name')
-        <div class="invalid-feedback">{{ $message }}</div>
-        @enderror
+    <div class="col-md-6 mb-3">
+        <label for="name" class="form-label">Name <span class="text-danger">*</span></label>
+        <input type="text" id="name" name="name" value="{{ old('name', $university->name ?? '') }}" class="form-control @error('name') is-invalid @enderror" required>
+        @error('name')<div class="invalid-feedback">{{ $message }}</div>@enderror
     </div>
-
-    <div class="col-md-6 mb-2">
-        <label for="short_name" class="form-label">Short Name</label>
-        <input type="text" class="form-control @error('short_name') is-invalid @enderror" id="short_name" name="short_name" value="{{ old('short_name', $university->short_name ?? '') }}">
-        @error('short_name')
-        <div class="invalid-feedback">{{ $message }}</div>
-        @enderror
-    </div>
-</div>
-<div class="row">
-    <div class="col-md-6 mb-2">
+    <div class="col-md-6 mb-3">
         <label for="country" class="form-label">Country <span class="text-danger">*</span></label>
-        <input type="text" class="form-control @error('country') is-invalid @enderror" id="country" name="country" value="{{ old('country', $university->country ?? '') }}" required>
-        @error('country')
-        <div class="invalid-feedback">{{ $message }}</div>
-        @enderror
-    </div>
-
-    <div class="col-md-6 mb-2">
-        <label for="city" class="form-label">City</label>
-        <input type="text" class="form-control @error('city') is-invalid @enderror" id="city" name="city" value="{{ old('city', $university->city ?? '') }}">
-        @error('city')
-        <div class="invalid-feedback">{{ $message }}</div>
-        @enderror
+        <input type="text" id="country" name="country" value="{{ old('country', $university->country ?? '') }}" class="form-control @error('country') is-invalid @enderror" required>
+        @error('country')<div class="invalid-feedback">{{ $message }}</div>@enderror
     </div>
 </div>
 <div class="row">
-    <div class="col-md-6 mb-2">
+    <div class="col-md-6 mb-3">
+        <label for="city" class="form-label">City</label>
+        <input type="text" id="city" name="city" value="{{ old('city', $university->city ?? '') }}" class="form-control @error('city') is-invalid @enderror">
+        @error('city')<div class="invalid-feedback">{{ $message }}</div>@enderror
+    </div>
+    <div class="col-md-6 mb-3">
         <label for="website" class="form-label">Website</label>
-        <input type="text" class="form-control @error('website') is-invalid @enderror" id="website" name="website" value="{{ old('website', $university->website ?? '') }}">
-        @error('website')
-        <div class="invalid-feedback">{{ $message }}</div>
-        @enderror
-    </div>
-
-    <div class="col-md-6 mb-2">
-        <label for="contact_email" class="form-label">Contact Email</label>
-        <input type="email" class="form-control @error('contact_email') is-invalid @enderror" id="contact_email" name="contact_email" value="{{ old('contact_email', $university->contact_email ?? '') }}">
-        @error('contact_email')
-        <div class="invalid-feedback">{{ $message }}</div>
-        @enderror
+        <input type="url" id="website" name="website" value="{{ old('website', $university->website ?? '') }}" class="form-control @error('website') is-invalid @enderror">
+        @error('website')<div class="invalid-feedback">{{ $message }}</div>@enderror
     </div>
 </div>
-
-<div class=" mb-2">
+<div class="mb-3">
+    <label for="address" class="form-label">Address</label>
+    <textarea id="address" name="address" class="form-control @error('address') is-invalid @enderror" rows="2">{{ old('address', $university->address ?? '') }}</textarea>
+    @error('address')<div class="invalid-feedback">{{ $message }}</div>@enderror
+</div>
+<div class="mb-3">
     <label for="description" class="form-label">Description</label>
-    <textarea class="form-control @error('description') is-invalid @enderror" id="description" name="description">{{ old('description', $university->description ?? '') }}</textarea>
-    @error('description')
-    <div class="invalid-feedback">{{ $message }}</div>
-    @enderror
+    <textarea id="description" name="description" class="form-control @error('description') is-invalid @enderror" rows="3">{{ old('description', $university->description ?? '') }}</textarea>
+    @error('description')<div class="invalid-feedback">{{ $message }}</div>@enderror
 </div>
-
-<div class="col-md-6 mb-2">
-    <label for="university_logo" class="form-label">University Logo</label>
-    <input type="file" class="form-control @error('university_logo') is-invalid @enderror" id="university_logo" name="university_logo" accept=".jpg,.jpeg,.png,.gif,.webp">
-    @error('university_logo')
-    <div class="invalid-feedback">{{ $message }}</div>
-    @enderror
-
-    @if(!empty($university->university_logo))
-    <div class="mt-2">
-        <img src="{{ asset('storage/uni_logo/' . $university->university_logo) }}" alt="University Logo" style="max-height: 100px;">
+<div class="row">
+    <div class="col-md-6 mb-3">
+        <div class="form-check form-switch">
+            <input type="hidden" name="is_active" value="0">
+            <input type="checkbox" id="is_active" name="is_active" value="1" class="form-check-input" {{ old('is_active', $university->is_active ?? true) ? 'checked' : '' }}>
+            <label for="is_active" class="form-check-label">Active</label>
+        </div>
     </div>
-    @endif
-    <small class="text-muted">Accepted formats: JPG, JPEG, PNG, GIF, WEBP. Max size: 5MB.</small>
 </div>

@@ -1,7 +1,6 @@
 @extends('layouts.admin')
 @section('admin-content')
 
-<div class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h3 class="fw-bold"><i class="fa fa-file-alt text-success me-2"></i>Applications of {{ $agent->business_name }}</h3>
         <form method="GET" class="d-flex gap-2">
@@ -60,6 +59,5 @@
     @else
     <div class="alert alert-info text-center">No applications found for this agent.</div>
     @endif
-</div>
 
 @endsection

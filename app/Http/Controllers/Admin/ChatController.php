@@ -10,6 +10,7 @@ use App\Events\MessageSent;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
 
@@ -17,93 +18,89 @@ class ChatController extends Controller
 {
     public function usersListView()
     {
-        return view('admin.chat');
+        return view('chat.index');
     }
 
     public function usersList()
     {
         $authId = Auth::id();
 
-        // Update online status
         UserStatus::updateOrCreate(
             ['user_id' => $authId],
-            [
-                'is_online' => true,
-                'last_seen' => now(),
-                'updated_at' => now()
-            ]
+            ['is_online' => true, 'last_seen' => now(), 'updated_at' => now()]
         );
 
-        $users = User::where('id', '!=', $authId)
-            ->where(function ($q) {
-                $q->where('role', 'admin')->orWhere('role', 'agent');
+        $subLastMessage = ChatMessage::select('message')
+            ->where(function ($q) use ($authId) {
+                $q->where(function ($q2) use ($authId) {
+                    $q2->where('sender_id', $authId)->whereColumn('receiver_id', 'users.id');
+                })->orWhere(function ($q2) use ($authId) {
+                    $q2->whereColumn('sender_id', 'users.id')->where('receiver_id', $authId);
+                });
             })
-            ->select(['id', 'business_name', 'business_logo', 'name', 'created_at'])
-            ->addSelect([
+            ->orderByDesc('id')
+            ->limit(1);
 
-                // ✅ Last message text
-                'last_message' => ChatMessage::select('message')
-                    ->where(function ($q) use ($authId) {
-                        $q->whereColumn('sender_id', 'users.id')->where('receiver_id', $authId)
-                            ->orWhereColumn('receiver_id', 'users.id')->where('sender_id', $authId);
-                    })
-                    ->latest()
-                    ->limit(1),
+        $subLastFile = ChatMessage::select('file')
+            ->where(function ($q) use ($authId) {
+                $q->where(function ($q2) use ($authId) {
+                    $q2->where('sender_id', $authId)->whereColumn('receiver_id', 'users.id');
+                })->orWhere(function ($q2) use ($authId) {
+                    $q2->whereColumn('sender_id', 'users.id')->where('receiver_id', $authId);
+                });
+            })
+            ->orderByDesc('id')
+            ->limit(1);
 
-                // ✅ Last message FILE (IMPORTANT)
-                'last_message_file' => ChatMessage::select('file')
-                    ->where(function ($q) use ($authId) {
-                        $q->whereColumn('sender_id', 'users.id')->where('receiver_id', $authId)
-                            ->orWhereColumn('receiver_id', 'users.id')->where('sender_id', $authId);
-                    })
-                    ->latest()
-                    ->limit(1),
+        $subLastTime = ChatMessage::select('created_at')
+            ->where(function ($q) use ($authId) {
+                $q->where(function ($q2) use ($authId) {
+                    $q2->where('sender_id', $authId)->whereColumn('receiver_id', 'users.id');
+                })->orWhere(function ($q2) use ($authId) {
+                    $q2->whereColumn('sender_id', 'users.id')->where('receiver_id', $authId);
+                });
+            })
+            ->orderByDesc('id')
+            ->limit(1);
 
-                // ✅ Last message time
-                'last_message_time' => ChatMessage::select('created_at')
-                    ->where(function ($q) use ($authId) {
-                        $q->whereColumn('sender_id', 'users.id')->where('receiver_id', $authId)
-                            ->orWhereColumn('receiver_id', 'users.id')->where('sender_id', $authId);
-                    })
-                    ->latest()
-                    ->limit(1),
+        $subUnread = ChatMessage::selectRaw('IFNULL(COUNT(*),0)')
+            ->whereColumn('sender_id', 'users.id')
+            ->where('receiver_id', $authId)
+            ->whereNull('read_at');
 
-                // ✅ Unread count
-                'unread_count' => ChatMessage::selectRaw('count(*)')
-                    ->whereColumn('sender_id', 'users.id')
-                    ->where('receiver_id', $authId)
-                    ->whereNull('read_at')
-            ])
+        $users = User::where('id', '!=', $authId)
+            ->whereIn('role', ['admin', 'agent', 'staff'])
+            ->select(['id', 'business_name', 'business_logo', 'name', 'role', 'created_at'])
+            ->selectSub($subLastMessage, 'last_message')
+            ->selectSub($subLastFile, 'last_message_file')
+            ->selectSub($subLastTime, 'last_message_time')
+            ->selectSub($subUnread, 'unread_count')
             ->with('status')
+            ->orderByDesc('created_at')
             ->get()
             ->map(function ($user) {
-
-                // ✅ Online status
                 $user->is_online = $user->status
                     && Carbon::parse($user->status->updated_at)->diffInMinutes(now()) < 2;
-
                 $user->last_seen_formatted = $user->is_online
                     ? 'Active Now'
                     : ($user->status && $user->status->last_seen
                         ? Carbon::parse($user->status->last_seen)->diffForHumans()
                         : 'Offline');
-
-                // ✅ Fallback name
                 if (!$user->business_name) {
                     $user->business_name = $user->name;
                 }
-
-                // ✅ EXTRA SAFETY: detect attachment
                 $user->has_attachment = !empty($user->last_message_file);
-
                 return $user;
             })
-            ->sortByDesc(fn($u) => $u->last_message_time ?? $u->created_at)
+            ->sortByDesc(function ($u) {
+                $lastSeen = $u->status && $u->status->last_seen ? strtotime($u->status->last_seen) : 0;
+                $lastMsg = $u->last_message_time ? strtotime($u->last_message_time) : 0;
+                return sprintf('%d%d%020d', $u->unread_count > 0 ? 1 : 0, $u->is_online ? 1 : 0, max($lastMsg, $lastSeen));
+            })
             ->values();
 
-        // ✅ Total unread messages
         $totalUnread = ChatMessage::where('receiver_id', $authId)
-            ->where('status', '!=', 'read')
+            ->whereNull('read_at')
             ->count();
 
         return response()->json([
@@ -115,7 +112,6 @@ class ChatController extends Controller
     {
         $authId = Auth::id();
 
-        // FIX: Wrap in a parent where to ensure it only gets messages between these TWO users
         $messages = ChatMessage::where(function ($query) use ($authId, $userId) {
             $query->where(function ($q) use ($authId, $userId) {
                 $q->where('sender_id', $authId)->where('receiver_id', $userId);
@@ -128,13 +124,45 @@ class ChatController extends Controller
             ->get();
 
         // Mark as read
-        ChatMessage::where('receiver_id', $authId)
-            ->where('sender_id', $userId)
-            ->whereNull('read_at')
-            ->update([
-                'read_at' => now(),
-                'status' => 'read'
-            ]);
+        ChatMessage::where(function ($q) use ($authId, $userId) {
+            $q->where('sender_id', $userId)->where('receiver_id', $authId);
+        })->whereNull('read_at')->update([
+            'read_at' => now(),
+            'status' => 'read'
+        ]);
+
+        return response()->json($messages);
+    }
+
+    public function fetchNewMessages(Request $request)
+    {
+        $request->validate([
+            'user_id' => 'required|exists:users,id',
+            'last_message_id' => 'nullable|integer|min:0',
+        ]);
+
+        $authId = Auth::id();
+        $userId = (int) $request->user_id;
+        $lastId = (int) ($request->last_message_id ?? 0);
+
+        $query = ChatMessage::where(function ($q) use ($authId, $userId) {
+            $q->where('sender_id', $authId)->where('receiver_id', $userId);
+        })->orWhere(function ($q) use ($authId, $userId) {
+            $q->where('sender_id', $userId)->where('receiver_id', $authId);
+        });
+
+        if ($lastId > 0) {
+            $query->where('id', '>', $lastId);
+        }
+
+        $messages = $query->orderBy('created_at', 'asc')->get();
+
+        if (!empty($messages)) {
+            ChatMessage::whereIn('id', $messages->pluck('id'))
+                ->where('receiver_id', $authId)
+                ->whereNull('read_at')
+                ->update(['read_at' => now(), 'status' => 'read']);
+        }
 
         return response()->json($messages);
     }
@@ -168,8 +196,11 @@ class ChatController extends Controller
                 'status' => 'sent'
             ]);
 
-            // If you use Pusher/Websockets, trigger it here:
-            // broadcast(new MessageSent($message))->toOthers();
+            try {
+                broadcast(new \App\Events\MessageSent($message))->toOthers();
+            } catch (\Exception $e) {
+                // Pusher/broadcast may not be configured; message is saved either way
+            }
 
             return response()->json(['success' => true, 'data' => $message]);
         } catch (\Exception $e) {
@@ -179,17 +210,12 @@ class ChatController extends Controller
 
     public function delete($id)
     {
-        $msg = ChatMessage::where('id', $id)
-            ->where('sender_id', Auth::id())
-            ->first();
+        $msg = ChatMessage::find($id);
 
         if ($msg) {
-
-            // delete file also
             if ($msg->file) {
                 Storage::disk('public')->delete($msg->file);
             }
-
             $msg->delete();
         }
 
@@ -231,5 +257,21 @@ class ChatController extends Controller
         }
 
         return response()->json(['status' => 'success']);
+    }
+
+    public function typing(Request $request)
+    {
+        $request->validate([
+            'receiver_id' => 'required|exists:users,id',
+            'typing' => 'required|boolean',
+        ]);
+
+        try {
+            broadcast(new \App\Events\UserTyping($request->receiver_id, $request->typing))->toOthers();
+        } catch (\Exception $e) {
+            // Pusher may not be configured, silently fail
+        }
+
+        return response()->json(['status' => 'ok']);
     }
 }

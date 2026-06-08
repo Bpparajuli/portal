@@ -11,11 +11,14 @@ use App\Models\Activity;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Notification;
 use App\Notifications\AgreementSubmitted;
-use App\Services\FileUploadService;
+use App\Contracts\FileUploadServiceInterface;
 use Illuminate\Support\Facades\Log;
 
 class UserController extends Controller
 {
+    public function __construct(
+        private readonly FileUploadServiceInterface $fileUploadService,
+    ) {}
     /**
      * Get user by slug
      */
@@ -125,9 +128,9 @@ class UserController extends Controller
         $user->save();
 
         // Upload files (logo, registration, pan only - NOT agreement)
-        $user->business_logo = FileUploadService::uploadAgentFile($request, $user, 'business_logo', 'logo');
-        $user->registration  = FileUploadService::uploadAgentFile($request, $user, 'registration', 'registration');
-        $user->pan           = FileUploadService::uploadAgentFile($request, $user, 'pan', 'pan');
+        $user->business_logo = $this->fileUploadService->uploadAgentFile($request, $user, 'business_logo', 'logo');
+        $user->registration  = $this->fileUploadService->uploadAgentFile($request, $user, 'registration', 'registration');
+        $user->pan           = $this->fileUploadService->uploadAgentFile($request, $user, 'pan', 'pan');
 
         $user->save();
 

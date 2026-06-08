@@ -11,7 +11,25 @@ class NotificationController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Auth::user()->notifications();
+        $user = Auth::user();
+
+        if ($request->has('count')) {
+            $recent = $user->notifications()->take(5)->get()->map(function ($n) {
+                return [
+                    'id' => $n->id,
+                    'data' => $n->data,
+                    'read_at' => $n->read_at,
+                    'created_at' => $n->created_at->diffForHumans(),
+                    'url' => route('agent.notifications.readAndRedirect', $n->id),
+                ];
+            });
+            return response()->json([
+                'unread_count' => $user->unreadNotifications->count(),
+                'recent' => $recent,
+            ]);
+        }
+
+        $query = $user->notifications();
 
         // Get regular notifications (excluding messages) - Unread first, then by date
         $notifications = $query->clone()

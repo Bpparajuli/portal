@@ -11,7 +11,6 @@ use Illuminate\Support\Facades\Log;
 
 class ReminderController extends Controller
 {
-    // Show waiting users page
     public function showAgreementReminders()
     {
         $waitingUsers = User::where('agreement_status', 'not_uploaded')
@@ -24,10 +23,9 @@ class ReminderController extends Controller
         return view('admin.users.waiting', compact('waitingUsers', 'agreementUsers'));
     }
 
-    // Send reminders
     public function sendAgreementReminder(Request $request)
     {
-        if (Auth::id() != 2) {
+        if (!Auth::user()->is_admin) {
             abort(403, 'Unauthorized action.');
         }
 

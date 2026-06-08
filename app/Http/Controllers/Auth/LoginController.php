@@ -22,6 +22,10 @@ class LoginController extends Controller
 
     public function login(Request $request)
     {
+        if (Auth::check()) {
+            return $this->redirectToDashboard(Auth::user());
+        }
+
         $request->validate([
             'email'    => 'required|email',
             'password' => 'required|string',
@@ -56,7 +60,11 @@ class LoginController extends Controller
         }
 
         if ($user->is_staff) {
-            return redirect()->route('crm.dashboard', ['assignee_id' => $user->id]);
+            $effectiveUser = $user->is_agent_staff ? $user->parent : $user;
+            if ($effectiveUser && $effectiveUser->paid_crm) {
+                return redirect()->route('crm.dashboard');
+            }
+            return redirect()->route('staff.dashboard');
         }
 
         if ($user->is_agent) {

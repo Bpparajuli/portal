@@ -6,7 +6,7 @@
                             ============================================ */
         .kanban-wrapper {
             position: relative;
-            margin-top: 1rem;
+            margin-top: 0.35rem;
             display: flex;
             flex-direction: column;
         }
@@ -15,23 +15,23 @@
         .kanban-scroll-top {
             overflow-x: scroll;
             overflow-y: hidden;
-            height: 14px;
-            margin-bottom: 4px;
+            height: 8px;
+            margin-bottom: 2px;
             flex-shrink: 0;
         }
 
         .kanban-scroll-top::-webkit-scrollbar {
-            height: 8px;
+            height: 4px;
         }
 
         .kanban-scroll-top::-webkit-scrollbar-thumb {
-            background: #94a3b8;
-            border-radius: 4px;
+            background: #cbd5e1;
+            border-radius: 2px;
         }
 
         .kanban-scroll-top::-webkit-scrollbar-track {
-            background: #e2e8f0;
-            border-radius: 4px;
+            background: #f1f5f9;
+            border-radius: 2px;
         }
 
         #scrollTopInner {
@@ -42,135 +42,136 @@
         /* ---- BOARD ---- */
         .kanban-board {
             display: flex;
-            gap: 1rem;
+            gap: 0.5rem;
             overflow-x: scroll;
             overflow-y: visible;
-            padding-bottom: 0.5rem;
-            min-height: calc(100vh - 180px);
+            padding-bottom: 0.35rem;
+            min-height: calc(100vh - 120px);
         }
 
         .kanban-board::-webkit-scrollbar {
-            height: 8px;
+            height: 6px;
         }
 
         .kanban-board::-webkit-scrollbar-thumb {
-            background: #94a3b8;
-            border-radius: 4px;
+            background: #cbd5e1;
+            border-radius: 3px;
         }
 
         .kanban-board::-webkit-scrollbar-track {
-            background: #e2e8f0;
-            border-radius: 4px;
+            background: #f1f5f9;
+            border-radius: 3px;
         }
 
         /* ============================================
                             COLUMN
                             ============================================ */
         .kanban-col {
-            min-width: 300px;
-            width: 300px;
+            min-width: 240px;
+            width: 240px;
             background: white;
-            border-radius: 12px;
-            border: 1px solid #e5e7eb;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
             display: flex;
             flex-direction: column;
-            max-height: calc(100vh - 140px);
+            max-height: calc(100vh - 100px);
             flex-shrink: 0;
-            transition: border 0.15s, background 0.15s;
+            transition: border 0.1s, background 0.1s;
         }
 
         .kanban-col.drag-over {
             background: #f0f9ff;
-            border: 2px dashed #4f46e5 !important;
+            border: 1.5px dashed var(--primary) !important;
         }
 
         /* ============================================
                             COLUMN HEADER
                             ============================================ */
         .kanban-col-header {
-            padding: 0.6rem 0.85rem;
-            font-weight: 600;
-            font-size: 0.88rem;
+            padding: 0.35rem 0.5rem;
+            font-weight: 700;
+            font-size: 0.76rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 1px solid #e5e7eb;
+            border-bottom: 1px solid var(--border);
             background: #fafbfc;
-            border-radius: 12px 12px 0 0;
+            border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+            color: var(--text-color);
             flex-shrink: 0;
         }
 
         .kanban-col-header-actions {
             display: flex;
-            gap: 6px;
+            gap: 4px;
             align-items: center;
         }
 
         .add-student-to-col-btn {
             background: none;
             border: none;
-            color: #820b4c;
+            color: var(--secondary);
             cursor: pointer;
-            font-size: 1rem;
-            padding: 3px 5px;
-            border-radius: 20px;
-            transition: all 0.2s;
+            font-size: 0.85rem;
+            padding: 1px 3px;
+            border-radius: 4px;
+            transition: all 0.15s;
             line-height: 1;
         }
 
         .add-student-to-col-btn:hover {
-            background: #fce7f3;
-            transform: scale(1.2);
+            background: var(--secondary-soft);
+            transform: scale(1.1);
         }
 
         /* ============================================
                             PROGRESS BAR TASK SUMMARY
                             ============================================ */
         .col-progress-bar-wrap {
-            padding: 6px 8px 5px;
+            padding: 2px 4px;
             background: #f9fafb;
-            border-bottom: 1px solid #f0f0f0;
+            border-bottom: 1px solid var(--border-light);
             flex-shrink: 0;
         }
 
         .col-progress-bar {
             display: flex;
-            height: 10px;
+            height: 6px;
             overflow: visible;
             cursor: default;
         }
 
         .cpb-seg {
-            height: 10px;
-            min-width: 4px;
+            height: 6px;
+            min-width: 2px;
             flex-shrink: 0;
             position: relative;
             cursor: pointer;
-            transition: filter 0.15s, transform 0.15s;
+            transition: filter 0.1s, transform 0.1s;
         }
 
         .cpb-seg:hover {
-            filter: brightness(1.12);
-            transform: scaleY(1.3);
+            filter: brightness(1.1);
+            transform: scaleY(1.25);
             z-index: 5;
         }
 
         .cpb-seg::after {
             content: attr(data-tip);
             position: absolute;
-            bottom: calc(100% + 6px);
+            bottom: calc(100% + 4px);
             left: 50%;
             transform: translateX(-50%);
             background: #1e293b;
             color: #fff;
-            font-size: 0.65rem;
+            font-size: 0.6rem;
             font-weight: 600;
-            padding: 3px 7px;
-            border-radius: 5px;
+            padding: 2px 5px;
+            border-radius: 3px;
             white-space: nowrap;
             pointer-events: none;
             opacity: 0;
-            transition: opacity 0.15s;
+            transition: opacity 0.1s;
             z-index: 100;
         }
 
@@ -179,23 +180,23 @@
         }
 
         .cpb-seg.cpb-today {
-            background: #f59e0b;
+            background: var(--warning);
         }
 
         .cpb-seg.cpb-upcoming {
-            background: #10b981;
+            background: var(--success);
         }
 
         .cpb-seg.cpb-overdue {
-            background: #ef4444;
+            background: var(--danger);
         }
 
         .cpb-seg.cpb-none {
-            background: #e2e8f0;
+            background: #cbd5e1;
         }
 
         .cpb-seg.seg-active {
-            outline: 2px solid #4f46e5;
+            outline: 1.5px solid var(--primary);
             outline-offset: 1px;
         }
 
@@ -203,10 +204,10 @@
                             COLUMN BODY
                             ============================================ */
         .kanban-col-body {
-            padding: 0.6rem;
+            padding: 0.35rem;
             display: flex;
             flex-direction: column;
-            gap: 0.6rem;
+            gap: 0.35rem;
             overflow-y: auto;
             flex: 1;
             min-height: 80px;
@@ -214,8 +215,8 @@
 
         .kanban-col-body.drag-over {
             background: #f0f9ff;
-            outline: 2px dashed #4f46e5;
-            border-radius: 8px;
+            outline: 1.5px dashed var(--primary);
+            border-radius: var(--radius-sm);
         }
 
         /* ============================================
@@ -223,23 +224,24 @@
                             ============================================ */
         .student-card {
             background: white;
-            border: 1px solid #e5e7eb;
-            border-radius: 10px;
-            padding: 0.7rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 0.4rem 0.5rem;
             cursor: grab;
-            transition: box-shadow 0.15s, transform 0.15s, opacity 0.15s;
+            transition: box-shadow 0.1s, transform 0.1s, opacity 0.1s;
             position: relative;
             user-select: none;
         }
 
         .student-card.pinned {
-            border-left: 4px solid #f59e0b;
-            background: linear-gradient(135deg, #fffdf0 0%, white 100%);
+            border-left: 3px solid var(--accent);
+            background: linear-gradient(135deg, #fffdf2 0%, white 100%);
         }
 
         .student-card:hover {
-            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
-            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+            transform: translateY(-0.5px);
+            border-color: var(--primary-light);
         }
 
         .student-card:active {
@@ -262,35 +264,35 @@
         }
 
         .student-name {
-            font-weight: 600;
-            font-size: 0.88rem;
-            color: #1f2937;
-            padding-right: 68px;
+            font-weight: 700;
+            font-size: 0.78rem;
+            color: var(--text-color);
+            padding-right: 55px;
         }
 
         .student-card .student-name {
-            padding-top: 16px;
+            padding-top: 10px;
         }
 
         /* ---- PINNED BADGE WITH UNPIN BUTTON ---- */
         .pinned-badge {
             position: absolute;
-            top: 7px;
-            left: 7px;
-            background: #f59e0b;
+            top: 3px;
+            left: 3px;
+            background: var(--accent);
             color: white;
-            font-size: 0.58rem;
+            font-size: 0.55rem;
             font-weight: 700;
-            padding: 2px 7px;
-            border-radius: 10px;
+            padding: 1px 4px;
+            border-radius: 3px;
             display: inline-flex;
             align-items: center;
-            gap: 6px;
+            gap: 2px;
             z-index: 2;
         }
 
         .pinned-badge:hover {
-            border: 1px solid black;
+            border: 1px solid rgba(0,0,0,0.1);
         }
 
         .unpin-btn {
@@ -298,47 +300,49 @@
             border: none;
             color: white;
             cursor: pointer;
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             padding: 0;
-            margin-left: 4px;
+            margin-left: 2px;
             opacity: 0.8;
-            transition: opacity 0.2s;
+            transition: opacity 0.15s;
             pointer-events: auto;
         }
 
         .unpin-btn:hover {
             opacity: 1;
             transform: scale(1.1);
-            background-color: #10b981;
-
+            background-color: var(--success);
         }
 
         /* ---- FOLLOW-UP BADGE ---- */
         .followup-badge {
             position: absolute;
-            top: 9px;
-            right: 9px;
-            font-size: 0.6rem;
+            top: 3px;
+            right: 3px;
+            font-size: 0.56rem;
             font-weight: 600;
-            padding: 0.18rem 0.42rem;
-            border-radius: 20px;
+            padding: 1px 4px;
+            border-radius: 3px;
             pointer-events: none;
             z-index: 2;
         }
 
         .followup-badge.overdue {
-            background: #fef2f2;
-            color: #dc2626;
+            background: var(--danger-soft);
+            color: var(--danger-dark);
+            border: 1px solid rgba(239, 68, 68, 0.2);
         }
 
         .followup-badge.today {
-            background: #fffbeb;
-            color: #d97706;
+            background: var(--warning-soft);
+            color: var(--warning-dark);
+            border: 1px solid rgba(245, 158, 11, 0.2);
         }
 
         .followup-badge.upcoming {
-            background: #f0fdf4;
-            color: #10b981;
+            background: var(--success-soft);
+            color: var(--success-dark);
+            border: 1px solid rgba(16, 185, 129, 0.2);
         }
 
         .followup-badge.none {
@@ -354,24 +358,23 @@
             z-index: 10;
             display: inline-flex;
             align-items: center;
-            gap: 4px;
-            margin-top: 0.5rem;
-            font-size: 0.62rem;
+            gap: 2px;
+            font-size: 0.58rem;
             background: transparent;
             border: 1px dashed #cbd5e1;
-            border-radius: 10px;
-            padding: 0.12rem 0.42rem;
+            border-radius: 4px;
+            padding: 0.05rem 0.25rem;
             cursor: pointer;
             color: #6b7280;
             width: auto;
             text-align: center;
-            margin-top: 3px;
+            margin-top: 2px;
         }
 
         .star-rating {
             display: inline-flex;
             flex-direction: row-reverse;
-            gap: 2px;
+            gap: 1px;
         }
 
         .star-rating input {
@@ -379,7 +382,7 @@
         }
 
         .star-rating label {
-            font-size: 14px;
+            font-size: 11px;
             color: #d1d5db;
             cursor: pointer;
             transition: color 0.1s;
@@ -392,7 +395,7 @@
         }
 
         .remove-rating-btn {
-            font-size: 0.65rem;
+            font-size: 0.58rem;
             color: #9ca3af;
             cursor: pointer;
             opacity: 0;
@@ -404,7 +407,6 @@
 
         .rating-area:hover .remove-rating-btn {
             opacity: 1;
-
         }
 
         .remove-rating-btn:hover {
@@ -417,19 +419,20 @@
         .tags-list {
             display: flex;
             flex-wrap: wrap;
-            gap: 0.25rem;
-            margin: 0.4rem 0 0.2rem;
+            gap: 2px;
+            margin: 0.25rem 0 0.15rem;
         }
 
         .tag {
-            font-size: 0.62rem;
-            background: #eef2ff;
-            color: #4f46e5;
-            border-radius: 10px;
-            padding: 0.12rem 0.42rem;
+            font-size: 0.58rem;
+            background: var(--primary-soft);
+            color: var(--primary-dark);
+            border-radius: 3px;
+            padding: 1px 3px;
             display: inline-flex;
             align-items: center;
-            gap: 0.2rem;
+            gap: 1px;
+            border: 1px solid rgba(26, 2, 98, 0.06);
         }
 
         .tag-remove {
@@ -443,35 +446,36 @@
         }
 
         .add-tag-btn {
-            font-size: 0.62rem;
+            font-size: 0.58rem;
             background: transparent;
             border: 1px dashed #cbd5e1;
-            border-radius: 10px;
-            padding: 0.12rem 0.42rem;
+            border-radius: 4px;
+            padding: 1px 4px;
             cursor: pointer;
             color: #6b7280;
             width: 100%;
             text-align: center;
-            margin-top: 3px;
+            margin-top: 2px;
+            transition: all 0.1s;
         }
 
         .add-tag-btn:hover {
-            background: #4f46e5;
+            background: var(--primary);
             color: white;
-            border-color: #4f46e5;
+            border-color: var(--primary);
         }
 
         .col-empty-msg {
             text-align: center;
             color: #9ca3af;
-            padding: 1.5rem 0.5rem;
-            font-size: 0.8rem;
+            padding: 0.6rem 0.3rem;
+            font-size: 0.72rem;
         }
 
         @media (max-width: 768px) {
             .kanban-col {
-                min-width: 260px;
-                width: 260px;
+                min-width: 220px;
+                width: 220px;
             }
         }
     </style>

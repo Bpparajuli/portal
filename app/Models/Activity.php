@@ -4,15 +4,15 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Notifications\Notifiable;
 
 class Activity extends Model
 {
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, SoftDeletes;
 
     protected $fillable = ['user_id', 'type', 'description', 'notifiable_id', 'link'];
 
-    // Relations
     public function student()
     {
         return $this->belongsTo(Student::class, 'student_id');
@@ -33,10 +33,8 @@ class Activity extends Model
         return $this->belongsTo(User::class, 'user_id');
     }
 
-    // 🔥 Accessor to make $act->link work in Blade
     public function getLinkAttribute()
     {
-        // Return stored link or link inside JSON data if using notifications
         if ($this->attributes['link'] ?? false) {
             return $this->attributes['link'];
         }

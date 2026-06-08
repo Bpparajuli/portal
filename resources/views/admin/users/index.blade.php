@@ -1,8 +1,6 @@
 @extends('layouts.admin')
 
 @section('admin-content')
-
-    <div class="container-fluid p-4">
         {{-- Page Header --}}
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
@@ -13,19 +11,9 @@
                 <button class="btn btn-outline-primary" onclick="toggleAdvancedFilters()">
                     <i class="fas fa-sliders-h me-2"></i>Advanced Filters
                 </button>
-                <div class="dropdown">
-                    <button class="btn btn-success dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                        <i class="fas fa-download me-2"></i>Export
-                    </button>
-                    <ul class="dropdown-menu export-dropdown">
-                        <li><a class="dropdown-item" href="#" onclick="exportData('excel')"><i
-                                    class="fas fa-file-excel me-2 text-white"></i>Export as Excel</a></li>
-                        <li><a class="dropdown-item" href="#" onclick="exportData('csv')"><i
-                                    class="fas fa-file-csv me-2 text-info"></i>Export as CSV</a></li>
-                        <li><a class="dropdown-item" href="#" onclick="exportData('pdf')"><i
-                                    class="fas fa-file-pdf me-2 text-danger"></i>Export as PDF</a></li>
-                    </ul>
-                </div>
+                <a href="{{ route('admin.exports.index') }}" class="btn btn-success">
+                    <i class="fas fa-download me-2"></i>Export
+                </a>
                 <a href="{{ route('admin.users.create') }}" class="btn btn-primary">
                     <i class="fas fa-user-plus me-2"></i> Add User
                 </a>
@@ -35,7 +23,7 @@
         {{-- Statistics Cards --}}
         <div class="row mb-4">
             <div class="col-md-3">
-                <div class="card stats-card border-0 shadow-sm rounded-3" onclick="applyRoleFilter('all')">
+                <div class="card stats-card" onclick="applyRoleFilter('all')">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
@@ -50,7 +38,7 @@
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="card stats-card border-0 shadow-sm rounded-3" onclick="applyRoleFilter('admin')">
+                <div class="card stats-card" onclick="applyRoleFilter('admin')">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
@@ -67,7 +55,7 @@
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="card stats-card border-0 shadow-sm rounded-3" onclick="applyRoleFilter('agent')">
+                <div class="card stats-card" onclick="applyRoleFilter('agent')">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
@@ -84,7 +72,7 @@
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="card stats-card border-0 shadow-sm rounded-3" onclick="applyRoleFilter('staff')">
+                <div class="card stats-card" onclick="applyRoleFilter('staff')">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
@@ -257,7 +245,7 @@
 
         {{-- Admins Table --}}
         @if ($admins->count())
-            <div class="card border-0 shadow-sm rounded-4 mb-4">
+            <div class="card mb-4">
                 <div class="card-header-custom rounded-top-4 p-3">
                     <div class="d-flex justify-content-between align-items-center">
                         <h5 class="mb-0 fw-bold"><i class="fas fa-user-shield me-2"></i>Administrators</h5>
@@ -290,7 +278,7 @@
                                             @if ($admin->business_logo)
                                                 <img src="{{ Storage::url($admin->business_logo) }}" alt="Logo"
                                                     width="50" height="50"
-                                                    class="rounded-3 object-fit-cover shadow-sm border">
+                                                    class="rounded object-fit-cover shadow-sm border">
                                             @else
                                                 <div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center"
                                                     style="width: 50px; height: 50px;">
@@ -309,7 +297,7 @@
                                         <td class="align-middle">
                                             <span
                                                 class="badge 
-                                    {{ $admin->active ? 'bg-success text-white' : 'bg-danger text-white' }} 
+                                    {{ $admin->active ? 'bg-success' : 'bg-danger' }} 
                                     rounded-pill  p-2">
                                                 <i class="fas fa-circle me-1" style="font-size: 10px;"></i>
                                                 {{ $admin->active ? 'Active' : 'Inactive' }}
@@ -318,7 +306,7 @@
                                         <td class="align-middle">{{ $admin->created_at->format('M d, Y') }}</td>
                                         <td class="align-middle text-end">
                                             <div class="dropdown">
-                                                <button class="btn btn-sm btn-light border-0" data-bs-toggle="dropdown">
+                                                <button class="btn btn-sm btn-ghost" data-bs-toggle="dropdown">
                                                     <i class="fas fa-ellipsis-v"></i>
                                                 </button>
                                                 <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3">
@@ -362,7 +350,7 @@
 
         {{-- Staff Table --}}
         @if ($staffs->count())
-            <div class="card border-0 shadow-sm rounded-4 mb-4">
+            <div class="card mb-4">
                 <div class="card-header-custom rounded-top-4 p-3">
                     <div class="d-flex justify-content-between align-items-center">
                         <h5 class="mb-0 fw-bold"><i class="fas fa-user-friends me-2"></i>Staff Members</h5>
@@ -394,7 +382,7 @@
                                             @if ($staff->business_logo)
                                                 <img src="{{ Storage::url($staff->business_logo) }}" alt="Logo"
                                                     width="50" height="50"
-                                                    class="rounded-3 object-fit-cover shadow-sm border">
+                                                    class="rounded object-fit-cover shadow-sm border">
                                             @else
                                                 <div class="bg-secondary  rounded-circle d-flex align-items-center justify-content-center"
                                                     style="width: 50px; height: 50px;">
@@ -418,7 +406,7 @@
                                         <td class="align-middle">
                                             <span
                                                 class="badge 
-                                    {{ $staff->active ? 'bg-success text-white' : 'bg-danger text-white' }} 
+                                    {{ $staff->active ? 'bg-success' : 'bg-danger' }} 
                                     rounded-pill  p-2">
                                                 <i class="fas fa-circle me-1" style="font-size: 10px;"></i>
                                                 {{ $staff->active ? 'Active' : 'Inactive' }}
@@ -426,7 +414,7 @@
                                         </td>
                                         <td class="align-middle text-end">
                                             <div class="dropdown">
-                                                <button class="btn btn-sm btn-light border-0" data-bs-toggle="dropdown">
+                                                <button class="btn btn-sm btn-ghost" data-bs-toggle="dropdown">
                                                     <i class="fas fa-ellipsis-v"></i>
                                                 </button>
                                                 <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3">
@@ -467,7 +455,7 @@
 
         {{-- Agents Table --}}
         @if ($agents->count())
-            <div class="card border-0 shadow-sm rounded-4 mb-4">
+            <div class="card mb-4">
                 <div class="card-header-custom rounded-top-4 p-3">
                     <div class="d-flex justify-content-between align-items-center">
                         <h5 class="mb-0 fw-bold"><i class="fas fa-handshake me-2"></i>Agents</h5>
@@ -499,7 +487,7 @@
                                                     @if ($agent->business_logo)
                                                         <img src="{{ Storage::url($agent->business_logo) }}"
                                                             alt="Logo" width="50" height="50"
-                                                            class="rounded-3 object-fit-cover shadow-sm border">
+                                                            class="rounded object-fit-cover shadow-sm border">
                                                     @else
                                                         <div class="bg-secondary rounded-3 d-flex align-items-center justify-content-center border"
                                                             style="width: 38px; height: 38px;">
@@ -545,7 +533,7 @@
                                         <td class="align-middle">
                                             <span
                                                 class="badge 
-                    {{ $agent->active ? 'bg-success text-white' : 'bg-danger text-white' }} 
+                    {{ $agent->active ? 'bg-success' : 'bg-danger' }} 
                     rounded-pill  p-2">
                                                 <i class="fas fa-circle me-1" style="font-size: 10px;"></i>
                                                 {{ $agent->active ? 'Active' : 'Inactive' }}
@@ -578,7 +566,7 @@
                                         </td>
                                         <td class="align-middle text-end">
                                             <div class="dropdown">
-                                                <button class="btn btn-sm btn-light border-0" data-bs-toggle="dropdown">
+                                                <button class="btn btn-sm btn-ghost" data-bs-toggle="dropdown">
                                                     <i class="fas fa-ellipsis-v"></i>
                                                 </button>
                                                 <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3">
@@ -653,7 +641,6 @@
                 </div>
             </div>
         </div>
-    </div>
 @endsection
 
 @push('scripts')

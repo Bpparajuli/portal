@@ -99,9 +99,7 @@ class ApplicationController extends Controller
     */
         if ($request->filled('country_filter')) {
             $query->whereHas('university', function ($q) use ($request) {
-                $q->where('country_id', $request->country_filter);
-                // If you don't have country_id in universities table, use:
-                // $q->where('country', $request->country_filter);
+                $q->where('country', $request->country_filter);
             });
         }
 
@@ -162,9 +160,13 @@ class ApplicationController extends Controller
     | Statistics Count Cards
     |--------------------------------------------------------------------------
     */
-        $acceptedCount = Application::where('application_status_id', 14)->count();
-        $rejectedCount = Application::where('application_status_id', 15)->count();
-        $lostCount = Application::where('application_status_id', 18)->count();
+        $approvedStatusId = ApplicationStatus::where('name', 'Visa Approved')->value('id');
+        $rejectedStatusId = ApplicationStatus::where('name', 'Visa Rejected')->value('id');
+        $lostStatusId = ApplicationStatus::where('name', 'Lost')->value('id');
+
+        $acceptedCount = Application::where('application_status_id', $approvedStatusId)->count();
+        $rejectedCount = Application::where('application_status_id', $rejectedStatusId)->count();
+        $lostCount = Application::where('application_status_id', $lostStatusId)->count();
 
         /*
     |--------------------------------------------------------------------------
@@ -186,6 +188,53 @@ class ApplicationController extends Controller
             'lostCount'
         ));
     }
+    public function export(Request $request)
+    {
+        $query = Application::with('student', 'university', 'course', 'status');
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->whereHas('student', fn($q2) => $q2->where('first_name', 'like', "%{$search}%")->orWhere('last_name', 'like', "%{$search}%"))
+                    ->orWhereHas('course', fn($q3) => $q3->where('title', 'like', "%{$search}%"))
+                    ->orWhereHas('university', fn($q4) => $q4->where('name', 'like', "%{$search}%"));
+            });
+        }
+        if ($request->filled('status')) {
+            $query->where('application_status_id', $request->status);
+        }
+        if ($request->filled('university_filter')) {
+            $query->where('university_id', $request->university_filter);
+        }
+
+        $apps = $query->get();
+
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="applications-' . now()->format('Y-m-d') . '.csv"',
+        ];
+
+        $callback = function () use ($apps) {
+            $file = fopen('php://output', 'w');
+            fputs($file, "\xEF\xBB\xBF");
+            fputcsv($file, ['ID', 'Application #', 'Student', 'Course', 'University', 'Status', 'Agent', 'Applied Date']);
+            foreach ($apps as $a) {
+                fputcsv($file, [
+                    $a->id, $a->application_number ?? '—',
+                    $a->student?->full_name ?? '—',
+                    $a->course?->title ?? '—',
+                    $a->university?->name ?? '—',
+                    $a->status?->name ?? '—',
+                    $a->agent?->business_name ?? '—',
+                    $a->created_at->format('Y-m-d'),
+                ]);
+            }
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
     /**
      * CREATE FORM
      */
@@ -220,8 +269,8 @@ class ApplicationController extends Controller
         $student = Student::findOrFail($request->student_id);
 
 
-        // DEFAULT STATUS = ID 1
-        $defaultStatus = ApplicationStatus::find(1);
+        // DEFAULT STATUS = first by sort_order
+        $defaultStatus = ApplicationStatus::orderBy('sort_order')->first();
 
         $application = new Application();
         $application->student_id = $student->id;
@@ -401,6 +450,25 @@ class ApplicationController extends Controller
     /**
      * DELETE APPLICATION
      */
+    public function withdraw(Application $application)
+    {
+        $lostStatusId = ApplicationStatus::where('name', 'Lost')->value('id');
+        $application->update([
+            'withdrawn_at' => now(),
+            'application_status_id' => $lostStatusId,
+        ]);
+
+        $student = $application->student;
+        if ($student && $student->agent_id) {
+            $agent = User::find($student->agent_id);
+            if ($agent) {
+                $agent->notify(new \App\Notifications\ApplicationWithdrawn($application));
+            }
+        }
+
+        return redirect()->back()->with('success', 'Application withdrawn successfully.');
+    }
+
     public function destroy(Application $application)
     {
         if ($application->sop_file) {

@@ -3,36 +3,61 @@
 namespace App\Http\Controllers\Staff;
 
 use App\Http\Controllers\Controller;
+use App\Models\Application;
+use App\Models\ApplicationStatus;
+use App\Models\Student;
+use App\Models\University;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
     public function index()
     {
-        $columns = [
-            ['title' => 'New Leads', 'color' => '#4e73df', 'id' => 'new'],
-            ['title' => 'Follow Up', 'color' => '#f6c23e', 'id' => 'follow_up'],
-            ['title' => 'Documentation', 'color' => '#36b9cc', 'id' => 'docs'],
-            ['title' => 'Visa Processing', 'color' => '#1cc88a', 'id' => 'visa'],
-            ['title' => 'Completed', 'color' => '#858796', 'id' => 'done'],
-        ];
+        $user = Auth::user();
+        $studentQuery = Student::query()->accessible();
+        $applicationQuery = Application::query();
 
-        // 20+ Realistic Records
-        $leads = [];
-        $names = ['Arjun Patel', 'Sarah Jenkins', 'Michael Chen', 'Elena Rodriguez', 'Kofi Mensah', 'Priya Sharma', 'David O’Connor', 'Yuki Tanaka', 'Ahmed Ali', 'Maria Garcia', 'Liam Wilson', 'Fatima Zahra', 'Hans Schmidt', 'Chloe Bennett', 'Ivan Petrov', 'Sofia Rossi', 'Zainab Abbas', 'Lucas Silva', 'Emily White', 'Oscar Isaac', 'Amara Okafor', 'Noah Williams'];
-
-        foreach ($names as $key => $name) {
-            $colIndex = $key % 5;
-            $leads[] = [
-                'id' => 1000 + $key,
-                'name' => $name,
-                'visa_type' => ($key % 3 == 0) ? 'Student Visa' : (($key % 3 == 1) ? 'Visitor Visa' : 'Work Permit'),
-                'country' => ['Australia', 'Canada', 'UK', 'USA', 'Germany'][$key % 5],
-                'status' => $columns[$colIndex]['title'],
-                'border_class' => ($key % 3 == 0) ? 'b-student' : (($key % 3 == 1) ? 'b-visitor' : 'b-work'),
-                'updated_at' => rand(1, 24) . ' hours ago'
-            ];
+        if ($user->is_agent_staff) {
+            $studentQuery->where('agent_id', $user->parent_id);
+            $applicationQuery->where('agent_id', $user->parent_id);
         }
 
-        return view('staff.dashboard', compact('columns', 'leads'));
+        $totalStudents = (clone $studentQuery)->count();
+        $totalApplications = (clone $applicationQuery)->count();
+        $totalUniversities = University::count();
+
+        $studentsWithDocs = (clone $studentQuery)->whereHas('documents')->count();
+        $docCompletionRate = $totalStudents > 0 ? round(($studentsWithDocs / $totalStudents) * 100) : 0;
+
+        $statuses = ApplicationStatus::where('is_active', 1)
+            ->orderBy('sort_order')
+            ->get()
+            ->map(function ($status) use ($applicationQuery) {
+                $q = clone $applicationQuery;
+                $status->count = $q->where('application_status_id', $status->id)->count();
+                return $status;
+            });
+
+        $recentStudents = (clone $studentQuery)->with('agent')->latest()->take(5)->get();
+
+        $recentApplications = (clone $applicationQuery)
+            ->with('student', 'university', 'status')
+            ->latest()
+            ->take(5)
+            ->get();
+
+        $monthlyLabels = collect(range(1, 12))->map(fn($m) => Carbon::create()->month($m)->format('M'));
+        $monthlyCounts = collect(range(1, 12))->map(function ($m) use ($applicationQuery) {
+            return (clone $applicationQuery)->whereMonth('created_at', $m)->whereYear('created_at', now()->year)->count();
+        });
+        $monthlyData = $monthlyLabels->zip($monthlyCounts)->map(fn($pair) => ['month' => $pair[0], 'total' => $pair[1]]);
+
+        return view('staff.dashboard', compact(
+            'totalStudents', 'totalApplications', 'totalUniversities',
+            'docCompletionRate', 'studentsWithDocs',
+            'statuses', 'recentStudents', 'recentApplications', 'monthlyData'
+        ));
     }
 }

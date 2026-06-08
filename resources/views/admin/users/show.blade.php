@@ -7,7 +7,7 @@
         {{-- Header Section with Gradient Background --}}
         <div class="row mb-2">
             <div class="col-12">
-                <div class="card border-0 shadow-sm bg-gradient-primary">
+                <div class="card bg-gradient-primary">
                     <div class="card-body p-2">
                         <div class="row align-items-start">
                             <div class="col-auto">
@@ -156,7 +156,7 @@
             {{-- Left Column - User Information --}}
             <div class="col-xl-4 col-lg-5 mb-4">
                 {{-- Profile Card --}}
-                <div class="card border-0 shadow-sm mb-2">
+                <div class="card mb-2">
                     <div class="card-header bg-white border-0 pt-4 pb-0">
                         <h5 class="mb-0"><i class="fas fa-user-circle text-primary me-2"></i>Profile Information</h5>
                     </div>
@@ -217,7 +217,7 @@
                 </div>
 
                 {{-- Documents Card --}}
-                <div class="card border-0 shadow-sm mb-4">
+                <div class="card mb-4">
                     <div class="card-header bg-light border-0 pt-4 pb-0">
                         <h5 class="mb-0"><i class="fas fa-file-alt text-primary me-2"></i>Business Documents</h5>
                     </div>
@@ -271,7 +271,7 @@
                 </div>
 
                 {{-- Login Status Card --}}
-                <div class="card border-0 shadow-sm">
+                <div class="card">
                     <div class="card-body">
                         <h5 class="mb-0"><i class="fas fa-sign-in-alt text-primary me-2"></i>Login Status</h5>
 
@@ -307,7 +307,7 @@
             {{-- Right Column - Statistics and Activities --}}
             <div class="col-xl-8 col-lg-7">
                 {{-- Students List --}}
-                <div class="card border-0 shadow-sm mb-4">
+                <div class="card mb-4">
                     <div class="card-header bg-white border-0 pt-4 pb-0 d-flex justify-content-between align-items-center">
                         <h5 class="mb-0"><i class="fas fa-graduation-cap text-primary me-2"></i>Recent Students</h5>
                         @if ($students->count() > 5)
@@ -363,7 +363,7 @@
                 </div>
 
                 {{-- Recent Applications --}}
-                <div class="card border-0 shadow-sm mb-4">
+                <div class="card mb-4">
                     <div class="card-header bg-white border-0 pt-4 pb-0 d-flex justify-content-between align-items-center">
                         <h5 class="mb-0"><i class="fas fa-file-signature text-primary me-2"></i>Recent Applications</h5>
                         @if ($applications->count() > 5)

@@ -1,88 +1,61 @@
-/* =========================================
-   Login.CSS - Progress Tracker Component
-   Fully Cleaned & Integrated
-========================================= */
-.login-container {
-    margin: auto;
-    background: #fff;
-    border-radius: 20px;
-}
+/* Login page styles - now using styles.css design system */
+/* Minimal page-specific overrides only */
 
-.login-page h2 {
-    font-size: 1.8rem;
-    color: #222;
-}
-.login-page .form-control {
-    border-radius: 10px;
-    padding: 12px;
-}
-.login-page .btn-primary {
-    border-radius: 10px;
-    background: linear-gradient(90deg, #1a0262, #820b5c);
-    border: none;
-    font-weight: 600;
-    transition:
-        transform 0.2s ease,
-        box-shadow 0.2s ease;
-}
-.login-page .btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
-}
-
-/* Countries grid (login page version) */
-.countries-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
-}
-.country-card {
-    position: relative;
-    overflow: hidden;
-    border-radius: 12px;
-    height: 160px;
-    display: block;
-    transition: transform 0.4s ease;
-}
-.country-card img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.4s ease;
-}
-.country-card:hover img {
-    transform: scale(1.1);
-}
-.country-card .overlay {
-    position: absolute;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.45);
-    color: #fff;
+.login-page {
+    min-height: 100vh;
     display: flex;
-    justify-content: center;
     align-items: center;
-    opacity: 0;
-    transition: opacity 0.4s ease;
-}
-.country-card:hover .overlay {
-    opacity: 1;
-}
-.country-card .overlay h3 {
-    font-size: 1.2rem;
-    font-weight: 600;
-    text-align: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--primary-soft, #ede9fe) 0%, var(--info-soft, #dbeafe) 50%, var(--accent-soft, #fef3c7) 100%);
+    padding: 1rem;
 }
 
-@media (max-width: 992px) {
-    .countries-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
+.login-card {
+    width: 100%;
+    max-width: 420px;
+    background: var(--bg-card, #fff);
+    border-radius: var(--radius-xl, 20px);
+    box-shadow: var(--shadow-xl, 0 20px 40px rgba(0,0,0,0.15));
+    padding: 2.5rem;
 }
-@media (max-width: 640px) {
-    .countries-grid {
-        grid-template-columns: 1fr;
-    }
-    .login-container {
-        padding: 1rem;
-    }
+
+.login-logo {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.login-logo img {
+    max-height: 60px;
+}
+
+.login-title {
+    font-size: 1.5rem;
+    font-weight: 800;
+    text-align: center;
+    margin-bottom: 0.5rem;
+    color: var(--secondary, #0f172a);
+}
+
+.login-subtitle {
+    text-align: center;
+    color: var(--text-muted, #94a3b8);
+    font-size: 0.85rem;
+    margin-bottom: 2rem;
+}
+
+.login-divider {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin: 1.5rem 0;
+    color: var(--text-muted, #94a3b8);
+    font-size: 0.8rem;
+}
+
+.login-divider::before,
+.login-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border, #e2e8f0);
 }

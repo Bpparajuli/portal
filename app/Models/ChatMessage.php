@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class ChatMessage extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'sender_id',
@@ -20,34 +21,43 @@ class ChatMessage extends Model
         'read_at',
     ];
 
-    // Type casting for convenient access
     protected $casts = [
         'delivered_at' => 'datetime',
         'read_at' => 'datetime',
         'status' => 'string',
     ];
 
-    // Sender relationship
     public function sender()
     {
         return $this->belongsTo(User::class, 'sender_id');
     }
 
-    // Receiver relationship
     public function receiver()
     {
         return $this->belongsTo(User::class, 'receiver_id');
     }
 
-    // Optional: helper to check if message is read
     public function isRead(): bool
     {
         return $this->status === 'read';
     }
 
-    // Optional: helper to check if message is delivered
     public function isDelivered(): bool
     {
         return $this->status === 'delivered' || $this->status === 'read';
+    }
+
+    public function scopeBetweenUsers($query, $userId1, $userId2)
+    {
+        return $query->where(function ($q) use ($userId1, $userId2) {
+            $q->where('sender_id', $userId1)->where('receiver_id', $userId2);
+        })->orWhere(function ($q) use ($userId1, $userId2) {
+            $q->where('sender_id', $userId2)->where('receiver_id', $userId1);
+        });
+    }
+
+    public function scopeUnreadForUser($query, $userId)
+    {
+        return $query->where('receiver_id', $userId)->where('status', '!=', 'read');
     }
 }

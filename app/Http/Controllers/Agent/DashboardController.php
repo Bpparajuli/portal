@@ -83,9 +83,10 @@ class DashboardController extends Controller
 
         // ---------- MONTHLY APPLICATIONS ----------
         $monthlyApplications = Application::where('agent_id', $agentId)
-            ->selectRaw('MONTH(created_at) as month, COUNT(*) as count')
-            ->groupBy('month')
-            ->pluck('count', 'month');
+            ->whereYear('created_at', now()->year)
+            ->get()
+            ->groupBy(fn($app) => (int) $app->created_at->format('n'))
+            ->map->count();
 
         $monthlyArr = [];
         for ($m = 1; $m <= 12; $m++) {

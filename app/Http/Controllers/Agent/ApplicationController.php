@@ -18,10 +18,13 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-use App\Services\FileUploadService;
+use App\Contracts\FileUploadServiceInterface;
 
 class ApplicationController extends Controller
 {
+    public function __construct(
+        private readonly FileUploadServiceInterface $fileUploadService,
+    ) {}
 
     // -------------------------------
     // List applications
@@ -118,16 +121,20 @@ class ApplicationController extends Controller
     | Statistics Cards (ONLY this agent)
     |--------------------------------------------------------------------------
     */
+        $approvedStatusId = ApplicationStatus::where('name', 'Visa Approved')->value('id');
+        $rejectedStatusId = ApplicationStatus::where('name', 'Visa Rejected')->value('id');
+        $lostStatusId = ApplicationStatus::where('name', 'Lost')->value('id');
+
         $acceptedCount = Application::where('agent_id', Auth::id())
-            ->where('application_status_id', 14)
+            ->where('application_status_id', $approvedStatusId)
             ->count();
 
         $rejectedCount = Application::where('agent_id', Auth::id())
-            ->where('application_status_id', 15)
+            ->where('application_status_id', $rejectedStatusId)
             ->count();
 
         $lostCount = Application::where('agent_id', Auth::id())
-            ->where('application_status_id', 18)
+            ->where('application_status_id', $lostStatusId)
             ->count();
 
         /*
@@ -312,7 +319,7 @@ class ApplicationController extends Controller
 
         // ✅ SOP Upload using service
         if ($request->hasFile('sop_file')) {
-            $application->sop_file = FileUploadService::uploadStudentSOP(
+            $application->sop_file = $this->fileUploadService->uploadStudentSOP(
                 $request->file('sop_file'),
                 Auth::user(),
                 $student
@@ -322,7 +329,7 @@ class ApplicationController extends Controller
         $application->save();
 
         // Notify admin
-        $admin = User::find(4);
+        $admin = User::admins()->first();
         if ($admin) {
             Notification::send($admin, new ApplicationSubmitted($application));
         }
@@ -403,7 +410,7 @@ class ApplicationController extends Controller
                 Storage::disk('public')->delete($application->sop_file);
             }
 
-            $application->sop_file = FileUploadService::uploadStudentSOP(
+            $application->sop_file = $this->fileUploadService->uploadStudentSOP(
                 $request->file('sop_file'),
                 Auth::user(),
                 $application->student
@@ -454,7 +461,7 @@ class ApplicationController extends Controller
             'application_status' => 'Withdrawn'
         ]);
 
-        $admin = User::find(4);
+        $admin = User::admins()->first();
         if ($admin) {
             Notification::send($admin, new ApplicationWithdrawn($application));
         }

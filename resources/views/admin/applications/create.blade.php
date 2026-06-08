@@ -106,7 +106,7 @@
             }
         }
     </style>
-    <div class="container py-4">
+    <div>
         {{-- Header --}}
         <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
             <div>
@@ -127,7 +127,7 @@
 
         <div class="row">
             <div class="col-lg-8">
-                <div class="card border-0 shadow-sm rounded-4">
+                <div class="card mb-4">
                     <div class="card-body p-4 p-md-5">
                         <form action="{{ route('admin.applications.store') }}" method="POST" enctype="multipart/form-data"
                             id="applicationForm">
@@ -291,7 +291,7 @@
                 </div>
 
                 {{-- Selected Preview Card --}}
-                <div class="card border-0 shadow-sm rounded-4">
+                <div class="card mb-4">
                     <div class="card-body p-4">
                         <h5 class="fw-bold mb-3">
                             <i class="fas fa-eye me-2 text-primary"></i>

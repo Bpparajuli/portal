@@ -13,14 +13,16 @@ use App\Http\Controllers\StudentIntakeController;
 use App\Http\Controllers\Guest\{
     CourseController as GuestCourseController,
     UniversityController as GuestUniversityController,
-    DashboardController as GuestDashboardController
+    DashboardController as GuestDashboardController,
+    EnquiryController as GuestEnquiryController,
+    PageController as GuestPageController
 };
 
 // Auth Controllers
 use App\Http\Controllers\Auth\{
     LoginController,
     RegisterController,
-    ContactController,
+
     WaitingController,
 };
 
@@ -38,7 +40,10 @@ use App\Http\Controllers\Admin\{
     BackupController as AdminBackupController,
     ReminderController as AdminReminderController,
     ApplicationStatusController as AdminApplicationStatusController,
-    QRController as AdminQRController
+    EmailController as AdminEmailController,
+    PageController as AdminPageController,
+    SettingController as AdminSettingController,
+    EnquiryController as AdminEnquiryController,
 };
 
 // Agent Controllers
@@ -83,20 +88,20 @@ use Illuminate\Support\Facades\Schema;
 
 Route::get('/', function () {
     if (Auth::check()) {
-        return Auth::user()->is_admin
-            ? redirect()->route('admin.dashboard')
-            : (Auth::user()->is_agent
-                ? redirect()->route('agent.dashboard')
-                : redirect()->route('guest.dashboard'));
+        $user = Auth::user();
+        return match (true) {
+            in_array($user->role, ['admin', 'superadmin']) => redirect()->route('admin.dashboard'),
+            $user->role === 'agent' => redirect()->route('agent.dashboard'),
+            $user->role === 'staff' => $user->paid_crm ? redirect()->route('crm.dashboard') : redirect()->route('staff.dashboard'),
+            default => redirect()->route('home'),
+        };
     }
 
     return app(GuestDashboardController::class)->welcome(request());
 })->name('home');
 
-Route::prefix('guest')->name('guest.')->group(function () {
-
-    Route::get('dashboard', [GuestDashboardController::class, 'welcome'])
-        ->name('dashboard');
+// Public routes at root level (no /guest prefix)
+Route::name('guest.')->group(function () {
 
     // Universities
     Route::get('universities', [GuestUniversityController::class, 'index'])->name('universities.index');
@@ -111,6 +116,13 @@ Route::prefix('guest')->name('guest.')->group(function () {
         Route::get('courses', 'index')->name('courses.index');
         Route::get('courses/{course}', 'show')->name('courses.show');
     });
+
+    // Contact / Enquiries
+    Route::get('contact', [GuestEnquiryController::class, 'create'])->name('enquiries.create');
+    Route::post('contact', [GuestEnquiryController::class, 'store'])->name('enquiries.store');
+
+    // Dynamic Pages
+    Route::get('p/{slug}', [GuestPageController::class, 'show'])->name('pages.show');
 });
 
 /*
@@ -128,9 +140,6 @@ Route::prefix('auth')->name('auth.')->group(function () {
         Route::get('register', 'showRegistrationForm')->name('register');
         Route::post('register', 'register');
     });
-
-    Route::get('contact', [ContactController::class, 'showForm'])->name('contact');
-    Route::post('contact', [ContactController::class, 'submit'])->name('contact.submit');
 
     Route::view('terms', 'auth.terms')->name('terms');
 
@@ -163,16 +172,18 @@ Route::middleware(['auth', \App\Http\Middleware\IsAdmin::class])
     ->name('admin.')
     ->group(function () {
 
-        Route::get('/backup-files', [AdminBackupController::class, 'backupFilesIfChanged'])
-            ->name('backup.files');
+        // Backup routes
+        Route::prefix('backups')->name('backup.')->group(function () {
+            Route::get('/', [AdminBackupController::class, 'index'])->name('index');
+            Route::post('/create', [AdminBackupController::class, 'create'])->name('create');
+            Route::post('/download-sql', [AdminBackupController::class, 'downloadSql'])->name('download-sql');
+            Route::get('/download-zip', [AdminBackupController::class, 'downloadZip'])->name('download-zip');
+            Route::get('/download-file/{filename}', [AdminBackupController::class, 'downloadFile'])->name('download-file');
+            Route::delete('/delete/{filename}', [AdminBackupController::class, 'delete'])->name('delete');
+        });
 
         // QR Code page
-        Route::get('/qr-code', function () {
-            if (!Auth::check() || !Auth::user()->is_admin) {
-                abort(403, 'Admin access required');
-            }
-            return view('admin.qr-js');
-        })->name('qr-code');
+        Route::get('/qr-code', [\App\Http\Controllers\Admin\QrCodeController::class, 'index'])->name('qr-code');
 
 
 
@@ -183,9 +194,11 @@ Route::middleware(['auth', \App\Http\Middleware\IsAdmin::class])
         Route::get('chat', [AdminChatController::class, 'usersListView'])->name('chat');
         Route::get('chat/users', [AdminChatController::class, 'usersList'])->name('chat.users');
         Route::get('chat/messages/{user}', [AdminChatController::class, 'fetchMessages'])->name('chat.messages');
+        Route::get('chat/new', [AdminChatController::class, 'fetchNewMessages'])->name('chat.new');
         Route::post('chat/send', [AdminChatController::class, 'sendMessage'])->name('chat.send');
         Route::delete('chat/delete/{id}', [AdminChatController::class, 'delete'])->name('chat.delete');
         Route::delete('chat/clear/{user}', [AdminChatController::class, 'clear'])->name('chat.clear');
+        Route::post('chat/typing', [AdminChatController::class, 'typing'])->name('chat.typing');
 
         // Notifications
         Route::get('notifications', [AdminNotificationController::class, 'index'])->name('notifications');
@@ -227,6 +240,7 @@ Route::middleware(['auth', \App\Http\Middleware\IsAdmin::class])
             Route::get('documents/create', [AdminDocumentController::class, 'create'])->name('documents.create');
             Route::post('documents', [AdminDocumentController::class, 'store'])->name('documents.store');
             Route::post('documents/other', [AdminDocumentController::class, 'storeOther'])->name('documents.storeOther');
+            Route::patch('documents/{document}/status', [AdminDocumentController::class, 'updateStatus'])->name('documents.updateStatus');
             Route::delete('documents/{document}/destroy', [AdminDocumentController::class, 'destroy'])->name('documents.destroy');
             Route::get('documents/{document}/download', [AdminDocumentController::class, 'download'])->name('documents.download');
             Route::get('documents/download-all', [AdminDocumentController::class, 'downloadAll'])->name('documents.downloadAll');
@@ -239,6 +253,18 @@ Route::middleware(['auth', \App\Http\Middleware\IsAdmin::class])
         Route::post('applications/{application}/add-message', [AdminApplicationController::class, 'addMessage'])->name('applications.addMessage');
         Route::delete('applications/{application}/messages/{message}', [AdminApplicationController::class, 'deleteMessage'])->name('applications.messages.delete');
         Route::resource('applications', AdminApplicationController::class);
+
+        // Export routes
+        Route::get('students/export', [AdminStudentController::class, 'export'])->name('students.export');
+        Route::get('applications/export', [AdminApplicationController::class, 'export'])->name('applications.export');
+        Route::get('exports', [\App\Http\Controllers\Admin\ExportController::class, 'index'])->name('exports.index');
+        Route::post('exports/export', [\App\Http\Controllers\Admin\ExportController::class, 'export'])->name('exports.export');
+
+        // Revenue routes
+        Route::get('revenues', [\App\Http\Controllers\Admin\RevenueController::class, 'index'])->name('revenues.index');
+        Route::get('revenues/{revenue}/edit', [\App\Http\Controllers\Admin\RevenueController::class, 'edit'])->name('revenues.edit');
+        Route::put('revenues/{revenue}', [\App\Http\Controllers\Admin\RevenueController::class, 'update'])->name('revenues.update');
+        Route::delete('revenues/{revenue}', [\App\Http\Controllers\Admin\RevenueController::class, 'destroy'])->name('revenues.destroy');
 
         /*
         |--------------------------------------------------------------------------
@@ -257,6 +283,51 @@ Route::middleware(['auth', \App\Http\Middleware\IsAdmin::class])
 
         Route::delete('application-status/{id}', [AdminApplicationStatusController::class, 'destroy'])
             ->name('application-status.destroy');
+
+        // ========== NEW: EMAIL SYSTEM ==========
+        Route::prefix('emails')->name('emails.')->group(function () {
+            Route::get('inbox', [AdminEmailController::class, 'inbox'])->name('inbox');
+            Route::get('sent', [AdminEmailController::class, 'sent'])->name('sent');
+            Route::get('drafts', [AdminEmailController::class, 'drafts'])->name('drafts');
+            Route::get('create', [AdminEmailController::class, 'create'])->name('create');
+            Route::post('store', [AdminEmailController::class, 'store'])->name('store');
+            Route::get('{email}', [AdminEmailController::class, 'show'])->name('show');
+            Route::post('{email}/reply', [AdminEmailController::class, 'reply'])->name('reply');
+            Route::post('save-draft', [AdminEmailController::class, 'saveDraft'])->name('save-draft');
+            Route::delete('{email}', [AdminEmailController::class, 'destroy'])->name('destroy');
+            Route::post('{email}/toggle-star', [AdminEmailController::class, 'toggleStar'])->name('toggle-star');
+            Route::get('{email}/download/{index}', [AdminEmailController::class, 'downloadAttachment'])->name('download-attachment');
+        });
+
+        // ========== NEW: DYNAMIC PAGES ==========
+        Route::resource('pages', AdminPageController::class);
+        Route::get('pages/dynamic/content', [\App\Http\Controllers\Admin\PageController::class, 'dynamic'])->name('pages.dynamic');
+        Route::post('pages/dynamic/update', [\App\Http\Controllers\Admin\PageController::class, 'updateDynamic'])->name('pages.dynamic.update');
+
+        // ========== NEW: SETTINGS ==========
+        Route::prefix('settings')->name('settings.')->group(function () {
+            Route::get('/', [AdminSettingController::class, 'index'])->name('index');
+            Route::put('/{setting}', [AdminSettingController::class, 'update'])->name('update');
+            Route::post('/create', [AdminSettingController::class, 'store'])->name('store');
+            Route::delete('{setting}', [AdminSettingController::class, 'destroy'])->name('destroy');
+            Route::post('/upload-image', [AdminSettingController::class, 'uploadImage'])->name('upload-image');
+            Route::get('/images', [AdminSettingController::class, 'listImages'])->name('images');
+        });
+
+        // ========== NEW: ENQUIRIES ==========
+        Route::resource('enquiries', AdminEnquiryController::class)->only(['index', 'show', 'destroy']);
+        Route::post('enquiries/{enquiry}/reply', [AdminEnquiryController::class, 'reply'])->name('enquiries.reply');
+
+        // ========== TESTIMONIALS ==========
+        Route::resource('testimonials', \App\Http\Controllers\Admin\TestimonialController::class);
+
+        // ========== ACTIVITY LOG ==========
+        Route::prefix('activities')->name('activities.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Admin\ActivityLogController::class, 'index'])->name('index');
+            Route::get('{activity}', [\App\Http\Controllers\Admin\ActivityLogController::class, 'show'])->name('show');
+            Route::delete('{activity}', [\App\Http\Controllers\Admin\ActivityLogController::class, 'destroy'])->name('destroy');
+            Route::post('clear-all', [\App\Http\Controllers\Admin\ActivityLogController::class, 'clearAll'])->name('clearAll');
+        });
     });
 
 /*
@@ -269,7 +340,56 @@ Route::middleware(['auth', \App\Http\Middleware\IsStaff::class])
     ->name('staff.')
     ->group(function () {
         Route::get('/dashboard', [StaffDashboardController::class, 'index'])->name('dashboard');
-        Route::get('/student/{id}', [StaffStudentController::class, 'show'])->name('student');
+
+        // Student management
+        Route::get('/students', [StaffStudentController::class, 'index'])->name('students.index');
+        Route::get('/student/{student}', [StaffStudentController::class, 'show'])->name('student.show');
+        Route::get('/student/{student}/edit', [StaffStudentController::class, 'edit'])->name('student.edit');
+        Route::put('/student/{student}', [StaffStudentController::class, 'update'])->name('student.update');
+
+        // Staff document management
+        Route::prefix('student/{student}/documents')->name('documents.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Staff\DocumentController::class, 'index'])->name('index');
+            Route::post('/', [\App\Http\Controllers\Staff\DocumentController::class, 'store'])->name('store');
+            Route::post('/other', [\App\Http\Controllers\Staff\DocumentController::class, 'storeOther'])->name('storeOther');
+            Route::delete('{document}', [\App\Http\Controllers\Staff\DocumentController::class, 'destroy'])->name('destroy');
+            Route::get('{document}/download', [\App\Http\Controllers\Staff\DocumentController::class, 'download'])->name('download');
+        });
+
+        // University & Course - read only
+        Route::get('/universities', [StaffStudentController::class, 'universities'])->name('universities');
+        Route::get('/courses', [StaffStudentController::class, 'courses'])->name('courses');
+
+        // University & Course - edit (staff can edit, not delete)
+        Route::get('/universities/{id}/edit', [\App\Http\Controllers\Admin\UniversityController::class, 'edit'])->name('universities.edit');
+        Route::put('/universities/{id}', [\App\Http\Controllers\Admin\UniversityController::class, 'update'])->name('universities.update');
+        Route::get('/courses/{id}/edit', [\App\Http\Controllers\Admin\CourseController::class, 'edit'])->name('courses.edit');
+        Route::put('/courses/{id}', [\App\Http\Controllers\Admin\CourseController::class, 'update'])->name('courses.update');
+
+        // Applications
+        Route::get('/applications', [StaffStudentController::class, 'applications'])->name('applications');
+
+        // Chat
+        Route::prefix('chat')->name('chat.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Staff\ChatController::class, 'index'])->name('index');
+            Route::get('/users', [\App\Http\Controllers\Staff\ChatController::class, 'usersList'])->name('users');
+            Route::get('/messages/{user}', [\App\Http\Controllers\Staff\ChatController::class, 'fetchMessages'])->name('messages');
+            Route::get('/new', [\App\Http\Controllers\Staff\ChatController::class, 'fetchNewMessages'])->name('new');
+            Route::post('/send', [\App\Http\Controllers\Staff\ChatController::class, 'sendMessage'])->name('send');
+            Route::delete('/delete/{id}', [\App\Http\Controllers\Staff\ChatController::class, 'delete'])->name('delete');
+            Route::delete('/clear/{user}', [\App\Http\Controllers\Staff\ChatController::class, 'clear'])->name('clear');
+            Route::post('/typing', [\App\Http\Controllers\Staff\ChatController::class, 'typing'])->name('typing');
+        });
+
+        // Notifications
+        Route::prefix('notifications')->name('notifications.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Staff\NotificationController::class, 'index'])->name('index');
+            Route::post('/mark-all', [\App\Http\Controllers\Staff\NotificationController::class, 'markAll'])->name('markAll');
+            Route::post('/{id}/mark-read', [\App\Http\Controllers\Staff\NotificationController::class, 'markAsRead'])->name('markRead');
+            Route::get('/{id}/redirect', [\App\Http\Controllers\Staff\NotificationController::class, 'readAndRedirect'])->name('readAndRedirect');
+            Route::delete('/{id}', [\App\Http\Controllers\Staff\NotificationController::class, 'delete'])->name('delete');
+            Route::delete('/all/delete', [\App\Http\Controllers\Staff\NotificationController::class, 'deleteAll'])->name('deleteAll');
+        });
     });
 
 /*
@@ -288,9 +408,11 @@ Route::middleware(['auth', \App\Http\Middleware\IsAgent::class])
         Route::get('chat', [AgentChatController::class, 'usersListView'])->name('chat');
         Route::get('chat/users', [AgentChatController::class, 'usersList'])->name('chat.users');
         Route::get('chat/messages/{user}', [AgentChatController::class, 'fetchMessages'])->name('chat.messages');
+        Route::get('chat/new', [AgentChatController::class, 'fetchNewMessages'])->name('chat.new');
         Route::post('chat/send', [AgentChatController::class, 'sendMessage'])->name('chat.send');
         Route::delete('chat/delete/{id}', [AgentChatController::class, 'delete'])->name('chat.delete');
         Route::delete('chat/clear/{user}', [AgentChatController::class, 'clear'])->name('chat.clear');
+        Route::post('chat/typing', [AgentChatController::class, 'typing'])->name('chat.typing');
 
         // Notifications
         Route::get('notifications', [AgentNotificationController::class, 'index'])->name('notifications');
@@ -308,12 +430,10 @@ Route::middleware(['auth', \App\Http\Middleware\IsAgent::class])
         Route::get('get-course-types/{universityId}', [AgentUniversityController::class, 'getCourseTypes'])->name('get-course-types');
         Route::get('get-courses-by-type/{universityId}/{type}', [AgentUniversityController::class, 'getCoursesByType'])->name('get-courses-by-type');
 
-        // Resources
-        Route::resources([
-            'students'     => AgentStudentController::class,
-            'universities' => AgentUniversityController::class,
-            'courses'      => AgentCourseController::class,
-        ]);
+        // Resources (agents get full CRUD on students, read-only on universities/courses)
+        Route::resource('students', AgentStudentController::class);
+        Route::resource('universities', AgentUniversityController::class)->only(['index', 'show']);
+        Route::resource('courses', AgentCourseController::class)->only(['index', 'show']);
 
         // User management (own profile + staff)
         Route::get('/users/{user:slug}', [AgentUserController::class, 'show'])->name('users.show');
@@ -360,7 +480,7 @@ Route::middleware(['auth', \App\Http\Middleware\IsAgent::class])
 | CRM Routes
 |--------------------------------------------------------------------------
 */
-Route::middleware('auth')
+Route::middleware(['auth', \App\Http\Middleware\IsPaidCrm::class])
     ->prefix('crm')
     ->name('crm.')
     ->group(function () {
@@ -463,6 +583,32 @@ Route::middleware('auth')
         Route::get('/debug/task-visibility/{student}', [CrmStudentController::class, 'debugAllTasksForStaff'])->name('debug.task-visibility');
     });
 
+
+/*
+|--------------------------------------------------------------------------
+| Global Chat Unread Count (all roles)
+|--------------------------------------------------------------------------
+*/
+Route::middleware('auth')->get('/chat/unread-count', function () {
+    return response()->json([
+        'count' => \App\Models\ChatMessage::where('receiver_id', Auth::id())
+            ->whereNull('read_at')
+            ->count()
+    ]);
+})->name('chat.unread');
+
+/*
+|--------------------------------------------------------------------------
+| AI Assistant Routes
+|--------------------------------------------------------------------------
+*/
+Route::middleware('auth')->prefix('ai')->name('ai.')->group(function () {
+    Route::get('/assistant', [\App\Http\Controllers\AI\AssistantController::class, 'index'])->name('assistant');
+    Route::post('/chat', [\App\Http\Controllers\AI\AssistantController::class, 'chat'])->name('chat');
+    Route::post('/analyze', [\App\Http\Controllers\AI\AssistantController::class, 'analyze'])->name('analyze');
+    Route::get('/settings', [\App\Http\Controllers\AI\AssistantController::class, 'settings'])->name('settings');
+    Route::post('/settings', [\App\Http\Controllers\AI\AssistantController::class, 'updateSettings'])->name('settings.update');
+});
 
 // ============================================
 // STUDENT INTAKE FORM - Public Form

@@ -8,6 +8,7 @@ use App\Models\Student;
 use App\Models\User;
 use App\Notifications\DocumentDeleted;
 use App\Notifications\DocumentUploaded;
+use App\Contracts\FileUploadServiceInterface;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -15,6 +16,9 @@ use Illuminate\Support\Facades\Notification;
 
 class DocumentController extends Controller
 {
+    public function __construct(
+        private readonly FileUploadServiceInterface $fileUploadService,
+    ) {}
     private function allDocumentTypes(): array
     {
         return [
@@ -41,6 +45,12 @@ class DocumentController extends Controller
         $otherDocs = $documents->filter(fn($doc) => !in_array(strtolower($doc->document_type), $allDocumentTypes));
 
         return view('admin.documents.index', compact('student', 'predefinedDocs', 'otherDocs', 'allDocumentTypes'));
+    }
+
+    public function create(Student $student)
+    {
+        return redirect()->route('admin.documents.index', $student->id)
+            ->with('info', 'Use the form below to upload documents.');
     }
 
     public function store(Request $request, Student $student)
@@ -84,18 +94,14 @@ class DocumentController extends Controller
     private function saveDocument($file, $documentType, Student $student)
     {
         $admin = Auth::user();
+        $agent = $student->agent ?? $admin;
 
-        $rawStudentName = trim(($student->first_name ?? '') . '_' . ($student->last_name ?? ''));
-        $safeStudent = empty($rawStudentName) ? 'student_' . $student->id : preg_replace('/[^A-Za-z0-9_\-]/', '_', strtolower($rawStudentName));
-
-        $fileName = preg_replace('/[^A-Za-z0-9_\-]/', '_', strtolower($documentType)) . '.' . $file->getClientOriginalExtension();
-        $folderPath = "admin_uploads/{$safeStudent}";
-        $filePath = $file->storeAs($folderPath, $fileName, 'public');
+        $filePath = $this->fileUploadService->uploadStudentDocument($file, $agent, $student, $documentType);
 
         $document = Document::create([
             'student_id' => $student->id,
             'uploaded_by' => $admin->id,
-            'file_name' => $fileName,
+            'file_name' => $file->getClientOriginalName(),
             'file_path' => $filePath,
             'file_type' => $file->getMimeType(),
             'document_type' => $documentType,
@@ -109,6 +115,23 @@ class DocumentController extends Controller
                 Notification::send($agent, new DocumentUploaded($admin, $student, $document));
             }
         }
+    }
+
+    public function updateStatus(Request $request, Student $student, Document $document)
+    {
+        if ($document->student_id !== $student->id) abort(403);
+
+        $request->validate(['status' => 'required|in:uploaded,missing,reviewed,downloaded']);
+
+        $data = ['status' => $request->status];
+        if ($request->status === 'reviewed') {
+            $data['reviewed_at'] = now();
+            $data['reviewed_by'] = Auth::id();
+        }
+
+        $document->update($data);
+
+        return redirect()->back()->with('success', 'Document status updated.');
     }
 
     public function destroy(Student $student, Document $document)

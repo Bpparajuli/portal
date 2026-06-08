@@ -99,7 +99,7 @@
 
                                                 {{-- Clickable link for the content --}}
                                                 @if ($isUnread)
-                                                    <a href="{{ $url ?? '#' }}" class="text-decoration-none text-white">
+                                                    <a href="{{ $url ?? '#' }}" class="text-decoration-none text-dark">
                                                         <div class="mb-2">
                                                             {!! $message !!}
                                                         </div>
@@ -231,7 +231,7 @@
                                                 </div>
                                                 @if ($isUnread)
                                                     {{-- Clickable link for the content --}}
-                                                    <a href="{{ $url }}" class="text-decoration-none text-white">
+                                                    <a href="{{ $url }}" class="text-decoration-none text-dark">
                                                         <div class="mb-2">
                                                             {!! Str::limit($messageContent, 100) !!}
                                                         </div>
@@ -371,7 +371,7 @@
         });
         // Handle mark all button
         document.querySelector('.btn-mark-all')?.addEventListener('click', function(e) {
-            const url = "{{ route('admin.notifications.markAll') }}";
+            const url = "{{ route('agent.notifications.markAll') }}";
 
             Swal.fire({
                 title: "Mark all as read?",

@@ -1,12 +1,13 @@
 <?php
 
-// routes/api.php
-
-use App\Http\Controllers\StudentIntakeController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\StudentIntakeController;
+use App\Http\Controllers\Api\StudentApiController;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
+
+// ============================================
+// PUBLIC API ROUTES
+// ============================================
 
 // Student Intake Routes
 Route::post('/student/intake', [StudentIntakeController::class, 'intake'])->name('api.student.intake');
@@ -105,4 +106,17 @@ Route::post('/facebook-lead-webhook', function (Request $request) {
 Route::get('/facebook-lead-webhook', function (Request $request) {
     $challenge = $request->input('hub_challenge');
     return response($challenge);
+});
+
+// ============================================
+// PROTECTED API ROUTES (Sanctum)
+// ============================================
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/user', function (Request $request) {
+        return $request->user();
+    });
+
+    // Student API
+    Route::get('/students', [StudentApiController::class, 'index']);
+    Route::get('/students/{student}', [StudentApiController::class, 'show']);
 });

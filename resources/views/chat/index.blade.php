@@ -1,0 +1,62 @@
+@php
+    $role = auth()->user()->role;
+    $layout = match($role) {
+        'admin' => 'layouts.admin',
+        'agent' => 'layouts.agent',
+        default => 'layouts.staff',
+    };
+    $section = match($role) {
+        'admin' => 'admin-content',
+        'agent' => 'content',
+        'staff' => 'staff-content',
+    };
+    $routePrefix = match($role) {
+        'admin' => 'admin.chat',
+        'agent' => 'agent.chat',
+        'staff' => 'staff.chat',
+    };
+    $canDeleteAny = $role === 'admin';
+    $showRoleFilter = $role !== 'agent';
+@endphp
+
+@extends($layout)
+@section($section)
+
+@push('styles')
+<link href="{{ asset('css/chat.css') }}" rel="stylesheet">
+@endpush
+
+<div class="chat-wrapper" id="chatWrapper">
+    <div class="sidebar-overlay" id="chatSidebarOverlay"></div>
+    @include('chat.partials.sidebar')
+    <div class="chat-main" id="chatMain">
+        @include('chat.partials.placeholder')
+        <div id="chatActive" class="d-none" style="display:none;flex-direction:column;height:100%;min-height:0;">
+            @include('chat.partials.chat-header')
+            @include('chat.partials.message-box')
+            @include('chat.partials.chat-footer')
+        </div>
+    </div>
+</div>
+
+@push('scripts')
+<script>
+window.CHAT_CONFIG = {
+    role: '{{ $role }}',
+    authId: {{ Auth::id() }},
+    csrfToken: '{{ csrf_token() }}',
+    usersRoute: '{{ route($routePrefix . '.users') }}',
+    canDeleteAny: {{ $canDeleteAny ? 'true' : 'false' }},
+    showRoleFilter: {{ $showRoleFilter ? 'true' : 'false' }},
+    pusherKey: '{{ env("PUSHER_APP_KEY") }}',
+    pusherCluster: '{{ env("PUSHER_APP_CLUSTER") }}',
+    broadcastDefault: '{{ config("broadcasting.default") }}',
+};
+</script>
+@if(config('broadcasting.default') === 'pusher')
+<script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
+@endif
+<script src="{{ asset('js/chat.js') }}"></script>
+@endpush
+
+@endsection

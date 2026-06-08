@@ -1,131 +1,25 @@
 @extends('layouts.admin')
 
-@section('title', 'Course Details')
+@section('page-title', $course->title)
+@section('title', 'Admin | ' . $course->title)
 
-@section('content')
-<div class="container-fluid py-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h4 class="uni-modal-title m-2">
-            <i class="fas fa-book"></i> Courses at <a href="{{ route('admin.universities.show', $course->university->id) }}" class="uni-name-link">
-                {{ $course->university->name }}- {{ $course->university->city ?? 'N/A' }}</strong></a>
-        </h4>
-        <a href="{{ route('admin.courses.index') }}" class="btn btn-secondary btn-sm">
+@section('admin-content')
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <a href="{{ route('admin.courses.index') }}" class="btn btn-outline-secondary">
             <i class="fas fa-arrow-left"></i> Back to Courses
         </a>
+        <div class="d-flex gap-2">
+            <a href="{{ route('admin.courses.edit', $course->id) }}" class="btn btn-primary">
+                <i class="fas fa-edit"></i> Edit
+            </a>
+            @if(in_array(auth()->user()->role, ['admin', 'superadmin']))
+            <form action="{{ route('admin.courses.destroy', $course->id) }}" method="POST" onsubmit="return confirm('Delete this course?');">
+                @csrf @method('DELETE')
+                <button class="btn btn-danger"><i class="fas fa-trash"></i> Delete</button>
+            </form>
+            @endif
+        </div>
     </div>
 
-    <div class="card shadow-sm">
-        <div class="card-header bg-primary text-white">
-            <h3 class="mb-0">{{ $course->title }}</h3>
-        </div>
-
-        <div class="card-body">
-            <div class="row mb-3">
-                <div class="col-md-4">
-                    <h6 class="fw-bold">University</h6>
-                    <p class="text-muted fw-semibold">{{ $course->university->name ?? 'N/A' }}</p>
-                </div>
-                <div class="col-md-4">
-                    <h6 class="fw-bold">City</h6>
-                    <p class="text-muted fw-semibold">{{ $course->university->city ?? 'N/A' }}</p>
-                </div>
-                <div class="col-md-4">
-                    <h6 class="fw-bold">Country</h6>
-                    <p class="text-muted fw-semibold">{{ $course->university->country ?? 'N/A' }}</p>
-                </div>
-            </div>
-
-            <hr>
-
-            <div class="row mb-3">
-                <div class="col-md-4">
-                    <h6 class="fw-bold">Course Code</h6>
-                    <p class="text-muted fw-semibold">{{ $course->course_code }}</p>
-                </div>
-                <div class="col-md-4">
-                    <h6 class="fw-bold">Course Type</h6>
-                    <p class="text-muted fw-semibold">{{ $course->course_type }}</p>
-                </div>
-                <div class="col-md-4">
-                    <h6 class="fw-bold">Duration</h6>
-                    <p class="text-muted fw-semibold">{{ $course->duration ?? 'N/A' }}</p>
-                </div>
-            </div>
-
-            <div class="row mb-3">
-                <div class="col-md-4">
-                    <h6 class="fw-bold">Tuition Fee</h6>
-                    <p class="text-muted fw-semibold">
-                        {{ $course->fee }}
-                    </p>
-                </div>
-                <div class="col-md-4">
-                    <h6 class="fw-bold">Application Fee</h6>
-                    <p class="text-muted fw-semibold">{{ $course->application_fee ? '$' . $course->application_fee : 'N/A' }}</p>
-                </div>
-                <div class="col-md-4">
-                    <h6 class="fw-bold">MOI </h6>
-                    <p class="text-muted fw-semibold">{{ $course->moi_requirement }}</p>
-                </div>
-            </div>
-            <div class="row mb-3">
-                <div class="col-md-4">
-                    <h6 class="fw-bold">Intakes</h6>
-                    <p class="text-muted fw-semibold">{{ $course->intakes ?? 'N/A' }}</p>
-                </div>
-
-                <div class="col-md-4">
-                    <h6 class="fw-bold">Academic Requirements</h6>
-                    <p class="text-muted fw-semibold">{{ $course->academic_requirement ?? 'N/A' }}</p>
-                </div>
-                <div class="col-md-4">
-                    <h6 class="fw-bold">Scholarships</h6>
-                    <p class="text-muted fw-semibold">{{ $course->scholarships ?? 'N/A' }}</p>
-                </div>
-            </div>
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    <h6 class="fw-bold">IELTS / PTE / Other Language Requirements</h6>
-                    <p class="text-muted fw-semibold">{{ $course->ielts_pte_other_languages ?? 'N/A' }}</p>
-                </div>
-                <div class="col-md-6 mb-3">
-                    <h6 class="text-muted">Course Link</h6>
-                    @if($course->course_link)
-                    <a href="{{ $course->course_link }}" target="_blank" class="text-decoration-underline">{{ $course->course_link }}</a>
-                    @else
-                    N/A
-                    @endif
-                </div>
-            </div>
-            <hr>
-            <div class="d-flex">
-                <div class="col-md-10 mb-3">
-                    <h6 class="fw-bold">Description</h6>
-                    <p class="text-muted fw-semibold">{{ $course->description ?? 'No description available.' }}</p>
-                </div>
-                <div class="col-md-2">
-                    <div class="m-1">
-                        <a href="{{ route('admin.courses.edit', $course->id) }}" class="btn btn-secondary me-2">
-                            <i class="fas fa-edit"></i> Edit
-                        </a>
-                    </div>
-                    <div class="m-1">
-                        @if(Auth::id() === 1)
-                        <form action="{{ route('admin.courses.destroy', $course->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this course?');">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="btn btn-danger">
-                                <i class="fas fa-trash"></i> Delete
-                            </button>
-                        </form>
-                        @endif
-                    </div>
-                </div>
-            </div>
-        </div>
-
-    </div>
-
-
-</div>
+    @include('shared.course-detail', ['prefix' => 'admin'])
 @endsection

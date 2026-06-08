@@ -2,16 +2,17 @@
 
 namespace App\Services;
 
+use App\Contracts\FileUploadServiceInterface;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
-class FileUploadService
+class FileUploadService implements FileUploadServiceInterface
 {
     /**
      * Upload file for agent (user)
      */
-    public static function uploadAgentFile(Request $request, $user, string $inputName, string $type)
+    public function uploadAgentFile(Request $request, $user, string $inputName, string $type)
     {
         // If no file uploaded → keep old value
         if (!$request->hasFile($inputName)) {
@@ -21,7 +22,7 @@ class FileUploadService
         $file = $request->file($inputName);
 
         // Validate file
-        self::validateFile($file, $type);
+        $this->validateFile($file, $type);
 
         // ✅ Use slug (VERY IMPORTANT)
         $folder = "agents/{$user->slug}";
@@ -41,19 +42,19 @@ class FileUploadService
     /**
      * Upload student photo
      */
-    public static function uploadStudentFile($file, $agent, $student, string $type, ?string $existingPath = null)
+    public function uploadStudentFile($file, $agent, $student, string $type, ?string $existingPath = null)
     {
         if (!$file) {
             return $existingPath;
         }
 
-        self::validateFile($file, $type);
+        $this->validateFile($file, $type);
 
         // ✅ Agent slug (already exists)
         $agentSlug = $agent->slug;
 
         // ✅ Student folder name (clean)
-        $studentName = self::sanitizeName($student->first_name . ' ' . $student->last_name);
+        $studentName = $this->sanitizeName($student->first_name . ' ' . $student->last_name);
 
         // ✅ Final folder
         $folder = "agents/{$agentSlug}/{$studentName}";
@@ -72,19 +73,19 @@ class FileUploadService
     /**
      * Upload student Documents
      */
-    public static function uploadStudentDocument($file, $agent, $student, string $documentType, ?string $existingPath = null)
+    public function uploadStudentDocument($file, $agent, $student, string $documentType, ?string $existingPath = null)
     {
         if (!$file) {
             return $existingPath;
         }
 
-        self::validateFile($file, $documentType, ['pdf', 'jpg', 'jpeg', 'png']);
+        $this->validateFile($file, $documentType, ['pdf', 'jpg', 'jpeg', 'png']);
 
         // ✅ Agent slug
         $agentSlug = $agent->slug;
 
         // ✅ Student folder
-        $studentName = self::sanitizeName($student->first_name . ' ' . $student->last_name);
+        $studentName = $this->sanitizeName($student->first_name . ' ' . $student->last_name);
 
         $folder = "agents/{$agentSlug}/{$studentName}";
 
@@ -104,17 +105,17 @@ class FileUploadService
     /**
      * Upload SOP For each Application
      */
-    public static function uploadStudentSOP($file, $agent, $student, ?string $existingPath = null)
+    public function uploadStudentSOP($file, $agent, $student, ?string $existingPath = null)
     {
         if (!$file) {
             return $existingPath;
         }
 
-        self::validateFile($file, 'sop', ['pdf', 'doc', 'docx']);
+        $this->validateFile($file, 'sop', ['pdf', 'doc', 'docx']);
 
         $agentSlug = $agent->slug;
 
-        $studentName = self::sanitizeName($student->first_name . ' ' . $student->last_name);
+        $studentName = $this->sanitizeName($student->first_name . ' ' . $student->last_name);
 
         $folder = "agents/{$agentSlug}/{$studentName}";
 
@@ -131,9 +132,9 @@ class FileUploadService
     /**
      * Delete all files for a student
      */
-    public static function deleteStudentFiles($agent, $student)
+    public function deleteStudentFiles($agent, $student)
     {
-        $studentName = self::sanitizeName($student->first_name . ' ' . $student->last_name);
+        $studentName = $this->sanitizeName($student->first_name . ' ' . $student->last_name);
         $folder = "agents/{$agent->slug}/{$studentName}";
 
         if (Storage::disk('public')->exists($folder)) {
@@ -144,7 +145,7 @@ class FileUploadService
     /**
      * Get file URL
      */
-    public static function getFileUrl($path)
+    public function getFileUrl($path)
     {
         if (!$path || !Storage::disk('public')->exists($path)) {
             return null;
@@ -156,7 +157,7 @@ class FileUploadService
     /**
      * Sanitize name for folder usage
      */
-    private static function sanitizeName($name)
+    private function sanitizeName($name)
     {
         return strtolower(Str::slug($name));
     }
@@ -164,9 +165,9 @@ class FileUploadService
     /**
      * Validate uploaded file
      */
-    private static function validateFile($file, string $type, array $allowedExtensions = null)
+    private function validateFile($file, string $type, array $allowedExtensions = null)
     {
-        $allowed = $allowedExtensions ?? self::getDefaultExtensions($type);
+        $allowed = $allowedExtensions ?? $this->getDefaultExtensions($type);
         $extension = strtolower($file->getClientOriginalExtension());
 
         if (!in_array($extension, $allowed)) {
@@ -182,7 +183,7 @@ class FileUploadService
     /**
      * Get default extensions based on file type
      */
-    private static function getDefaultExtensions(string $type)
+    private function getDefaultExtensions(string $type)
     {
         $imageTypes = ['logo', 'photo', 'signature'];
         $documentTypes = ['agreement', 'pan', 'ielts', 'toefl', 'transcript'];

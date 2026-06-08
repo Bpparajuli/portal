@@ -12,10 +12,13 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
-use App\Services\FileUploadService;
+use App\Contracts\FileUploadServiceInterface;
 
 class DocumentController extends Controller
 {
+    public function __construct(
+        private readonly FileUploadServiceInterface $fileUploadService,
+    ) {}
     /**
      * Allowed document types
      */
@@ -68,6 +71,15 @@ class DocumentController extends Controller
             'otherDocs',
             'allDocumentTypes'
         ));
+    }
+
+    /**
+     * Show create form (redirects to index which has the upload form)
+     */
+    public function create(Student $student)
+    {
+        return redirect()->route('agent.documents.index', $student->id)
+            ->with('info', 'Use the form below to upload documents.');
     }
 
     /**
@@ -129,7 +141,7 @@ class DocumentController extends Controller
         $agent = Auth::user();
 
         // ✅ Upload using service
-        $filePath = FileUploadService::uploadStudentDocument(
+        $filePath = $this->fileUploadService->uploadStudentDocument(
             $file,
             $agent,
             $student,
@@ -149,7 +161,7 @@ class DocumentController extends Controller
         ]);
 
         // 🔔 Notify Admin
-        $admin = User::find(3);
+        $admin = User::admins()->first();
         if ($admin) {
             Notification::send($admin, new DocumentUploaded($agent, $student, $document));
         }
@@ -174,7 +186,7 @@ class DocumentController extends Controller
         $document->delete();
 
         // 🔔 Notify Admin
-        $admin = User::find(3);
+        $admin = User::admins()->first();
         if ($admin) {
             Notification::send($admin, new DocumentDeleted(Auth::user(), $student, $document));
         }

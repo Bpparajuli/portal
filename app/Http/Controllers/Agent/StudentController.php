@@ -2,28 +2,30 @@
 
 namespace App\Http\Controllers\Agent;
 
+use App\Actions\CreateStudentAction;
+use App\Actions\DeleteStudentAction;
+use App\Actions\UpdateStudentAction;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreStudentRequest;
+use App\Http\Requests\UpdateStudentRequest;
 use App\Models\Application;
 use App\Models\ApplicationStatus;
 use App\Models\Document;
 use App\Models\Student;
 use App\Models\University;
 use App\Models\User;
-use App\Notifications\StudentAdded;
-use App\Notifications\StudentDeleted;
-use App\Services\FileUploadService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Notification;
-use Illuminate\Support\Facades\Storage;
 
 class StudentController extends Controller
 {
-    // -------------------------------------------------------------------------
-    // Index – list students with filters
-    // -------------------------------------------------------------------------
+    public function __construct(
+        private readonly CreateStudentAction $createStudentAction,
+        private readonly UpdateStudentAction $updateStudentAction,
+        private readonly DeleteStudentAction $deleteStudentAction,
+    ) {}
 
     public function index(Request $request)
     {
@@ -32,7 +34,6 @@ class StudentController extends Controller
         $query = Student::with(['applications.university', 'applications.status', 'documents'])
             ->where('agent_id', Auth::id());
 
-        // Search
         if ($search = $request->get('search')) {
             $query->where(function ($q) use ($search) {
                 $q->where('first_name', 'like', "%{$search}%")
@@ -42,30 +43,20 @@ class StudentController extends Controller
             });
         }
 
-        // Country filter
         if ($country = $request->get('country')) {
-            $query->whereHas('applications.university', function ($q) use ($country) {
-                $q->where('country', $country);
-            });
+            $query->whereHas('applications.university', fn($q) => $q->where('country', $country));
         }
 
-        // University filter (through applications)
         if ($university = $request->get('university')) {
-            $query->whereHas('applications', function ($q) use ($university) {
-                $q->where('university_id', $university);
-            });
+            $query->whereHas('applications', fn($q) => $q->where('university_id', $university));
         }
 
-        // Application status filter - FIXED
         if ($appStatusId = $request->get('application_status_id')) {
-            $query->whereHas('applications', function ($q) use ($appStatusId) {
-                $q->where('application_status_id', $appStatusId);
-            });
+            $query->whereHas('applications', fn($q) => $q->where('application_status_id', $appStatusId));
         }
 
-        // Document status filter using subquery
         if ($docStatus = $request->get('document_status')) {
-            $required      = Student::REQUIRED_DOCUMENTS;
+            $required = Student::REQUIRED_DOCUMENTS;
             $totalRequired = count($required);
 
             $query->addSelect([
@@ -75,50 +66,34 @@ class StudentController extends Controller
             ]);
 
             match ($docStatus) {
-                'Completed'    => $query->having('required_doc_count', '=', $totalRequired),
+                'Completed' => $query->having('required_doc_count', '=', $totalRequired),
                 'Not Uploaded' => $query->havingRaw('COALESCE(required_doc_count, 0) = 0'),
-                'Incomplete'   => $query->havingRaw("COALESCE(required_doc_count, 0) > 0 AND COALESCE(required_doc_count, 0) < {$totalRequired}"),
-                default        => null,
+                'Incomplete' => $query->havingRaw("COALESCE(required_doc_count, 0) > 0 AND COALESCE(required_doc_count, 0) < {$totalRequired}"),
+                default => null,
             };
         }
 
-        // Get universities with counts
-        $universities = University::whereHas('applications', function ($q) {
-            $q->where('agent_id', Auth::id());
-        })
-            ->withCount(['applications' => function ($q) {
-                $q->where('agent_id', Auth::id());
-            }])
-            ->orderBy('name')
-            ->get();
+        $universities = University::whereHas('applications', fn($q) => $q->where('agent_id', Auth::id()))
+            ->withCount(['applications' => fn($q) => $q->where('agent_id', Auth::id())])
+            ->orderBy('name')->get();
 
-        // Get application statuses with counts
-        $applicationStatuses = ApplicationStatus::where('is_active', 1)
-            ->orderBy('sort_order')
-            ->get()
+        $applicationStatuses = ApplicationStatus::where('is_active', 1)->orderBy('sort_order')->get()
             ->map(function ($status) {
                 $status->applications_count = Application::where('application_status_id', $status->id)
-                    ->whereHas('student', function ($q) {
-                        $q->where('agent_id', Auth::id());
-                    })
-                    ->count();
+                    ->whereHas('student', fn($q) => $q->where('agent_id', Auth::id()))->count();
                 return $status;
             })
             ->filter(fn($status) => $status->applications_count > 0)
             ->values();
 
-        $students = $query->orderByDesc('created_at')
-            ->paginate($perPage)
-            ->withQueryString();
+        $students = $query->orderByDesc('created_at')->paginate($perPage)->withQueryString();
 
-        // Attach document stats from already-loaded relationship
         foreach ($students as $student) {
-            $stats                     = $student->getDocumentStats();
-            $student->document_status   = $stats['status'];
+            $stats = $student->getDocumentStats();
+            $student->document_status = $stats['status'];
             $student->document_progress = $stats['progress'];
-            $student->uploaded_count    = $stats['uploaded_count'];
+            $student->uploaded_count = $stats['uploaded_count'];
 
-            // Attach latest application status with colors
             $latestApp = $student->applications->sortByDesc('created_at')->first();
             if ($latestApp && $latestApp->status) {
                 $student->latest_status_name = $latestApp->status->name;
@@ -127,286 +102,107 @@ class StudentController extends Controller
             }
         }
 
-        // Dashboard stats (cached 5 min)
         $dashboardStats = Cache::remember('agent_dashboard_stats_' . Auth::id(), 300, function () {
             $agentId = Auth::id();
-
             return [
-                'totalStudents'    => Student::where('agent_id', $agentId)->count(),
-                'totalApplied'     => Student::where('agent_id', $agentId)->whereHas('applications')->count(),
+                'totalStudents' => Student::where('agent_id', $agentId)->count(),
+                'totalApplied' => Student::where('agent_id', $agentId)->whereHas('applications')->count(),
                 'admittedEnrolled' => Student::where('agent_id', $agentId)
                     ->whereHas('applications', fn($q) => $q->whereIn('application_status_id', function ($sub) {
                         $sub->select('id')->from('application_statuses')
                             ->whereIn('name', ['Accepted by the University', 'Visa Approved']);
-                    }))
-                    ->count(),
+                    }))->count(),
                 'documentCompleted' => Student::countStudentsWithAllCompulsoryDocuments($agentId),
             ];
         });
 
-        // Get countries with application counts - FORCED FRESH DATA
-        $countries = Cache::remember(
-            'agent_application_countries_' . Auth::id(),
-            3600,
-            function () {
-                // Query to get countries with their application counts
-                $countryData = Application::where('agent_id', Auth::id())
-                    ->whereNotNull('university_id')
-                    ->join('universities', 'applications.university_id', '=', 'universities.id')
-                    ->select('universities.country', DB::raw('COUNT(*) as application_count'))
-                    ->whereNotNull('universities.country')
-                    ->groupBy('universities.country')
-                    ->orderBy('application_count', 'DESC')
-                    ->get();
-
-                // Convert to collection of objects with name and count
-                return $countryData->map(function ($item) {
-                    return (object) [
-                        'name' => $item->country,
-                        'count' => (int) $item->application_count
-                    ];
-                });
-            }
-        );
-
-        // FORCE clear and refresh if data is in wrong format
-        if ($countries->isNotEmpty() && is_string($countries->first())) {
-            // Clear the bad cache and get fresh data
-            Cache::forget('agent_application_countries_' . Auth::id());
-
-            $countryData = Application::where('agent_id', Auth::id())
-                ->whereNotNull('university_id')
+        $countries = Cache::remember('agent_application_countries_' . Auth::id(), 3600, function () {
+            return Application::where('agent_id', Auth::id())->whereNotNull('university_id')
                 ->join('universities', 'applications.university_id', '=', 'universities.id')
                 ->select('universities.country', DB::raw('COUNT(*) as application_count'))
-                ->whereNotNull('universities.country')
-                ->groupBy('universities.country')
-                ->orderBy('application_count', 'DESC')
-                ->get();
+                ->whereNotNull('universities.country')->groupBy('universities.country')
+                ->orderBy('application_count', 'DESC')->get()
+                ->map(fn($item) => (object) ['name' => $item->country, 'count' => (int) $item->application_count]);
+        });
 
-            $countries = $countryData->map(function ($item) {
-                return (object) [
-                    'name' => $item->country,
-                    'count' => (int) $item->application_count
-                ];
-            });
+        if ($countries->isNotEmpty() && is_string($countries->first())) {
+            Cache::forget('agent_application_countries_' . Auth::id());
+            $countries = collect();
         }
 
-        return view('agent.students.index', [
-            'students'            => $students,
-            'countries'           => $countries,
-            'universities'        => $universities,
-            'applicationStatuses' => $applicationStatuses,
-            'totalRequiredDocs'   => count(Student::REQUIRED_DOCUMENTS),
-            ...$dashboardStats,
-        ]);
+        return view('agent.students.index', array_merge(
+            compact('students', 'countries', 'universities', 'applicationStatuses'),
+            ['totalRequiredDocs' => count(Student::REQUIRED_DOCUMENTS)],
+            $dashboardStats
+        ));
     }
-
-    // -------------------------------------------------------------------------
-    // Create
-    // -------------------------------------------------------------------------
 
     public function create()
     {
-        return view('agent.students.create', [
-            'student' => new Student(),
-        ]);
+        return view('agent.students.create', ['student' => new Student()]);
     }
 
-    // -------------------------------------------------------------------------
-    // Store
-    // -------------------------------------------------------------------------
-
-    public function store(Request $request)
+    public function store(StoreStudentRequest $request)
     {
-        $data             = $this->validateStudent($request);
-        $data['tags']     = $this->parseTags($request->get('tags', ''));
-        $data['agent_id'] = Auth::id();
-
-        // FORCE STAGE ID
-        $data['current_stage_id'] = 6;
-
-        $student = Student::create($data);
-
-        if ($request->hasFile('students_photo')) {
-            $student->students_photo = FileUploadService::uploadStudentFile(
-                $request->file('students_photo'),
-                Auth::user(),
-                $student,
-                'photo'
-            );
-            $student->saveQuietly();
-        }
-
-        $this->notifyAdmin(new StudentAdded(Auth::user(), $student));
+        $request->merge(['agent_id' => Auth::id()]);
+        $student = $this->createStudentAction->execute($request);
         $this->clearAgentCache();
 
         return redirect()->route('agent.students.index')
             ->with('success', 'Student created successfully.');
     }
 
-    // -------------------------------------------------------------------------
-    // Show
-    // -------------------------------------------------------------------------
-
     public function show(Student $student)
     {
         $this->authorizeStudent($student);
 
-        $student->load([
-            'documents',
-            'applications.university',
-            'applications.course',
-            'applications.messages.user'
-        ]);
-
-        $applications = $student->applications;
-
+        $student->load(['documents', 'applications.university', 'applications.course', 'applications.messages.user']);
         $documentStats = $student->getDocumentStats();
 
-        // same logic as index (important for consistency)
-        $student->uploaded_count = $documentStats['uploaded_count'];
-
         return view('agent.students.show', [
-            'student'            => $student,
-            'applications'       => $applications,
-            'documentStats'      => $documentStats,
-            'totalRequiredDocs'  => count(Student::REQUIRED_DOCUMENTS),
+            'student' => $student,
+            'applications' => $student->applications,
+            'documentStats' => $documentStats,
+            'totalRequiredDocs' => count(Student::REQUIRED_DOCUMENTS),
         ]);
     }
-
-    // -------------------------------------------------------------------------
-    // Edit
-    // -------------------------------------------------------------------------
 
     public function edit(Student $student)
     {
         $this->authorizeStudent($student);
-
-        return view('agent.students.edit', [
-            'student' => $student,
-        ]);
+        return view('agent.students.edit', ['student' => $student]);
     }
 
-    // -------------------------------------------------------------------------
-    // Update
-    // -------------------------------------------------------------------------
-
-    public function update(Request $request, Student $student)
+    public function update(UpdateStudentRequest $request, Student $student)
     {
         $this->authorizeStudent($student);
-
-        $data         = $this->validateStudent($request, $student->id);
-        $data['tags'] = $this->parseTags($request->get('tags', ''));
-
-        $student->update($data);
-
-        if ($request->hasFile('students_photo')) {
-            $student->students_photo = FileUploadService::uploadStudentFile(
-                $request->file('students_photo'),
-                Auth::user(),
-                $student,
-                'photo'
-            );
-            $student->saveQuietly();
-        }
-
+        $student = $this->updateStudentAction->execute($student, $request);
         $this->clearAgentCache();
 
         return redirect()->route('agent.students.show', $student)
             ->with('success', 'Student updated successfully.');
     }
 
-    // -------------------------------------------------------------------------
-    // Destroy
-    // -------------------------------------------------------------------------
-
     public function destroy(Student $student)
     {
         $this->authorizeStudent($student);
-
-        $this->notifyAdmin(new StudentDeleted(Auth::user(), $student));
-
-        // Remove student folder from storage
-        $folder = sprintf(
-            'agents/%s/%s',
-            Auth::user()->slug,
-            strtolower(str_replace(' ', '-', "{$student->first_name}-{$student->last_name}"))
-        );
-
-        if (Storage::disk('public')->exists($folder)) {
-            Storage::disk('public')->deleteDirectory($folder);
-        }
-
-        $student->delete();
+        $this->deleteStudentAction->execute($student);
         $this->clearAgentCache();
 
         return redirect()->route('agent.students.index')
             ->with('success', 'Student deleted successfully.');
     }
 
-    // -------------------------------------------------------------------------
-    // Private Helpers
-    // -------------------------------------------------------------------------
-
-    private function validateStudent(Request $request, ?int $excludeId = null): array
-    {
-        $emailRule = 'nullable|email|unique:students,email' . ($excludeId ? ",{$excludeId}" : '');
-
-        return $request->validate([
-            'first_name'          => 'required|string|max:255',
-            'last_name'           => 'required|string|max:255',
-            'dob'                 => 'nullable|date',
-            'gender'              => ['nullable', 'in:' . implode(',', Student::GENDERS)],
-            'email'               => $emailRule,
-            'phone_number'        => 'nullable|string|max:50',
-            'permanent_address'   => 'nullable|string|max:255',
-            'temporary_address'   => 'nullable|string|max:255',
-            'nationality'         => 'nullable|string|max:100',
-            'passport_number'     => 'nullable|string|max:100',
-            'passport_expiry'     => 'nullable|date',
-            'marital_status'      => ['nullable', 'in:' . implode(',', Student::MARITAL_STATUSES)],
-            'qualification'       => 'nullable|string|max:255',
-            'passed_year'         => 'nullable|integer|min:1900|max:' . date('Y'),
-            'gap'                 => 'nullable|integer|min:0|max:20',
-            'last_grades'         => 'nullable|string|max:50',
-            'education_board'     => 'nullable|string|max:100',
-            'preferred_country'   => 'nullable|string|max:100',
-            'preferred_city'      => 'nullable|string|max:100',
-            'preferred_course'    => 'nullable|string|max:255',
-            'preferred_university' => 'nullable|string|max:255',
-            'remarks'             => 'nullable|string',
-            'follow_up_date'      => 'nullable|date',
-            'students_photo'      => 'nullable|image|mimes:jpg,jpeg,png|max:5120',
-        ]);
-    }
-
-    private function parseTags(string $raw): array
-    {
-        if (empty(trim($raw))) {
-            return [];
-        }
-
-        return array_values(array_filter(array_map('trim', explode(',', $raw))));
-    }
-
     private function authorizeStudent(Student $student): void
     {
-        if ((int) $student->agent_id !== Auth::id()) {
+        if ((int) $student->agent_id !== Auth::id() && !Auth::user()->is_admin) {
             abort(403, 'Unauthorized');
-        }
-    }
-
-    private function notifyAdmin(object $notification): void
-    {
-        $admin = User::find(config('app.admin_user_id', 6));
-        if ($admin) {
-            Notification::send($admin, $notification);
         }
     }
 
     private function clearAgentCache(): void
     {
         Cache::forget('agent_dashboard_stats_' . Auth::id());
-        Cache::forget('agent_countries_' . Auth::id());
+        Cache::forget('agent_application_countries_' . Auth::id());
     }
 }

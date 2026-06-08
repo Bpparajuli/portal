@@ -3,6 +3,8 @@
 
 namespace App\Services;
 
+use App\Contracts\FileUploadServiceInterface;
+use App\Contracts\StudentServiceInterface;
 use App\Models\Student;
 use App\Models\StudentStage;
 use App\Models\User;
@@ -11,13 +13,17 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
-class StudentService
+class StudentService implements StudentServiceInterface
 {
+    public function __construct(
+        private readonly FileUploadServiceInterface $fileUploadService,
+    ) {}
+
     /**
      * Check for duplicate student
      * Returns existing student if found, null otherwise
      */
-    public static function findDuplicate(Request $request, ?Student $student = null): ?Student
+    public function findDuplicate(Request $request, ?Student $student = null): ?Student
     {
         // For updates, exclude the current student
         $query = Student::query();
@@ -37,7 +43,7 @@ class StudentService
         // Check by phone number (if provided)
         if ($request->filled('phone_number')) {
             // Clean phone number for comparison (remove spaces, dashes, etc.)
-            $cleanPhone = self::cleanPhoneNumber($request->phone_number);
+            $cleanPhone = $this->cleanPhoneNumber($request->phone_number);
 
             $existing = Student::where('id', '!=', $student?->id)
                 ->where(function ($q) use ($cleanPhone, $request) {
@@ -57,7 +63,7 @@ class StudentService
                 ->where('last_name', $request->last_name)
                 ->where(function ($q) use ($request) {
                     $q->where('phone_number', $request->phone_number)
-                        ->orWhere('phone_number', self::cleanPhoneNumber($request->phone_number));
+                        ->orWhere('phone_number', $this->cleanPhoneNumber($request->phone_number));
                 })->first();
 
             if ($existing) {
@@ -71,7 +77,7 @@ class StudentService
     /**
      * Clean phone number for comparison
      */
-    private static function cleanPhoneNumber($phone): string
+    private function cleanPhoneNumber($phone): string
     {
         // Remove all non-numeric characters
         $cleaned = preg_replace('/[^0-9]/', '', $phone);
@@ -87,7 +93,7 @@ class StudentService
     /**
      * Get duplicate message with details
      */
-    public static function getDuplicateMessage(Student $existingStudent): string
+    public function getDuplicateMessage(Student $existingStudent): string
     {
         $details = [];
 
@@ -106,20 +112,20 @@ class StudentService
     /**
      * Create or update student with consistent folder structure
      */
-    public static function saveStudent(Request $request, ?Student $student = null): Student
+    public function saveStudent(Request $request, ?Student $student = null): Student
     {
         $isNew = !$student;
 
         // Check for duplicates BEFORE creating new student
         if ($isNew) {
-            $duplicate = self::findDuplicate($request);
+            $duplicate = $this->findDuplicate($request);
             if ($duplicate) {
-                throw new \Exception(self::getDuplicateMessage($duplicate));
+                throw new \Exception($this->getDuplicateMessage($duplicate));
             }
         }
 
         // Prepare student data
-        $data = self::prepareStudentData($request, $student);
+        $data = $this->prepareStudentData($request, $student);
 
         if ($isNew) {
             $student = Student::create($data);
@@ -129,11 +135,11 @@ class StudentService
 
         // Handle photo upload using your FileUploadService
         if ($request->hasFile('students_photo')) {
-            $agent = self::getAgentForStudent($request, $student);
+            $agent = $this->getAgentForStudent($request, $student);
 
             if ($agent) {
                 try {
-                    $photoPath = FileUploadService::uploadStudentFile(
+                    $photoPath = $this->fileUploadService->uploadStudentFile(
                         file: $request->file('students_photo'),
                         agent: $agent,
                         student: $student,
@@ -150,7 +156,7 @@ class StudentService
         }
 
         // Ensure folder structure exists
-        self::ensureStudentFolderExists($student);
+        $this->ensureStudentFolderExists($student);
 
         return $student;
     }
@@ -158,7 +164,7 @@ class StudentService
     /**
      * Prepare student data from request
      */
-    private static function prepareStudentData(Request $request, ?Student $student = null): array
+    private function prepareStudentData(Request $request, ?Student $student = null): array
     {
         $data = [];
 
@@ -213,7 +219,7 @@ class StudentService
 
         // Clean phone number before saving (optional - store both raw and cleaned)
         if ($request->has('phone_number') && !empty($request->phone_number)) {
-            $data['phone_number'] = self::cleanPhoneNumber($request->phone_number);
+            $data['phone_number'] = $this->cleanPhoneNumber($request->phone_number);
         }
 
         // 🔥 SOURCE HANDLING - Smart defaults based on intake method
@@ -250,7 +256,7 @@ class StudentService
             }
             // Priority 2: For API intake/quick add - force agent 12
             elseif ($intakeMethod === 'api_intake' || $intakeMethod === 'quick_add') {
-                $data['agent_id'] = self::getDefaultAgentId();
+                $data['agent_id'] = $this->getDefaultAgentId();
             }
             // Priority 3: Logged-in user if they are an agent or staff
             elseif (Auth::check() && (Auth::user()->is_agent || Auth::user()->is_agent_staff || Auth::user()->is_staff)) {
@@ -258,7 +264,7 @@ class StudentService
             }
             // Priority 4: Default agent
             else {
-                $data['agent_id'] = self::getDefaultAgentId();
+                $data['agent_id'] = $this->getDefaultAgentId();
             }
         }
 
@@ -281,7 +287,7 @@ class StudentService
     /**
      * Get agent for student (from request or student record)
      */
-    private static function getAgentForStudent(Request $request, Student $student): ?User
+    private function getAgentForStudent(Request $request, Student $student): ?User
     {
         // Try to get from request first (for updates)
         if ($request->has('agent_id') && $request->input('agent_id')) {
@@ -294,13 +300,13 @@ class StudentService
         }
 
         // Fallback to default agent
-        return User::find(self::getDefaultAgentId());
+        return User::find($this->getDefaultAgentId());
     }
 
     /**
      * Get default agent ID
      */
-    private static function getDefaultAgentId(): int
+    private function getDefaultAgentId(): int
     {
         $agent = User::where('role', 'agent')->first();
         return $agent?->id ?? 12;
@@ -309,7 +315,7 @@ class StudentService
     /**
      * Ensure student folder structure exists using your FileUploadService structure
      */
-    public static function ensureStudentFolderExists(Student $student): void
+    public function ensureStudentFolderExists(Student $student): void
     {
         $agent = $student->agent;
 
@@ -319,7 +325,7 @@ class StudentService
         }
 
         // Use the same sanitization as FileUploadService
-        $studentName = self::sanitizeName($student->first_name . ' ' . $student->last_name);
+        $studentName = $this->sanitizeName($student->first_name . ' ' . $student->last_name);
         $folderPath = "agents/{$agent->slug}/{$studentName}";
 
         // Create folder if it doesn't exist
@@ -332,7 +338,7 @@ class StudentService
     /**
      * Sanitize name for folder usage (matching FileUploadService)
      */
-    private static function sanitizeName($name): string
+    private function sanitizeName($name): string
     {
         return strtolower(\Illuminate\Support\Str::slug($name));
     }
@@ -340,12 +346,12 @@ class StudentService
     /**
      * Delete student and all associated files using your FileUploadService
      */
-    public static function deleteStudent(Student $student): void
+    public function deleteStudent(Student $student): void
     {
         // Delete all files using your FileUploadService
         if ($student->agent) {
             try {
-                FileUploadService::deleteStudentFiles($student->agent, $student);
+                $this->fileUploadService->deleteStudentFiles($student->agent, $student);
             } catch (\Exception $e) {
                 Log::error('Failed to delete student files: ' . $e->getMessage());
             }

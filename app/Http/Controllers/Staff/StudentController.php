@@ -3,37 +3,129 @@
 namespace App\Http\Controllers\Staff;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\UpdateStudentRequest;
+use App\Models\Application;
+use App\Models\Course;
+use App\Models\Student;
+use App\Models\University;
+use App\Models\User;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class StudentController extends Controller
 {
-    public function show($id)
+    public function index(Request $request)
     {
-        $student = (object)[
-            'id' => $id,
-            'name' => 'Arjun Patel',
-            'uid' => 'STU-2026-0492',
-            'email' => 'arjun.patel@gmail.com',
-            'phone' => '+91 98765 43210',
-            'country' => 'United Kingdom',
-            'visa_type' => 'Student Visa (Subclass 500)',
-            'assigned_to' => 'Sarah Smith',
-            'source' => 'Facebook Lead',
-            'created_at' => '12 Jan 2026',
-            'current_step' => 'Documentation',
-            'steps' => ['Lead', 'Contacted', 'Documentation', 'Submission', 'Decision', 'Completed'],
-            'stats' => [
-                ['label' => 'Total Tasks', 'value' => '12', 'color' => 'text-primary'],
-                ['label' => 'Docs Pending', 'value' => '3', 'color' => 'text-warning'],
-                ['label' => 'Days Active', 'value' => '42', 'color' => 'text-success'],
-            ],
-            'activities' => [
-                ['user' => 'Sarah Smith', 'msg' => 'moved lead to Documentation', 'time' => '2h ago', 'type' => 'status'],
-                ['user' => 'System', 'msg' => 'Email sent: Document Request List', 'time' => '5h ago', 'type' => 'email'],
-                ['user' => 'Arjun Patel', 'msg' => 'uploaded Passport_Scan.pdf', 'time' => 'Yesterday', 'type' => 'upload'],
-                ['user' => 'Admin', 'msg' => 'updated Visa Category', 'time' => '3 days ago', 'type' => 'edit'],
-            ]
-        ];
+        $query = Student::with(['agent', 'applications.status'])->accessible();
 
-        return view('staff.student', compact('student'));
+        if ($search = $request->get('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('first_name', 'like', "%{$search}%")
+                    ->orWhere('last_name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
+        $students = $query->orderByDesc('created_at')->paginate(20);
+
+        return view('staff.students.index', compact('students'));
+    }
+
+    public function show(Student $student)
+    {
+        $this->authorizeAccess($student);
+
+        $student->load(['agent', 'documents', 'applications.university', 'applications.course', 'currentStage']);
+
+        return view('staff.students.show', [
+            'student' => $student,
+            'documentStats' => $student->getDocumentStats(),
+        ]);
+    }
+
+    public function edit(Student $student)
+    {
+        $this->authorizeAccess($student);
+
+        return view('staff.students.edit', [
+            'student' => $student,
+            'agents' => User::agents()->orderBy('business_name')->get(),
+        ]);
+    }
+
+    public function update(UpdateStudentRequest $request, Student $student)
+    {
+        $this->authorizeAccess($student);
+
+        $student->update($request->validated());
+
+        return redirect()->route('staff.student.show', $student)
+            ->with('success', 'Student updated successfully.');
+    }
+
+    public function universities()
+    {
+        $universities = University::active()->withCount('courses')->orderBy('name')->paginate(20);
+
+        return view('staff.universities.index', compact('universities'));
+    }
+
+    public function courses()
+    {
+        $courses = Course::active()->with('university')->orderBy('title')->paginate(20);
+
+        return view('staff.courses.index', compact('courses'));
+    }
+
+    public function applications(Request $request)
+    {
+        $query = Application::with(['student', 'university', 'status']);
+
+        $user = Auth::user();
+
+        if ($user->is_agent_staff) {
+            $query->whereIn('agent_id', [$user->id, $user->parent_id]);
+        } elseif ($user->is_staff && !$user->is_admin_staff) {
+            $query->where('agent_id', $user->id);
+        }
+
+        if ($search = $request->get('search')) {
+            $query->whereHas('student', fn($q) => $q->where('first_name', 'like', "%{$search}%")
+                ->orWhere('last_name', 'like', "%{$search}%"));
+        }
+
+        $applications = $query->latest()->paginate(20);
+
+        return view('staff.applications.index', compact('applications'));
+    }
+
+    public function chat()
+    {
+        return view('chat.index');
+    }
+
+    public function notifications()
+    {
+        $notifications = Auth::user()->notifications()->latest()->paginate(20);
+
+        return view('staff.notifications.index', compact('notifications'));
+    }
+
+    private function authorizeAccess(Student $student): void
+    {
+        $user = Auth::user();
+
+        if ($user->is_admin || $user->is_admin_staff) {
+            return;
+        }
+
+        $allowedAgentIds = [$user->id];
+        if ($user->is_agent_staff) {
+            $allowedAgentIds[] = $user->parent_id;
+        }
+
+        if (!in_array((int) $student->agent_id, $allowedAgentIds)) {
+            abort(403, 'Unauthorized access to this student.');
+        }
     }
 }

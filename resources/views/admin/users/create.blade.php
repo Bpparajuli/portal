@@ -1,11 +1,10 @@
 @extends('layouts.admin')
 
 @section('content')
-    <div class="container-fluid p-1">
         <div class="row">
             <!-- Sidebar Navigation -->
             <div class="col-lg-3 mb-4">
-                <div class="card border-0 shadow-sm rounded-4 sticky-top" style="top: 20px;">
+                <div class="card sticky-top" style="top: 20px;">
                     <div class="card-body p-4">
                         <div class="text-center mb-4">
                             <!-- Logo Preview - Only shows when logo is uploaded -->
@@ -67,7 +66,7 @@
                     <div class="tab-content">
                         <!-- Basic Information Tab -->
                         <div class="tab-pane fade show active" id="basic-info" role="tabpanel">
-                            <div class="card border-0 shadow-sm rounded-4 mb-4">
+                            <div class="card mb-4">
                                 <div class="d-flex justify-content-between align-items-center mb-0">
                                     <div class="card-header bg-white border-0 pt-4 px-4">
                                         <h5 class="fw-bold mb-0">Basic Information</h5>
@@ -259,7 +258,7 @@
 
                         <!-- Documents Tab -->
                         <div class="tab-pane fade" id="documents" role="tabpanel">
-                            <div class="card border-0 shadow-sm rounded-4 mb-4">
+                            <div class="card mb-4">
                                 <div class="card-header bg-white border-0 pt-4 px-4">
                                     <h5 class="fw-bold mb-0">Documents & Files</h5>
                                     <p class="text-muted small mb-0">Upload business documents and registrations</p>
@@ -273,7 +272,7 @@
                                                 <div class="d-flex align-items-start gap-3">
                                                     <div class="flex-shrink-0">
                                                         <img id="logoPreview" src="https://placehold.co/100?text=Logo"
-                                                            class="rounded-3 border shadow-sm object-fit-cover"
+                                                            class="rounded border shadow-sm object-fit-cover"
                                                             width="80" height="80" style="object-fit: cover;">
                                                     </div>
                                                     <div class="flex-grow-1">
@@ -297,7 +296,7 @@
                                                 <div class="d-flex align-items-start gap-3">
                                                     <div class="flex-shrink-0">
                                                         <img id="regPreview" src="https://placehold.co/100?text=File"
-                                                            class="rounded-3 border shadow-sm" width="80"
+                                                            class="rounded border shadow-sm" width="80"
                                                             height="80" style="object-fit: cover;">
                                                     </div>
                                                     <div class="flex-grow-1">
@@ -321,7 +320,7 @@
                                                 <div class="d-flex align-items-start gap-3">
                                                     <div class="flex-shrink-0">
                                                         <img id="panPreview" src="https://placehold.co/100?text=No+File"
-                                                            class="rounded-3 border shadow-sm" width="80"
+                                                            class="rounded border shadow-sm" width="80"
                                                             height="80" style="object-fit: cover;">
                                                     </div>
                                                     <div class="flex-grow-1">
@@ -346,7 +345,7 @@
                                                     <div class="flex-shrink-0">
                                                         <img id="agreementPreview"
                                                             src="https://placehold.co/100?text=No+File"
-                                                            class="rounded-3 border shadow-sm" width="80"
+                                                            class="rounded border shadow-sm" width="80"
                                                             height="80" style="object-fit: cover;">
                                                     </div>
                                                     <div class="flex-grow-1">
@@ -380,13 +379,13 @@
 
                         <!-- Security Tab -->
                         <div class="tab-pane fade" id="security" role="tabpanel">
-                            <div class="card border-0 shadow-sm rounded-4 mb-4">
+                            <div class="card mb-4">
                                 <div class="card-header bg-white border-0 pt-4 px-4">
                                     <h5 class="fw-bold mb-0">Security Settings</h5>
                                     <p class="text-muted small mb-0">Set password and security preferences</p>
                                 </div>
                                 <div class="card-body p-4">
-                                    <div class="alert alert-info border-0 rounded-3 mb-4">
+                                    <div class="alert alert-info mb-4">
                                         <i class="fas fa-info-circle me-2"></i>
                                         Password is required for new users.
                                     </div>
@@ -444,7 +443,6 @@
                 </form>
             </div>
         </div>
-    </div>
 @endsection
 
 @push('scripts')

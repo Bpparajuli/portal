@@ -12,6 +12,7 @@ use App\Models\Course;
 use App\Models\Application;
 use App\Models\Activity;
 use App\Models\ApplicationStatus;
+use App\Models\Setting;
 use Carbon\Carbon;
 
 class DashboardController extends Controller
@@ -24,8 +25,8 @@ class DashboardController extends Controller
         }
 
         // ========== KPI COUNTS ==========
-        $totalAgents       = User::where('is_agent', 1)->count();
-        $activeAgents      = User::where('is_agent', 1)->where('agreement_status', 'verified')->count();
+        $totalAgents       = User::agents()->count();
+        $activeAgents      = User::agents()->where('agreement_status', 'verified')->count();
         $totalStudents     = Student::count();
         $totalUniversities = University::count();
         $totalCourses      = Course::count();
@@ -80,27 +81,33 @@ class DashboardController extends Controller
         $universityChartData = $this->applicationsByUniversityChart();
 
         // ========== TOP LISTS ==========
-        $topAgents = User::where('is_agent', 1)
+        $topAgents = User::agents()
             ->withCount('applications')
-            ->having('applications_count', '>', 0)
             ->orderByDesc('applications_count')
+            ->take(10)
+            ->get()
+            ->filter(fn($u) => $u->applications_count > 0)
             ->take(5)
-            ->get();
+            ->values();
 
         $topCourses = Course::withCount('applications')
-            ->having('applications_count', '>', 0)
             ->orderByDesc('applications_count')
+            ->take(10)
+            ->get()
+            ->filter(fn($c) => $c->applications_count > 0)
             ->take(5)
-            ->get();
+            ->values();
 
         $topUniversities = University::withCount('applications')
-            ->having('applications_count', '>', 0)
             ->orderByDesc('applications_count')
+            ->take(10)
+            ->get()
+            ->filter(fn($u) => $u->applications_count > 0)
             ->take(5)
-            ->get();
+            ->values();
 
         // ========== PENDING AGENTS ==========
-        $pendingAgents = User::where('is_agent', 1)
+        $pendingAgents = User::agents()
             ->where(function ($q) {
                 $q->where('active', 0)
                     ->orWhere('agreement_status', '!=', 'verified')
@@ -150,6 +157,9 @@ class DashboardController extends Controller
                 return $activity;
             });
 
+        $widgets = Setting::getValue('dashboard_widgets', []);
+        $welcomeMessage = Setting::getValue('welcome_message', 'Welcome to the admin dashboard.');
+
         return view('admin.dashboard', compact(
             // KPI
             'totalAgents',
@@ -195,7 +205,11 @@ class DashboardController extends Controller
             // Activity feeds
             'studentActivities',
             'applicationActivities',
-            'documentActivities'
+            'documentActivities',
+
+            // Widget config
+            'widgets',
+            'welcomeMessage'
         ));
     }
 
@@ -256,18 +270,12 @@ class DashboardController extends Controller
      */
     private function monthlyApplicationsChart(): array
     {
-        $monthlyApplications = Application::select(
-            DB::raw('COUNT(*) as count'),
-            DB::raw('MONTH(created_at) as month')
-        )
-            ->whereYear('created_at', date('Y'))
-            ->groupBy('month')
-            ->orderBy('month')
-            ->get();
+        $apps = Application::whereYear('created_at', now()->year)->get();
+        $grouped = $apps->groupBy(fn($app) => (int) $app->created_at->format('n'));
 
         $data = array_fill(0, 12, 0);
-        foreach ($monthlyApplications as $m) {
-            $data[$m->month - 1] = $m->count;
+        foreach ($grouped as $month => $items) {
+            $data[$month - 1] = $items->count();
         }
 
         return [

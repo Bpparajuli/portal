@@ -6,7 +6,7 @@
             <h5 class="card-title fw-bold mb-0">Find Your University</h5>
 
             @auth
-            @if(auth()->user()->is_admin)
+            @if(in_array(auth()->user()->role, ['admin', 'superadmin']))
             <div>
                 <a href="{{ route('admin.universities.create') }}" class="btn btn-success btn-sm">+ Add University</a>
                 <a href="{{ route('admin.courses.create') }}" class="btn btn-success btn-sm">+ Add Course</a>
@@ -18,10 +18,11 @@
         @php
         // Determine role-specific routes
         if (auth()->check()) {
-        if (auth()->user()->is_admin) {
+        $role = auth()->user()->role;
+        if (in_array($role, ['admin', 'superadmin'])) {
         $prefix = 'admin';
         $formAction = route('admin.universities.index');
-        } elseif (auth()->user()->is_agent) {
+        } elseif ($role === 'agent') {
         $prefix = 'agent';
         $formAction = route('agent.universities.index');
         } else {

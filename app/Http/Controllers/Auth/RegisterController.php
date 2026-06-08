@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Str;
 use App\Notifications\UserRegistered;
-use App\Services\FileUploadService;
+use App\Contracts\FileUploadServiceInterface;
 use Illuminate\Support\Facades\Log;
 
 class RegisterController extends Controller
@@ -20,8 +20,9 @@ class RegisterController extends Controller
      * Create a new controller instance.
      * This ensures only guests can access registration
      */
-    public function __construct()
-    {
+    public function __construct(
+        private readonly FileUploadServiceInterface $fileUploadService,
+    ) {
         // Only guests can access registration
         $this->middleware('guest')->except('logout');
 
@@ -107,8 +108,6 @@ class RegisterController extends Controller
 
             // Default roles/status
             $user->role     = 'agent';
-            $user->is_agent = 1;
-            $user->is_admin = 0;
             $user->active   = 1;
 
             // ✅ Generate unique slug
@@ -126,12 +125,12 @@ class RegisterController extends Controller
             $user->save();
 
             // ✅ File uploads
-            $user->business_logo  = FileUploadService::uploadAgentFile($request, $user, 'business_logo', 'logo');
-            $user->registration   = FileUploadService::uploadAgentFile($request, $user, 'registration', 'registration');
-            $user->pan            = FileUploadService::uploadAgentFile($request, $user, 'pan', 'pan');
+            $user->business_logo  = $this->fileUploadService->uploadAgentFile($request, $user, 'business_logo', 'logo');
+            $user->registration   = $this->fileUploadService->uploadAgentFile($request, $user, 'registration', 'registration');
+            $user->pan            = $this->fileUploadService->uploadAgentFile($request, $user, 'pan', 'pan');
 
             if ($request->hasFile('agreement_file')) {
-                $user->agreement_file   = FileUploadService::uploadAgentFile($request, $user, 'agreement_file', 'agreement');
+                $user->agreement_file   = $this->fileUploadService->uploadAgentFile($request, $user, 'agreement_file', 'agreement');
                 $user->agreement_status = 'uploaded';
             } else {
                 $user->agreement_status = 'not_uploaded';
@@ -141,7 +140,7 @@ class RegisterController extends Controller
             $user->save();
 
             // ✅ Notify admin (find admin users instead of hardcoded id=2)
-            $admins = User::where('is_admin', 1)->orWhere('role', 'admin')->get();
+            $admins = User::admins()->get();
             if ($admins->count() > 0) {
                 foreach ($admins as $admin) {
                     Notification::send($admin, new UserRegistered($user));

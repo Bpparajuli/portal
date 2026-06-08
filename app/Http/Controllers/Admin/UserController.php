@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 
 // ✅ Service
-use App\Services\FileUploadService;
+use App\Contracts\FileUploadServiceInterface;
 
 // Notifications
 use App\Notifications\UserRegistered;
@@ -25,6 +25,10 @@ use Illuminate\Support\Facades\Log;
 
 class UserController extends Controller
 {
+    public function __construct(
+        private readonly FileUploadServiceInterface $fileUploadService,
+    ) {}
+
     /**
      * LIST USERS with Advanced Filtering, Sorting, and Export
      */
@@ -426,19 +430,19 @@ class UserController extends Controller
 
         // Upload files via service
         if ($request->hasFile('business_logo')) {
-            $user->business_logo = FileUploadService::uploadAgentFile($request, $user, 'business_logo', 'logo');
+            $user->business_logo = $this->fileUploadService->uploadAgentFile($request, $user, 'business_logo', 'logo');
         }
 
         if ($request->hasFile('registration')) {
-            $user->registration = FileUploadService::uploadAgentFile($request, $user, 'registration', 'registration');
+            $user->registration = $this->fileUploadService->uploadAgentFile($request, $user, 'registration', 'registration');
         }
 
         if ($request->hasFile('pan')) {
-            $user->pan = FileUploadService::uploadAgentFile($request, $user, 'pan', 'pan');
+            $user->pan = $this->fileUploadService->uploadAgentFile($request, $user, 'pan', 'pan');
         }
 
         if ($request->hasFile('agreement_file')) {
-            $user->agreement_file = FileUploadService::uploadAgentFile($request, $user, 'agreement_file', 'agreement');
+            $user->agreement_file = $this->fileUploadService->uploadAgentFile($request, $user, 'agreement_file', 'agreement');
             $user->agreement_status = 'uploaded';
         } else {
             $user->agreement_status = $request->agreement_status ?? 'not_uploaded';
@@ -446,8 +450,8 @@ class UserController extends Controller
 
         $user->save();
 
-        // Notify admin (user with ID 2)
-        $admin = User::find(2);
+        // Notify admin
+        $admin = User::admins()->first();
         if ($admin) {
             Notification::send($admin, new UserRegistered($user));
         }
@@ -518,7 +522,7 @@ class UserController extends Controller
         // Upload via service
         if ($request->hasFile('business_logo')) {
             $oldFile = $user->business_logo;
-            $user->business_logo = FileUploadService::uploadAgentFile($request, $user, 'business_logo', 'logo');
+            $user->business_logo = $this->fileUploadService->uploadAgentFile($request, $user, 'business_logo', 'logo');
             if ($oldFile && Storage::disk('public')->exists($oldFile)) {
                 Storage::disk('public')->delete($oldFile);
             }
@@ -526,7 +530,7 @@ class UserController extends Controller
 
         if ($request->hasFile('registration')) {
             $oldFile = $user->registration;
-            $user->registration = FileUploadService::uploadAgentFile($request, $user, 'registration', 'registration');
+            $user->registration = $this->fileUploadService->uploadAgentFile($request, $user, 'registration', 'registration');
             if ($oldFile && Storage::disk('public')->exists($oldFile)) {
                 Storage::disk('public')->delete($oldFile);
             }
@@ -534,7 +538,7 @@ class UserController extends Controller
 
         if ($request->hasFile('pan')) {
             $oldFile = $user->pan;
-            $user->pan = FileUploadService::uploadAgentFile($request, $user, 'pan', 'pan');
+            $user->pan = $this->fileUploadService->uploadAgentFile($request, $user, 'pan', 'pan');
             if ($oldFile && Storage::disk('public')->exists($oldFile)) {
                 Storage::disk('public')->delete($oldFile);
             }
@@ -542,7 +546,7 @@ class UserController extends Controller
 
         if ($request->hasFile('agreement_file')) {
             $oldFile = $user->agreement_file;
-            $user->agreement_file = FileUploadService::uploadAgentFile($request, $user, 'agreement_file', 'agreement');
+            $user->agreement_file = $this->fileUploadService->uploadAgentFile($request, $user, 'agreement_file', 'agreement');
             $user->agreement_status = 'uploaded';
             if ($oldFile && Storage::disk('public')->exists($oldFile)) {
                 Storage::disk('public')->delete($oldFile);
@@ -562,8 +566,8 @@ class UserController extends Controller
      */
     public function destroy(User $user)
     {
-        // Allow only Admin 1 and Admin 2
-        if (!in_array(Auth::id(), [1, 2])) {
+        // Allow only admins
+        if (!Auth::user()->is_admin) {
             return back()->with('error', 'Unauthorized action.');
         }
 
@@ -572,8 +576,8 @@ class UserController extends Controller
             return back()->with('error', 'You cannot delete your own account.');
         }
 
-        // Prevent deleting Super Admin (ID = 1)
-        if ($user->id == 1) {
+        // Prevent deleting admin users
+        if ($user->is_admin) {
             return back()->with('error', 'Super admin cannot be deleted.');
         }
 

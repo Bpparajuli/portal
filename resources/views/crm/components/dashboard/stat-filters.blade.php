@@ -6,19 +6,20 @@
         /* ============================================ */
         .stat-card {
             background: white;
-            border-radius: 16px;
-            padding: 1rem;
+            border-radius: var(--radius-sm);
+            padding: 0.35rem 0.5rem;
             transition: all 0.2s;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            box-shadow: var(--shadow-sm);
             height: 100%;
             cursor: pointer;
             position: relative;
             overflow: hidden;
+            border: 1px solid var(--border);
         }
 
         .stat-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
         }
 
         .stat-card::before {
@@ -27,7 +28,7 @@
             top: 0;
             left: 0;
             right: 0;
-            height: 3px;
+            height: 2px;
             background: var(--card-color);
         }
 
@@ -35,31 +36,36 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
+            gap: 4px;
         }
 
         .stat-left {
             flex: 1;
+            min-width: 0;
         }
 
         .stat-icon {
-            font-size: 2rem;
-            opacity: 0.8;
+            font-size: 1.1rem;
+            opacity: 0.7;
         }
 
         .stat-number {
-            font-size: 1.8rem;
-            font-weight: 800;
-            color: #1f2937;
-            line-height: 1.2;
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--text-color);
+            line-height: 1.1;
         }
 
         .stat-label {
-            font-size: 0.7rem;
+            font-size: 0.62rem;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: #6b7280;
+            letter-spacing: 0.3px;
+            color: var(--text-muted);
             font-weight: 600;
-            margin-top: 4px;
+            margin-top: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         /* ============================================ */
@@ -67,35 +73,39 @@
         /* ============================================ */
         .crm-toolbar {
             background: white;
-            border-radius: 12px;
-            padding: 1rem;
-            margin-bottom: 1.5rem;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            border-radius: var(--radius-sm);
+            padding: 0.35rem 0.5rem;
+            margin-bottom: 0.6rem;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border);
+            position: sticky;
+            top: 46px;
+            z-index: 99;
         }
 
         .search-wrapper {
             display: flex;
-            gap: 8px;
+            gap: 6px;
             align-items: center;
             flex-wrap: nowrap;
         }
 
         .search-wrapper .form-select {
             width: auto;
-            min-width: 100px;
+            min-width: 80px;
         }
 
         .filter-group {
             display: flex;
-            gap: 10px;
+            gap: 6px;
             flex-wrap: nowrap;
             align-items: center;
         }
 
         .view-btn.active {
-            background: var(--crm-primary);
+            background: var(--primary);
             color: white;
-            border-color: var(--crm-primary);
+            border-color: var(--primary);
         }
 
         @media (max-width: 992px) {

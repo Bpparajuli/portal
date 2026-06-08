@@ -1,144 +1,143 @@
 @extends('layouts.staff')
 
-@section('content')<style>
-    body {
-        background-color: #f0f2f5;
-        font-family: 'Inter', sans-serif;
-    }
-
-    .kanban-wrapper {
-        display: flex;
-        overflow-x: auto;
-        padding: 20px;
-        gap: 15px;
-        height: calc(100vh - 80px);
-    }
-
-    .kanban-column {
-        min-width: 280px;
-        width: 280px;
-        background: #ebedf0;
-        border-radius: 8px;
-        display: flex;
-        flex-direction: column;
-    }
-
-    .column-header {
-        padding: 12px 15px;
-        font-weight: 700;
-        font-size: 11px;
-        text-transform: uppercase;
-        color: #5e6c84;
-        display: flex;
-        justify-content: space-between;
-    }
-
-    .card-item {
-        background: #fff;
-        border-radius: 4px;
-        padding: 10px;
-        margin-bottom: 8px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
-        border-left: 4px solid #dfe1e6;
-        transition: 0.2s;
-        text-decoration: none !important;
-        color: inherit;
-        display: block;
-    }
-
-    .card-item:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-    }
-
-    /* Image-Specific Border Colors */
-    .b-student {
-        border-left-color: #0052cc;
-    }
-
-    .b-visitor {
-        border-left-color: #36b37e;
-    }
-
-    .b-work {
-        border-left-color: #ffab00;
-    }
-
-    .visa-badge {
-        font-size: 10px;
-        padding: 2px 6px;
-        border-radius: 3px;
-        background: #f4f5f7;
-        color: #42526e;
-        font-weight: 600;
-    }
-
-    .card-name {
-        font-size: 13px;
-        font-weight: 600;
-        color: #172b4d;
-        margin: 5px 0;
-    }
-
-    .card-info {
-        font-size: 11px;
-        color: #5e6c84;
-    }
-
-    .avatar-sm {
-        width: 22px;
-        height: 22px;
-        border-radius: 50%;
-    }
-
-</style>
-
-<div class="p-3">
-    <div class="d-flex justify-content-between align-items-center mb-3 bg-white p-2 rounded shadow-sm">
-        <div class="input-group w-25">
-            <span class="input-group-text bg-white border-end-0"><i class="fas fa-search"></i></span>
-            <input type="text" id="boardSearch" class="form-control border-start-0" placeholder="Search leads...">
+@section('staff-content')
+<div class="container-fluid p-3">
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+        <div>
+            <h5 class="fw-bold mb-0" style="color: var(--primary);">Staff Dashboard</h5>
+            <p class="text-muted mb-0 small">Overview of your portal data</p>
         </div>
-        <button class="btn btn-primary btn-sm">+ New Lead</button>
+        <span class="text-muted small"><i class="far fa-calendar me-1"></i>{{ now()->format('F d, Y') }}</span>
     </div>
 
-    <div class="kanban-wrapper">
-        @foreach($columns as $col)
-        <div class="kanban-column">
-            <div class="column-header">
-                <span>{{ $col['title'] }}</span>
-                <span class="text-muted">{{ count(array_filter($leads, fn($l) => $l['status'] == $col['title'])) }}</span>
-            </div>
-            <div class="px-2 overflow-auto flex-grow-1" id="col-{{ $col['id'] }}">
-                @foreach($leads as $lead)
-                @if($lead['status'] == $col['title'])
-                <a href="{{ route('staff.student', $lead['id']) }}" class="card-item {{ $lead['border_class'] }}" data-search="{{ strtolower($lead['name']) }} {{ $lead['id'] }}">
-                    <div class="d-flex justify-content-between align-items-center mb-1">
-                        <span class="visa-badge">{{ $lead['visa_type'] }}</span>
-                        <small class="text-muted" style="font-size: 9px;">#{{ $lead['id'] }}</small>
-                    </div>
-                    <div class="card-name">{{ $lead['name'] }}</div>
-                    <div class="card-info mb-2"><i class="fas fa-plane me-1"></i> {{ $lead['country'] }}</div>
-                    <div class="d-flex justify-content-between align-items-center border-top pt-2 mt-2">
-                        <img src="https://ui-avatars.com/api/?name={{ urlencode($lead['name']) }}&background=random" class="avatar-sm">
-                        <span class="text-muted" style="font-size: 9px;">Updated {{ $lead['updated_at'] }}</span>
-                    </div>
-                </a>
-                @endif
-                @endforeach
+    <div class="row g-3 mb-3">
+        <div class="col-md-3 col-6">
+            <x-stat-card icon="fa-user-graduate" value="{{ $totalStudents }}" label="Total Students" color="primary" />
+        </div>
+        <div class="col-md-3 col-6">
+            <x-stat-card icon="fa-file-alt" value="{{ $totalApplications }}" label="Applications" color="info" />
+        </div>
+        <div class="col-md-3 col-6">
+            <x-stat-card icon="fa-university" value="{{ $totalUniversities }}" label="Universities" color="success" />
+        </div>
+        <div class="col-md-3 col-6">
+            <x-stat-card icon="fa-check-circle" value="{{ $docCompletionRate }}%" label="Docs Completion" color="warning" />
+        </div>
+    </div>
+
+    <div class="row g-3 mb-3">
+        <div class="col-md-8">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white py-2 d-flex justify-content-between align-items-center">
+                    <h6 class="fw-bold mb-0">Monthly Applications ({{ now()->year }})</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="monthlyChart" height="120"></canvas>
+                </div>
             </div>
         </div>
-        @endforeach
+        <div class="col-md-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white py-2">
+                    <h6 class="fw-bold mb-0">Application Pipeline</h6>
+                </div>
+                <div class="card-body p-2">
+                    @foreach($statuses->where('count', '>', 0) as $status)
+                    <div class="d-flex align-items-center justify-content-between p-2 border-bottom">
+                        <span class="small">{{ $status->name }}</span>
+                        <span class="badge rounded-pill" style="background:{{ $status->bg_color }};">{{ $status->count }}</span>
+                    </div>
+                    @endforeach
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-md-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white py-2 d-flex justify-content-between align-items-center">
+                    <h6 class="fw-bold mb-0">Recent Students</h6>
+                    <a href="{{ route('staff.students.index') }}" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0 small">
+                        <thead class="table-light">
+                            <tr><th class="ps-3">Name</th><th>Email</th><th class="pe-3">Joined</th></tr>
+                        </thead>
+                        <tbody>
+                            @forelse($recentStudents as $student)
+                            <tr>
+                                <td class="ps-3">
+                                    <a href="{{ route('staff.student.show', $student) }}" class="text-decoration-none fw-medium">{{ $student->full_name }}</a>
+                                </td>
+                                <td class="text-muted">{{ $student->email }}</td>
+                                <td class="text-muted small pe-3">{{ $student->created_at?->format('M d, Y') }}</td>
+                            </tr>
+                            @empty
+                            <tr><td colspan="3" class="text-center py-3 text-muted">No students found.</td></tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white py-2 d-flex justify-content-between align-items-center">
+                    <h6 class="fw-bold mb-0">Recent Applications</h6>
+                    <a href="{{ route('staff.applications') }}" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0 small">
+                        <thead class="table-light">
+                            <tr><th class="ps-3">Student</th><th>University</th><th>Status</th><th class="pe-3">Date</th></tr>
+                        </thead>
+                        <tbody>
+                            @forelse($recentApplications as $app)
+                            <tr>
+                                <td class="ps-3 fw-medium">{{ $app->student?->name ?? '—' }}</td>
+                                <td class="text-muted">{{ $app->university?->name ?? '—' }}</td>
+                                <td><span class="badge" style="background:{{ $app->status?->bg_color ?? '#6c757d' }};">{{ $app->status?->name ?? 'N/A' }}</span></td>
+                                <td class="text-muted small pe-3">{{ $app->created_at?->format('M d, Y') }}</td>
+                            </tr>
+                            @empty
+                            <tr><td colspan="4" class="text-center py-3 text-muted">No applications found.</td></tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
-    document.getElementById('boardSearch').addEventListener('keyup', function() {
-        let val = this.value.toLowerCase();
-        document.querySelectorAll('.card-item').forEach(card => {
-            card.style.display = card.dataset.search.includes(val) ? 'block' : 'none';
-        });
-    });
-
+new Chart(document.getElementById('monthlyChart'), {
+    type: 'bar',
+    data: {
+        labels: @json($monthlyData->pluck('month')),
+        datasets: [{
+            label: 'Applications',
+            data: @json($monthlyData->pluck('total')),
+            backgroundColor: 'rgba(26, 2, 98, 0.15)',
+            borderColor: 'rgba(26, 2, 98, 0.6)',
+            borderWidth: 2,
+            borderRadius: 6,
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+            y: { beginAtZero: true, grid: { color: '#f0f0f0' }, ticks: { stepSize: 1 } },
+            x: { grid: { display: false } }
+        }
+    }
+});
 </script>
+@endpush
 @endsection

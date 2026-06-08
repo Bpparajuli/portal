@@ -11,10 +11,14 @@ use App\Notifications\AgreementSubmitted;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
-use App\Services\FileUploadService;
+use App\Contracts\FileUploadServiceInterface;
 
 class WaitingController extends Controller
 {
+    public function __construct(
+        private readonly FileUploadServiceInterface $fileUploadService,
+    ) {}
+
     public function show()
     {
         $user = Auth::user();
@@ -67,7 +71,7 @@ class WaitingController extends Controller
             $oldFile = $user->agreement_file;
 
             // Use FileUploadService - this will store at: agents/{user->slug}/agreement.{ext}
-            $uploadedPath = FileUploadService::uploadAgentFile($request, $user, 'agreement_file', 'agreement');
+            $uploadedPath = $this->fileUploadService->uploadAgentFile($request, $user, 'agreement_file', 'agreement');
 
             if (!$uploadedPath) {
                 throw new \Exception('File upload failed');
@@ -109,9 +113,7 @@ class WaitingController extends Controller
     {
         try {
             // Get admin users
-            $admins = User::where('is_admin', 1)
-                ->orWhere('role', 'admin')
-                ->get(['id', 'email', 'name']);
+            $admins = User::admins()->get(['id', 'email', 'name']);
 
             if ($admins->isNotEmpty()) {
                 foreach ($admins as $admin) {
@@ -123,7 +125,7 @@ class WaitingController extends Controller
                 }
             } else {
                 // Fallback: try to find any admin
-                $defaultAdmin = User::where('is_admin', 1)->orWhere('role', 'admin')->first();
+                $defaultAdmin = User::admins()->first();
                 if ($defaultAdmin) {
                     Notification::send($defaultAdmin, new AgreementSubmitted($user));
                 }
@@ -131,6 +133,65 @@ class WaitingController extends Controller
         } catch (\Exception $e) {
             Log::warning('Notification system error: ' . $e->getMessage());
             // Don't rethrow - we don't want to fail the upload
+        }
+    }
+
+    /**
+     * Re-upload agreement (same as upload but allows overwriting existing file)
+     */
+    public function reupload(Request $request)
+    {
+        $user = Auth::user();
+
+        if (!$user->is_agent) {
+            return redirect()->back()->with('error', 'Unauthorized access.');
+        }
+
+        if ($user->agreement_status === 'verified') {
+            return redirect()->route('agent.dashboard')->with('error', 'Your account is already verified.');
+        }
+
+        $validator = validator($request->all(), [
+            'agreement_file' => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()
+                ->with('error', $validator->errors()->first('agreement_file'))
+                ->withInput();
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // Delete old file if exists
+            if ($user->agreement_file && Storage::disk('public')->exists($user->agreement_file)) {
+                Storage::disk('public')->delete($user->agreement_file);
+            }
+
+            $uploadedPath = $this->fileUploadService->uploadAgentFile($request, $user, 'agreement_file', 'agreement');
+
+            if (!$uploadedPath) {
+                throw new \Exception('File upload failed');
+            }
+
+            $user->agreement_file = $uploadedPath;
+            $user->agreement_status = 'uploaded';
+            $user->agreement_uploaded_at = now();
+            $user->save();
+
+            DB::commit();
+
+            $this->notifyAdminsAsync($user);
+
+            return redirect()->route('auth.waiting-dash')
+                ->with('success', 'Agreement re-uploaded successfully! Your document is under review.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return redirect()->back()
+                ->with('error', 'Re-upload failed: ' . $e->getMessage())
+                ->withInput();
         }
     }
 

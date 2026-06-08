@@ -3,15 +3,18 @@
 
 namespace App\Http\Controllers;
 
+use App\Contracts\StudentServiceInterface;
 use App\Models\Student;
 use App\Models\User;
-use App\Services\StudentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 class StudentIntakeController extends Controller
 {
+    public function __construct(
+        private readonly StudentServiceInterface $studentService,
+    ) {}
     /**
      * Main intake endpoint for API/form submissions
      */
@@ -63,9 +66,9 @@ class StudentIntakeController extends Controller
 
         try {
             // Check for duplicate before creating
-            $duplicate = StudentService::findDuplicate($serviceRequest);
+            $duplicate = $this->studentService->findDuplicate($serviceRequest);
             if ($duplicate) {
-                $duplicateMessage = StudentService::getDuplicateMessage($duplicate);
+                $duplicateMessage = $this->studentService->getDuplicateMessage($duplicate);
 
                 if ($request->expectsJson() || ($data['return_format'] ?? '') === 'json') {
                     return response()->json([
@@ -88,7 +91,7 @@ class StudentIntakeController extends Controller
             }
 
             // Use StudentService to create student
-            $student = StudentService::saveStudent($serviceRequest);
+            $student = $this->studentService->saveStudent($serviceRequest);
 
             // Store in session for thank you page
             session(['last_student' => $student]);
@@ -181,7 +184,7 @@ class StudentIntakeController extends Controller
 
         try {
             // Check for duplicate
-            $duplicate = StudentService::findDuplicate($serviceRequest);
+            $duplicate = $this->studentService->findDuplicate($serviceRequest);
             if ($duplicate) {
                 return sprintf(
                     "⚠️ DUPLICATE STUDENT DETECTED!\n\nStudent: %s\nPhone: %s\nEmail: %s\nCreated: %s\n\nPlease check existing record before adding again.",
@@ -193,7 +196,7 @@ class StudentIntakeController extends Controller
             }
 
             // Use StudentService for creation
-            $student = StudentService::saveStudent($serviceRequest);
+            $student = $this->studentService->saveStudent($serviceRequest);
 
             return sprintf(
                 "✅ STUDENT ADDED SUCCESSFULLY!\n\nStudent ID: %d\nName: %s\nPhone: %s\nEmail: %s\nApplying For: %s\nCountry: %s\nSource: %s",

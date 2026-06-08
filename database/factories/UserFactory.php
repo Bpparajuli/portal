@@ -6,43 +6,27 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
-/**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\User>
- */
 class UserFactory extends Factory
 {
-    /**
-     * The current password being used by the factory.
-     */
     protected static ?string $password;
 
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
     public function definition(): array
     {
+        $name = $this->faker->unique()->userName();
+
         return [
             'business_name' => $this->faker->company(),
-            'username'      => $this->faker->userName(),
+            'owner_name'    => $this->faker->name(),
+            'name'          => $name,
+            'slug'          => Str::slug($name),
             'contact'       => $this->faker->phoneNumber(),
             'address'       => $this->faker->address(),
             'email'         => $this->faker->unique()->safeEmail(),
-            'password_hash' => bcrypt('password'),
-            'is_admin'      => false,
-            'is_agent'      => true,
+            'password'      => Hash::make('password'),
+            'role'          => 'agent',
             'active'        => true,
+            'agreement_status' => 'verified',
+            'paid_crm'      => false,
         ];
-    }
-
-    /**
-     * Indicate that the model's email address should be unverified.
-     */
-    public function unverified(): static
-    {
-        return $this->state(fn(array $attributes) => [
-            'email_verified_at' => null,
-        ]);
     }
 }

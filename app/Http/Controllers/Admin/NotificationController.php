@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use Illuminate\Notifications\DatabaseNotification;
+use App\Models\User;
 
 class NotificationController extends Controller
 {
@@ -13,6 +14,22 @@ class NotificationController extends Controller
     public function index(Request $request)
     {
         $user = Auth::user();
+
+        if ($request->has('count')) {
+            $recent = $user->notifications()->take(5)->get()->map(function ($n) {
+                return [
+                    'id' => $n->id,
+                    'data' => $n->data,
+                    'read_at' => $n->read_at,
+                    'created_at' => $n->created_at->diffForHumans(),
+                    'url' => route('admin.notifications.readAndRedirect', $n->id),
+                ];
+            });
+            return response()->json([
+                'unread_count' => $user->unreadNotifications->count(),
+                'recent' => $recent,
+            ]);
+        }
 
         // Get regular notifications (excluding messages)
         $notifications = $user->notifications()
@@ -34,7 +51,7 @@ class NotificationController extends Controller
             ->paginate(5, ['*'], 'messages_page')
             ->withQueryString();
 
-        return view('admin.notifications', compact('notifications', 'messages'));
+        return view('admin.notifications.index', compact('notifications', 'messages'));
     }
 
     // Mark a single notification as read
@@ -123,7 +140,10 @@ class NotificationController extends Controller
         } elseif (!empty($data['student']['id'])) {
             $url = route('admin.students.show', $data['student']['id']);
         } elseif (!empty($data['agent']['id'])) {
-            $url = route('admin.agents.show', $data['agent']['id']);
+            $agent = User::find($data['agent']['id']);
+            if ($agent) {
+                $url = route('admin.users.show', $agent);
+            }
         }
 
         return redirect($url ?? route('admin.notifications'));

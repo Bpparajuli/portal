@@ -32,7 +32,7 @@
         }
     </style>
 
-    <div class="container py-4">
+    <div>
         {{-- Header --}}
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
@@ -53,7 +53,7 @@
 
         <div class="row">
             <div class="col-md-8">
-                <div class="card border-0 shadow-sm rounded-4">
+                <div class="card mb-4">
                     <div class="card-body p-5">
                         <form id="updateForm" action="{{ route('admin.applications.update', $application->id) }}"
                             method="POST" enctype="multipart/form-data">
@@ -213,7 +213,7 @@
                 </div>
 
                 {{-- Info Card --}}
-                <div class="card border-0 shadow-sm rounded-4">
+                <div class="card mb-4">
                     <div class="card-body p-4">
                         <h5 class="fw-bold mb-3">ℹ️ Information</h5>
                         <div class="mb-3">
