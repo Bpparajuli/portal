@@ -31,7 +31,7 @@ class BackupController extends Controller
             }
             $backups = $backups->sortByDesc('date')->values();
         }
-        return view('admin.backups.index', compact('backups'));
+        return view('admin.backups', compact('backups'));
     }
 
     public function create()

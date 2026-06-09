@@ -43,10 +43,15 @@
                             <div class="d-flex gap-1">
                                 <button type="button" class="btn btn-sm btn-outline-info" onclick="viewPage({{ $page->id }})" title="Preview"><i class="fas fa-eye"></i></button>
                                 <a href="{{ route('admin.pages.edit', $page) }}" class="btn btn-sm btn-outline-primary" title="Edit"><i class="fas fa-edit"></i></a>
-                                <form action="{{ route('admin.pages.destroy', $page) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this page?')">
-                                    @csrf @method('DELETE')
-                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete"><i class="fas fa-trash-alt"></i></button>
-                                </form>
+                                <x-confirm-delete
+                                    action="admin.pages.destroy"
+                                    :id="$page->id"
+                                    label=""
+                                    title="Delete Page?"
+                                    message="This will permanently delete this page."
+                                    mode="form"
+                                    class="btn btn-sm btn-outline-danger"
+                                />
                             </div>
                         </td>
                     </tr>

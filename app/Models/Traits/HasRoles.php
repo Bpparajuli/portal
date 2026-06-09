@@ -37,6 +37,14 @@ trait HasRoles
         return $this->role === 'superadmin';
     }
 
+    public function getRoleGroupAttribute(): string
+    {
+        if ($this->is_admin || $this->is_admin_staff) {
+            return 'management';
+        }
+        return 'partner';
+    }
+
     public function getIsAdminStaffAttribute(): bool
     {
         if (!$this->is_staff) {
@@ -69,6 +77,11 @@ trait HasRoles
     public function scopeStaff($query)
     {
         return $query->where('role', 'staff');
+    }
+
+    public function getViewPrefixAttribute(): string
+    {
+        return $this->role_group;
     }
 
     public function getAccessibleStudents()

@@ -33,7 +33,7 @@ class RevenueController extends Controller
         $filteredTotal = $revenues->sum('amount');
         $agents = User::agents()->orderBy('business_name')->get();
 
-        return view('admin.revenues.index', compact('revenues', 'grandTotal', 'filteredTotal', 'agents'));
+        return view('admin.revenues', compact('revenues', 'grandTotal', 'filteredTotal', 'agents'));
     }
 
     public function edit(Revenue $revenue)

@@ -17,7 +17,7 @@ class ApplicationStatusController extends Controller
             ->orderBy('id')
             ->get();
 
-        return view('admin.applications.status', compact('statuses'));
+        return view('admin.application-status', compact('statuses'));
     }
 
     /**

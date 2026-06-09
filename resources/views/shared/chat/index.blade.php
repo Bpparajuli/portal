@@ -16,7 +16,6 @@
         'staff' => 'staff.chat',
     };
     $canDeleteAny = $role === 'admin';
-    $showRoleFilter = $role !== 'agent';
 @endphp
 
 @extends($layout)
@@ -47,7 +46,6 @@ window.CHAT_CONFIG = {
     csrfToken: '{{ csrf_token() }}',
     usersRoute: '{{ route($routePrefix . '.users') }}',
     canDeleteAny: {{ $canDeleteAny ? 'true' : 'false' }},
-    showRoleFilter: {{ $showRoleFilter ? 'true' : 'false' }},
     pusherKey: '{{ env("PUSHER_APP_KEY") }}',
     pusherCluster: '{{ env("PUSHER_APP_CLUSTER") }}',
     broadcastDefault: '{{ config("broadcasting.default") }}',

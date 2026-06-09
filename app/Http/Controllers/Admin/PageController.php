@@ -124,7 +124,7 @@ class PageController extends Controller
         $activities = Setting::getValue('activities_events', []);
         $images = $this->getUploadedImages();
 
-        return view('admin.pages-content.index', compact(
+        return view('admin.pages-content', compact(
             'pages', 'contentSettings', 'groups', 'welcomeText', 'programs', 'activities', 'images'
         ));
     }

@@ -69,7 +69,7 @@
                             @forelse($recentStudents as $student)
                             <tr>
                                 <td class="ps-3">
-                                    <a href="{{ route('staff.student.show', $student) }}" class="text-decoration-none fw-medium">{{ $student->full_name }}</a>
+                                    <a href="{{ route('staff.students.show', $student) }}" class="text-decoration-none fw-medium">{{ $student->full_name }}</a>
                                 </td>
                                 <td class="text-muted">{{ $student->email }}</td>
                                 <td class="text-muted small pe-3">{{ $student->created_at?->format('M d, Y') }}</td>

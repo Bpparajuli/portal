@@ -51,7 +51,7 @@ class ApplicationController extends Controller
         if ($request->filled('status')) $query->where('application_status_id', $request->status);
         if ($request->filled('status_filter')) $query->where('application_status_id', $request->status_filter);
         if ($request->filled('university_filter')) $query->where('university_id', $request->university_filter);
-        if ($request->filled('agent_filter') && $user->is_admin) $query->where('agent_id', $request->agent_filter);
+        if ($request->filled('agent_filter') && ($user->is_admin || $user->is_admin_staff)) $query->where('agent_id', $request->agent_filter);
         if ($request->filled('country_filter')) {
             $query->whereHas('university', fn($q) => $q->where('country', $request->country_filter));
         }
@@ -65,7 +65,7 @@ class ApplicationController extends Controller
             ->withCount(['applications' => fn($q) => $user->is_agent ? $q->where('agent_id', $user->id) : $q])
             ->orderBy('name')->get();
 
-        $agents = $user->is_admin
+        $agents = ($user->is_admin || $user->is_admin_staff)
             ? User::agents()->whereHas('students')->withCount('students')->orderBy('business_name')->get()
             : collect();
 
@@ -87,9 +87,11 @@ class ApplicationController extends Controller
 
         $applications = $query->latest()->paginate(20)->withQueryString();
 
+        $role = $user->role;
+
         return view('shared.applications.index', compact(
             'applications', 'statuses', 'universities', 'agents', 'countries',
-            'acceptedCount', 'rejectedCount', 'lostCount'
+            'acceptedCount', 'rejectedCount', 'lostCount', 'role'
         ));
     }
 
@@ -193,7 +195,7 @@ class ApplicationController extends Controller
         $application->load(['student', 'university', 'course', 'status']);
 
         $universities = University::all();
-        $statuses = $user->is_admin ? ApplicationStatus::orderBy('sort_order')->get() : collect();
+        $statuses = ($user->is_admin || $user->is_admin_staff) ? ApplicationStatus::orderBy('sort_order')->get() : collect();
 
         if ($user->is_agent) {
             $courses = $application->university_id ? Course::where('university_id', $application->university_id)->get() : collect();
@@ -215,7 +217,9 @@ class ApplicationController extends Controller
             'sop_file' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:15360',
         ];
 
-        if ($user->is_admin) {
+        $canManageStatus = $user->is_admin || $user->is_admin_staff;
+
+        if ($canManageStatus) {
             $rules['application_status_id'] = 'required|exists:application_statuses,id';
         }
 
@@ -229,7 +233,7 @@ class ApplicationController extends Controller
         $application->update([
             'university_id' => $request->university_id,
             'course_id' => $request->course_id,
-            'application_status_id' => $user->is_admin ? $request->application_status_id : $application->application_status_id,
+            'application_status_id' => $canManageStatus ? $request->application_status_id : $application->application_status_id,
         ]);
 
         if ($user->is_agent && $request->has('student_id')) {
@@ -247,7 +251,7 @@ class ApplicationController extends Controller
 
         $application->save();
 
-        if ($user->is_admin && $oldStatus != $request->application_status_id) {
+        if ($canManageStatus && $oldStatus != $request->application_status_id) {
             User::notifyAgent($application->student->agent_id, new ApplicationStatusUpdated($application, $user));
         }
 
@@ -274,7 +278,7 @@ class ApplicationController extends Controller
         $this->authorize('withdraw', $application);
 
         $request->validate([
-            'reason' => 'nullable|string|max:500',
+            'reason' => 'required|string|max:500',
         ]);
 
         $lostStatusId = ApplicationStatus::where('name', 'Lost')->value('id');
@@ -288,7 +292,7 @@ class ApplicationController extends Controller
         $admin = User::admins()->first();
         $admin?->notify(new ApplicationWithdrawn($application));
 
-        return redirect()->route('agent.applications.index')
+        return redirect()->route(Auth::user()->role . '.applications.index')
             ->with('success', 'Application withdrawn.');
     }
 

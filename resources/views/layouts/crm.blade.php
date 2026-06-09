@@ -228,7 +228,7 @@
 </head>
 
 <body>
-    @include('shared.alerts')
+    @include('partials.alerts')
 
     <div class="crm-wrapper">
         {{-- TOP NAVIGATION BAR --}}
@@ -280,9 +280,19 @@
                                 class="btn btn-sm btn-outline-secondary d-md-inline-block">
                                 <i class="fas fa-download"></i> Export
                             </a>
+                        @endif
+
+                        @if (auth()->user()->is_admin)
+                            {{-- Admin Button --}}
                             <a href="{{ route('admin.dashboard') }}" class="btn btn-sm d-md-inline-block text-white"
-                                style="background-color: #820b5c; ">
-                                <i class="fas fa-upload"></i> Portal
+                                style="background-color: #820b5c;">
+                                <i class="fas fa-upload"></i> Admin Portal
+                            </a>
+                        @elseif (auth()->user()->is_staff)
+                            {{-- Staff Button --}}
+                            <a href="{{ route('staff.dashboard') }}" class="btn btn-sm d-md-inline-block text-white"
+                                style="background-color: #820b5c;">
+                                <i class="fas fa-upload"></i> Staff Portal
                             </a>
                         @endif
 

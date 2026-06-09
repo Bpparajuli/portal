@@ -10,7 +10,7 @@ class ActivityLogController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Activity::with('user', 'student');
+        $query = Activity::with('user', 'student', 'application');
 
         if ($request->filled('type')) {
             $query->where('type', $request->type);
@@ -28,13 +28,12 @@ class ActivityLogController extends Controller
 
         $types = Activity::select('type')->distinct()->pluck('type');
 
-        return view('admin.activities.index', compact('activities', 'types'));
+        return view('admin.activities', compact('activities', 'types'));
     }
 
     public function show(Activity $activity)
     {
-        $activity->load('user', 'student', 'application', 'document');
-        return view('admin.activities.show', compact('activity'));
+        return redirect()->route('admin.activities.index');
     }
 
     public function destroy(Activity $activity)

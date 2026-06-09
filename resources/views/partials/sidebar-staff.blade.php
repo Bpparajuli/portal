@@ -3,8 +3,12 @@
     <i class="fas fa-chart-pie"></i> <span>Dashboard</span>
 </a>
 
+<a href="{{ route('staff.users.show', Auth::user()->slug) }}" class="nav-link {{ request()->routeIs('staff.users.*') ? 'active' : '' }}">
+    <i class="fas fa-user"></i> <span>My Profile</span>
+</a>
+
 <div class="nav-section">Management</div>
-<a href="{{ route('staff.students.index') }}" class="nav-link {{ request()->routeIs('staff.students.*') || request()->routeIs('staff.student.*') ? 'active' : '' }}">
+<a href="{{ route('staff.students.index') }}" class="nav-link {{ request()->routeIs('staff.students.*') ? 'active' : '' }}">
     <i class="fas fa-user-graduate"></i> <span>Students</span>
 </a>
 <a href="{{ route('staff.applications.index') }}" class="nav-link {{ request()->routeIs('staff.applications.*') ? 'active' : '' }}">

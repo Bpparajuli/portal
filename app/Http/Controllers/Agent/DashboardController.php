@@ -25,15 +25,6 @@ class DashboardController extends Controller
 
         $totalApplications = Application::where('agent_id', $agentId)->count();
 
-        $startOfMonth = Carbon::now()->startOfMonth();
-        $endOfMonth = Carbon::now()->endOfMonth();
-
-        $recentApplications = Application::where('agent_id', $agentId)
-            ->whereBetween('created_at', [$startOfMonth, $endOfMonth])
-            ->count();
-
-        $totalUniversities = University::count();
-
         // ---------- VISA CONVERSION ----------
         $visaApprovedStatusId = ApplicationStatus::where('name', 'Visa Approved')->value('id');
 
@@ -62,42 +53,10 @@ class DashboardController extends Controller
             return $status->bg_color ?? '#6b7280';
         })->values();
 
-        // Get ALL active statuses ordered by sort_order
-        $pipelineStatuses = ApplicationStatus::where('is_active', 1)
-            ->orderBy('sort_order')
-            ->get(['id', 'name', 'bg_color', 'text_color', 'sort_order']);
-
-        // Get counts for each status based on agent
-        $pipelineCounts = [];
-        foreach ($pipelineStatuses as $status) {
-            $pipelineCounts[$status->id] = Application::where('agent_id', $agentId)
-                ->where('application_status_id', $status->id)
-                ->count();
-        }
-
-        // Create a mapping of sort_order to status for easy lookup in blade
-        $statusByOrder = [];
-        foreach ($pipelineStatuses as $status) {
-            $statusByOrder[$status->sort_order] = $status;
-        }
-
-        // ---------- MONTHLY APPLICATIONS ----------
-        $monthlyApplications = Application::where('agent_id', $agentId)
-            ->whereYear('created_at', now()->year)
-            ->get()
-            ->groupBy(fn($app) => (int) $app->created_at->format('n'))
-            ->map->count();
-
-        $monthlyArr = [];
-        for ($m = 1; $m <= 12; $m++) {
-            $monthlyArr[] = $monthlyApplications->get($m, 0);
-        }
-
         // ---------- UNIVERSITY CHART ----------
         $universityChartData = $this->applicationsByUniversityChart($agentId);
 
-
-        // ---------- COURSE TYPE CHART (OPTIMIZED) ----------
+        // ---------- COURSE TYPE CHART ----------
         $courseTypeData = Application::where('agent_id', $agentId)
             ->join('courses', 'applications.course_id', '=', 'courses.id')
             ->select('courses.course_type', DB::raw('COUNT(*) as total'))
@@ -120,8 +79,6 @@ class DashboardController extends Controller
             ->whereIn('type', ['application_submitted', 'application_withdrawn'])
             ->latest()->take(5)->get();
 
-        $today = Carbon::today();
-
         $todayActivitiesCount = Activity::where('user_id', $agentId)
             ->whereIn('type', [
                 'student_added',
@@ -131,7 +88,7 @@ class DashboardController extends Controller
                 'application_submitted',
                 'application_withdrawn'
             ])
-            ->whereDate('created_at', $today)
+            ->whereDate('created_at', Carbon::today())
             ->count();
 
         // ---------- TOP UNIVERSITIES ----------
@@ -168,18 +125,12 @@ class DashboardController extends Controller
         return view('agent.dashboard', compact(
             'totalStudents',
             'totalApplications',
-            'totalUniversities',
-            'recentApplications',
             'visaApproved',
             'visaConversionPercent',
             'statuses',
             'statusLabels',
             'statusCounts',
             'statusColors',
-            'pipelineStatuses',
-            'pipelineCounts',
-            'statusByOrder',
-            'monthlyArr',
             'universityChartData',
             'studentActivities',
             'documentActivities',

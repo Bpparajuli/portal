@@ -62,7 +62,7 @@
                             </select>
                         </div>
 
-                        @if($user->is_admin && $statuses->count())
+                        @if(($user->is_admin || $user->is_admin_staff) && $statuses->count())
                             <div class="mb-4">
                                 <label class="form-label fw-semibold">Status</label>
                                 <select name="application_status_id" class="form-select rounded-3">
@@ -83,7 +83,10 @@
                             <div class="mb-4 p-3 bg-light rounded-3">
                                 <label class="form-label fw-semibold">Current SOP</label>
                                 <div>
-                                    <a href="{{ Storage::url($application->sop_file) }}" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill"><i class="fas fa-eye me-1"></i>View</a>
+                                    <a href="{{ Storage::url($application->sop_file) }}" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill previewable"
+                                       data-url="{{ Storage::url($application->sop_file) }}"
+                                       data-filename="SOP_{{ $application->application_number }}"
+                                       data-preview-type="document"><i class="fas fa-eye me-1"></i>View</a>
                                     <a href="{{ Storage::url($application->sop_file) }}" download class="btn btn-sm btn-outline-secondary rounded-pill"><i class="fas fa-download me-1"></i>Download</a>
                                 </div>
                             </div>

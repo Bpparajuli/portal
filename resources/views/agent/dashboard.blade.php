@@ -531,7 +531,7 @@
                             class="fa fa-university"></i></div>
                     <div>
                         <div class="ag-stat-label text-muted">Universities</div>
-                        <div class="ag-stat-value">{{ $totalUniversities ?? 0 }}</div>
+                        <div class="ag-stat-value">{{ \App\Models\University::count() }}</div>
                     </div>
                 </a>
             </div>
@@ -547,14 +547,6 @@
 
                 {{-- LEFT COLUMN --}}
                 <div class="ag-left">
-                    <div class="card">
-                        <div class="ag-card-header">
-                            <h5 class="ag-card-title"><span class="ag-card-icon"><i class="fas fa-chart-line"></i></span>
-                                Monthly Applications ({{ date('Y') }})</h5>
-                        </div>
-                        <div class="ag-card-body"><canvas id="monthlyChart" height="120"></canvas></div>
-                    </div>
-
                     <div class="card">
                         <div class="ag-card-header">
                             <h5 class="ag-card-title"><span class="ag-card-icon"><i class="fas fa-university"></i></span>
@@ -720,7 +712,7 @@
                 <div class="ag-widget card">
                     <div class="ag-widget-label text-muted">Applications This Month</div>
                     <div style="display:flex;align-items:center;justify-content:space-between;">
-                        <div class="ag-widget-value">{{ $recentApplications ?? 0 }}</div>
+                        <div class="ag-widget-value">{{ $totalApplications }}</div>
                         <a href="{{ route('agent.applications.index') }}" class="text-primary"
                             style="font-size:0.8rem;font-weight:600;text-decoration:none;">View all →</a>
                     </div>
@@ -922,47 +914,6 @@
                     }
                 });
             }
-
-            // Monthly
-            new Chart(document.getElementById('monthlyChart'), {
-                type: 'line',
-                data: {
-                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov',
-                        'Dec'
-                    ],
-                    datasets: [{
-                        label: 'Applications',
-                        data: @json($monthlyArr),
-                        borderColor: '#820b5c',
-                        backgroundColor: 'rgba(130,11,92,0.08)',
-                        fill: true,
-                        tension: 0.4,
-                        pointRadius: 4,
-                        pointBackgroundColor: '#820b5c'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: {
-                                color: 'rgba(0,0,0,0.04)'
-                            }
-                        },
-                        x: {
-                            grid: {
-                                display: false
-                            }
-                        }
-                    }
-                }
-            });
 
             // University
             const uniData = @json($universityChartData ?? ['labels' => [], 'datasets' => [['data' => []]]]);

@@ -4,11 +4,13 @@ namespace App\Providers;
 
 use App\Models\Application;
 use App\Models\Course;
+use App\Models\Document;
 use App\Models\Student;
 use App\Models\University;
 use App\Models\User;
 use App\Policies\ApplicationPolicy;
 use App\Policies\CoursePolicy;
+use App\Policies\DocumentPolicy;
 use App\Policies\StudentPolicy;
 use App\Policies\UniversityPolicy;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
@@ -19,6 +21,7 @@ class AuthServiceProvider extends ServiceProvider
     protected $policies = [
         Application::class => ApplicationPolicy::class,
         Course::class => CoursePolicy::class,
+        Document::class => DocumentPolicy::class,
         Student::class => StudentPolicy::class,
         University::class => UniversityPolicy::class,
     ];
@@ -34,7 +37,7 @@ class AuthServiceProvider extends ServiceProvider
         });
 
         Gate::define('manage-applications', function (User $user) {
-            return $user->is_admin || $user->is_agent;
+            return $user->is_admin || $user->is_agent || $user->is_admin_staff;
         });
 
         Gate::define('view-crm', function (User $user) {

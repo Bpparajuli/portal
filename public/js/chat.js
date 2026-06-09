@@ -5,7 +5,6 @@
     const role = cfg.role || 'staff';
     const authId = parseInt(cfg.authId) || 0;
     const canDeleteAny = cfg.canDeleteAny === true;
-    const showRoleFilter = cfg.showRoleFilter === true;
     const csrfToken = cfg.csrfToken || '';
     const usersRoute = cfg.usersRoute || '';
     const pusherKey = cfg.pusherKey || '';
@@ -13,12 +12,11 @@
     const broadcastDefault = cfg.broadcastDefault || '';
 
     let activeUser = null;
-    let allUsers = {};
+    let allSections = [];
     let lastMessageId = 0;
     let typingTimer = null;
     let isTyping = false;
     let pollInterval = null;
-    let currentFilter = 'all';
     let isLoadingMessages = false;
     let messageIds = new Set();
     let audioCtx = null;
@@ -35,6 +33,13 @@
         if (!audioCtx || audioCtx.state === 'closed') { initAudio(); }
         if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
         return audioCtx;
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        var div = document.createElement('div');
+        div.appendChild(document.createTextNode(str));
+        return div.innerHTML;
     }
 
     function formatTime(d) {
@@ -88,6 +93,16 @@
 
     document.getElementById('chatSidebarOverlay')?.addEventListener('click', window.toggleChatSidebar);
 
+    function toggleSection(el) {
+        var header = el.closest('.accordion-section')?.querySelector('.section-header');
+        if (header) header.click();
+    }
+
+    function sectionIconHtml(role) {
+        var icons = { admin: 'fa-user-shield', agent: 'fa-user-tie', staff: 'fa-users' };
+        return '<i class="fas ' + (icons[role] || 'fa-user') + ' section-icon"></i>';
+    }
+
     async function loadUsers() {
         try {
             const res = await fetch(usersRoute);
@@ -97,57 +112,101 @@
                 badge.textContent = data.total_unread;
                 data.total_unread > 0 ? badge.classList.remove('d-none') : badge.classList.add('d-none');
             }
-            allUsers = {};
-            (data.users || []).forEach(function(u) { allUsers[u.id] = u; });
+            allSections = data.sections || [];
             renderUserList();
         } catch(e) { console.error('loadUsers', e); }
     }
 
-    function renderUserList() {
-        const list = document.getElementById('userList');
-        const groups = {};
-        Object.values(allUsers).forEach(function(u) {
-            if (showRoleFilter && currentFilter !== 'all' && u.role !== currentFilter) return;
-            const r = u.role || 'staff';
-            if (!groups[r]) groups[r] = [];
-            groups[r].push(u);
-        });
-        const labels = { admin: 'Admin', agent: 'Agents', staff: 'Team Members' };
-        const order = ['staff', 'agent', 'admin'];
-        let html = '';
-        order.forEach(function(r) {
-            const g = groups[r];
-            if (!g || !g.length) return;
-            html += '<div style="padding:3px 12px 1px;"><span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted);">' + (labels[r] || r) + '</span></div>';
-            g.forEach(function(u) {
-                const ac = activeUser && activeUser.id === u.id ? 'active' : '';
-                let dm = u.last_message || '';
-                if (!dm && (u.last_message_file || u.has_attachment)) dm = '<i class="fas fa-paperclip"></i> Attachment';
-                if (!dm) dm = 'No messages yet';
-                html += '<div class="user-card ' + ac + '" data-uid="' + u.id + '">'
-                    + '<div class="chat-avatar">' + (u.business_logo ? '<img src="/storage/' + u.business_logo + '">' : initials(u.business_name || u.name))
-                    + '<span class="status-dot ' + (u.is_online ? 'online' : 'offline') + '"></span></div>'
-                    + '<div class="user-info-wrap"><div class="user-name">' + (u.business_name || u.name) + '</div>'
-                    + '<div class="user-preview">' + dm + '</div></div>'
-                    + '<div class="user-meta"><span class="user-time">' + formatDate(u.last_message_time) + '</span>'
-                    + (u.unread_count > 0 ? '<span class="unread-badge">' + u.unread_count + '</span>' : '') + '</div>'
-                    + '</div>';
-            });
-        });
-        list.innerHTML = html || '<div class="text-center mt-4 text-muted small">No contacts found</div>';
+    function getActiveUserId() {
+        return activeUser ? activeUser.id : null;
     }
 
-    if (showRoleFilter) {
-        window.filterByType = function(type) {
-            currentFilter = type;
-            renderUserList();
-        };
+    function buildUserHtml(u) {
+        var ac = (activeUser && activeUser.id === u.id) ? 'active' : '';
+        var dm = escapeHtml(u.last_message || '');
+        if (!dm && (u.last_message_file || u.has_attachment)) dm = '<i class="fas fa-paperclip"></i> Attachment';
+        if (!dm) dm = 'No messages yet';
+        return '<div class="user-card ' + ac + '" data-uid="' + u.id + '">'
+            + '<div class="chat-avatar">' + (u.business_logo ? '<img src="/storage/' + u.business_logo + '">' : initials(u.business_name || u.name))
+            + '<span class="status-dot ' + (u.is_online ? 'online' : 'offline') + '"></span></div>'
+            + '<div class="user-info-wrap"><div class="user-name">' + escapeHtml(u.business_name || u.name) + '</div>'
+            + '<div class="user-preview">' + dm + '</div></div>'
+            + '<div class="user-meta"><span class="user-time">' + formatDate(u.last_message_time) + '</span>'
+            + (u.unread_count > 0 ? '<span class="unread-badge">' + u.unread_count + '</span>' : '') + '</div>'
+            + '</div>';
+    }
+
+    function renderUserList() {
+        var list = document.getElementById('userList');
+        var searchQuery = (document.getElementById('userSearch')?.value || '').toLowerCase().trim();
+
+        if (allSections.length === 0) {
+            list.innerHTML = '<div class="text-center mt-4 text-muted small">No contacts found</div>';
+            return;
+        }
+
+        var html = '';
+
+        allSections.forEach(function(section, idx) {
+            var filteredUsers = section.users;
+            if (searchQuery) {
+                filteredUsers = section.users.filter(function(u) {
+                    var name = (u.business_name || u.name || '').toLowerCase();
+                    return name.includes(searchQuery);
+                });
+            }
+            if (filteredUsers.length === 0 && !searchQuery) return;
+
+            var sectionHasActive = filteredUsers.some(function(u) { return u.id === getActiveUserId(); });
+            var expanded = searchQuery ? true : (sectionHasActive || (idx === 0 && section.unread_count > 0));
+            var collapseId = 'sec-collapse-' + idx;
+
+            var unreadBadge = section.unread_count > 0
+                ? '<span class="section-unread-badge">' + section.unread_count + '</span>'
+                : '';
+
+            html += '<div class="accordion-section">'
+                + '<div class="section-header" data-bs-toggle="collapse" data-bs-target="#' + collapseId + '" aria-expanded="' + expanded + '" role="button">'
+                + '<div class="section-header-left">'
+                + sectionIconHtml(section.role)
+                + '<span class="section-label">' + section.label + '</span>'
+                + '</div>'
+                + '<div class="section-header-right">'
+                + unreadBadge
+                + '<i class="fas fa-chevron-down section-chevron"></i>'
+                + '</div>'
+                + '</div>'
+                + '<div id="' + collapseId + '" class="collapse' + (expanded ? ' show' : '') + '" data-bs-parent="#chatAccordion">'
+                + '<div class="section-body">'
+                + filteredUsers.map(buildUserHtml).join('')
+                + '</div>'
+                + '</div>'
+                + '</div>';
+        });
+
+        list.innerHTML = html || '<div class="text-center mt-4 text-muted small">No contacts found</div>';
+
+        allSections.forEach(function(section, idx) {
+            var collapseId = 'sec-collapse-' + idx;
+            var el = document.getElementById(collapseId);
+            if (el) {
+                el.addEventListener('show.bs.collapse', function() {
+                    var header = this.closest('.accordion-section')?.querySelector('.section-header');
+                    if (header) header.classList.add('expanded');
+                });
+                el.addEventListener('hide.bs.collapse', function() {
+                    var header = this.closest('.accordion-section')?.querySelector('.section-header');
+                    if (header) header.classList.remove('expanded');
+                });
+            }
+        });
     }
 
     window.selectUser = async function(user) {
         activeUser = user;
         lastMessageId = 0;
         messageIds = new Set();
+
         document.getElementById('noChatSelected').classList.add('d-none');
         document.getElementById('chatActive').classList.remove('d-none');
         document.getElementById('chatActive').style.display = 'flex';
@@ -173,7 +232,7 @@
         if (!activeUser || isLoadingMessages) return;
         try {
             isLoadingMessages = true;
-            const url = forceScroll || lastMessageId === 0
+            var url = (forceScroll || lastMessageId === 0)
                 ? '/' + role + '/chat/messages/' + activeUser.id
                 : '/' + role + '/chat/new?user_id=' + activeUser.id + '&last_message_id=' + lastMessageId;
             const res = await fetch(url);
@@ -185,7 +244,7 @@
                 renderMessages(msgs, box);
                 box.scrollTop = box.scrollHeight;
             } else if (msgs.length > 0) {
-                const newMsgs = msgs.filter(function(m) { return !messageIds.has(m.id); });
+                var newMsgs = msgs.filter(function(m) { return !messageIds.has(m.id); });
                 if (newMsgs.length > 0) {
                     renderMessages(newMsgs, box, true);
                     box.scrollTop = box.scrollHeight;
@@ -304,7 +363,6 @@
             : '<i class="fas fa-file-alt fs-5" style="color:var(--primary);"></i>';
         document.getElementById('attachmentPreview').classList.add('show');
     }
-
     window.handleFileSelect = handleFileSelect;
 
     window.cancelAttachment = function() {
@@ -420,11 +478,7 @@
     };
 
     window.filterUsers = function() {
-        var q = document.getElementById('userSearch').value.toLowerCase();
-        document.querySelectorAll('.user-card').forEach(function(c) {
-            var name = (c.querySelector('.user-name')?.innerText.toLowerCase() || '');
-            c.style.display = name.includes(q) ? 'flex' : 'none';
-        });
+        renderUserList();
     };
 
     function playSound(type) {
@@ -497,7 +551,16 @@
         var card = e.target.closest('.user-card');
         if (card) {
             var uid = parseInt(card.dataset.uid);
-            if (allUsers[uid]) window.selectUser(allUsers[uid]);
+            if (uid) {
+                for (var i = 0; i < allSections.length; i++) {
+                    for (var j = 0; j < allSections[i].users.length; j++) {
+                        if (allSections[i].users[j].id === uid) {
+                            window.selectUser(allSections[i].users[j]);
+                            return;
+                        }
+                    }
+                }
+            }
         }
     });
 

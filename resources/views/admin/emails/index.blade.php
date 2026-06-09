@@ -53,10 +53,15 @@
                         </td>
                         <td class="text-muted small">{{ $email->created_at->format('M d, Y H:i') }}</td>
                         <td>
-                            <form action="{{ route('admin.emails.destroy', $email) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this email?')">
-                                @csrf @method('DELETE')
-                                <button type="submit" class="btn btn-sm btn-link text-danger p-1" title="Delete" onclick="event.stopPropagation();"><i class="fas fa-trash-alt"></i></button>
-                            </form>
+                            <x-confirm-delete
+                                action="admin.emails.destroy"
+                                :id="$email->id"
+                                label=""
+                                title="Delete Email?"
+                                message="This will permanently delete this email."
+                                mode="form"
+                                class="btn btn-sm btn-link text-danger p-1"
+                            />
                         </td>
                     </tr>
                     @endforeach

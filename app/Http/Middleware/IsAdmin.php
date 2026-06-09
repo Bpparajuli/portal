@@ -10,7 +10,7 @@ class IsAdmin
 {
     public function handle(Request $request, Closure $next)
     {
-        if (!Auth::check() || !in_array(Auth::user()->role, ['superadmin', 'admin'])) {
+        if (!Auth::check() || !(Auth::user()->is_admin || Auth::user()->is_admin_staff)) {
             abort(403, 'Unauthorized. Admin access required.');
         }
         return $next($request);

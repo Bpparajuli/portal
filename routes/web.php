@@ -11,6 +11,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\CourseController;
 use App\Http\Controllers\UniversityController;
 use App\Http\Controllers\ApplicationController;
+use App\Http\Controllers\StudentController;
 use App\Http\Controllers\StudentIntakeController;
 
 
@@ -33,10 +34,7 @@ use App\Http\Controllers\Auth\{
 
 // Admin Controllers
 use App\Http\Controllers\Admin\{
-    ChatController as AdminChatController,
     DashboardController as AdminDashboardController,
-    StudentController as AdminStudentController,
-    UserController as AdminUserController,
     BackupController as AdminBackupController,
     ReminderController as AdminReminderController,
     ApplicationStatusController as AdminApplicationStatusController,
@@ -48,16 +46,18 @@ use App\Http\Controllers\Admin\{
 
 // Agent Controllers
 use App\Http\Controllers\Agent\{
-    ChatController as AgentChatController,
-    DashboardController as AgentDashboardController,
-    StudentController as AgentStudentController,
-    UserController as AgentUserController
+    DashboardController as AgentDashboardController
 };
+
+// Unified Chat Controller (Admin, Agent, Staff)
+use App\Http\Controllers\ChatController;
+
+// Unified User Controller
+use App\Http\Controllers\UserController;
 
 // Staff Controllers
 use App\Http\Controllers\Staff\{
-    DashboardController as StaffDashboardController,
-    StudentController as StaffStudentController
+    DashboardController as StaffDashboardController
 };
 
 // CRM Controllers
@@ -186,14 +186,14 @@ Route::middleware(['auth', \App\Http\Middleware\IsAdmin::class])
         Route::get('dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
 
         // Chat
-        Route::get('chat', [AdminChatController::class, 'usersListView'])->name('chat');
-        Route::get('chat/users', [AdminChatController::class, 'usersList'])->name('chat.users');
-        Route::get('chat/messages/{user}', [AdminChatController::class, 'fetchMessages'])->name('chat.messages');
-        Route::get('chat/new', [AdminChatController::class, 'fetchNewMessages'])->name('chat.new');
-        Route::post('chat/send', [AdminChatController::class, 'sendMessage'])->name('chat.send');
-        Route::delete('chat/delete/{id}', [AdminChatController::class, 'delete'])->name('chat.delete');
-        Route::delete('chat/clear/{user}', [AdminChatController::class, 'clear'])->name('chat.clear');
-        Route::post('chat/typing', [AdminChatController::class, 'typing'])->name('chat.typing');
+        Route::get('chat', [ChatController::class, 'index'])->name('chat');
+        Route::get('chat/users', [ChatController::class, 'usersList'])->name('chat.users');
+        Route::get('chat/messages/{user}', [ChatController::class, 'fetchMessages'])->name('chat.messages');
+        Route::get('chat/new', [ChatController::class, 'fetchNewMessages'])->name('chat.new');
+        Route::post('chat/send', [ChatController::class, 'sendMessage'])->name('chat.send');
+        Route::delete('chat/delete/{id}', [ChatController::class, 'delete'])->name('chat.delete');
+        Route::delete('chat/clear/{user}', [ChatController::class, 'clear'])->name('chat.clear');
+        Route::post('chat/typing', [ChatController::class, 'typing'])->name('chat.typing');
 
         // Notifications
         Route::get('notifications', [NotificationController::class, 'index'])->name('notifications.index');
@@ -205,15 +205,15 @@ Route::middleware(['auth', \App\Http\Middleware\IsAdmin::class])
         Route::delete('notifications', [NotificationController::class, 'deleteAll'])->name('notifications.deleteAll');
 
         // Users — special routes BEFORE resource
-        Route::get('users/waiting', [AdminUserController::class, 'waiting'])->name('users.waiting');
-        Route::put('users/{user:slug}/approve', [AdminUserController::class, 'approve'])->name('users.approve');
+        Route::get('users/waiting', [UserController::class, 'waiting'])->name('users.waiting');
+        Route::put('users/{user:slug}/approve', [UserController::class, 'approve'])->name('users.approve');
         Route::post('users/reminder/send', [AdminReminderController::class, 'sendAgreementReminder'])->name('reminder.send');
-        Route::put('users/{user:slug}/verify-agreement', [AdminUserController::class, 'verifyAgreement'])->name('users.verifyAgreement');
-        Route::delete('/users/{user:slug}/agreement/delete', [AdminUserController::class, 'deleteAgreement'])->name('users.agreement.delete');
-        Route::get('users/{agent:slug}/students', [AdminUserController::class, 'students'])->name('users.students');
-        Route::get('users/{agent:slug}/applications', [AdminUserController::class, 'applications'])->name('users.applications');
-        Route::get('users/get-parents', [AdminUserController::class, 'getParents'])->name('users.get-parents');
-        Route::resource('users', AdminUserController::class)->parameters(['users' => 'user:slug']);
+        Route::put('users/{user:slug}/verify-agreement', [UserController::class, 'verifyAgreement'])->name('users.verifyAgreement');
+        Route::delete('/users/{user:slug}/agreement/delete', [UserController::class, 'deleteAgreement'])->name('users.agreement.delete');
+        Route::get('users/{agent:slug}/students', [UserController::class, 'students'])->name('users.students');
+        Route::get('users/{agent:slug}/applications', [UserController::class, 'applications'])->name('users.applications');
+        Route::get('users/get-parents', [UserController::class, 'getParents'])->name('users.get-parents');
+        Route::resource('users', UserController::class)->parameters(['users' => 'user:slug']);
 
         Route::post('/users/reminder/preview', [AdminReminderController::class, 'previewEmail'])->name('reminder.preview');
         // Dynamic Data
@@ -225,7 +225,7 @@ Route::middleware(['auth', \App\Http\Middleware\IsAdmin::class])
         // Resources
         Route::resources([
             'courses'      => CourseController::class,
-            'students'     => AdminStudentController::class,
+            'students'     => StudentController::class,
             'universities' => UniversityController::class,
         ]);
 
@@ -243,12 +243,13 @@ Route::middleware(['auth', \App\Http\Middleware\IsAdmin::class])
         Route::get('applications/get-courses/{universityId}', [ApplicationController::class, 'getCourses'])->name('applications.get-courses');
         Route::get('students/{student}/applications', [ApplicationController::class, 'forStudent'])->name('students.applications');
         Route::patch('applications/{application}/withdraw', [ApplicationController::class, 'withdraw'])->name('applications.withdraw');
+        Route::patch('applications/{application}/status', [ApplicationController::class, 'updateStatus'])->name('applications.updateStatus');
         Route::post('applications/{application}/add-message', [ApplicationController::class, 'addMessage'])->name('applications.addMessage');
         Route::delete('applications/{application}/messages/{message}', [ApplicationController::class, 'deleteMessage'])->name('applications.messages.delete');
         Route::resource('applications', ApplicationController::class);
 
         // Export routes
-        Route::get('students/export', [AdminStudentController::class, 'export'])->name('students.export');
+        Route::get('students/export', [StudentController::class, 'export'])->name('students.export');
         Route::get('applications/export', [ApplicationController::class, 'export'])->name('applications.export');
         Route::get('exports', [\App\Http\Controllers\Admin\ExportController::class, 'index'])->name('exports.index');
         Route::post('exports/export', [\App\Http\Controllers\Admin\ExportController::class, 'export'])->name('exports.export');
@@ -308,7 +309,7 @@ Route::middleware(['auth', \App\Http\Middleware\IsAdmin::class])
         });
 
         // ========== NEW: ENQUIRIES ==========
-        Route::resource('enquiries', AdminEnquiryController::class)->only(['index', 'show', 'destroy']);
+        Route::resource('enquiries', AdminEnquiryController::class)->only(['index', 'destroy']);
         Route::post('enquiries/{enquiry}/reply', [AdminEnquiryController::class, 'reply'])->name('enquiries.reply');
 
         // ========== TESTIMONIALS ==========
@@ -335,10 +336,11 @@ Route::middleware(['auth', \App\Http\Middleware\IsStaff::class])
         Route::get('/dashboard', [StaffDashboardController::class, 'index'])->name('dashboard');
 
         // Student management
-        Route::get('/students', [StaffStudentController::class, 'index'])->name('students.index');
-        Route::get('/student/{student}', [StaffStudentController::class, 'show'])->name('student.show');
-        Route::get('/student/{student}/edit', [StaffStudentController::class, 'edit'])->name('student.edit');
-        Route::put('/student/{student}', [StaffStudentController::class, 'update'])->name('student.update');
+        Route::get('/students', [StudentController::class, 'index'])->name('students.index');
+        Route::get('/student/{student}', [StudentController::class, 'show'])->name('students.show');
+        Route::get('/student/{student}/edit', [StudentController::class, 'edit'])->name('students.edit');
+        Route::put('/student/{student}', [StudentController::class, 'update'])->name('students.update');
+        Route::delete('/student/{student}', [StudentController::class, 'destroy'])->name('students.destroy');
 
         // Staff document management
         Route::prefix('student/{student}/documents')->name('documents.')->group(function () {
@@ -367,20 +369,28 @@ Route::middleware(['auth', \App\Http\Middleware\IsStaff::class])
         Route::put('/courses/{course}', [CourseController::class, 'update'])->name('courses.update');
 
         // Applications
+        Route::get('/applications/create', [ApplicationController::class, 'create'])->name('applications.create');
+        Route::post('/applications', [ApplicationController::class, 'store'])->name('applications.store');
+        Route::get('/applications/get-courses/{universityId}', [ApplicationController::class, 'getCourses'])->name('applications.get-courses');
         Route::get('/applications', [ApplicationController::class, 'index'])->name('applications.index');
         Route::get('/applications/{application}', [ApplicationController::class, 'show'])->name('applications.show');
+        Route::get('/applications/{application}/edit', [ApplicationController::class, 'edit'])->name('applications.edit');
+        Route::put('/applications/{application}', [ApplicationController::class, 'update'])->name('applications.update');
         Route::patch('/applications/{application}/status', [ApplicationController::class, 'updateStatus'])->name('applications.updateStatus');
+        Route::patch('/applications/{application}/withdraw', [ApplicationController::class, 'withdraw'])->name('applications.withdraw');
+        Route::post('/applications/{application}/add-message', [ApplicationController::class, 'addMessage'])->name('applications.addMessage');
+        Route::delete('/applications/{application}', [ApplicationController::class, 'destroy'])->name('applications.destroy');
 
         // Chat
         Route::prefix('chat')->name('chat.')->group(function () {
-            Route::get('/', [\App\Http\Controllers\Staff\ChatController::class, 'index'])->name('index');
-            Route::get('/users', [\App\Http\Controllers\Staff\ChatController::class, 'usersList'])->name('users');
-            Route::get('/messages/{user}', [\App\Http\Controllers\Staff\ChatController::class, 'fetchMessages'])->name('messages');
-            Route::get('/new', [\App\Http\Controllers\Staff\ChatController::class, 'fetchNewMessages'])->name('new');
-            Route::post('/send', [\App\Http\Controllers\Staff\ChatController::class, 'sendMessage'])->name('send');
-            Route::delete('/delete/{id}', [\App\Http\Controllers\Staff\ChatController::class, 'delete'])->name('delete');
-            Route::delete('/clear/{user}', [\App\Http\Controllers\Staff\ChatController::class, 'clear'])->name('clear');
-            Route::post('/typing', [\App\Http\Controllers\Staff\ChatController::class, 'typing'])->name('typing');
+            Route::get('/', [ChatController::class, 'index'])->name('index');
+            Route::get('/users', [ChatController::class, 'usersList'])->name('users');
+            Route::get('/messages/{user}', [ChatController::class, 'fetchMessages'])->name('messages');
+            Route::get('/new', [ChatController::class, 'fetchNewMessages'])->name('new');
+            Route::post('/send', [ChatController::class, 'sendMessage'])->name('send');
+            Route::delete('/delete/{id}', [ChatController::class, 'delete'])->name('delete');
+            Route::delete('/clear/{user}', [ChatController::class, 'clear'])->name('clear');
+            Route::post('/typing', [ChatController::class, 'typing'])->name('typing');
         });
 
         // Notifications
@@ -392,6 +402,12 @@ Route::middleware(['auth', \App\Http\Middleware\IsStaff::class])
             Route::delete('/{id}', [NotificationController::class, 'delete'])->name('delete');
             Route::delete('/all/delete', [NotificationController::class, 'deleteAll'])->name('deleteAll');
         });
+
+        // User profile (staff can view/edit their own profile)
+        Route::get('/profile/{user:slug}', [UserController::class, 'show'])->name('users.show');
+        Route::get('/profile/{user:slug}/edit', [UserController::class, 'edit'])->name('users.edit');
+        Route::put('/profile/{user:slug}', [UserController::class, 'update'])->name('users.update');
+        Route::post('/profile/{user:slug}/reset-password', [UserController::class, 'resetPassword'])->name('users.reset-password');
     });
 
 /*
@@ -407,14 +423,14 @@ Route::middleware(['auth', \App\Http\Middleware\IsAgent::class])
         Route::get('dashboard', [AgentDashboardController::class, 'index'])->name('dashboard');
 
         // Chat
-        Route::get('chat', [AgentChatController::class, 'usersListView'])->name('chat');
-        Route::get('chat/users', [AgentChatController::class, 'usersList'])->name('chat.users');
-        Route::get('chat/messages/{user}', [AgentChatController::class, 'fetchMessages'])->name('chat.messages');
-        Route::get('chat/new', [AgentChatController::class, 'fetchNewMessages'])->name('chat.new');
-        Route::post('chat/send', [AgentChatController::class, 'sendMessage'])->name('chat.send');
-        Route::delete('chat/delete/{id}', [AgentChatController::class, 'delete'])->name('chat.delete');
-        Route::delete('chat/clear/{user}', [AgentChatController::class, 'clear'])->name('chat.clear');
-        Route::post('chat/typing', [AgentChatController::class, 'typing'])->name('chat.typing');
+        Route::get('chat', [ChatController::class, 'index'])->name('chat');
+        Route::get('chat/users', [ChatController::class, 'usersList'])->name('chat.users');
+        Route::get('chat/messages/{user}', [ChatController::class, 'fetchMessages'])->name('chat.messages');
+        Route::get('chat/new', [ChatController::class, 'fetchNewMessages'])->name('chat.new');
+        Route::post('chat/send', [ChatController::class, 'sendMessage'])->name('chat.send');
+        Route::delete('chat/delete/{id}', [ChatController::class, 'delete'])->name('chat.delete');
+        Route::delete('chat/clear/{user}', [ChatController::class, 'clear'])->name('chat.clear');
+        Route::post('chat/typing', [ChatController::class, 'typing'])->name('chat.typing');
 
         // Notifications
         Route::get('notifications', [NotificationController::class, 'index'])->name('notifications.index');
@@ -433,23 +449,23 @@ Route::middleware(['auth', \App\Http\Middleware\IsAgent::class])
         Route::get('get-courses-by-type/{universityId}/{type}', [UniversityController::class, 'getCoursesByType'])->name('get-courses-by-type');
 
         // Resources (agents get full CRUD on students, read-only on universities/courses)
-        Route::resource('students', AgentStudentController::class);
+        Route::resource('students', StudentController::class);
         Route::get('universities/{university}', [UniversityController::class, 'show'])->name('universities.show');
         Route::resource('courses', CourseController::class)->only(['index', 'show']);
 
         // User management (own profile + staff)
-        Route::get('/users/{user:slug}', [AgentUserController::class, 'show'])->name('users.show');
-        Route::get('/users/{user:slug}/edit', [AgentUserController::class, 'edit'])->name('users.edit');
-        Route::put('/users/{user:slug}', [AgentUserController::class, 'update'])->name('users.update');
-        Route::post('/users/{user:slug}/reset-password', [AgentUserController::class, 'resetPassword'])->name('users.reset-password');
+        Route::get('/users/{user:slug}', [UserController::class, 'show'])->name('users.show');
+        Route::get('/users/{user:slug}/edit', [UserController::class, 'edit'])->name('users.edit');
+        Route::put('/users/{user:slug}', [UserController::class, 'update'])->name('users.update');
+        Route::post('/users/{user:slug}/reset-password', [UserController::class, 'resetPassword'])->name('users.reset-password');
 
         // Staff management (agent creates/manages their own staff)
-        Route::get('/staff/create', [AgentUserController::class, 'createStaff'])->name('staff.create');
-        Route::post('/staff', [AgentUserController::class, 'storeStaff'])->name('staff.store');
-        Route::get('/staff/{user:slug}/edit', [AgentUserController::class, 'editStaff'])->name('staff.edit');
-        Route::put('/staff/{user:slug}', [AgentUserController::class, 'updateStaff'])->name('staff.update');
-        Route::delete('/staff/{user:slug}', [AgentUserController::class, 'destroyStaff'])->name('staff.destroy');
-        Route::get('/staff/{user:slug}', [AgentUserController::class, 'showStaff'])->name('staff.show');
+        Route::get('/staff/create', [UserController::class, 'createStaff'])->name('staff.create');
+        Route::post('/staff', [UserController::class, 'storeStaff'])->name('staff.store');
+        Route::get('/staff/{user:slug}/edit', [UserController::class, 'editStaff'])->name('staff.edit');
+        Route::put('/staff/{user:slug}', [UserController::class, 'updateStaff'])->name('staff.update');
+        Route::delete('/staff/{user:slug}', [UserController::class, 'destroyStaff'])->name('staff.destroy');
+        Route::get('/staff/{user:slug}', [UserController::class, 'showStaff'])->name('staff.show');
 
         // Applications - special routes BEFORE resource
         // Quick start route - MUST be before the resource routes

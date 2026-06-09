@@ -109,13 +109,39 @@
         </div>
         @endif
 
+        @php
+            $unreadNotifications = $notifications->whereNull('read_at')->count() ?? 0;
+            $unreadMessages = isset($messages) ? $messages->whereNull('read_at')->count() : 0;
+            $totalUnread = $unreadNotifications + $unreadMessages;
+        @endphp
+
         <div class="notif-tabs">
-            <button class="notif-tab active" onclick="switchTab('all', this)">All</button>
-            <button class="notif-tab" onclick="switchTab('notifications', this)">Notifications</button>
+            <button class="notif-tab active" onclick="switchTab('all', this)">
+                All
+                @if($totalUnread > 0)
+                    <span class="badge bg-primary rounded-pill ms-1" style="font-size:0.65rem;">{{ $totalUnread }}</span>
+                @endif
+            </button>
+            <button class="notif-tab" onclick="switchTab('notifications', this)">
+                Notifications
+                @if($unreadNotifications > 0)
+                    <span class="badge bg-warning rounded-pill ms-1" style="font-size:0.65rem;">{{ $unreadNotifications }}</span>
+                @endif
+            </button>
             @if(isset($messages))
-            <button class="notif-tab" onclick="switchTab('messages', this)">Messages</button>
+            <button class="notif-tab" onclick="switchTab('messages', this)">
+                Messages
+                @if($unreadMessages > 0)
+                    <span class="badge bg-info rounded-pill ms-1" style="font-size:0.65rem;">{{ $unreadMessages }}</span>
+                @endif
+            </button>
             @endif
-            <button class="notif-tab" onclick="switchTab('unread', this)">Unread</button>
+            <button class="notif-tab" onclick="switchTab('unread', this)">
+                Unread
+                @if($totalUnread > 0)
+                    <span class="badge bg-danger rounded-pill ms-1" style="font-size:0.65rem;">{{ $totalUnread }}</span>
+                @endif
+            </button>
         </div>
 
         <div class="notif-list" id="notifList">
@@ -180,7 +206,11 @@
                     <div class="notif-text">{!! Str::limit(strip_tags($item['text']), 120) !!}</div>
                     <div class="notif-actions">
                         @if($item['url'] && $item['url'] !== '#')
-                            <a href="{{ route($role . '.notifications.markRead', $item['id']) }}?redirect={{ urlencode($item['url']) }}" class="btn btn-xs btn-primary">View</a>
+                            <form action="{{ route($role . '.notifications.markRead', $item['id']) }}" method="POST" class="d-inline">
+                                @csrf
+                                <input type="hidden" name="redirect" value="{{ $item['url'] }}">
+                                <button type="submit" class="btn btn-xs btn-primary">View</button>
+                            </form>
                         @endif
                         <button class="btn btn-xs btn-ghost" onclick="toggleRead('{{ $item['id'] }}', {{ $item['is_unread'] ? 'true' : 'false' }})">
                             <i class="fas {{ $item['is_unread'] ? 'fa-envelope-open' : 'fa-envelope' }}"></i>

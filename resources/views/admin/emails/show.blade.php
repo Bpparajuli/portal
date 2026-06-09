@@ -4,10 +4,15 @@
     <x-page-header :title="$email->subject">
         <x-slot:actions>
             <a href="{{ route('admin.emails.inbox') }}" class="btn btn-outline-secondary"><i class="fas fa-arrow-left me-2"></i>Back</a>
-            <form action="{{ route('admin.emails.destroy', $email) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this email?')">
-                @csrf @method('DELETE')
-                <button type="submit" class="btn btn-outline-danger"><i class="fas fa-trash-alt me-2"></i>Delete</button>
-            </form>
+            <x-confirm-delete
+                action="admin.emails.destroy"
+                :id="$email->id"
+                label="Delete"
+                title="Delete Email?"
+                message="This will permanently delete this email."
+                mode="form"
+                class="btn btn-outline-danger"
+            />
         </x-slot:actions>
     </x-page-header>
 

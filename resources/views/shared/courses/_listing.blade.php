@@ -109,7 +109,80 @@
     <div class="container">
         <div class="uni-listing-grid" style="grid-template-columns:repeat(auto-fill,minmax(280px,1fr))">
             @forelse($courses as $course)
-                @include('shared.course-card', ['courseItem' => $course, 'prefix' => $prefix])
+                @php $c = $course; @endphp
+                @if($c)
+                <div class="card course-card shadow-sm h-100 border-0" data-aos="fade-up">
+                    <div class="card-body d-flex flex-column p-3">
+                        <div class="d-flex align-items-start gap-3 mb-3">
+                            @if($c->university && $c->university->university_logo)
+                                <img src="{{ asset('storage/uni_logo/' . $c->university->university_logo) }}"
+                                     alt="{{ $c->university->name }}"
+                                     class="course-uni-logo border">
+                            @else
+                                <div class="course-uni-logo bg-light d-flex align-items-center justify-content-center border rounded">
+                                    <i class="fas fa-university text-muted"></i>
+                                </div>
+                            @endif
+                            <div class="min-w-0" style="flex:1;min-width:0;">
+                                <h5 class="card-title mb-1">{{ $c->title }}</h5>
+                                @if($c->university)
+                                    <small class="text-muted">{{ $c->university->name }}</small>
+                                @endif
+                            </div>
+                        </div>
+                        <div class="d-flex flex-wrap gap-2 mb-3">
+                            <span class="badge bg-light text-dark border">{{ $c->course_type }}</span>
+                            @if($c->duration)
+                                <span class="badge bg-light text-dark border"><i class="far fa-clock me-1"></i>{{ $c->duration }}</span>
+                            @endif
+                            @if($c->fee)
+                                <span class="badge bg-light text-dark border text-truncate" style="max-width:100%;overflow-wrap:break-word;"><i class="fas fa-tag me-1"></i>{{ $c->fee }}</span>
+                            @endif
+                        </div>
+                        @if($c->description)
+                            <p class="card-text small text-muted flex-grow-1" style="font-size:0.8rem;line-height:1.5;">{{ Str::limit($c->description, 120) }}</p>
+                        @endif
+                        @auth
+                            @php $user = auth()->user(); @endphp
+                            @if($user->is_admin)
+                            <div class="d-flex gap-1 mb-2 flex-wrap">
+                                <a href="{{ route($prefix . '.courses.edit', $c) }}" class="btn btn-sm btn-outline-warning">
+                                    <i class="fas fa-edit"></i> Edit
+                                </a>
+                                @can('delete', $c)
+                                <x-confirm-delete
+                                    action="{{ $prefix }}.courses.destroy"
+                                    :id="$c->id"
+                                    label="Delete"
+                                    title="Delete {{ $c->course_code }}?"
+                                    message="This action cannot be undone."
+                                    class="btn btn-sm btn-outline-danger"
+                                />
+                                @endcan
+                            </div>
+                            @elseif($user->is_agent)
+                            <div class="d-flex gap-1 mb-2">
+                                <a href="{{ route('agent.applications.quick-start', ['course_id' => $c->id]) }}"
+                                   class="btn btn-sm btn-success">
+                                    <i class="fas fa-paper-plane me-1"></i>Apply
+                                </a>
+                            </div>
+                            @elseif($user->is_staff)
+                                @can('update', $c)
+                                <div class="d-flex gap-1 mb-2">
+                                    <a href="{{ route($prefix . '.courses.edit', $c) }}" class="btn btn-sm btn-outline-warning">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </a>
+                                </div>
+                                @endcan
+                            @endif
+                        @endauth
+                        <a href="{{ route($prefix . '.courses.show', $c->id) }}" class="btn btn-primary btn-sm mt-auto align-self-start">
+                            <i class="fas fa-info-circle me-1"></i>View Details
+                        </a>
+                    </div>
+                </div>
+                @endif
             @empty
                 <div class="text-center py-5" style="grid-column:1/-1">
                     <i class="fas fa-search fa-4x text-muted mb-3"></i>

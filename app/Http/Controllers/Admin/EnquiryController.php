@@ -22,13 +22,12 @@ class EnquiryController extends Controller
             });
         }
         $enquiries = $query->paginate(20)->withQueryString();
-        return view('admin.enquiries.index', compact('enquiries'));
+        return view('admin.enquiries', compact('enquiries'));
     }
 
     public function show(Enquiry $enquiry)
     {
-        $enquiry->markAsRead();
-        return view('admin.enquiries.show', compact('enquiry'));
+        return redirect()->route('admin.enquiries.index');
     }
 
     public function reply(Request $request, Enquiry $enquiry)

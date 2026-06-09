@@ -12,7 +12,7 @@ class UniversityPolicy
 
     public function viewAny(User $user): bool { return true; }
     public function view(User $user, University $university): bool { return true; }
-    public function create(User $user): bool { return $user->is_admin || $user->is_staff; }
-    public function update(User $user, University $university): bool { return $user->is_admin || $user->is_staff; }
+    public function create(User $user): bool { return $user->is_admin || $user->is_admin_staff; }
+    public function update(User $user, University $university): bool { return $user->is_admin || $user->is_admin_staff; }
     public function delete(User $user, University $university): bool { return $user->is_admin; }
 }

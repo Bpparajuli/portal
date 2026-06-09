@@ -12,10 +12,10 @@
         </h4>
         <div class="d-flex gap-2">
             @if ($previous)
-            <a href="{{ route($role . '.courses.edit', $previous->id) }}" class="btn btn-outline-secondary btn-sm">← Previous</a>
+            <a href="{{ route($role . '.courses.edit', $previous->id) }}" class="btn btn-outline-secondary btn-sm">&larr; Previous</a>
             @endif
             @if ($next)
-            <a href="{{ route($role . '.courses.edit', $next->id) }}" class="btn btn-outline-primary btn-sm">Next →</a>
+            <a href="{{ route($role . '.courses.edit', $next->id) }}" class="btn btn-outline-primary btn-sm">Next &rarr;</a>
             @endif
         </div>
     </div>
@@ -36,7 +36,105 @@
     <form action="{{ route($role . '.courses.update', $course->id) }}" method="POST">
         @csrf
         @method('PUT')
-        @include('shared.courses._form')
+        <div class="row">
+            <div class="col-12 mb-3">
+                <label for="university_id" class="form-label">University <span class="text-danger">*</span></label>
+                @if(isset($course) && $course->university_id)
+                    <input type="text" class="form-control" value="{{ $course->university->name }} - {{ $course->university->city }}" readonly>
+                    <input type="hidden" name="university_id" value="{{ $course->university_id }}">
+                @else
+                    <select id="university_id" name="university_id" class="form-select @error('university_id') is-invalid @enderror" required>
+                        <option value="">-- Select University --</option>
+                        @foreach($universities as $uni)
+                        <option value="{{ $uni->id }}" {{ old('university_id', $course->university_id) == $uni->id ? 'selected' : '' }}>
+                            {{ $uni->name }} - {{ $uni->city }}
+                        </option>
+                        @endforeach
+                    </select>
+                    @error('university_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                @endif
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label for="title" class="form-label">Title <span class="text-danger">*</span></label>
+                <input type="text" id="title" name="title" value="{{ old('title', $course->title) }}" class="form-control @error('title') is-invalid @enderror" required>
+                @error('title')<div class="invalid-feedback">{{ $message }}</div>@enderror
+            </div>
+            <div class="col-md-6 mb-3">
+                <label for="course_code" class="form-label">Course Code <span class="text-danger">*</span></label>
+                <input type="text" id="course_code" name="course_code" value="{{ old('course_code', $course->course_code) }}" class="form-control @error('course_code') is-invalid @enderror" required>
+                @error('course_code')<div class="invalid-feedback">{{ $message }}</div>@enderror
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <label for="duration" class="form-label">Duration</label>
+                <input type="text" id="duration" name="duration" value="{{ old('duration', $course->duration) }}" class="form-control @error('duration') is-invalid @enderror">
+                @error('duration')<div class="invalid-feedback">{{ $message }}</div>@enderror
+            </div>
+            <div class="col-md-4 mb-3">
+                <label for="fee" class="form-label">Fee</label>
+                <input type="text" id="fee" name="fee" value="{{ old('fee', $course->fee) }}" class="form-control @error('fee') is-invalid @enderror">
+                @error('fee')<div class="invalid-feedback">{{ $message }}</div>@enderror
+            </div>
+            <div class="col-md-4 mb-3">
+                <label for="intakes" class="form-label">Intakes <span class="text-danger">*</span></label>
+                <input type="text" id="intakes" name="intakes" value="{{ old('intakes', $course->intakes) }}" class="form-control @error('intakes') is-invalid @enderror" required>
+                @error('intakes')<div class="invalid-feedback">{{ $message }}</div>@enderror
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <label for="course_type" class="form-label">Course Type</label>
+                <select id="course_type" name="course_type" class="form-select @error('course_type') is-invalid @enderror">
+                    <option value="">-- Select Type --</option>
+                    <option value="UG" {{ old('course_type', $course->course_type) == 'UG' ? 'selected' : '' }}>Undergraduate</option>
+                    <option value="PG" {{ old('course_type', $course->course_type) == 'PG' ? 'selected' : '' }}>Postgraduate</option>
+                    <option value="Diploma" {{ old('course_type', $course->course_type) == 'Diploma' ? 'selected' : '' }}>Diploma</option>
+                </select>
+                @error('course_type')<div class="invalid-feedback">{{ $message }}</div>@enderror
+            </div>
+            <div class="col-md-4 mb-3">
+                <label for="moi_requirement" class="form-label">MOI Requirement</label>
+                <input type="text" id="moi_requirement" name="moi_requirement" value="{{ old('moi_requirement', $course->moi_requirement) }}" class="form-control @error('moi_requirement') is-invalid @enderror">
+                @error('moi_requirement')<div class="invalid-feedback">{{ $message }}</div>@enderror
+            </div>
+            <div class="col-md-4 mb-3">
+                <label for="application_fee" class="form-label">Application Fee</label>
+                <input type="text" id="application_fee" name="application_fee" value="{{ old('application_fee', $course->application_fee) }}" class="form-control @error('application_fee') is-invalid @enderror">
+                @error('application_fee')<div class="invalid-feedback">{{ $message }}</div>@enderror
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label for="academic_requirement" class="form-label">Academic Requirement</label>
+                <input type="text" id="academic_requirement" name="academic_requirement" value="{{ old('academic_requirement', $course->academic_requirement) }}" class="form-control @error('academic_requirement') is-invalid @enderror">
+                @error('academic_requirement')<div class="invalid-feedback">{{ $message }}</div>@enderror
+            </div>
+            <div class="col-md-6 mb-3">
+                <label for="ielts_pte_other_languages" class="form-label">IELTS / PTE / Other</label>
+                <input type="text" id="ielts_pte_other_languages" name="ielts_pte_other_languages" value="{{ old('ielts_pte_other_languages', $course->ielts_pte_other_languages) }}" class="form-control @error('ielts_pte_other_languages') is-invalid @enderror">
+                @error('ielts_pte_other_languages')<div class="invalid-feedback">{{ $message }}</div>@enderror
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label for="scholarships" class="form-label">Scholarships</label>
+                <input type="text" id="scholarships" name="scholarships" value="{{ old('scholarships', $course->scholarships) }}" class="form-control @error('scholarships') is-invalid @enderror">
+                @error('scholarships')<div class="invalid-feedback">{{ $message }}</div>@enderror
+            </div>
+            <div class="col-md-6 mb-3">
+                <label for="course_link" class="form-label">Course Link</label>
+                <input type="url" id="course_link" name="course_link" value="{{ old('course_link', $course->course_link) }}" class="form-control @error('course_link') is-invalid @enderror">
+                @error('course_link')<div class="invalid-feedback">{{ $message }}</div>@enderror
+            </div>
+        </div>
+        <div class="mb-3">
+            <label for="description" class="form-label">Description</label>
+            <textarea id="description" name="description" class="form-control @error('description') is-invalid @enderror" rows="3">{{ old('description', $course->description) }}</textarea>
+            @error('description')<div class="invalid-feedback">{{ $message }}</div>@enderror
+        </div>
         <div class="d-flex justify-content-end mt-3">
             <button type="submit" class="btn btn-success">Update Course</button>
         </div>

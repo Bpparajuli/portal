@@ -94,8 +94,11 @@
                             <i class="fas fa-ellipsis-v"></i>
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end shadow-sm">
-                            @if(Auth::user()->is_agent)
-                                <li><a class="dropdown-item" href="{{ route('agent.users.show', Auth::user()->slug) }}"><i class="fas fa-user me-2"></i>My Profile</a></li>
+                            @php $_u = Auth::user(); @endphp
+                            @if($_u->is_agent)
+                                <li><a class="dropdown-item" href="{{ route('agent.users.show', $_u->slug) }}"><i class="fas fa-user me-2"></i>My Profile</a></li>
+                            @elseif($_u->is_staff)
+                                <li><a class="dropdown-item" href="{{ route('staff.users.show', $_u->slug) }}"><i class="fas fa-user me-2"></i>My Profile</a></li>
                             @endif
                             <li><a class="dropdown-item" href="{{ Auth::user()->is_admin ? route('admin.settings.index') : '#' }}"><i class="fas fa-cog me-2"></i>Settings</a></li>
                             <li><hr class="dropdown-divider"></li>
@@ -119,7 +122,7 @@
     </div>
 
     @include('components.file-preview-modal')
-    @include('shared.delete-modal')
+    @include('components.delete-modal')
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>

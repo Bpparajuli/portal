@@ -13,12 +13,12 @@ class TestimonialController extends Controller
     public function index()
     {
         $testimonials = Testimonial::latest()->paginate(20);
-        return view('admin.testimonials.index', compact('testimonials'));
+        return view('admin.testimonials', compact('testimonials'));
     }
 
     public function create()
     {
-        return view('admin.testimonials.form', ['testimonial' => new Testimonial()]);
+        return redirect()->route('admin.testimonials.index');
     }
 
     public function store(Request $request)
@@ -49,7 +49,7 @@ class TestimonialController extends Controller
 
     public function edit(Testimonial $testimonial)
     {
-        return view('admin.testimonials.form', compact('testimonial'));
+        return redirect()->route('admin.testimonials.index');
     }
 
     public function update(Request $request, Testimonial $testimonial)

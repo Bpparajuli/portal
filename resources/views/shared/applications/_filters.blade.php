@@ -20,7 +20,7 @@
                 @endforeach
             </select>
         </div>
-        @if(auth()->user()->is_admin)
+        @if(auth()->user()->is_admin || auth()->user()->is_admin_staff)
         <div class="col-md-2">
             <select name="agent_filter" class="form-select form-select-sm">
                 <option value="">All Agents</option>

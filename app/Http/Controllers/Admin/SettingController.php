@@ -24,7 +24,7 @@ class SettingController extends Controller
 
         $uploadedImages = $this->getUploadedImages();
 
-        return view('admin.settings.index', compact('settings', 'allSettings', 'groups', 'uploadedImages'));
+        return view('admin.settings', compact('settings', 'allSettings', 'groups', 'uploadedImages'));
     }
 
     public function update(Request $request, Setting $setting)

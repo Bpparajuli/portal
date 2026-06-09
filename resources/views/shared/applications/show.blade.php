@@ -106,7 +106,10 @@
                                     <small class="d-block {{ $msg->type === 'admin' ? 'text-muted' : 'text-white-50' }}">{{ $msg->type === 'admin' ? 'Admin' : 'Agent' }} · {{ $msg->created_at->diffForHumans() }}</small>
                                     @if($msg->message)<p class="mb-1 mt-1">{{ $msg->message }}</p>@endif
                                     @if($msg->file_path)
-                                        <a href="{{ Storage::url($msg->file_path) }}" target="_blank" class="small {{ $msg->type === 'admin' ? '' : 'text-white' }}"><i class="fas fa-paperclip me-1"></i>Attachment</a>
+                                        <a href="{{ Storage::url($msg->file_path) }}" target="_blank" class="small {{ $msg->type === 'admin' ? '' : 'text-white' }} previewable"
+                                           data-url="{{ Storage::url($msg->file_path) }}"
+                                           data-filename="{{ basename($msg->file_path) }}"
+                                           data-preview-type="document"><i class="fas fa-paperclip me-1"></i>Attachment</a>
                                     @endif
                                 </div>
                             </div>
@@ -164,6 +167,16 @@
                         @endcan
                         @can('updateStatus', $application)
                             <button class="btn btn-outline-warning rounded-pill py-2" data-bs-toggle="modal" data-bs-target="#statusModal"><i class="fas fa-exchange-alt me-2"></i>Update Status</button>
+                        @endcan
+                        @can('delete', $application)
+                            <x-confirm-delete
+                                action="{{ $role }}.applications.destroy"
+                                :id="$application->id"
+                                label="Delete Application"
+                                title="Delete Application #{{ $application->application_number }}?"
+                                message="This will permanently delete this application and all associated data. This action cannot be undone."
+                                class="btn btn-outline-danger rounded-pill py-2"
+                            />
                         @endcan
                     </div>
                 </div>

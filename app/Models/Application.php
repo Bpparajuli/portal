@@ -73,6 +73,11 @@ class Application extends Model
         return $this->hasMany(ApplicationMessage::class, 'application_id');
     }
 
+    public function statusHistories()
+    {
+        return $this->hasMany(ApplicationStatusHistory::class);
+    }
+
     public function scopeAccessible($query)
     {
         $user = auth()->user();

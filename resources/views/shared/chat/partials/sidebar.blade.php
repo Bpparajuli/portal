@@ -12,18 +12,7 @@
         </div>
     </div>
 
-    @if($showRoleFilter)
-    <div class="chat-type-selector">
-        <select id="chatTypeFilter" onchange="filterByType(this.value)">
-            <option value="all">All Users</option>
-            <option value="admin">Admins</option>
-            <option value="agent">Agents</option>
-            <option value="staff">Team Members</option>
-        </select>
-    </div>
-    @endif
-
-    <div class="user-list" id="userList">
+    <div class="user-list accordion" id="chatAccordion">
         <div class="text-center mt-4 text-muted small">Loading...</div>
     </div>
 </div>

@@ -14,7 +14,7 @@ class ExportController extends Controller
 {
     public function index()
     {
-        return view('admin.exports.index');
+        return view('admin.exports');
     }
 
     public function export(Request $request)
