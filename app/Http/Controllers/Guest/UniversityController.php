@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Guest;
 
 use App\Http\Controllers\Controller;
-use App\Http\Controllers\Traits\HasUniversityFilters;
+use App\Services\HasUniversityFilters;
 use App\Models\University;
 use Illuminate\Http\Request;
 

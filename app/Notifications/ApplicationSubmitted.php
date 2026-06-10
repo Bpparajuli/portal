@@ -6,8 +6,8 @@ use App\Models\Application;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 use Illuminate\Notifications\Messages\MailMessage;
-use App\Helpers\ActivityLogger;
-use App\Helpers\HasActivityLink;
+use App\Services\ActivityLogger;
+use App\Services\HasActivityLink;
 
 class ApplicationSubmitted extends Notification
 {
@@ -64,7 +64,7 @@ class ApplicationSubmitted extends Notification
 
         ActivityLogger::log(
             'application_submitted',
-            "📨 Application submitted for {$student->first_name} {$student->last_name} to {$university->short_name} on {$course->title}.",
+            "ðŸ“¨ Application submitted for {$student->first_name} {$student->last_name} to {$university->short_name} on {$course->title}.",
             $app->id,
             $link,
             $agent->id

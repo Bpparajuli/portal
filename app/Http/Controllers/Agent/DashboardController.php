@@ -9,6 +9,7 @@ use App\Models\Course;
 use App\Models\Student;
 use App\Models\Activity;
 use App\Models\ApplicationStatus;
+use App\Services\DashboardService;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -16,82 +17,60 @@ use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
+    protected $dashboardService;
+
+    public function __construct(DashboardService $dashboardService)
+    {
+        $this->dashboardService = $dashboardService;
+    }
+
     public function index(Request $request)
     {
         $agentId = Auth::id();
 
         // ---------- BASIC METRICS ----------
         $totalStudents = Student::where('agent_id', $agentId)->count();
-
         $totalApplications = Application::where('agent_id', $agentId)->count();
+        $today = Carbon::today();
+
+        $thisMonthStudents = Student::where('agent_id', $agentId)
+            ->whereMonth('created_at', now()->month)->whereYear('created_at', now()->year)->count();
+
+        $thisMonthApps = Application::where('agent_id', $agentId)
+            ->whereMonth('created_at', now()->month)->whereYear('created_at', now()->year)->count();
 
         // ---------- VISA CONVERSION ----------
         $visaApprovedStatusId = ApplicationStatus::where('name', 'Visa Approved')->value('id');
-
         $visaApproved = Application::where('agent_id', $agentId)
-            ->where('application_status_id', $visaApprovedStatusId)
-            ->count();
-
+            ->where('application_status_id', $visaApprovedStatusId)->count();
         $visaConversionPercent = $totalApplications > 0
-            ? round(($visaApproved / $totalApplications) * 100, 1)
-            : 0;
+            ? round(($visaApproved / $totalApplications) * 100, 1) : 0;
+
+        // ---------- GROWTH / TRENDS ----------
+        $appGrowth = $this->dashboardService->applicationGrowth($agentId);
+        $weeklyData = $this->dashboardService->weeklyTrendData($agentId);
+        $weeklyLabels = $weeklyData['labels'];
+        $weeklyAppsData = $weeklyData['applications'];
+        $weeklyStudentsData = $weeklyData['students'];
 
         // ---------- STATUS (ONLY WITH APPLICATIONS) ----------
         $statuses = ApplicationStatus::where('is_active', 1)
-            ->whereHas('applications', function ($q) use ($agentId) {
-                $q->where('agent_id', $agentId);
-            })
-            ->withCount(['applications' => function ($q) use ($agentId) {
-                $q->where('agent_id', $agentId);
-            }])
+            ->whereHas('applications', fn($q) => $q->where('agent_id', $agentId))
+            ->withCount(['applications' => fn($q) => $q->where('agent_id', $agentId)])
             ->orderBy('sort_order')
             ->get();
 
         $statusLabels = $statuses->pluck('name')->values();
         $statusCounts = $statuses->pluck('applications_count')->values();
-        $statusColors = $statuses->map(function ($status) {
-            return $status->bg_color ?? '#6b7280';
-        })->values();
+        $statusColors = $statuses->map(fn($s) => $s->bg_color ?? '#6b7280')->values();
 
-        // ---------- UNIVERSITY CHART ----------
-        $universityChartData = $this->applicationsByUniversityChart($agentId);
+        $statusChartData = $this->dashboardService->applicationsByStatusChart($agentId);
 
-        // ---------- COURSE TYPE CHART ----------
-        $courseTypeData = Application::where('agent_id', $agentId)
-            ->join('courses', 'applications.course_id', '=', 'courses.id')
-            ->select('courses.course_type', DB::raw('COUNT(*) as total'))
-            ->groupBy('courses.course_type')
-            ->get();
+        // ---------- CHARTS ----------
+        $universityChartData = $this->dashboardService->applicationsByUniversityChart($agentId, 10);
+        $monthlyApps = $this->dashboardService->monthlyApplicationsChart(null, $agentId);
 
-        $courseTypeLabels = $courseTypeData->pluck('course_type')->toArray();
-        $courseTypeValues = $courseTypeData->pluck('total')->toArray();
-
-        // ---------- ACTIVITIES ----------
-        $studentActivities = Activity::where('user_id', $agentId)
-            ->whereIn('type', ['student_added', 'student_deleted'])
-            ->latest()->take(5)->get();
-
-        $documentActivities = Activity::where('user_id', $agentId)
-            ->whereIn('type', ['document_uploaded', 'document_deleted'])
-            ->latest()->take(5)->get();
-
-        $applicationActivities = Activity::where('user_id', $agentId)
-            ->whereIn('type', ['application_submitted', 'application_withdrawn'])
-            ->latest()->take(5)->get();
-
-        $todayActivitiesCount = Activity::where('user_id', $agentId)
-            ->whereIn('type', [
-                'student_added',
-                'student_deleted',
-                'document_uploaded',
-                'document_deleted',
-                'application_submitted',
-                'application_withdrawn'
-            ])
-            ->whereDate('created_at', Carbon::today())
-            ->count();
-
-        // ---------- TOP UNIVERSITIES ----------
+        // ---------- TOP LISTS ----------
         $topUniversities = University::select('universities.id', 'universities.name', 'universities.short_name')
             ->join('applications', 'applications.university_id', '=', 'universities.id')
             ->where('applications.agent_id', $agentId)
@@ -101,102 +80,98 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
 
-        // ---------- FILTERS ----------
+        $topCourses = Course::whereHas('applications', fn($q) => $q->where('agent_id', $agentId))
+            ->withCount(['applications' => fn($q) => $q->where('agent_id', $agentId)])
+            ->orderByDesc('applications_count')
+            ->take(5)
+            ->get();
+
+        // ---------- LATEST APPLICATIONS ----------
+        $latestApplications = Application::with(['student', 'course', 'university', 'status'])
+            ->where('agent_id', $agentId)->latest()->take(10)->get();
+
+        // ---------- ACTIVITIES (grouped by type+student+date) ----------
+        $baseTypes = ['student_added','student_deleted'];
+        $appTypes  = ['application_submitted','application_withdrawn','application_status_changed'];
+        $docTypes  = ['document_uploaded','document_deleted'];
+
+        $studentGroups = $this->dashboardService->groupActivities(
+            Activity::with('student', 'user')->where('user_id', $agentId)
+                ->whereIn('type', $baseTypes)->latest()->take(50)->get()
+        );
+        $studentActivities = $studentGroups->take(7)->map(function ($g) {
+            return (object) [
+                'link' => $g['notifiable_id'] && in_array($g['type'], ['student_added','student_deleted'])
+                    ? route('agent.students.show', $g['notifiable_id']) : '#',
+                'description' => $this->dashboardService->formatGroupedDescription($g, 'agent'),
+                'user' => $g['user'],
+                'created_at' => $g['latest'],
+            ];
+        });
+
+        $appGroups = $this->dashboardService->groupActivities(
+            Activity::with('application', 'user')->where('user_id', $agentId)
+                ->whereIn('type', $appTypes)->latest()->take(50)->get()
+        );
+        $applicationActivities = $appGroups->take(7)->map(function ($g) {
+            return (object) [
+                'link' => $g['notifiable_id']
+                    ? route('agent.applications.show', $g['notifiable_id']) : '#',
+                'description' => $this->dashboardService->formatGroupedDescription($g, 'agent'),
+                'user' => $g['user'],
+                'created_at' => $g['latest'],
+            ];
+        });
+
+        $docGroups = $this->dashboardService->groupActivities(
+            Activity::with('student', 'user')->where('user_id', $agentId)
+                ->whereIn('type', $docTypes)->latest()->take(50)->get()
+        );
+        $documentActivities = $docGroups->take(7)->map(function ($g) {
+            return (object) [
+                'link' => '#',
+                'description' => $this->dashboardService->formatGroupedDescription($g, 'agent'),
+                'user' => $g['user'],
+                'created_at' => $g['latest'],
+            ];
+        });
+
+        $todayActivitiesCount = Activity::where('user_id', $agentId)
+            ->whereIn('type', array_merge($baseTypes, $appTypes, $docTypes))
+            ->whereDate('created_at', $today)->count();
+
+        // ---------- FILTERS (university list) ----------
         $countries = University::select('country')->distinct()->pluck('country');
         $query = University::with('courses');
-
         if ($request->filled('search')) {
             $keyword = $request->search;
-            $query->where(function ($q) use ($keyword) {
-                $q->where('name', 'like', "%{$keyword}%")
-                    ->orWhereHas('courses', fn($qc) => $qc->where('title', 'like', "%{$keyword}%"));
-            });
+            $query->where(fn($q) => $q->where('name', 'like', "%{$keyword}%")
+                ->orWhereHas('courses', fn($qc) => $qc->where('title', 'like', "%{$keyword}%")));
         }
-
         if ($request->filled('country')) $query->where('country', $request->country);
         if ($request->filled('city')) $query->where('city', $request->city);
         if ($request->filled('university_id')) $query->where('id', $request->university_id);
-        if ($request->filled('course_id')) {
+        if ($request->filled('course_id'))
             $query->whereHas('courses', fn($q) => $q->where('id', $request->course_id));
-        }
-
         $universities = $query->paginate(10)->withQueryString();
 
-        return view('agent.dashboard', compact(
-            'totalStudents',
-            'totalApplications',
-            'visaApproved',
-            'visaConversionPercent',
-            'statuses',
-            'statusLabels',
-            'statusCounts',
-            'statusColors',
-            'universityChartData',
-            'studentActivities',
-            'documentActivities',
-            'applicationActivities',
+        return view('dashboard.agent-dashboard', compact(
+            'totalStudents','totalApplications',
+            'thisMonthStudents','thisMonthApps',
+            'visaApproved','visaConversionPercent',
+            'appGrowth',
+            'weeklyLabels','weeklyAppsData','weeklyStudentsData',
+            'statuses','statusLabels','statusCounts','statusColors','statusChartData',
+            'universityChartData','monthlyApps',
+            'topUniversities','topCourses',
+            'latestApplications',
+            'studentActivities','documentActivities','applicationActivities',
             'todayActivitiesCount',
-            'countries',
-            'universities',
-            'courseTypeLabels',
-            'courseTypeValues',
-            'topUniversities'
+            'countries','universities'
         ));
     }
 
-    /**
-     * Applications by University Chart Data
-     */
-    private function applicationsByUniversityChart($agentId)
-    {
-        $data = DB::table('applications')
-            ->join('universities', 'applications.university_id', '=', 'universities.id')
-            ->where('applications.agent_id', $agentId)
-            ->select(
-                'universities.short_name',
-                DB::raw('COUNT(applications.id) as count')
-            )
-            ->groupBy('universities.short_name')
-            ->orderByDesc('count')
-            ->limit(10)
-            ->get();
-
-        $labels = $data->pluck('short_name')->toArray();
-        $counts = $data->pluck('count')->toArray();
-
-        $baseColors = [
-            '#3b82f6',
-            '#60a5fa',
-            '#818cf8',
-            '#facc15',
-            '#22c55e',
-            '#ef4444',
-            '#8b5cf6',
-            '#f97316',
-            '#0ea5e9',
-            '#16a34a'
-        ];
-
-        $colors = [];
-        foreach ($labels as $i => $label) {
-            $colors[] = $baseColors[$i % count($baseColors)];
-        }
-
-        return [
-            'labels' => $labels,
-            'datasets' => [[
-                'label' => 'Applications',
-                'data' => $counts,
-                'backgroundColor' => $colors,
-                'borderColor' => '#fff',
-                'borderWidth' => 2
-            ]]
-        ];
-    }
-
-    /**
-     * Get default color for status if not set in DB
-     */
+    // Chart methods extracted to App\Services\DashboardService
 
 
     // ---------- AJAX FILTERS ----------

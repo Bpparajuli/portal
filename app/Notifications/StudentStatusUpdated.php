@@ -5,8 +5,8 @@ namespace App\Notifications;
 use App\Models\Student;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
-use App\Helpers\ActivityLogger;
-use App\Helpers\HasActivityLink;
+use App\Services\ActivityLogger;
+use App\Services\HasActivityLink;
 
 class StudentStatusUpdated extends Notification
 {
@@ -35,7 +35,7 @@ class StudentStatusUpdated extends Notification
         // Log the activity
         ActivityLogger::log(
             'student_status_updated',
-            "📘 Updated status to {$status} for student {$studentName}",
+            "ðŸ“˜ Updated status to {$status} for student {$studentName}",
             $this->student->id,
             $link,
             $notifiable->id

@@ -1,10 +1,18 @@
-@extends('layouts.app')
+@php
+    $__user = auth()->user();
+    $__isAgent = $__user->is_agent;
+    $__isStaff = $__user->is_staff && !$__user->is_admin_staff;
+    $__layout = $__isAgent ? 'layouts.agent' : ($__isStaff ? 'layouts.staff' : 'layouts.admin');
+    $__section = $__isAgent ? 'agent-content' : ($__isStaff ? 'staff-content' : 'admin-content');
+    $role = $__user->role;
+@endphp
 
-@php $role = auth()->user()->role; @endphp
+@extends($__layout)
 
 @section('title', 'Add University')
+@section('page-title', 'Add University')
 
-@section('content')
+@section($__section)
 <div class="container-fluid px-3 py-3">
     <h4 class="fw-bold mb-3"><i class="fas fa-plus-circle text-primary me-2"></i>Add New University</h4>
 
@@ -50,7 +58,7 @@
             @error('university_logo')<div class="invalid-feedback">{{ $message }}</div>@enderror
         </div>
         <div class="d-flex justify-content-between mt-3">
-            <a href="{{ route($role . '.universities.index') }}" class="btn btn-secondary">Cancel</a>
+            <a href="{{ route($role === 'staff' ? 'staff.universities' : $role . '.universities.index') }}" class="btn btn-secondary">Cancel</a>
             <button type="submit" class="btn btn-success">Add University</button>
         </div>
     </form>

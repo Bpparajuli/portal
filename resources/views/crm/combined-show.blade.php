@@ -1657,7 +1657,7 @@
                                     <div class="task-box-header" style="color: #ef4444;">⚠️ Overdue Tasks
                                         ({{ $dueTasks->count() }})</div>
                                     @foreach ($dueTasks as $task)
-                                        @include('crm.partials.task-item', [
+                                        @include('crm.components.tasks.task-item', [
                                             'task' => $task,
                                             'type' => 'overdue',
                                             'canEdit' => $canEdit,
@@ -1671,7 +1671,7 @@
                                     <div class="task-box-header" style="color: #10b981;">📅 Today's Tasks
                                         ({{ $todayTasks->count() }})</div>
                                     @foreach ($todayTasks as $task)
-                                        @include('crm.partials.task-item', [
+                                        @include('crm.components.tasks.task-item', [
                                             'task' => $task,
                                             'type' => 'today',
                                             'canEdit' => $canEdit,
@@ -1685,7 +1685,7 @@
                                     <div class="task-box-header" style="color: #3b82f6;">🗓 Upcoming Tasks
                                         ({{ $plannedTasks->count() }})</div>
                                     @foreach ($plannedTasks as $task)
-                                        @include('crm.partials.task-item', [
+                                        @include('crm.components.tasks.task-item', [
                                             'task' => $task,
                                             'type' => 'upcoming',
                                             'canEdit' => $canEdit,

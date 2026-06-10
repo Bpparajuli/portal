@@ -8,8 +8,8 @@ use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 use Illuminate\Notifications\Messages\MailMessage;
-use App\Helpers\ActivityLogger;
-use App\Helpers\HasActivityLink;
+use App\Services\ActivityLogger;
+use App\Services\HasActivityLink;
 
 class DocumentUploaded extends Notification
 {
@@ -60,7 +60,7 @@ class DocumentUploaded extends Notification
 
         ActivityLogger::log(
             'document_uploaded',
-            "📤 {$doc->document_type} uploaded for {$this->student->first_name} {$this->student->last_name}",
+            "ðŸ“¤ {$doc->document_type} uploaded for {$this->student->first_name} {$this->student->last_name}",
             $this->student->id,
             $link,
             $this->agent->id

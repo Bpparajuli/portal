@@ -11,6 +11,9 @@
 
 @extends($__layout)
 
+@section('title', 'Students')
+@section('page-title', 'Students')
+
 @push('styles')
     <link rel="stylesheet" href="{{ asset('css/students.css') }}">
     @if ($__isAgent)
@@ -92,8 +95,64 @@
         @endif
 
         {{-- ═══════════════════════════════════════════════════════════════════ --}}
-        {{-- AGENT STATS CARDS --}}
+        {{-- STATS CARDS --}}
         {{-- ═══════════════════════════════════════════════════════════════════ --}}
+        @if ($__isMgmt && isset($adminTotalStudents))
+            <div class="row g-3 mb-4">
+                <div class="col-sm-6 col-xl-3">
+                    <div class="card border-0 h-100 shadow-sm" style="border-radius:12px;">
+                        <div class="card-body d-flex align-items-center gap-3 p-3">
+                            <div class="rounded-3 p-3" style="background:rgba(79,70,229,0.1);">
+                                <i class="fas fa-users fa-lg" style="color:#4f46e5;"></i>
+                            </div>
+                            <div>
+                                <div class="small text-muted">Total Students</div>
+                                <div class="fs-4 fw-bold" style="color:#1e293b;">{{ number_format($adminTotalStudents) }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6 col-xl-3">
+                    <div class="card border-0 h-100 shadow-sm" style="border-radius:12px;">
+                        <div class="card-body d-flex align-items-center gap-3 p-3">
+                            <div class="rounded-3 p-3" style="background:rgba(14,165,233,0.1);">
+                                <i class="fas fa-file-alt fa-lg" style="color:#0ea5e9;"></i>
+                            </div>
+                            <div>
+                                <div class="small text-muted">Applications</div>
+                                <div class="fs-4 fw-bold" style="color:#1e293b;">{{ number_format($adminTotalApplied) }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6 col-xl-3">
+                    <div class="card border-0 h-100 shadow-sm" style="border-radius:12px;">
+                        <div class="card-body d-flex align-items-center gap-3 p-3">
+                            <div class="rounded-3 p-3" style="background:rgba(16,185,129,0.1);">
+                                <i class="fas fa-user-tie fa-lg" style="color:#10b981;"></i>
+                            </div>
+                            <div>
+                                <div class="small text-muted">Active Agents</div>
+                                <div class="fs-4 fw-bold" style="color:#1e293b;">{{ number_format($adminActiveAgents) }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6 col-xl-3">
+                    <div class="card border-0 h-100 shadow-sm" style="border-radius:12px;">
+                        <div class="card-body d-flex align-items-center gap-3 p-3">
+                            <div class="rounded-3 p-3" style="background:rgba(245,158,11,0.1);">
+                                <i class="fas fa-file-upload fa-lg" style="color:#f59e0b;"></i>
+                            </div>
+                            <div>
+                                <div class="small text-muted">With Documents</div>
+                                <div class="fs-4 fw-bold" style="color:#1e293b;">{{ number_format($adminDocsComplete) }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endif
         @if ($__isAgent && isset($totalStudents))
             <div class="row g-3 mb-4">
                 @foreach ([['label' => 'Total Students', 'value' => $totalStudents, 'icon' => 'fa-users', 'color' => 'primary'], ['label' => 'Total Applied', 'value' => $totalApplied ?? 0, 'icon' => 'fa-paper-plane', 'color' => 'info'], ['label' => 'Admitted/Enrolled', 'value' => $admittedEnrolled ?? 0, 'icon' => 'fa-user-graduate', 'color' => 'success'], ['label' => 'Docs Complete', 'value' => $documentCompleted ?? 0, 'icon' => 'fa-file-alt', 'color' => 'warning']] as $stat)
@@ -237,110 +296,46 @@
         @endif
 
         {{-- ═══════════════════════════════════════════════════════════════════ --}}
-        {{-- PRIMARY TABLE --}}
+        {{-- PRIMARY TABLE (unified data-table component) --}}
         {{-- ═══════════════════════════════════════════════════════════════════ --}}
         @php $primaryStudents = $table1Students ?? $students ?? collect(); @endphp
-        <div class="card border-0 shadow-sm mb-4" style="border-radius:12px;overflow:hidden;">
-            <div class="d-flex justify-content-between align-items-center px-3 py-2"
-                style="background:var(--primary);color:#fff;">
-                <h6 class="mb-0 fw-semibold">
-                    <i class="fa-solid fa-table me-2" style="opacity:0.5;"></i>
-                    {{ $__isMgmt ? 'All Students' : ($__isAgent ? 'All Students' : 'Students') }}
-                </h6>
-                <small>{{ $primaryStudents->total() ?? $primaryStudents->count() }} student(s)</small>
-            </div>
-            <div class="table-responsive">
-                <table class="table align-middle mb-0" style="font-size:0.78rem;">
-                    <thead>
-                        <tr>
-                            <th
-                                style="padding:0.6rem 0.7rem;font-size:0.65rem;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;color:rgba(255,255,255,0.85);background:var(--primary) !important;border-bottom:2px solid var(--primary-dark) !important;">
-                                Student</th>
-                            <th
-                                style="padding:0.6rem 0.7rem;font-size:0.65rem;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;color:rgba(255,255,255,0.85);background:var(--primary) !important;border-bottom:2px solid var(--primary-dark) !important;">
-                                Contact</th>
-                            @if (!$__isAgent)
-                                <th
-                                    style="padding:0.6rem 0.7rem;font-size:0.65rem;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;color:rgba(255,255,255,0.85);background:var(--primary) !important;border-bottom:2px solid var(--primary-dark) !important;">
-                                    Agent</th>
-                            @endif
-                            <th
-                                style="padding:0.6rem 0.7rem;font-size:0.65rem;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;color:rgba(255,255,255,0.85);background:var(--primary) !important;border-bottom:2px solid var(--primary-dark) !important;">
-                                Status</th>
-                            @if (!$__isStaff)
-                                <th
-                                    style="padding:0.6rem 0.7rem;font-size:0.65rem;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;color:rgba(255,255,255,0.85);background:var(--primary) !important;border-bottom:2px solid var(--primary-dark) !important;">
-                                    Documents</th>
-                            @endif
-                            <th
-                                style="padding:0.6rem 0.7rem;font-size:0.65rem;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;color:rgba(255,255,255,0.85);text-align:right;width:100px;background:var(--primary) !important;border-bottom:2px solid var(--primary-dark) !important;">
-                                Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @include('shared.students._table-rows', [
-                            'students' => $primaryStudents,
-                            '__prefix' => $__prefix,
-                            '__routePrefix' => $__routePrefix,
-                            '__isAgent' => $__isAgent,
-                            '__isStaff' => $__isStaff,
-                            '__isMgmt' => $__isMgmt,
-                            'totalRequiredDocs' => $totalRequiredDocs,
-                        ])
-                    </tbody>
-                </table>
-            </div>
-            @if ($primaryStudents->hasPages())
-                <div class="card-footer bg-white border-top d-flex justify-content-center py-3">
-                    {{ $primaryStudents->appends(request()->query())->links() }}
-                </div>
-            @endif
-        </div>
+        <x-data-table
+            title="{{ $__isMgmt ? 'All Students' : ($__isAgent ? 'All Students' : 'Students') }}"
+            :headers="array_merge(
+                ['Student', 'Contact'],
+                $__isAgent ? [] : ['Agent'],
+                ['Status'],
+                $__isStaff ? [] : ['Documents'],
+                ['Action']
+            )"
+            :rows="$primaryStudents"
+            row-view="components.data-table.student-row"
+            :route-prefix="$__routePrefix"
+            :total-required-docs="$totalRequiredDocs"
+            :is-agent="$__isAgent"
+            :is-staff="$__isStaff"
+            :is-mgmt="$__isMgmt"
+            :pagination="$primaryStudents->hasPages() ? $primaryStudents : null"
+            searchable="false"
+        />
 
         {{-- ═══════════════════════════════════════════════════════════════════ --}}
-        {{-- ADMIN: SECONDARY TABLE (partner agents) --}}
+        {{-- ADMIN: SECONDARY TABLE (partner agents, via unified component) --}}
         {{-- ═══════════════════════════════════════════════════════════════════ --}}
         @if ($__isMgmt && isset($table2Students) && $table2Students->total())
-            <div class="card border-0 shadow-sm mb-4" style="border-radius:12px;overflow:hidden;">
-                <div class="d-flex justify-content-between align-items-center px-3 py-2"
-                    style="background:var(--primary);color:#fff;">
-                    <h6 class="mb-0 fw-semibold">
-                        <i class="fa-solid fa-table me-2" style="opacity:0.5;"></i>
-                        Students of Partner Agents
-                    </h6>
-                    <small>{{ $table2Students->total() }} student(s)</small>
-                </div>
-                <div class="table-responsive">
-                    <table class="table align-middle mb-0" style="font-size:0.78rem;">
-                        <thead>
-                            <tr>
-                                <th style="padding:0.6rem 0.7rem;font-size:0.65rem;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;color:rgba(255,255,255,0.85);background:var(--primary) !important;border-bottom:2px solid var(--primary-dark) !important;">Student</th>
-                                <th style="padding:0.6rem 0.7rem;font-size:0.65rem;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;color:rgba(255,255,255,0.85);background:var(--primary) !important;border-bottom:2px solid var(--primary-dark) !important;">Contact</th>
-                                <th style="padding:0.6rem 0.7rem;font-size:0.65rem;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;color:rgba(255,255,255,0.85);background:var(--primary) !important;border-bottom:2px solid var(--primary-dark) !important;">Agent</th>
-                                <th style="padding:0.6rem 0.7rem;font-size:0.65rem;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;color:rgba(255,255,255,0.85);background:var(--primary) !important;border-bottom:2px solid var(--primary-dark) !important;">Status</th>
-                                <th style="padding:0.6rem 0.7rem;font-size:0.65rem;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;color:rgba(255,255,255,0.85);background:var(--primary) !important;border-bottom:2px solid var(--primary-dark) !important;">Documents</th>
-                                <th style="padding:0.6rem 0.7rem;font-size:0.65rem;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;color:rgba(255,255,255,0.85);text-align:right;width:100px;background:var(--primary) !important;border-bottom:2px solid var(--primary-dark) !important;">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @include('shared.students._table-rows', [
-                                'students' => $table2Students,
-                                '__prefix' => $__prefix,
-                                '__routePrefix' => $__routePrefix,
-                                '__isAgent' => false,
-                                '__isStaff' => false,
-                                '__isMgmt' => $__isMgmt,
-                                'totalRequiredDocs' => $totalRequiredDocs,
-                            ])
-                        </tbody>
-                    </table>
-                </div>
-                @if ($table2Students->hasPages())
-                    <div class="card-footer bg-white border-top d-flex justify-content-center py-3">
-                        {{ $table2Students->appends(request()->query())->links() }}
-                    </div>
-                @endif
-            </div>
+            <x-data-table
+                title="Students of Partner Agents"
+                :headers="['Student', 'Contact', 'Agent', 'Status', 'Documents', 'Action']"
+                :rows="$table2Students"
+                row-view="components.data-table.student-row"
+                :route-prefix="$__routePrefix"
+                :total-required-docs="$totalRequiredDocs"
+                :is-agent="false"
+                :is-staff="false"
+                :is-mgmt="$__isMgmt"
+                :pagination="$table2Students->hasPages() ? $table2Students : null"
+                searchable="false"
+            />
         @endif
 
     </div>

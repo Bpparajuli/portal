@@ -7,8 +7,8 @@ use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 use Illuminate\Notifications\Messages\MailMessage;
-use App\Helpers\ActivityLogger;
-use App\Helpers\HasActivityLink;
+use App\Services\ActivityLogger;
+use App\Services\HasActivityLink;
 
 class ApplicationStatusUpdated extends Notification
 {
@@ -58,7 +58,7 @@ class ApplicationStatusUpdated extends Notification
 
         ActivityLogger::log(
             'application_status_updated',
-            "📄 Status updated to {$app->application_status} for {$student->first_name} {$student->last_name} by {$this->updatedBy->name}.",
+            "ðŸ“„ Status updated to {$app->application_status} for {$student->first_name} {$student->last_name} by {$this->updatedBy->name}.",
             $app->id,
             $link,
             $this->updatedBy->id
@@ -66,7 +66,7 @@ class ApplicationStatusUpdated extends Notification
 
         return [
             'type' => 'application_status_updated',
-            'message' => "📄 Status updated to {$app->application_status} for {$student->first_name} {$student->last_name} by {$this->updatedBy->name}.",
+            'message' => "ðŸ“„ Status updated to {$app->application_status} for {$student->first_name} {$student->last_name} by {$this->updatedBy->name}.",
             'application' => [
                 'id' => $app->id,
                 'number' => $app->application_number,

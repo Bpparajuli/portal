@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Str;
 use App\Notifications\UserRegistered;
-use App\Contracts\FileUploadServiceInterface;
+use App\Services\FileUploadService;
 use Illuminate\Support\Facades\Log;
 
 class RegisterController extends Controller
@@ -21,7 +21,7 @@ class RegisterController extends Controller
      * This ensures only guests can access registration
      */
     public function __construct(
-        private readonly FileUploadServiceInterface $fileUploadService,
+        private readonly FileUploadService $fileUploadService,
     ) {
         // Only guests can access registration
         $this->middleware('guest')->except('logout');
@@ -57,7 +57,7 @@ class RegisterController extends Controller
         }
 
         // Show registration form for guests only
-        return view('auth.register');
+        return view('guest.auth.register');
     }
 
     /**

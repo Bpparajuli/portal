@@ -7,7 +7,7 @@
     };
     $section = match($role) {
         'admin' => 'admin-content',
-        'agent' => 'content',
+        'agent' => 'agent-content',
         'staff' => 'staff-content',
     };
     $routePrefix = match($role) {
@@ -19,6 +19,8 @@
 @endphp
 
 @extends($layout)
+@section('title', 'Chat')
+@section('page-title', 'Chat')
 @section($section)
 
 @push('styles')

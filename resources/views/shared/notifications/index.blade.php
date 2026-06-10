@@ -1,10 +1,18 @@
-@extends('layouts.app')
+@php
+    $__user = auth()->user();
+    $__isAgent = $__user->is_agent;
+    $__isStaff = $__user->is_staff && !$__user->is_admin_staff;
+    $__layout = $__isAgent ? 'layouts.agent' : ($__isStaff ? 'layouts.staff' : 'layouts.admin');
+    $__section = $__isAgent ? 'agent-content' : ($__isStaff ? 'staff-content' : 'admin-content');
+    $role = $__user->role;
+@endphp
 
-@php $role = auth()->user()->role; @endphp
+@extends($__layout)
 
 @section('title', 'Notifications')
+@section('page-title', 'Notifications')
 
-@section('content')
+@section($__section)
 <style>
 .notif-page { max-width: 900px; margin: 0 auto; }
 .notif-header {
@@ -263,8 +271,8 @@ async function markAllRead() {
 
 async function toggleRead(id, isUnread) {
     const url = isUnread
-        ? '{{ url("/") }}/' + '{{ $role }}' + '/notifications/' + id + '/read'
-        : '{{ url("/") }}/' + '{{ $role }}' + '/notifications/' + id + '/unread';
+        ? '{{ route($role . ".notifications.markRead", "__ID__") }}'.replace('__ID__', id)
+        : '{{ route($role . ".notifications.markUnread", "__ID__") }}'.replace('__ID__', id);
     const form = document.createElement('form');
     form.method = 'POST'; form.action = url;
     form.innerHTML = '<input type="hidden" name="_token" value="{{ csrf_token() }}">';
@@ -280,7 +288,7 @@ async function deleteNotif(id) {
     if (result.isConfirmed) {
         const form = document.createElement('form');
         form.method = 'POST';
-        form.action = '{{ url("/") }}/' + '{{ $role }}' + '/notifications/' + id;
+        form.action = '{{ route($role . ".notifications.delete", "__ID__") }}'.replace('__ID__', id);
         form.innerHTML = '<input type="hidden" name="_token" value="{{ csrf_token() }}"><input type="hidden" name="_method" value="DELETE">';
         document.body.appendChild(form); form.submit();
     }

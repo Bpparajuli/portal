@@ -12,40 +12,32 @@
 @extends($__layout)
 
 @section('title', 'Add New Student')
+@section('page-title', 'Add New Student')
 @push('styles')
     <link rel="stylesheet" href="{{ asset('css/students.css') }}">
 @endpush
 
 @section($__section)
-<div class="{{ $__isMgmt ? 'container-lg py-4' : ($__isAgent ? 'container-lg py-4' : 'container-fluid p-3') }}">
-    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
-        <div>
-            <h4 class="fw-bold mb-0"><i class="fas fa-user-plus me-2 text-primary"></i> Add New Student</h4>
-            <p class="text-muted small mb-0 mt-1">Fill in the student's details below</p>
-        </div>
-        <a href="{{ route($__routePrefix . '.index') }}" class="btn btn-outline-secondary btn-sm">
-            <i class="fas fa-arrow-left me-1"></i> Back to Students
-        </a>
-    </div>
+<form action="{{ route($__routePrefix . '.store') }}" method="POST" enctype="multipart/form-data" id="createForm">
+    @csrf
 
-    <form action="{{ route($__routePrefix . '.store') }}" method="POST" enctype="multipart/form-data" novalidate>
-        @csrf
-
+    <div class="edit-page-wrapper">
         @include('shared.students.form', [
             'student' => new \App\Models\Student(),
             'agents' => $agents ?? null,
             'universities' => $universities ?? null,
             'courses' => $courses ?? null,
         ])
+    </div>
 
-        <div class="d-flex justify-content-between align-items-center mt-4">
-            <a href="{{ route($__routePrefix . '.index') }}" class="btn btn-outline-danger btn-sm">
-                Cancel
-            </a>
-            <button type="submit" class="btn btn-success">
-                <i class="fas fa-plus me-1"></i> Add Student
-            </button>
+    <div class="edit-fixed-bar">
+        <div class="bar-left">
+            <span class="bar-student" style="color:#9ca3af;font-size:0.8rem;">Adding a new student</span>
         </div>
-    </form>
-</div>
+        <div class="bar-right">
+            <a href="{{ route($__routePrefix . '.index') }}" class="btn btn-outline-secondary" style="font-size:0.75rem;padding:7px 16px;border-radius:8px;">Cancel</a>
+            <button type="submit" class="btn btn-success" style="font-size:0.75rem;padding:7px 20px;border-radius:8px;"><i class="fas fa-plus me-1"></i>Add Student</button>
+        </div>
+    </div>
+</form>
 @endsection

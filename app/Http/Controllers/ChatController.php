@@ -29,7 +29,7 @@ class ChatController extends Controller
         );
 
         $users = User::where('id', '!=', $authId)
-            ->whereIn('role', ['admin', 'agent', 'staff'])
+            ->whereIn('role', Auth::user()->is_agent ? ['admin', 'staff'] : ['admin', 'agent', 'staff'])
             ->with('status')
             ->get()
             ->map(function ($user) use ($authId) {

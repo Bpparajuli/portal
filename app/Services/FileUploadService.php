@@ -2,12 +2,11 @@
 
 namespace App\Services;
 
-use App\Contracts\FileUploadServiceInterface;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
-class FileUploadService implements FileUploadServiceInterface
+class FileUploadService
 {
     /**
      * Upload file for agent (user)

@@ -3,9 +3,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Contracts\StudentServiceInterface;
 use App\Models\Student;
 use App\Models\User;
+use App\Services\StudentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Validator;
 class StudentIntakeController extends Controller
 {
     public function __construct(
-        private readonly StudentServiceInterface $studentService,
+        private readonly StudentService $studentService,
     ) {}
     /**
      * Main intake endpoint for API/form submissions
@@ -149,7 +149,7 @@ class StudentIntakeController extends Controller
      */
     public function showForm()
     {
-        return view('intake.universal-form');
+        return view('guest.intake.universal-form');
     }
 
     /**

@@ -57,8 +57,6 @@ class ApplicationController extends Controller
         }
 
         $statuses = ApplicationStatus::where('is_active', 1)
-            ->whereHas('applications', fn($q) => $user->is_agent ? $q->where('agent_id', $user->id) : $q)
-            ->withCount(['applications' => fn($q) => $user->is_agent ? $q->where('agent_id', $user->id) : $q])
             ->orderBy('sort_order')->get();
 
         $universities = University::whereHas('applications', fn($q) => $user->is_agent ? $q->where('agent_id', $user->id) : $q)
@@ -265,6 +263,14 @@ class ApplicationController extends Controller
         $request->validate(['application_status_id' => 'required|exists:application_statuses,id']);
         $oldStatus = $application->application_status_id;
         $application->update(['application_status_id' => $request->application_status_id]);
+
+        \App\Models\ApplicationStatusHistory::create([
+            'application_id' => $application->id,
+            'from_status_id' => $oldStatus,
+            'to_status_id' => $request->application_status_id,
+            'changed_by' => Auth::id(),
+            'reason' => $request->reason,
+        ]);
 
         if ($oldStatus != $request->application_status_id) {
             User::notifyAgent($application->student->agent_id, new ApplicationStatusUpdated($application, Auth::user()));

@@ -31,7 +31,7 @@ class EnquiryReply extends Mailable
     public function content(): Content
     {
         return new Content(
-            markdown: 'emails.enquiry-reply',
+            markdown: 'admin.emails.notifications.enquiry-reply',
             with: ['enquiry' => $this->enquiry],
         );
     }

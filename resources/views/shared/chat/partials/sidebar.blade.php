@@ -12,7 +12,7 @@
         </div>
     </div>
 
-    <div class="user-list accordion" id="chatAccordion">
+    <div class="user-list accordion" id="userList">
         <div class="text-center mt-4 text-muted small">Loading...</div>
     </div>
 </div>

@@ -2,9 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Actions\CreateStudentAction;
-use App\Actions\DeleteStudentAction;
-use App\Actions\UpdateStudentAction;
 use App\Http\Requests\StoreStudentRequest;
 use App\Http\Requests\UpdateStudentRequest;
 use App\Models\Application;
@@ -15,6 +12,7 @@ use App\Models\Setting;
 use App\Models\Student;
 use App\Models\University;
 use App\Models\User;
+use App\Services\StudentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -23,9 +21,7 @@ use Illuminate\Support\Facades\DB;
 class StudentController extends Controller
 {
     public function __construct(
-        private readonly CreateStudentAction $createStudentAction,
-        private readonly UpdateStudentAction $updateStudentAction,
-        private readonly DeleteStudentAction $deleteStudentAction,
+        private readonly StudentService $studentService,
     ) {
         $this->authorizeResource(Student::class, 'student');
     }
@@ -95,6 +91,12 @@ class StudentController extends Controller
         $table2Students = $partnerQuery->whereIn('agent_id', $specialAgentIds)
             ->paginate(15, ['*'], 'page2')->withQueryString();
 
+        // Admin stats
+        $adminTotalStudents = Student::count();
+        $adminTotalApplied = Application::count();
+        $adminActiveAgents = User::agents()->whereHas('students')->count();
+        $adminDocsComplete = Student::whereHas('documents')->count();
+
         foreach ([$table1Students, $table2Students] as $collection) {
             foreach ($collection as $student) {
                 $stats = $student->getDocumentStats();
@@ -106,7 +108,8 @@ class StudentController extends Controller
 
         return view('shared.students.index', compact(
             'table1Students', 'table2Students', 'agents', 'universities',
-            'applicationStatuses', 'sortBy', 'order', 'countries'
+            'applicationStatuses', 'sortBy', 'order', 'countries',
+            'adminTotalStudents', 'adminTotalApplied', 'adminActiveAgents', 'adminDocsComplete',
         ) + ['totalRequiredDocs' => count(Student::REQUIRED_DOCUMENTS)]);
     }
 
@@ -243,7 +246,7 @@ class StudentController extends Controller
             $request->merge(['agent_id' => $user->id]);
         }
 
-        $student = $this->createStudentAction->execute($request);
+        $student = $this->studentService->saveStudent($request);
 
         if ($user->is_agent) {
             Cache::forget('agent_dashboard_stats_' . $user->id);
@@ -289,7 +292,7 @@ class StudentController extends Controller
 
     public function update(UpdateStudentRequest $request, Student $student)
     {
-        $this->updateStudentAction->execute($student, $request);
+        $this->studentService->saveStudent($request, $student);
 
         $user = Auth::user();
         if ($user->is_agent) {
@@ -302,7 +305,7 @@ class StudentController extends Controller
 
     public function destroy(Student $student)
     {
-        $this->deleteStudentAction->execute($student);
+        $this->studentService->deleteStudent($student);
 
         $user = Auth::user();
         if ($user->is_agent) {

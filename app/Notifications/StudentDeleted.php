@@ -7,8 +7,8 @@ use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 use Illuminate\Notifications\Messages\MailMessage;
-use App\Helpers\ActivityLogger;
-use App\Helpers\HasActivityLink;
+use App\Services\ActivityLogger;
+use App\Services\HasActivityLink;
 
 class StudentDeleted extends Notification
 {
@@ -56,7 +56,7 @@ class StudentDeleted extends Notification
 
         ActivityLogger::log(
             'student_deleted',
-            "🗑️ Student deleted: {$this->student->first_name} {$this->student->last_name}",
+            "ðŸ—‘ï¸ Student deleted: {$this->student->first_name} {$this->student->last_name}",
             $this->student->id,
             $link,
             $this->admin->id

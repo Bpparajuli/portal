@@ -1,9 +1,18 @@
-@extends('layouts.app')
-@php $role = auth()->user()->role; @endphp
+@php
+    $__user = auth()->user();
+    $__isAgent = $__user->is_agent;
+    $__isStaff = $__user->is_staff && !$__user->is_admin_staff;
+    $__layout = $__isAgent ? 'layouts.agent' : ($__isStaff ? 'layouts.staff' : 'layouts.admin');
+    $__section = $__isAgent ? 'agent-content' : ($__isStaff ? 'staff-content' : 'admin-content');
+    $role = $__user->role;
+@endphp
+
+@extends($__layout)
 
 @section('title', 'Edit University')
+@section('page-title', 'Edit University')
 
-@section('content')
+@section($__section)
 <div class="container-fluid px-3 py-3">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h4 class="fw-bold mb-0">

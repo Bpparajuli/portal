@@ -49,8 +49,9 @@ use App\Http\Controllers\Agent\{
     DashboardController as AgentDashboardController
 };
 
-// Unified Chat Controller (Admin, Agent, Staff)
+// Unified Controllers
 use App\Http\Controllers\ChatController;
+use App\Http\Controllers\DashboardController;
 
 // Unified User Controller
 use App\Http\Controllers\UserController;
@@ -71,9 +72,7 @@ use App\Http\Controllers\CRM\{
     StudentStageController as CrmStudentStageController,
     StudentStageHistoryController as CrmStudentStageHistoryController,
 };
-use App\Models\CrmTasks;
-use Carbon\Carbon;
-use Illuminate\Support\Facades\Schema;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -83,17 +82,14 @@ use Illuminate\Support\Facades\Schema;
 
 Route::get('/', function () {
     if (Auth::check()) {
-        $user = Auth::user();
-        return match (true) {
-            in_array($user->role, ['admin', 'superadmin']) => redirect()->route('admin.dashboard'),
-            $user->role === 'agent' => redirect()->route('agent.dashboard'),
-            $user->role === 'staff' => $user->paid_crm ? redirect()->route('crm.dashboard') : redirect()->route('staff.dashboard'),
-            default => redirect()->route('home'),
-        };
+        return redirect()->route('dashboard');
     }
 
     return app(GuestDashboardController::class)->welcome(request());
 })->name('home');
+
+// Unified Dashboard (single entry point for all roles)
+Route::middleware('auth')->get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
 // Public routes at root level (no /guest prefix)
 Route::name('guest.')->group(function () {
@@ -136,7 +132,7 @@ Route::prefix('auth')->name('auth.')->group(function () {
         Route::post('register', 'register');
     });
 
-    Route::view('terms', 'auth.terms')->name('terms');
+    Route::view('terms', 'guest.auth.terms')->name('terms');
 
     Route::get('/waiting-dash', [WaitingController::class, 'show'])
         ->name('waiting-dash')
@@ -337,13 +333,13 @@ Route::middleware(['auth', \App\Http\Middleware\IsStaff::class])
 
         // Student management
         Route::get('/students', [StudentController::class, 'index'])->name('students.index');
-        Route::get('/student/{student}', [StudentController::class, 'show'])->name('students.show');
-        Route::get('/student/{student}/edit', [StudentController::class, 'edit'])->name('students.edit');
-        Route::put('/student/{student}', [StudentController::class, 'update'])->name('students.update');
-        Route::delete('/student/{student}', [StudentController::class, 'destroy'])->name('students.destroy');
+        Route::get('/students/{student}', [StudentController::class, 'show'])->name('students.show');
+        Route::get('/students/{student}/edit', [StudentController::class, 'edit'])->name('students.edit');
+        Route::put('/students/{student}', [StudentController::class, 'update'])->name('students.update');
+        Route::delete('/students/{student}', [StudentController::class, 'destroy'])->name('students.destroy');
 
         // Staff document management
-        Route::prefix('student/{student}/documents')->name('documents.')->group(function () {
+        Route::prefix('students/{student}/documents')->name('documents.')->group(function () {
             Route::get('/', [DocumentController::class, 'index'])->name('index');
             Route::post('/', [DocumentController::class, 'store'])->name('store');
             Route::post('/other', [DocumentController::class, 'storeOther'])->name('storeOther');
@@ -398,6 +394,7 @@ Route::middleware(['auth', \App\Http\Middleware\IsStaff::class])
             Route::get('/', [NotificationController::class, 'index'])->name('index');
             Route::post('/mark-all', [NotificationController::class, 'markAll'])->name('markAll');
             Route::post('/{id}/mark-read', [NotificationController::class, 'markAsRead'])->name('markRead');
+            Route::post('/{id}/unread', [NotificationController::class, 'markAsUnread'])->name('markUnread');
             Route::get('/{id}/redirect', [NotificationController::class, 'readAndRedirect'])->name('readAndRedirect');
             Route::delete('/{id}', [NotificationController::class, 'delete'])->name('delete');
             Route::delete('/all/delete', [NotificationController::class, 'deleteAll'])->name('deleteAll');
@@ -472,6 +469,7 @@ Route::middleware(['auth', \App\Http\Middleware\IsAgent::class])
         Route::get('applications/quick-start', [ApplicationController::class, 'quickStart'])->name('applications.quick-start');
 
         Route::get('students/{student}/applications', [ApplicationController::class, 'forStudent'])->name('students.applications');
+        Route::patch('applications/{application}/status', [ApplicationController::class, 'updateStatus'])->name('applications.updateStatus');
         Route::get('applications/get-courses/{universityId}', [ApplicationController::class, 'getCourses'])->name('applications.get-courses');
         Route::patch('applications/{application}/withdraw', [ApplicationController::class, 'withdraw'])->name('applications.withdraw');
         Route::post('applications/{application}/add-message', [ApplicationController::class, 'addMessage'])->name('applications.addMessage');
@@ -539,8 +537,6 @@ Route::middleware(['auth', \App\Http\Middleware\IsPaidCrm::class])
         Route::get('/tasks/{task}/data', [CrmTasksController::class, 'getEditData'])->name('tasks.data');
         Route::patch('/tasks/{task}/reschedule', [CrmTasksController::class, 'reschedule'])->name('tasks.reschedule');
         Route::post('/tasks/check-due', [CrmTasksController::class, 'checkDueTasks'])->name('tasks.check-due');
-        Route::delete('/tasks/{task}', [CrmTasksController::class, 'destroy'])
-            ->name('tasks.destroy');
         Route::get('/my-today-tasks', [CrmStudentController::class, 'getMyTodayTasksStudents'])
             ->name('my-today-tasks');
         Route::post('/tasks/check-duplicate/{studentId}', [CrmTasksController::class, 'checkDuplicate'])
@@ -611,19 +607,6 @@ Route::middleware('auth')->get('/chat/unread-count', function () {
     ]);
 })->name('chat.unread');
 
-/*
-|--------------------------------------------------------------------------
-| AI Assistant Routes
-|--------------------------------------------------------------------------
-*/
-Route::middleware('auth')->prefix('ai')->name('ai.')->group(function () {
-    Route::get('/assistant', [\App\Http\Controllers\AI\AssistantController::class, 'index'])->name('assistant');
-    Route::post('/chat', [\App\Http\Controllers\AI\AssistantController::class, 'chat'])->name('chat');
-    Route::post('/analyze', [\App\Http\Controllers\AI\AssistantController::class, 'analyze'])->name('analyze');
-    Route::get('/settings', [\App\Http\Controllers\AI\AssistantController::class, 'settings'])->name('settings');
-    Route::post('/settings', [\App\Http\Controllers\AI\AssistantController::class, 'updateSettings'])->name('settings.update');
-});
-
 // ============================================
 // STUDENT INTAKE FORM - Public Form
 // ============================================
@@ -649,7 +632,7 @@ Route::get('/thank-you', function () {
         return redirect()->route('student.intake.form');
     }
 
-    return view('intake.thank-you', compact('student'));
+    return view('guest.intake.thank-you', compact('student'));
 })->name('thank-you');
 
 

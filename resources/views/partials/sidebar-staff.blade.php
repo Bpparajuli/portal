@@ -34,7 +34,3 @@
     <i class="fas fa-tasks"></i> <span>CRM</span>
 </a>
 
-<div class="nav-section">AI Tools</div>
-<a href="{{ route('ai.assistant') }}" class="nav-link {{ request()->routeIs('ai.*') ? 'active' : '' }}">
-    <i class="fas fa-robot"></i> <span>AI Assistant</span>
-</a>

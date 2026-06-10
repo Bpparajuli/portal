@@ -7,8 +7,8 @@ use App\Models\ApplicationMessage;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 use Illuminate\Notifications\Messages\MailMessage;
-use App\Helpers\ActivityLogger;
-use App\Helpers\HasActivityLink;
+use App\Services\ActivityLogger;
+use App\Services\HasActivityLink;
 
 class ApplicationMessageAdded extends Notification
 {
@@ -74,7 +74,7 @@ class ApplicationMessageAdded extends Notification
 
         ActivityLogger::log(
             'application_message_added',
-            "💬 New message for {$student->first_name} {$student->last_name} by {$msg->user->name}",
+            "ðŸ’¬ New message for {$student->first_name} {$student->last_name} by {$msg->user->name}",
             $app->id,
             $link,
             $msg->user->id
@@ -82,7 +82,7 @@ class ApplicationMessageAdded extends Notification
 
         return [
             'type' => 'application_message_added',
-            'message' => "💬 New message for {$student->first_name} {$student->last_name} by {$msg->user->name}.",
+            'message' => "ðŸ’¬ New message for {$student->first_name} {$student->last_name} by {$msg->user->name}.",
             'application' => [
                 'id' => $app->id,
                 'number' => $app->application_number,

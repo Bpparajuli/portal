@@ -13,6 +13,6 @@ class DashboardController extends Controller
     {
         $countries = University::select('country')->distinct()->pluck('country');
 
-        return view('guest.dashboard', compact('countries'));
+        return view('dashboard.guest-dashboard', compact('countries'));
     }
 }

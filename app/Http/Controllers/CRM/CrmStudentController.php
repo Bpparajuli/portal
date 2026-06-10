@@ -12,23 +12,13 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
-use App\Contracts\StudentServiceInterface;
-use App\Actions\UpdateStudentRatingAction;
-use App\Actions\ChangeStudentStageAction;
-use App\Actions\SaveStudentNoteAction;
-use App\Actions\ManageStudentTagsAction;
-use App\Services\StudentDashboardService;
+use App\Services\StudentService;
 use Carbon\Carbon;
 
 class CrmStudentController extends Controller
 {
     public function __construct(
-        private readonly StudentServiceInterface $studentService,
-        private readonly UpdateStudentRatingAction $updateStudentRatingAction,
-        private readonly ChangeStudentStageAction $changeStudentStageAction,
-        private readonly SaveStudentNoteAction $saveStudentNoteAction,
-        private readonly ManageStudentTagsAction $manageStudentTagsAction,
-        private readonly StudentDashboardService $dashboardService,
+        private readonly StudentService $studentService,
     ) {}
 
     public function debugAllTasksForStaff()
@@ -173,7 +163,21 @@ class CrmStudentController extends Controller
             $this->authorizeStudent($student);
             $user = Auth::user();
 
-            $data = $this->dashboardService->getDashboardData($student, $user);
+            $student->load(['currentStage', 'agent', 'documents', 'latestApplication', 'revenues.creator']);
+            $data = $this->studentService->getTaskCategories($student, $user);
+            $data['student'] = $student;
+            $data['notes'] = $student->notes()->where('is_log', false)->with('creator')->orderBy('is_pinned', 'desc')->orderBy('created_at', 'desc')->get();
+            $data['activityLogs'] = $student->notes()->where('is_log', true)->with('creator')->orderBy('created_at', 'desc')->get();
+            $data['staffUsers'] = User::where('role', 'staff')->orderBy('name')->get(['id', 'name', 'role', 'business_logo']);
+            $data['stages'] = StudentStage::active()->ordered()->get();
+            $data['currentStage'] = $student->currentStage;
+            $data['assignableUsers'] = $this->studentService->getAssignableUsers($user);
+            $data['canEdit'] = !$user->is_agent;
+            $data['revenues'] = $student->revenues()->with('creator')->orderBy('transaction_date', 'desc')->paginate(10);
+            $data['expectedRevenue'] = $student->expected_revenue ?? 0;
+            $data['collectedRevenue'] = $student->received_revenue ?? 0;
+            $data['remainingDue'] = max(0, $data['expectedRevenue'] - $data['collectedRevenue']);
+            $data['revenuesCollection'] = $data['revenues'] instanceof \Illuminate\Pagination\LengthAwarePaginator ? $data['revenues']->getCollection() : $data['revenues'];
             $data['todayTaskNavigation'] = $this->getTodayTaskNavigation($student->id);
 
             return view('crm.show', $data);
@@ -414,7 +418,7 @@ class CrmStudentController extends Controller
                 'is_pinned' => ['boolean'],
             ]);
 
-            $note = $this->saveStudentNoteAction->execute($student, $validated['content'], Auth::user());
+            $note = $this->studentService->saveNote($student, $validated['content'], Auth::user());
 
             if ($request->boolean('is_pinned')) {
                 $note->update(['is_pinned' => true]);
@@ -443,7 +447,7 @@ class CrmStudentController extends Controller
                 'reason'       => ['nullable', 'string', 'max:500'],
             ]);
 
-            $this->changeStudentStageAction->execute(
+            $this->studentService->changeStage(
                 $student,
                 $validated['new_stage_id'],
                 $validated['reason'] ?? null,
@@ -484,7 +488,7 @@ class CrmStudentController extends Controller
             }
 
             $rating = $request->rating ?? 0;
-            $this->updateStudentRatingAction->execute($student, $rating, $user);
+            $this->studentService->updateRating($student, $rating, $user);
 
             return response()->json([
                 'success' => true,

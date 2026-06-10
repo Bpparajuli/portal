@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Traits\HasUniversityFilters;
+use App\Services\HasUniversityFilters;
 use App\Http\Requests\StoreUniversityRequest;
 use App\Models\Course;
 use App\Models\University;

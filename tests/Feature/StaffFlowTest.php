@@ -66,7 +66,7 @@ class StaffFlowTest extends TestCase
     {
         $student = Student::factory()->create(['agent_id' => $this->agent->id]);
 
-        $response = $this->actingAs($this->staff)->get(route('staff.student.show', $student));
+        $response = $this->actingAs($this->staff)->get(route('staff.students.show', $student));
 
         $response->assertStatus(200);
     }
@@ -99,7 +99,7 @@ class StaffFlowTest extends TestCase
             'application_status_id' => $status->id,
         ]);
 
-        $response = $this->actingAs($this->staff)->get(route('staff.applications'));
+        $response = $this->actingAs($this->staff)->get(route('staff.applications.index'));
 
         $response->assertStatus(200);
     }

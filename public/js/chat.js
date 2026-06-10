@@ -176,7 +176,7 @@
                 + '<i class="fas fa-chevron-down section-chevron"></i>'
                 + '</div>'
                 + '</div>'
-                + '<div id="' + collapseId + '" class="collapse' + (expanded ? ' show' : '') + '" data-bs-parent="#chatAccordion">'
+                + '<div id="' + collapseId + '" class="collapse' + (expanded ? ' show' : '') + '" data-bs-parent="#userList">'
                 + '<div class="section-body">'
                 + filteredUsers.map(buildUserHtml).join('')
                 + '</div>'

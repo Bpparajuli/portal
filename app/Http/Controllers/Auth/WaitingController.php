@@ -11,12 +11,12 @@ use App\Notifications\AgreementSubmitted;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
-use App\Contracts\FileUploadServiceInterface;
+use App\Services\FileUploadService;
 
 class WaitingController extends Controller
 {
     public function __construct(
-        private readonly FileUploadServiceInterface $fileUploadService,
+        private readonly FileUploadService $fileUploadService,
     ) {}
 
     public function show()
@@ -34,7 +34,7 @@ class WaitingController extends Controller
             return redirect('/')->with('error', 'Unauthorized access.');
         }
 
-        return view('auth.waiting-dash', compact('user'));
+        return view('guest.auth.waiting-dash', compact('user'));
     }
 
     /**

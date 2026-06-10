@@ -12,6 +12,7 @@
 @extends($__layout)
 
 @section('title', $__isAdmin ? 'Edit User - ' . ($user->business_name ?? $user->name) : 'Edit Profile - ' . ($user->business_name ?? $user->name))
+@section('page-title', $__isAdmin ? 'Edit User' : 'Edit Profile')
 
 @push('styles')
 <style>

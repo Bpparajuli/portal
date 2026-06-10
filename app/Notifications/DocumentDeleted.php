@@ -8,8 +8,8 @@ use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 use Illuminate\Notifications\Messages\MailMessage;
-use App\Helpers\ActivityLogger;
-use App\Helpers\HasActivityLink;
+use App\Services\ActivityLogger;
+use App\Services\HasActivityLink;
 
 class DocumentDeleted extends Notification
 {
@@ -60,7 +60,7 @@ class DocumentDeleted extends Notification
 
         ActivityLogger::log(
             'document_deleted',
-            "🚮 {$doc->document_type} deleted for {$this->student->first_name} {$this->student->last_name}",
+            "ðŸš® {$doc->document_type} deleted for {$this->student->first_name} {$this->student->last_name}",
             $this->student->id,
             $link,
             $this->agent->id

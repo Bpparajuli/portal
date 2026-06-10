@@ -7,11 +7,12 @@
     };
     $showAdminActions = Auth::check() && (Auth::user()->is_admin || Auth::user()->is_staff);
 
-    $filterCityRoute = route($prefix . '.get-cities', ':country');
-    $filterUniRoute = route($prefix . '.get-universities', ':city');
-    $filterTypeRoute = route($prefix . '.get-course-types', ':universityId');
-    $filterCourseRoute = route($prefix . '.get-courses-by-type', ['universityId'=>':universityId','type'=>':type']);
-    $filterFormAction = $prefix === 'guest' ? route('guest.universities.index') : route($prefix . '.universities.index');
+    $ajaxPrefix = $prefix === 'staff' ? 'admin' : $prefix;
+    $filterCityRoute = route($ajaxPrefix . '.get-cities', ':country');
+    $filterUniRoute = route($ajaxPrefix . '.get-universities', ':city');
+    $filterTypeRoute = route($ajaxPrefix . '.get-course-types', ':universityId');
+    $filterCourseRoute = route($ajaxPrefix . '.get-courses-by-type', ['universityId'=>':universityId','type'=>':type']);
+    $filterFormAction = $prefix === 'guest' ? route('guest.universities.index') : ($prefix === 'staff' ? route('staff.universities') : route($prefix . '.universities.index'));
     $countries = \App\Models\University::select('country')->distinct()->pluck('country');
 @endphp
 

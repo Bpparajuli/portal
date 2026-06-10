@@ -11,6 +11,7 @@
 
 @extends($layout)
 @section('title', 'User Details - ' . ($profileUser->business_name ?? $profileUser->name))
+@section('page-title', 'User Details')
 
 @push('styles')
 <style>
@@ -665,7 +666,7 @@
                                                 class="btn btn-sm btn-outline-warning" title="Edit Staff">
                                                 <i class="fas fa-edit"></i>
                                             </a>
-                                        @else
+                                        @elseif($isAgent)
                                             <a href="{{ route($routePrefix . '.staff.edit', $staff->slug) }}"
                                                 class="btn btn-sm btn-outline-warning" title="Edit Staff">
                                                 <i class="fas fa-edit"></i>
@@ -681,7 +682,7 @@
                                                 class="btn btn-sm btn-outline-danger"
                                                 title="Delete Staff"
                                             />
-                                        @else
+                                        @elseif($isAgent)
                                             <x-confirm-delete
                                                 url="{{ route($routePrefix . '.staff.destroy', $staff->slug) }}"
                                                 message="Are you sure you want to delete staff member &quot;{{ $staff->name }}&quot;? This action cannot be undone!"

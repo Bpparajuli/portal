@@ -7,8 +7,8 @@ use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 use Illuminate\Notifications\Messages\MailMessage;
-use App\Helpers\ActivityLogger;
-use App\Helpers\HasActivityLink;
+use App\Services\ActivityLogger;
+use App\Services\HasActivityLink;
 
 class StudentAdded extends Notification
 {
@@ -56,7 +56,7 @@ class StudentAdded extends Notification
 
         ActivityLogger::log(
             'student_added',
-            "👤 Student added: {$this->student->first_name} {$this->student->last_name} by {$this->agent->business_name}",
+            "ðŸ‘¤ Student added: {$this->student->first_name} {$this->student->last_name} by {$this->agent->business_name}",
             $this->student->id,
             $link,
             $this->agent->id

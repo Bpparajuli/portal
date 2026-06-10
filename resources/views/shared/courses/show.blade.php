@@ -1,12 +1,21 @@
-@extends('layouts.app')
-@php $role = auth()->user()->role; @endphp
+@php
+    $__user = auth()->user();
+    $__isAgent = $__user->is_agent;
+    $__isStaff = $__user->is_staff && !$__user->is_admin_staff;
+    $__layout = $__isAgent ? 'layouts.agent' : ($__isStaff ? 'layouts.staff' : 'layouts.admin');
+    $__section = $__isAgent ? 'agent-content' : ($__isStaff ? 'staff-content' : 'admin-content');
+    $role = $__user->role;
+@endphp
+
+@extends($__layout)
 
 @section('title', $course->title . ' - Course Details')
+@section('page-title', $course->title)
 
-@section('content')
+@section($__section)
 <div class="container-fluid py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <a href="{{ route($role . '.courses.index') }}" class="btn btn-outline-secondary btn-sm">
+        <a href="{{ route($role === 'staff' ? 'staff.courses' : $role . '.courses.index') }}" class="btn btn-outline-secondary btn-sm">
             <i class="fas fa-arrow-left"></i> Back to Courses
         </a>
         <div class="d-flex gap-2">

@@ -34,7 +34,7 @@ class InternalEmail extends Mailable
     public function content(): Content
     {
         return new Content(
-            markdown: 'emails.internal',
+            markdown: 'admin.emails.notifications.internal',
             with: [
                 'email' => $this->email,
                 'isReply' => $this->isReply,

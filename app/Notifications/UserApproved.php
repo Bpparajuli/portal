@@ -5,7 +5,7 @@ namespace App\Notifications;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 use Illuminate\Notifications\Messages\MailMessage;
-use App\Helpers\ActivityLogger;
+use App\Services\ActivityLogger;
 
 class UserApproved extends Notification
 {
@@ -16,7 +16,7 @@ class UserApproved extends Notification
      */
     public function via($notifiable)
     {
-        // Only mail — no database notification
+        // Only mail â€” no database notification
         return ['mail'];
     }
 
@@ -28,7 +28,7 @@ class UserApproved extends Notification
         $displayName = $notifiable->business_name ?? $notifiable->username ?? $notifiable->name;
 
         return (new MailMessage)
-            ->subject('🎉 Your Account Has Been Approved!')
+            ->subject('ðŸŽ‰ Your Account Has Been Approved!')
             ->view('emails.layout', [
                 'subject'    => 'Your Account Has Been Approved',
                 'greeting'   => "Hello {$displayName},",
@@ -39,7 +39,7 @@ class UserApproved extends Notification
                 'actionText' => 'Login Now',
                 'actionUrl'  => route('auth.login'),
                 'outroLines' => [
-                    "Thank you for registering with us — we’re excited to have you onboard!"
+                    "Thank you for registering with us â€” weâ€™re excited to have you onboard!"
                 ]
             ]);
     }
@@ -55,7 +55,7 @@ class UserApproved extends Notification
         // Log activity for admin/internal tracking
         ActivityLogger::log(
             'user_approved',
-            "✅ User approved: {$displayName}",
+            "âœ… User approved: {$displayName}",
             $notifiable->id,
             $link,
             $notifiable->id

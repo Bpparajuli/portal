@@ -1,6 +1,7 @@
-@extends('layouts.agent')
+@extends('layouts.staff')
 
 @section('title', 'Staff Profile - ' . $staff->name)
+@section('page-title', 'Staff Profile')
 
 @section('content')
 <div class="container-lg py-4">

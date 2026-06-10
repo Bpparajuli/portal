@@ -6,8 +6,8 @@ use App\Models\Application;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 use Illuminate\Notifications\Messages\MailMessage;
-use App\Helpers\ActivityLogger;
-use App\Helpers\HasActivityLink;
+use App\Services\ActivityLogger;
+use App\Services\HasActivityLink;
 
 class ApplicationWithdrawn extends Notification
 {
@@ -63,7 +63,7 @@ class ApplicationWithdrawn extends Notification
 
         ActivityLogger::log(
             'application_withdrawn',
-            "🚫 Application withdrawn for {$student->first_name} {$student->last_name} to {$university->name} by {$agent->name}",
+            "ðŸš« Application withdrawn for {$student->first_name} {$student->last_name} to {$university->name} by {$agent->name}",
             $app->id,
             $link,
             $agent->id

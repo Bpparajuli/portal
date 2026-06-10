@@ -7,7 +7,7 @@ use App\Models\Student;
 use App\Models\User;
 use App\Notifications\DocumentDeleted;
 use App\Notifications\DocumentUploaded;
-use App\Contracts\FileUploadServiceInterface;
+use App\Services\FileUploadService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -17,7 +17,7 @@ use ZipArchive;
 class DocumentController extends Controller
 {
     public function __construct(
-        private readonly FileUploadServiceInterface $fileUploadService,
+        private readonly FileUploadService $fileUploadService,
     ) {}
 
     public static function allDocumentTypes(): array

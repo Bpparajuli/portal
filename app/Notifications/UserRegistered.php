@@ -6,7 +6,7 @@ use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 use Illuminate\Notifications\Messages\MailMessage;
-use App\Helpers\ActivityLogger;
+use App\Services\ActivityLogger;
 
 class UserRegistered extends Notification
 {
@@ -54,7 +54,7 @@ class UserRegistered extends Notification
 
         ActivityLogger::log(
             'user_registered',
-            "🧾 New user registered: {$displayName}",
+            "ðŸ§¾ New user registered: {$displayName}",
             $this->newUser->id,
             $link,
             $this->newUser->id

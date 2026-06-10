@@ -11,6 +11,7 @@
 @extends($__layout)
 
 @section('title', 'Create New User')
+@section('page-title', 'Create New User')
 
 @section($__section)
 <div class="container-lg py-4">

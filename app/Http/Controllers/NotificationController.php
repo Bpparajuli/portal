@@ -35,7 +35,7 @@ class NotificationController extends Controller
                 ->orderBy('created_at', 'desc')
                 ->paginate(20);
 
-            return view('shared.notifications.index', compact('notifications'));
+            return view('shared.notifications.index', compact('notifications', 'role'));
         }
 
         $notifications = $user->notifications()
@@ -56,7 +56,7 @@ class NotificationController extends Controller
             ->paginate(5, ['*'], 'messages_page')
             ->withQueryString();
 
-        return view('shared.notifications.index', compact('notifications', 'messages'));
+        return view('shared.notifications.index', compact('notifications', 'messages', 'role'));
     }
 
     public function markAsRead(Request $request, $id)
@@ -124,7 +124,7 @@ class NotificationController extends Controller
             $url = route($role . '.applications.show', $data['application']['id']);
         } elseif (!empty($data['student']['id'])) {
             $url = $role === 'staff'
-                ? route('staff.student.show', $data['student']['id'])
+                ? route('staff.students.show', $data['student']['id'])
                 : route($role . '.students.show', $data['student']['id']);
         } elseif (!empty($data['agent']['id'])) {
             $agent = User::find($data['agent']['id']);

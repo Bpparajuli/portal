@@ -17,7 +17,7 @@ class LoginController extends Controller
             return $this->redirectToDashboard(Auth::user());
         }
 
-        return view('auth.login');
+        return view('guest.auth.login');
     }
 
     public function login(Request $request)
