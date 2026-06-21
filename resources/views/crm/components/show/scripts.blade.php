@@ -203,6 +203,15 @@
                 }
                 document.getElementById('edit_due_date').value = dueDate || '';
                 document.getElementById('edit_time_slot').value = task.priority_time_slot || '';
+                // Extract time from scheduled_for if available
+                let editTime = '';
+                if (dueDate && task.scheduled_for && task.scheduled_for.includes(' ')) {
+                    let parts = task.scheduled_for.split(' ');
+                    if (parts[1] && parts[1] !== '00:00:00') {
+                        editTime = parts[1].substring(0, 5);
+                    }
+                }
+                document.getElementById('edit_time').value = editTime || '';
                 document.getElementById('edit_priority').value = task.priority || 'medium';
                 document.getElementById('edit_assigned_to').value = task.assigned_to || '';
                 document.getElementById('editTaskForm').action = `/crm/tasks/${taskId}`;
@@ -215,36 +224,46 @@
     }
 
     function deleteTask(taskId, taskType = null) {
-        let confirmMessage = 'Are you sure you want to delete this task?';
-
+        let title = 'Delete this task?';
+        let text = 'This action cannot be undone.';
         if (taskType === 'stage_change') {
-            confirmMessage =
-                '⚠️ WARNING: This is a stage change record. Deleting it will only remove the task, NOT the student. Continue?';
+            text = 'This is a stage change record. Deleting it will only remove the task, NOT the student.';
         }
 
-        if (!confirm(confirmMessage)) return;
+        Swal.fire({
+            title: title,
+            text: text,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Yes, delete it!',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if (!result.isConfirmed) return;
 
-        fetch(`/crm/tasks/${taskId}`, {
-                method: 'DELETE',
-                headers: {
-                    'X-CSRF-TOKEN': getCsrfToken(),
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    showToast(data.message || 'Task deleted successfully', 'success');
-                    setTimeout(() => window.location.reload(), 1500);
-                } else {
-                    showToast(data.message || 'Failed to delete task', 'error');
-                }
-            })
-            .catch(error => {
-                console.error('Error deleting task:', error);
-                showToast('Error: ' + error.message, 'error');
-            });
+            fetch(`/crm/tasks/${taskId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': getCsrfToken(),
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showToast(data.message || 'Task deleted successfully', 'success');
+                        setTimeout(() => window.location.reload(), 1500);
+                    } else {
+                        showToast(data.message || 'Failed to delete task', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error deleting task:', error);
+                    showToast('Error: ' + error.message, 'error');
+                });
+        });
     }
 
     function setRescheduleDate(days) {
@@ -263,12 +282,23 @@
     }
 
     // Make functions globally available
+    window.openEditNoteModal = openEditNoteModal;
+    window.openLogNoteModal = openLogNoteModal;
     window.openNewTaskModal = openNewTaskModal;
     window.openCompleteModal = openCompleteModal;
     window.openRescheduleModal = openRescheduleModal;
     window.openCancelModal = openCancelModal;
-    window.closeModal = closeModal;
+    window.openEditModal = openEditModal;
+    window.togglePin = togglePin;
     window.setRescheduleDate = setRescheduleDate;
+    window.deleteTask = deleteTask;
+    window.undoComplete = undoComplete;
+    window.undoCancel = undoCancel;
+    window.closeModal = closeModal;
+    window.closeTagModal = closeTagModal;
+    window.openTagModal = openTagModal;
+    window.saveTag = saveTag;
+    window.removeTagFromCard = removeTagFromCard;
     window.deleteTask = deleteTask;
     window.openEditModal = openEditModal;
     window.undoComplete = undoComplete;
@@ -1024,4 +1054,23 @@
             };
         });
     });
+
+    // ========== STUDENT RATING ==========
+    function updateStudentRating(r) {
+        fetch('/crm/student/' + currentStudentId + '/update-rating', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': getCsrfToken(), 'Accept': 'application/json' },
+            body: JSON.stringify({ rating: r })
+        })
+        .then(res => res.json())
+        .then(d => {
+            if (d.success) {
+                showToast(d.message || 'Rating updated');
+                document.querySelectorAll('#studentStarRating input').forEach(el => {
+                    el.checked = parseInt(el.value) === r;
+                });
+            } else showToast(d.error || 'Failed', 'error');
+        })
+        .catch(() => showToast('Error updating rating', 'error'));
+    }
 </script>

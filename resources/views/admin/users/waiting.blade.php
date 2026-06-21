@@ -22,7 +22,7 @@
             {{-- Stats Cards --}}
             <div class="row g-4 mb-5">
                 <div class="col-md-4">
-                    <div class="card border-0 shadow-sm bg-gradient-primary text-white">
+                    <div class="card border-0 shadow-sm bg-primary text-white">
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
@@ -37,7 +37,7 @@
                     </div>
                 </div>
                 <div class="col-md-4">
-                    <div class="card border-0 shadow-sm bg-gradient-warning text-white">
+                    <div class="card border-0 shadow-sm bg-warning text-white">
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
@@ -52,7 +52,7 @@
                     </div>
                 </div>
                 <div class="col-md-4">
-                    <div class="card border-0 shadow-sm bg-gradient-info text-white">
+                    <div class="card border-0 shadow-sm bg-info text-white">
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>

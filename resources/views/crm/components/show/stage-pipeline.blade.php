@@ -13,12 +13,12 @@
                         @csrf
                         <input type="hidden" name="new_stage_id" value="{{ $stg->id }}">
                         <button type="submit" class="stage-card {{ $statusClass }}"
-                            onclick="return confirm('Move to \'{{ $stg->name }}\'?')">
+                            onclick="return confirm('Move to \'{{ $stg->name }}\'?')" title="{{ $stg->name }}">
                             <span class="stage-title">{{ $stg->name }}</span>
                         </button>
                     </form>
                 @else
-                    <div class="stage-card {{ $statusClass }}">
+                    <div class="stage-card {{ $statusClass }}" title="{{ $stg->name }}">
                         <span class="stage-title">{{ $stg->name }}</span>
                         @if ($isCurrent)
                             <span class="stage-days">{{ $student->days_in_current_stage ?? 0 }}d</span>

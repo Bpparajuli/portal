@@ -83,7 +83,16 @@
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Photo</label>
-                            <input type="file" name="image" class="form-control" accept="image/*">
+                            <div class="d-flex gap-2 align-items-start">
+                                <div style="flex:1;">
+                                    <input type="file" name="image" class="form-control" accept="image/*">
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-secondary py-0"
+                                    style="font-size:10px;white-space:nowrap;" data-gallery-target="test_image"
+                                    data-gallery-preview="testPhotoPreview" data-gallery-hidden="testImageHidden"><i
+                                        class="fas fa-images me-1"></i>Gallery</button>
+                                <input type="hidden" name="image_selected" id="testImageHidden" data-gallery-field="image">
+                            </div>
                             <div id="testCurrentPhoto" class="mt-2 d-none">
                                 <img id="testPhotoPreview" src="" alt="Preview" style="width:80px;height:80px;object-fit:cover;border-radius:50%;">
                                 <small class="text-muted ms-2">Current photo</small>

@@ -92,7 +92,7 @@ class UserController extends Controller
         $request->validate([
             'business_name'   => 'required|string|max:255',
             'owner_name'      => 'required|string|max:255',
-            'name'            => 'required|string|max:255',
+            'name' => 'required|string|max:255',
             'email'           => 'required|email|unique:users',
             'contact'         => 'nullable|string|max:20',
             'address'         => 'nullable|string|max:500',
@@ -143,6 +143,7 @@ class UserController extends Controller
 
         if (!$auth->is_admin) {
             $request->validate([
+                'name'           => 'required|string|max:255',
                 'email'          => 'required|email|max:255|unique:users,email,' . $user->id,
                 'contact'        => 'nullable|string|max:20',
                 'address'        => 'nullable|string|max:255',
@@ -159,21 +160,22 @@ class UserController extends Controller
             if ($oldData['email'] != $user->email) $changes[] = 'email';
             if ($oldData['contact'] != $user->contact) $changes[] = 'contact';
             if ($oldData['address'] != $user->address) $changes[] = 'address';
+            $routePrefix = $auth->is_agent ? 'agent' : 'staff';
             if ($request->filled('password') || $request->hasFile('business_logo') || $request->hasFile('registration') || $request->hasFile('pan')) {
                 \App\Models\Activity::create([
                     'user_id' => $user->id, 'type' => 'profile_updated',
                     'description' => "Profile updated by {$user->business_name}" . ($changes ? ". Changes: " . implode(', ', $changes) : ""),
                     'notifiable_id' => $user->id, 'notifiable_type' => User::class,
-                    'link' => route('agent.users.show', $user->slug),
+                    'link' => route($routePrefix . '.users.show', $user->slug),
                 ]);
             }
-            return redirect()->route('agent.users.show', $user->slug)->with('success', 'Profile updated successfully.');
+            return redirect()->route($routePrefix . '.users.show', $user->slug)->with('success', 'Profile updated successfully.');
         }
 
         $request->validate([
             'business_name'   => 'required|string|max:255',
             'owner_name'      => 'required|string|max:255',
-            'name'            => 'required|string|max:255',
+            'name' => 'required|string|max:255',
             'email'           => 'required|email|unique:users,email,' . $user->id,
             'contact'         => 'nullable|string|max:20',
             'address'         => 'nullable|string|max:500',
@@ -364,7 +366,7 @@ class UserController extends Controller
         $agent = Auth::user();
 
         $request->validate([
-            'name'     => 'required|string|max:255',
+            'name' => 'required|string|max:255',
             'email'    => 'required|email|unique:users,email',
             'contact'  => 'nullable|string|max:20',
             'address'  => 'nullable|string|max:500',
@@ -396,7 +398,7 @@ class UserController extends Controller
         if ($staff->parent_id !== $agent->id || $staff->role !== 'staff') abort(403);
 
         $request->validate([
-            'name'     => 'required|string|max:255',
+            'name' => 'required|string|max:255',
             'email'    => 'required|email|unique:users,email,' . $staff->id,
             'contact'  => 'nullable|string|max:20',
             'address'  => 'nullable|string|max:500',

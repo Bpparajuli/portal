@@ -57,7 +57,15 @@
             min-height: 100vh;
             overflow-x: hidden;
         }
-        h1, h2, h3, h4, h5, h6 { color: var(--heading-color); }
+
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6 {
+            color: var(--heading-color);
+        }
 
         /* ───── Top Navbar ───── */
         .guest-header {
@@ -166,15 +174,15 @@
         }
 
         .guest-header .btn-register {
-            background: linear-gradient(135deg, var(--secondary), #a30e74);
+            background: linear-gradient(135deg, var(--primary), #820b5c);
             color: #fff;
             border: 1.5px solid transparent;
-            box-shadow: 0 4px 14px rgba(from var(--secondary) r g b / 0.35);
+            box-shadow: 0 4px 14px rgba(from var(--primary) r g b / 0.35);
         }
 
         .guest-header .btn-register:hover {
             transform: translateY(-1px);
-            box-shadow: 0 6px 20px rgba(from var(--secondary) r g b / 0.45);
+            box-shadow: 0 6px 20px rgba(from var(--primary) r g b / 0.45);
         }
 
         .guest-header .navbar-toggler {
@@ -194,11 +202,13 @@
             color: #fff;
             overflow: hidden;
         }
+
         .notice-bar .notice-inner {
             display: flex;
             align-items: center;
             white-space: nowrap;
         }
+
         .notice-bar .notice-icon {
             display: inline-flex;
             align-items: center;
@@ -213,15 +223,23 @@
             flex-shrink: 0;
             z-index: 1;
         }
+
         .notice-bar .notice-track {
             display: inline-block;
             padding-left: 2rem;
             animation: notice-scroll 35s linear infinite;
         }
+
         @keyframes notice-scroll {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(-50%); }
+            0% {
+                transform: translateX(0);
+            }
+
+            100% {
+                transform: translateX(-50%);
+            }
         }
+
         .notice-bar .notice-track:hover {
             animation-play-state: paused;
         }
@@ -236,34 +254,39 @@
             .guest-header .container {
                 flex-wrap: wrap;
             }
+
             .guest-header .navbar-collapse {
-                background: rgba(13,1,58,0.98);
+                background: rgba(13, 1, 58, 0.98);
                 border-radius: 0 0 16px 16px;
                 padding: 0.75rem;
                 margin-top: 0.5rem;
             }
+
             .guest-header .nav-links {
                 flex-direction: column;
                 width: 100%;
                 padding: 0.5rem 0;
                 gap: 0;
             }
+
             .guest-header .nav-links .nav-link {
                 padding: 0.7rem 1rem;
                 border-radius: 8px;
             }
+
             .guest-header .auth-buttons {
                 width: 100%;
                 padding: 0.75rem 0 0.25rem;
                 justify-content: center;
                 flex-wrap: wrap;
-                border-top: 1px solid rgba(255,255,255,0.08);
+                border-top: 1px solid rgba(255, 255, 255, 0.08);
                 margin-top: 0.5rem;
             }
+
             .guest-header .auth-buttons .btn-auth {
-                flex:1;
-                justify-content:center;
-                text-align:center;
+                flex: 1;
+                justify-content: center;
+                text-align: center;
             }
         }
     </style>
@@ -275,12 +298,12 @@
     <header class="guest-header">
         <div class="container">
             <a class="navbar-brand" href="{{ route('home') }}">
-                @if($siteLogo)
+                @if ($siteLogo)
                     @php $logoSrc = str_starts_with($siteLogo, 'settings/') ? \Illuminate\Support\Facades\Storage::url($siteLogo) : (str_starts_with($siteLogo, 'images/') ? asset($siteLogo) : asset('storage/uni_logo/' . $siteLogo)); @endphp
                     <img src="{{ $logoSrc }}" alt="{{ $siteName }} logo">
                 @else
                     <span class="d-inline-flex align-items-center justify-content-center"
-                          style="width:40px;height:40px;border-radius:8px;background:rgba(255,255,255,0.1);">
+                        style="width:40px;height:40px;border-radius:8px;background:rgba(255,255,255,0.1);">
                         <i class="fas fa-graduation-cap" style="color:#fff;font-size:1.2rem;"></i>
                     </span>
                 @endif
@@ -291,7 +314,7 @@
             </a>
 
             <button class="navbar-toggler d-lg-none" type="button" data-bs-toggle="collapse" data-bs-target="#guestNav"
-                    aria-controls="guestNav" aria-expanded="false" aria-label="Toggle navigation">
+                aria-controls="guestNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
 
@@ -299,19 +322,25 @@
                 <ul class="nav-links mx-auto">
                     <li class="nav-item">
                         <a class="nav-link {{ request()->routeIs('home') ? 'active' : '' }}"
-                           href="{{ route('home') }}"><i class="fas fa-home me-1"></i>Home</a>
+                            href="{{ route('home') }}"><i class="fas fa-home me-1"></i>Home</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {{ request()->routeIs('guest.universities.*') ? 'active' : '' }}"
-                           href="{{ route('guest.universities.index') }}"><i class="fas fa-university me-1"></i>Universities</a>
+                            href="{{ route('guest.universities.index') }}"><i
+                                class="fas fa-university me-1"></i>Universities</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {{ request()->routeIs('guest.courses.*') ? 'active' : '' }}"
-                           href="{{ route('guest.courses.index') }}"><i class="fas fa-book-open me-1"></i>Courses</a>
+                            href="{{ route('guest.courses.index') }}"><i class="fas fa-book-open me-1"></i>Courses</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('guest.faq') ? 'active' : '' }}"
+                            href="{{ route('guest.faq') }}"><i class="fas fa-circle-question me-1"></i>FAQ</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {{ request()->routeIs('guest.enquiries.create') ? 'active' : '' }}"
-                           href="{{ route('guest.enquiries.create') }}"><i class="fas fa-envelope me-1"></i>Contact</a>
+                            href="{{ route('guest.enquiries.create') }}"><i
+                                class="fas fa-envelope me-1"></i>Contact</a>
                     </li>
                 </ul>
 
@@ -326,7 +355,7 @@
                     @else
                         @php
                             $user = auth()->user();
-                            $dashRoute = match(true) {
+                            $dashRoute = match (true) {
                                 $user->is_admin => route('admin.dashboard'),
                                 $user->is_agent => route('agent.dashboard'),
                                 $user->is_staff && $user->paid_crm => route('crm.dashboard'),
@@ -344,13 +373,14 @@
     </header>
 
     {{-- ════════════ NOTICE BAR ════════════ --}}
-    @if($notice)
-    <div class="notice-bar">
-        <div class="container notice-inner">
-            <span class="notice-icon"><i class="fas fa-bullhorn"></i> Notice</span>
-            <div class="notice-track">{{ $notice }} &nbsp;&bull;&nbsp; {{ $notice }} &nbsp;&bull;&nbsp; {{ $notice }}</div>
+    @if ($notice)
+        <div class="notice-bar">
+            <div class="container notice-inner">
+                <span class="notice-icon"><i class="fas fa-bullhorn"></i> Notice</span>
+                <div class="notice-track">{{ $notice }} &nbsp;&bull;&nbsp; {{ $notice }}
+                    &nbsp;&bull;&nbsp; {{ $notice }}</div>
+            </div>
         </div>
-    </div>
     @endif
 
     {{-- ════════════ MAIN CONTENT ════════════ --}}
@@ -364,7 +394,13 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
-    <script>AOS.init({ duration: 800, once: true, offset: 60 });</script>
+    <script>
+        AOS.init({
+            duration: 800,
+            once: true,
+            offset: 60
+        });
+    </script>
 
     {{-- Tawk.to Live Chat --}}
     <script>
@@ -381,6 +417,8 @@
         })();
     </script>
 
+    @include('partials.popup-display')
     @stack('scripts')
 </body>
+
 </html>

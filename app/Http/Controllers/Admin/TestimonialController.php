@@ -13,7 +13,7 @@ class TestimonialController extends Controller
     public function index()
     {
         $testimonials = Testimonial::latest()->paginate(20);
-        return view('admin.testimonials', compact('testimonials'));
+        return view('admin.cms.testimonials', compact('testimonials'));
     }
 
     public function create()
@@ -70,7 +70,7 @@ class TestimonialController extends Controller
             if ($testimonial->image) {
                 $oldPath = $testimonial->image;
                 if (str_starts_with($oldPath, 'public/')) $oldPath = substr($oldPath, 7);
-                Storage::delete('public/' . $oldPath);
+                Storage::delete($oldPath);
             }
             $file = $request->file('image');
             $filename = Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '-' . time() . '.' . $file->getClientOriginalExtension();
@@ -88,7 +88,7 @@ class TestimonialController extends Controller
         if ($testimonial->image) {
             $path = $testimonial->image;
             if (str_starts_with($path, 'public/')) $path = substr($path, 7);
-            Storage::delete('public/' . $path);
+            Storage::delete($path);
         }
 
         $testimonial->delete();

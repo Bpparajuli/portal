@@ -581,8 +581,7 @@
                                                 <span class="input-group-text bg-light border-end-0">
                                                     <i class="fas fa-user text-secondary"></i>
                                                 </span>
-                                                <input type="text" name="name"
-                                                    class="form-control border-start-0 ps-0 @error('name') is-invalid @enderror"
+                                                <input type="text" name="name" class="form-control border-start-0 ps-0 @error('name') is-invalid @enderror"
                                                     value="{{ old('name') }}" placeholder="Primary contact person">
                                             </div>
                                             <div class="form-text">Person responsible for daily communication</div>

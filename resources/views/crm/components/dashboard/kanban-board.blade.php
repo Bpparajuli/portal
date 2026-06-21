@@ -1,17 +1,11 @@
-{{-- resources/views/crm/components/dashboard/kanban-board.blade.php --}}
 @push('styles')
     <style>
-        /* ============================================
-                            KANBAN LAYOUT
-                            ============================================ */
         .kanban-wrapper {
             position: relative;
-            margin-top: 0.35rem;
             display: flex;
             flex-direction: column;
         }
 
-        /* ---- TOP SCROLL BAR ---- */
         .kanban-scroll-top {
             overflow-x: scroll;
             overflow-y: hidden;
@@ -21,17 +15,17 @@
         }
 
         .kanban-scroll-top::-webkit-scrollbar {
-            height: 4px;
+            height: 5px;
         }
 
         .kanban-scroll-top::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 2px;
+            background: #94a3b8;
+            border-radius: 3px;
         }
 
         .kanban-scroll-top::-webkit-scrollbar-track {
-            background: #f1f5f9;
-            border-radius: 2px;
+            background: #e2e8f0;
+            border-radius: 3px;
         }
 
         #scrollTopInner {
@@ -39,66 +33,60 @@
             display: block;
         }
 
-        /* ---- BOARD ---- */
         .kanban-board {
             display: flex;
-            gap: 0.5rem;
-            overflow-x: scroll;
+            gap: 10px;
+            overflow-x: auto;
             overflow-y: visible;
-            padding-bottom: 0.35rem;
-            min-height: calc(100vh - 120px);
+            padding-bottom: 4px;
+            min-height: calc(100vh - 180px);
         }
 
         .kanban-board::-webkit-scrollbar {
-            height: 6px;
+            height: 5px;
         }
 
         .kanban-board::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
+            background: #94a3b8;
             border-radius: 3px;
         }
 
-        .kanban-board::-webkit-scrollbar-track {
-            background: #f1f5f9;
-            border-radius: 3px;
-        }
-
-        /* ============================================
-                            COLUMN
-                            ============================================ */
         .kanban-col {
-            min-width: 240px;
-            width: 240px;
-            background: white;
-            border-radius: var(--radius-sm);
-            border: 1px solid var(--border);
+            min-width: 290px;
+            width: 290px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(8px);
+            border-radius: var(--radius);
+            border: 1px solid var(--card-border);
             display: flex;
             flex-direction: column;
-            max-height: calc(100vh - 100px);
+            max-height: calc(100vh - 110px);
             flex-shrink: 0;
-            transition: border 0.1s, background 0.1s;
+            transition: border .12s, box-shadow .12s;
+            box-shadow: var(--card-shadow);
         }
 
         .kanban-col.drag-over {
-            background: #f0f9ff;
-            border: 1.5px dashed var(--primary) !important;
+            border-color: var(--primary) !important;
+            box-shadow: 0 0 0 2px rgba(15, 118, 110, .15);
         }
 
-        /* ============================================
-                            COLUMN HEADER
-                            ============================================ */
         .kanban-col-header {
-            padding: 0.35rem 0.5rem;
-            font-weight: 700;
-            font-size: 0.76rem;
+            padding: 8px 12px;
+            font-weight: 600;
+            font-size: var(--font-md);
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 1px solid var(--border);
-            background: #fafbfc;
-            border-radius: var(--radius-sm) var(--radius-sm) 0 0;
-            color: var(--text-color);
+            border-bottom: 1px solid rgba(0, 0, 0, .05);
             flex-shrink: 0;
+            border-radius: var(--radius) var(--radius) 0 0;
+        }
+
+        .kanban-col-header-left {
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
 
         .kanban-col-header-actions {
@@ -107,71 +95,87 @@
             align-items: center;
         }
 
+        .stage-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .stage-count-badge {
+            font-size: .6rem;
+            font-weight: 700;
+            background: rgba(0, 0, 0, .06);
+            padding: 1px 7px;
+            border-radius: 20px;
+            color: #475569;
+        }
+
         .add-student-to-col-btn {
             background: none;
             border: none;
-            color: var(--secondary);
+            color: var(--primary);
             cursor: pointer;
-            font-size: 0.85rem;
-            padding: 1px 3px;
-            border-radius: 4px;
-            transition: all 0.15s;
+            font-size: .85rem;
+            padding: 2px 6px;
+            border-radius: 6px;
             line-height: 1;
+            transition: all .12s;
         }
 
         .add-student-to-col-btn:hover {
-            background: var(--secondary-soft);
+            background: var(--primary-light);
             transform: scale(1.1);
         }
 
-        /* ============================================
-                            PROGRESS BAR TASK SUMMARY
-                            ============================================ */
         .col-progress-bar-wrap {
-            padding: 2px 4px;
-            background: #f9fafb;
-            border-bottom: 1px solid var(--border-light);
+            padding: 4px 10px 2px;
+            background: rgba(0, 0, 0, .02);
+            border-bottom: 1px solid rgba(0, 0, 0, .04);
             flex-shrink: 0;
         }
 
         .col-progress-bar {
             display: flex;
-            height: 6px;
+            height: 5px;
             overflow: visible;
             cursor: default;
+            border-radius: 3px;
         }
 
         .cpb-seg {
-            height: 6px;
-            min-width: 2px;
+            height: 5px;
+            min-width: 3px;
             flex-shrink: 0;
             position: relative;
             cursor: pointer;
-            transition: filter 0.1s, transform 0.1s;
+            transition: filter .12s;
         }
 
         .cpb-seg:hover {
-            filter: brightness(1.1);
-            transform: scaleY(1.25);
-            z-index: 5;
+            filter: brightness(1.2);
+        }
+
+        .cpb-seg+.cpb-seg {
+            border-left: 1px solid rgba(255, 255, 255, .3);
         }
 
         .cpb-seg::after {
             content: attr(data-tip);
             position: absolute;
-            bottom: calc(100% + 4px);
+            bottom: calc(100% + 5px);
             left: 50%;
             transform: translateX(-50%);
             background: #1e293b;
             color: #fff;
-            font-size: 0.6rem;
+            font-size: .58rem;
             font-weight: 600;
-            padding: 2px 5px;
-            border-radius: 3px;
+            padding: 3px 8px;
+            border-radius: 4px;
             white-space: nowrap;
             pointer-events: none;
             opacity: 0;
-            transition: opacity 0.1s;
+            transition: opacity .12s;
             z-index: 100;
         }
 
@@ -184,7 +188,7 @@
         }
 
         .cpb-seg.cpb-upcoming {
-            background: var(--success);
+            background: #306945;
         }
 
         .cpb-seg.cpb-overdue {
@@ -192,56 +196,39 @@
         }
 
         .cpb-seg.cpb-none {
-            background: #cbd5e1;
+            background: #bcbcbc;
         }
 
         .cpb-seg.seg-active {
-            outline: 1.5px solid var(--primary);
-            outline-offset: 1px;
+            box-shadow: 0 0 0 2px var(--primary);
         }
 
-        /* ============================================
-                            COLUMN BODY
-                            ============================================ */
         .kanban-col-body {
-            padding: 0.35rem;
+            padding: 8px;
             display: flex;
             flex-direction: column;
-            gap: 0.35rem;
+            gap: 8px;
             overflow-y: auto;
             flex: 1;
-            min-height: 80px;
+            min-height: 60px;
         }
 
         .kanban-col-body.drag-over {
-            background: #f0f9ff;
-            outline: 1.5px dashed var(--primary);
+            background: rgba(15, 118, 110, .04);
             border-radius: var(--radius-sm);
         }
 
-        /* ============================================
-                            STUDENT CARD
-                            ============================================ */
         .student-card {
             background: white;
-            border: 1px solid var(--border);
-            border-radius: var(--radius-sm);
-            padding: 0.4rem 0.5rem;
+            border: 1px solid #e8e8e8;
+            border-left: 3px solid transparent;
+            border-radius: 8px;
+            padding: 0.65rem 0.75rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
             cursor: grab;
-            transition: box-shadow 0.1s, transform 0.1s, opacity 0.1s;
+            transition: all 0.15s;
             position: relative;
             user-select: none;
-        }
-
-        .student-card.pinned {
-            border-left: 3px solid var(--accent);
-            background: linear-gradient(135deg, #fffdf2 0%, white 100%);
-        }
-
-        .student-card:hover {
-            box-shadow: var(--shadow-md);
-            transform: translateY(-0.5px);
-            border-color: var(--primary);
         }
 
         .student-card:active {
@@ -249,126 +236,68 @@
         }
 
         .student-card.dragging {
-            opacity: 0.3 !important;
-            cursor: grabbing !important;
+            opacity: 0.5;
         }
 
         .student-card.filter-hidden {
             display: none !important;
         }
 
-        .student-card>a {
-            display: block;
-            text-decoration: none;
-            color: inherit;
+        .student-card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transform: translateY(-1px);
+            border-color: #d1d5db;
+            border-left-color: var(--sc, #d1d5db);
+        }
+
+        .student-card.pinned {
+            border-color: #f59e0b;
+            border-left-color: #f59e0b;
+            background: linear-gradient(135deg, #fff, #fffbeb);
+            box-shadow: 0 1px 4px rgba(245, 158, 11, 0.15);
+        }
+
+        .student-card.pinned:hover {
+            box-shadow: 0 3px 12px rgba(245, 158, 11, 0.2);
         }
 
         .student-name {
             font-weight: 700;
-            font-size: 0.78rem;
-            color: var(--text-color);
-            padding-right: 55px;
+            font-size: 0.83rem;
+            color: #1f2937;
         }
 
-        .student-card .student-name {
-            padding-top: 10px;
+        .student-name a {
+            text-decoration: none;
+            color: inherit;
         }
 
-        /* ---- PINNED BADGE WITH UNPIN BUTTON ---- */
-        .pinned-badge {
-            position: absolute;
-            top: 3px;
-            left: 3px;
-            background: var(--accent);
-            color: white;
-            font-size: 0.55rem;
-            font-weight: 700;
-            padding: 1px 4px;
-            border-radius: 3px;
-            display: inline-flex;
-            align-items: center;
-            gap: 2px;
-            z-index: 2;
+        .student-name a:hover {
+            color: #4f46e5;
         }
 
-        .pinned-badge:hover {
-            border: 1px solid rgba(0,0,0,0.1);
-        }
-
-        .unpin-btn {
-            background: none;
-            border: none;
-            color: white;
-            cursor: pointer;
+        .student-sub {
             font-size: 0.65rem;
-            padding: 0;
-            margin-left: 2px;
-            opacity: 0.8;
-            transition: opacity 0.15s;
-            pointer-events: auto;
-        }
-
-        .unpin-btn:hover {
-            opacity: 1;
-            transform: scale(1.1);
-            background-color: var(--success);
-        }
-
-        /* ---- FOLLOW-UP BADGE ---- */
-        .followup-badge {
-            position: absolute;
-            top: 3px;
-            right: 3px;
-            font-size: 0.56rem;
-            font-weight: 600;
-            padding: 1px 4px;
-            border-radius: 3px;
-            pointer-events: none;
-            z-index: 2;
-        }
-
-        .followup-badge.overdue {
-            background: var(--danger-soft);
-            color: var(--danger-dark);
-            border: 1px solid rgba(239, 68, 68, 0.2);
-        }
-
-        .followup-badge.today {
-            background: var(--warning-soft);
-            color: var(--warning-dark);
-            border: 1px solid rgba(245, 158, 11, 0.2);
-        }
-
-        .followup-badge.upcoming {
-            background: var(--success-soft);
-            color: var(--success-dark);
-            border: 1px solid rgba(16, 185, 129, 0.2);
-        }
-
-        .followup-badge.none {
-            background: #f3f4f6;
             color: #6b7280;
-        }
-
-        /* ============================================
-                            STAR RATING - 3 STARS ONLY
-                            ============================================ */
-        .rating-area {
-            position: relative;
-            z-index: 10;
-            display: inline-flex;
-            align-items: center;
-            gap: 2px;
-            font-size: 0.58rem;
-            background: transparent;
-            border: 1px dashed #cbd5e1;
-            border-radius: 4px;
-            padding: 0.05rem 0.25rem;
-            cursor: pointer;
-            color: #6b7280;
-            width: auto;
-            text-align: center;
             margin-top: 2px;
+        }
+
+        .student-sub i {
+            width: 13px;
+            text-align: center;
+            margin-right: 3px;
+            color: #9ca3af;
+        }
+
+        .card-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .card-row+.card-row {
+            margin-top: 4px;
         }
 
         .star-rating {
@@ -382,10 +311,10 @@
         }
 
         .star-rating label {
-            font-size: 11px;
+            font-size: 13px;
             color: #d1d5db;
             cursor: pointer;
-            transition: color 0.1s;
+            line-height: 1;
         }
 
         .star-rating input:checked~label,
@@ -394,88 +323,127 @@
             color: #fbbf24;
         }
 
-        .remove-rating-btn {
-            font-size: 0.58rem;
-            color: #9ca3af;
-            cursor: pointer;
-            opacity: 0;
-            transition: opacity 0.15s, color 0.15s;
-            background: none;
+        .followup-badge {
+            font-size: 0.55rem;
+            font-weight: 600;
+            padding: 0.15rem 0.45rem;
+            border-radius: 20px;
+            display: inline-block;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .followup-badge.overdue {
+            background: #fef2f2;
+            color: #dc2626;
+        }
+
+        .followup-badge.today {
+            background: #fffbeb;
+            color: #d97706;
+        }
+
+        .followup-badge.upcoming {
+            background: #ede5f8;
+            color: #1a0262;
+        }
+
+        .followup-badge.none {
+            background: #f3f4f6;
+            color: #6b7280;
+        }
+
+        .pin-btn {
+            font-size: .52rem;
+            background: #f3f4f6;
+            color: #6b7280;
             border: none;
-            padding: 0;
+            border-radius: 20px;
+            padding: 1px 7px;
+            cursor: pointer;
+            transition: all .12s;
+            line-height: 1.5;
         }
 
-        .rating-area:hover .remove-rating-btn {
-            opacity: 1;
+        .pin-btn.pinned {
+            background: #f59e0b;
+            color: #fff;
         }
 
-        .remove-rating-btn:hover {
-            color: #ef4444;
+        .pin-btn:hover {
+            filter: brightness(1.05);
         }
 
-        /* ============================================
-                            TAGS
-                        ============================================ */
+        .add-tag-btn {
+            font-size: .52rem;
+            background: transparent;
+            border: 1px dashed #cbd5e1;
+            border-radius: 20px;
+            padding: 0.1rem 0.45rem;
+            cursor: pointer;
+            color: #6b7280;
+            transition: all .12s;
+            line-height: 1.5;
+            flex-shrink: 0;
+        }
+
+        .add-tag-btn:hover {
+            background: #4f46e5;
+            color: white;
+            border-color: #4f46e5;
+        }
+
+        .assignee-chip {
+            font-size: .5rem;
+            background: #eff6ff;
+            color: #2563eb;
+            border-radius: 20px;
+            padding: 1px 7px;
+            line-height: 1.5;
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+        }
+
         .tags-list {
             display: flex;
             flex-wrap: wrap;
-            gap: 2px;
-            margin: 0.25rem 0 0.15rem;
+            gap: 0.2rem;
         }
 
         .tag {
-            font-size: 0.58rem;
-            background: var(--primary-soft);
-            color: var(--primary-dark);
-            border-radius: 3px;
-            padding: 1px 3px;
+            font-size: 0.55rem;
+            background: #eef2ff;
+            color: #4f46e5;
+            border-radius: 12px;
+            padding: 0.1rem 0.4rem;
             display: inline-flex;
             align-items: center;
-            gap: 1px;
-            border: 1px solid rgba(26, 2, 98, 0.06);
+            gap: 0.15rem;
         }
 
         .tag-remove {
             cursor: pointer;
             font-weight: bold;
-            opacity: 0.6;
+            margin-left: 0.1rem;
+            opacity: 0.7;
         }
 
         .tag-remove:hover {
             opacity: 1;
         }
 
-        .add-tag-btn {
-            font-size: 0.58rem;
-            background: transparent;
-            border: 1px dashed #cbd5e1;
-            border-radius: 4px;
-            padding: 1px 4px;
-            cursor: pointer;
-            color: #6b7280;
-            width: 100%;
-            text-align: center;
-            margin-top: 2px;
-            transition: all 0.1s;
-        }
-
-        .add-tag-btn:hover {
-            background: var(--primary);
-            color: white;
-            border-color: var(--primary);
-        }
-
         .col-empty-msg {
             text-align: center;
-            color: #9ca3af;
-            padding: 0.6rem 0.3rem;
-            font-size: 0.72rem;
+            color: #94a3b8;
+            padding: 1.5rem .5rem;
+            font-size: .75rem;
         }
 
         @media (max-width: 768px) {
             .kanban-col {
-                min-width: 220px;
-                width: 220px;
+                min-width: 250px;
+                width: 250px;
             }
         }
     </style>
@@ -489,83 +457,65 @@
     <div class="kanban-board" id="kanbanBoard">
         @foreach ($stages as $stage)
             @php
-                $colStudents = isset($students[$stage->id]) ? $students[$stage->id] : collect();
-
-                $sortedStudents = $colStudents->sortByDesc(function ($s) {
-                    $pinned = $s->pinned ?? 0;
-                    $rating = $s->rating ?? 0;
-
-                    // Calculate priority score (higher = higher in list)
-                    // Priority order:
-                    // 1. Pinned + high rating (3 star)
-                    // 2. Pinned + medium rating (2 star)
-                    // 3. Non-pinned + high rating (3 star)
-                    // 4. Everything else sorted by created_at
-
-                    if ($pinned == 1 && $rating >= 3) {
-                        // Priority 1: Pinned 3-star students
-                        $priority = 1000000;
-                    } elseif ($pinned == 1 && $rating >= 2) {
-                        // Priority 2: Pinned 2-star students
-                        $priority = 900000;
-                    } elseif ($pinned == 1 && $rating >= 1) {
-                        // Priority 3: Pinned 1-star students
-                        $priority = 800000;
-                    } elseif ($pinned == 0 && $rating >= 3) {
-                        // Priority 4: Non-pinned 3-star students
-                        $priority = 700000;
-                    } elseif ($pinned == 0 && $rating >= 2) {
-                        // Priority 5: Non-pinned 2-star students
-                        $priority = 600000;
-                    } elseif ($pinned == 0 && $rating >= 1) {
-                        // Priority 6: Non-pinned 1-star students
-                        $priority = 500000;
+                $colSt = isset($students[$stage->id]) ? $students[$stage->id] : collect();
+            @endphp
+            @continue($colSt->isEmpty())
+            @php
+                $sorted = $colSt->sortByDesc(function ($s) {
+                    $p = ($s->pinned ?? 0) == 1;
+                    $r = $s->rating ?? 0;
+                    $score = 0;
+                    if ($p && $r >= 3) {
+                        $score = 1e9;
+                    } elseif ($p && $r >= 2) {
+                        $score = 9e8;
+                    } elseif ($p && $r >= 1) {
+                        $score = 8e8;
+                    } elseif ($r >= 3) {
+                        $score = 7e8;
+                    } elseif ($r >= 2) {
+                        $score = 6e8;
+                    } elseif ($r >= 1) {
+                        $score = 5e8;
                     } else {
-                        // Priority 7: No rating
-                        $priority = 400000;
+                        $score = 4e8;
                     }
-
-                    // Add timestamp as secondary sort (newer = higher)
-                    $timestamp = strtotime($s->created_at ?? 0);
-
-                    // Return combined score (priority * large number + timestamp)
-                    return $priority * 100000 + $timestamp;
+                    return $score + strtotime($s->created_at ?? 0);
                 });
 
-                $cToday = $cUpcoming = $cOverdue = $cNone = 0;
-                foreach ($sortedStudents as $s) {
+                $cT = $cU = $cO = $cN = 0;
+                foreach ($sorted as $s) {
                     $od = $s->overdueActivities->count();
                     $up = $s->upcomingActivities->count();
-                    $t = $s->pendingActivities->first();
+                    $tk = $s->pendingActivities->first();
                     if ($od > 0) {
-                        $cOverdue++;
-                    } elseif ($t && $t->scheduled_for?->isToday()) {
-                        $cToday++;
+                        $cO++;
+                    } elseif ($tk && $tk->scheduled_for?->isToday()) {
+                        $cT++;
                     } elseif ($up > 0) {
-                        $cUpcoming++;
+                        $cU++;
                     } else {
-                        $cNone++;
+                        $cN++;
                     }
                 }
-                $total = max(1, $cToday + $cUpcoming + $cOverdue + $cNone);
-                $pToday = round(($cToday / $total) * 100);
-                $pUpcoming = round(($cUpcoming / $total) * 100);
-                $pOverdue = round(($cOverdue / $total) * 100);
-                $pNone = max(0, 100 - $pToday - $pUpcoming - $pOverdue);
+                $tot = max(1, $cT + $cU + $cO + $cN);
+                $pT = round(($cT / $tot) * 100);
+                $pU = round(($cU / $tot) * 100);
+                $pO = round(($cO / $tot) * 100);
+                $pN = max(0, 100 - $pT - $pU - $pO);
             @endphp
 
             <div class="kanban-col" data-stage-id="{{ $stage->id }}">
-                <div class="kanban-col-header" style="background:{{ $stage->color }}12;">
-                    <span>
-                        <span
-                            style="background:{{ $stage->color }};width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:6px;"></span>
-                        {{ $stage->name }}
-                    </span>
+                <div class="kanban-col-header" style="background:{{ $stage->color }}44;">
+                    <div class="kanban-col-header-left">
+                        <span class="stage-dot" style="background:{{ $stage->color }}"></span>
+                        <span>{{ $stage->name }}</span>
+                        <span class="stage-count-badge">{{ $sorted->count() }}</span>
+                    </div>
                     <div class="kanban-col-header-actions">
-                        <span class="badge bg-secondary rounded-pill">{{ $sortedStudents->count() }}</span>
                         @if (isset($isAdmin) && $isAdmin)
                             <button type="button" class="add-student-to-col-btn"
-                                onclick="window.CrmKanban.openAddStudentModal({{ $stage->id }},'{{ addslashes($stage->name) }}')"
+                                onclick="CrmKanban.openAddStudentModal({{ $stage->id }},'{{ addslashes($stage->name) }}')"
                                 title="Add student">
                                 <i class="fas fa-plus-circle"></i>
                             </button>
@@ -574,160 +524,137 @@
                 </div>
 
                 <div class="col-progress-bar-wrap">
-                    <div class="col-progress-bar" data-stage="{{ $stage->id }}" data-total="{{ $total }}"
-                        data-today="{{ $cToday }}" data-upcoming="{{ $cUpcoming }}"
-                        data-overdue="{{ $cOverdue }}" data-none="{{ $cNone }}">
-                        @if ($pToday > 0)
-                            <div class="cpb-seg cpb-today" style="flex:{{ $pToday }}" data-filter="today"
-                                data-stage="{{ $stage->id }}" data-tip="📅 Today: {{ $cToday }}"></div>
+                    <div class="col-progress-bar" data-stage="{{ $stage->id }}" data-total="{{ $tot }}"
+                        data-today="{{ $cT }}" data-upcoming="{{ $cU }}"
+                        data-overdue="{{ $cO }}" data-none="{{ $cN }}">
+                        @if ($pT > 0)
+                            <div class="cpb-seg cpb-today" style="flex:{{ $pT }}" data-filter="today"
+                                data-stage="{{ $stage->id }}" data-tip="Today: {{ $cT }}"></div>
                         @endif
-                        @if ($pUpcoming > 0)
-                            <div class="cpb-seg cpb-upcoming" style="flex:{{ $pUpcoming }}" data-filter="upcoming"
-                                data-stage="{{ $stage->id }}" data-tip="🚀 Upcoming: {{ $cUpcoming }}"></div>
+                        @if ($pU > 0)
+                            <div class="cpb-seg cpb-upcoming" style="flex:{{ $pU }}" data-filter="upcoming"
+                                data-stage="{{ $stage->id }}" data-tip="Upcoming: {{ $cU }}"></div>
                         @endif
-                        @if ($pOverdue > 0)
-                            <div class="cpb-seg cpb-overdue" style="flex:{{ $pOverdue }}" data-filter="overdue"
-                                data-stage="{{ $stage->id }}" data-tip="⚠️ Overdue: {{ $cOverdue }}"></div>
+                        @if ($pO > 0)
+                            <div class="cpb-seg cpb-overdue" style="flex:{{ $pO }}" data-filter="overdue"
+                                data-stage="{{ $stage->id }}" data-tip="Overdue: {{ $cO }}"></div>
                         @endif
-                        @if ($pNone > 0)
-                            <div class="cpb-seg cpb-none" style="flex:{{ $pNone }}" data-filter="unscheduled"
-                                data-stage="{{ $stage->id }}" data-tip="📋 No Tasks: {{ $cNone }}"></div>
+                        @if ($pN > 0)
+                            <div class="cpb-seg cpb-none" style="flex:{{ $pN }}" data-filter="unscheduled"
+                                data-stage="{{ $stage->id }}" data-tip="No Tasks: {{ $cN }}"></div>
                         @endif
                     </div>
                 </div>
 
                 <div class="kanban-col-body" data-stage-id="{{ $stage->id }}">
-                    @forelse($sortedStudents as $student)
+                    @forelse($sorted as $s)
                         @php
-                            $overdue = $student->overdueActivities->count();
-                            $upcoming = $student->upcomingActivities->count();
-                            $task = $student->pendingActivities->first();
-                            $isToday = $task && $task->scheduled_for?->isToday();
-                            $nextDate = $task?->scheduled_for;
-                            $rating = $student->rating ?? 0;
-                            $pinned = $student->pinned ?? 0;
-                            $isPinned = $pinned == 1;
-
-                            if ($overdue > 0) {
-                                $fClass = 'overdue';
-                                $fLabel = "⚠️ {$overdue} overdue";
+                            $od = $s->overdueActivities->count();
+                            $up = $s->upcomingActivities->count();
+                            $tk = $s->pendingActivities->first();
+                            $isToday = $tk && $tk->scheduled_for?->isToday();
+                            $nx = $tk?->scheduled_for;
+                            $rt = $s->rating ?? 0;
+                            $pn = ($s->pinned ?? 0) == 1;
+                            if ($od > 0) {
+                                $fCls = 'overdue';
+                                $fLbl = $od . ' overdue';
                                 $cf = 'overdue';
                             } elseif ($isToday) {
-                                $fClass = 'today';
-                                $fLabel = '📅 Today';
+                                $fCls = 'today';
+                                $fLbl = 'Today';
                                 $cf = 'today';
-                            } elseif ($upcoming > 0) {
-                                $fClass = 'upcoming';
-                                $fLabel = '📅 ' . ($nextDate ? $nextDate->format('d M') : 'Upcoming');
+                            } elseif ($up > 0) {
+                                $fCls = 'upcoming';
+                                $fLbl = $nx ? $nx->format('d M') : 'Upcoming';
                                 $cf = 'upcoming';
                             } else {
-                                $fClass = 'none';
-                                $fLabel = 'No tasks';
+                                $fCls = 'none';
+                                $fLbl = 'No tasks';
                                 $cf = 'unscheduled';
                             }
+                            $assignees = $s->pendingActivities->pluck('assignee')->filter()->unique('id');
                         @endphp
 
-                        <div class="student-card {{ $isPinned ? 'pinned' : '' }}"
-                            data-student-id="{{ $student->id }}" data-rating="{{ $rating }}"
-                            data-pinned="{{ $pinned }}" data-task-filter="{{ $cf }}" draggable="true">
+                        <div class="student-card {{ $pn ? 'pinned' : '' }}" style="--sc:{{ $stage->color }}"
+                            data-student-id="{{ $s->id }}" data-rating="{{ $rt }}"
+                            data-pinned="{{ $pn ? 1 : 0 }}" data-task-filter="{{ $cf }}" draggable="true">
 
-                            @php
-                                $isPinned = $student->pinned == 1; // Use pinned column, not rating
-                            @endphp
-
-
-                            <div class="followup-badge {{ $fClass }}">{{ $fLabel }}</div>
-
-                            <a href="{{ route('crm.student.show', $student) }}">
-                                <div class="student-name">{{ $student->full_name }}</div>
-                                <div class="small text-muted mt-1">
-                                    <i class="fas fa-globe-americas"></i>
-                                    {{ $student->preferred_country ?? 'N/A' }}
-                                </div>
-                                <div class="small mt-1">
-                                    <i class="fas fa-phone-alt"></i>
-                                    {{ $student->phone_number ?? '—' }}
-                                </div>
-                                @if ($isAdmin)
-                                    @php
-                                        // Get unique assignees from all pending tasks
-                                        $assignees = $student->pendingActivities
-                                            ->pluck('assignee')
-                                            ->filter()
-                                            ->unique('id');
-                                    @endphp
-                                    @if ($assignees->count() > 0)
-                                        <div class="small text-muted mt-1">
-                                            <i class="fas fa-user-tie"></i>
-                                            @foreach ($assignees as $assignee)
-                                                <span class="badge bg-secondary me-1">{{ $assignee->name }}</span>
-                                            @endforeach
-                                        </div>
-                                    @else
-                                        <div class="small text-muted mt-1">
-                                            <i class="fas fa-user-tie"></i> Unassigned
-                                        </div>
-                                    @endif
-                                @endif
-                            </a>
-
-                            <div class="tags-list">
-                                @if ($student->tags && is_array($student->tags))
-                                    @foreach ($student->tags as $tag)
-                                        <span class="tag">
-                                            <i class="fas fa-tag"></i> {{ $tag }}
-                                            <span class="tag-remove"
-                                                onclick="event.stopPropagation(); window.CrmKanban.removeTag({{ $student->id }},'{{ addslashes($tag) }}')">×</span>
-                                        </span>
-                                    @endforeach
-                                @endif
-                            </div>
-
-                            <div class="d-flex justify-content-between">
-                                <button type="button" class="add-tag-btn" data-student-id="{{ $student->id }}"
-                                    onclick="event.stopPropagation(); window.CrmKanban.openTagModal({{ $student->id }})">
-                                    <i class="fas fa-plus"></i> Add tag
-                                </button>
-                                {{-- Rating Area - 3 Stars Only --}}
-                                <div class="rating-area" onclick="event.stopPropagation();">
-                                    <div class="star-rating" data-student-id="{{ $student->id }}">
-                                        <input type="radio" name="rating_{{ $student->id }}" value="3"
-                                            id="star3_{{ $student->id }}" {{ $rating == 3 ? 'checked' : '' }}>
-                                        <label for="star3_{{ $student->id }}" title="3 stars">★</label>
-
-                                        <input type="radio" name="rating_{{ $student->id }}" value="2"
-                                            id="star2_{{ $student->id }}" {{ $rating == 2 ? 'checked' : '' }}>
-                                        <label for="star2_{{ $student->id }}" title="2 stars">★</label>
-
-                                        <input type="radio" name="rating_{{ $student->id }}" value="1"
-                                            id="star1_{{ $student->id }}" {{ $rating == 1 ? 'checked' : '' }}>
-                                        <label for="star1_{{ $student->id }}" title="1 star">★</label>
-                                    </div>
-                                    @if ($rating > 0)
-                                        <button type="button" class="remove-rating-btn" title="Remove rating"
-                                            onclick="event.stopPropagation(); window.CrmKanban.updateRating({{ $student->id }}, 0)">
-                                            <i class="fas fa-times-circle"></i>
-                                        </button>
-                                    @endif
-                                </div>
-
-                            </div>
-                            <div class="pin">
-                                @if ($isPinned)
-                                    <div class="pinned-badge">
-                                        <i class="fas fa-thumbtack"></i> Pinned
-                                        <button type="button" class="unpin-btn"
-                                            onclick="event.stopPropagation(); window.CrmKanban.togglePin({{ $student->id }}, 0)"
-                                            title="Unpin student">
-                                            <i class="fas fa-times"></i>
-                                        </button>
-                                    </div>
+                            {{-- Row 1: name + pin --}}
+                            <div class="card-row">
+                                <div class="student-name"><a
+                                        href="{{ route('crm.students.show', $s) }}">{{ $s->full_name }}</a></div>
+                                @if ($pn)
+                                    <button class="pin-btn pinned"
+                                        onclick="event.stopPropagation();CrmKanban.togglePin({{ $s->id }},0)"
+                                        title="Unpin"><i class="fas fa-thumbtack"></i></button>
                                 @else
-                                    <div class="pinned-badge"
-                                        style="background: #d1d5db ; color:#000000; cursor: pointer;"
-                                        onclick="event.stopPropagation(); window.CrmKanban.togglePin({{ $student->id }}, 1)">
-                                        📍 Pin
-                                    </div>
+                                    <button class="pin-btn"
+                                        onclick="event.stopPropagation();CrmKanban.togglePin({{ $s->id }},1)"
+                                        title="Pin"><i class="fas fa-thumbtack"></i></button>
+                                @endif
+                            </div>
+
+                            {{-- Row 2: country --}}
+                            <div class="student-sub"><i class="fas fa-globe-americas"></i>
+                                {{ $s->preferred_country ?? 'N/A' }}</div>
+
+                            {{-- Row 3: phone + rating --}}
+                            <div class="card-row" style="margin-top:3px;">
+                                <span style="font-size:0.65rem;color:#6b7280;"><i class="fas fa-phone-alt"
+                                        style="width:13px;text-align:center;margin-right:3px;color:#9ca3af;"></i>
+                                    {{ $s->phone_number ?? '—' }}</span>
+                                <div class="star-rating" onclick="event.stopPropagation();">
+                                    <input type="radio" name="kr_{{ $s->id }}" value="3"
+                                        id="k3_{{ $s->id }}" {{ $rt == 3 ? 'checked' : '' }}>
+                                    <label for="k3_{{ $s->id }}"
+                                        onclick="event.stopPropagation();CrmKanban.updateRating({{ $s->id }},3)">★</label>
+                                    <input type="radio" name="kr_{{ $s->id }}" value="2"
+                                        id="k2_{{ $s->id }}" {{ $rt == 2 ? 'checked' : '' }}>
+                                    <label for="k2_{{ $s->id }}"
+                                        onclick="event.stopPropagation();CrmKanban.updateRating({{ $s->id }},2)">★</label>
+                                    <input type="radio" name="kr_{{ $s->id }}" value="1"
+                                        id="k1_{{ $s->id }}" {{ $rt == 1 ? 'checked' : '' }}>
+                                    <label for="k1_{{ $s->id }}"
+                                        onclick="event.stopPropagation();CrmKanban.updateRating({{ $s->id }},1)">★</label>
+                                </div>
+                            </div>
+
+                            {{-- Row 4: tags list + add tag --}}
+                            <div class="card-row">
+                                <div class="tags-list">
+                                    @if ($s->tags && is_array($s->tags))
+                                        @foreach ($s->tags as $t)
+                                            <span class="tag"><i class="fas fa-tag" style="font-size:.45rem;"></i>
+                                                {{ $t }}<span class="tag-remove"
+                                                    onclick="event.stopPropagation();CrmKanban.removeTag({{ $s->id }},'{{ addslashes($t) }}')">×</span></span>
+                                        @endforeach
+                                    @endif
+                                </div>
+                                <button type="button" class="add-tag-btn"
+                                    onclick="event.stopPropagation();CrmKanban.openTagModal({{ $s->id }})"><i
+                                        class="fas fa-plus"></i></button>
+                            </div>
+
+                            {{-- Row 5: assignee + task date --}}
+                            <div class="card-row">
+                                <div>
+                                    @foreach ($assignees as $a)
+                                        <span class="assignee-chip"><i class="fas fa-user-circle"
+                                                style="font-size:.45rem;"></i>
+                                            {{ \Illuminate\Support\Str::words($a->name, 2, '') }}</span>
+                                    @endforeach
+                                </div>
+                                @if ($od > 0)
+                                    <span class="followup-badge overdue"><i class="fas fa-exclamation-circle"
+                                            style="font-size:.45rem;margin-right:2px;"></i> Overdue</span>
+                                @elseif ($isToday)
+                                    <span class="followup-badge today"><i class="fas fa-calendar-day"
+                                            style="font-size:.45rem;margin-right:2px;"></i> Today</span>
+                                @elseif ($nx)
+                                    <span class="followup-badge upcoming"><i class="fas fa-calendar-alt"
+                                            style="font-size:.45rem;margin-right:2px;"></i>
+                                        {{ $nx->format('d M') }}</span>
                                 @endif
                             </div>
                         </div>
@@ -744,73 +671,71 @@
     <script>
         window.CrmKanban = (function() {
             'use strict';
+            var initd = false,
+                curId = null,
+                dragging = false,
+                raf = null,
+                sDir = null,
+                cX = 0;
+            var board, topScroll, topInner;
+            var CRM = window.CrmCore?.getInstance();
+            var sl = function() {
+                CRM?.showLoader();
+            };
+            var hl = function() {
+                CRM?.hideLoader();
+            };
+            var st = function(m, t) {
+                CRM?.showToast(m, t);
+            };
+            var csrf = function() {
+                return CRM ? CRM.getCsrfToken() : document.querySelector('meta[name="csrf-token"]')?.content;
+            };
+            var esc = function(s) {
+                return CRM ? CRM.escapeHtml(s) : String(s ?? '').replace(/[&<>"']/g, function(c) {
+                    return ({
+                        '&': '&amp;',
+                        '<': '&lt;',
+                        '>': '&gt;',
+                        '"': '&quot;',
+                        "'": '&#39;'
+                    })[c];
+                });
+            };
 
-            let isInitialized = false;
-            let currentStudentId = null;
-            let isDragging = false;
-            let rafId = null;
-            let scrollDir = null;
-            let dragClientX = 0;
-
-            let board = null;
-            let topScroll = null;
-            let topInner = null;
-            let wrapper = null;
-
-            const CRM = window.CrmCore?.getInstance();
-            const showLoader = () => CRM?.showLoader();
-            const hideLoader = () => CRM?.hideLoader();
-            const showToast = (m, t) => CRM?.showToast(m, t);
-            const getCsrf = () => CRM ? CRM.getCsrfToken() : document.querySelector('meta[name="csrf-token"]')
-                ?.content;
-            const escHtml = (s) => CRM ? CRM.escapeHtml(s) : String(s ?? '').replace(/[&<>"']/g, c => ({
-                '&': '&amp;',
-                '<': '&lt;',
-                '>': '&gt;',
-                '"': '&quot;',
-                "'": '&#39;'
-            } [c]));
-
-            function initScrollSync() {
+            function syncScroll() {
                 board = document.getElementById('kanbanBoard');
                 topScroll = document.getElementById('kanbanScrollTop');
                 topInner = document.getElementById('scrollTopInner');
-                wrapper = document.getElementById('kanbanWrapper');
-
                 if (!board) return;
 
-                function matchWidth() {
+                function mw() {
                     if (!topInner || !board) return;
                     topInner.style.width = board.scrollWidth + 'px';
-                    if (topScroll) {
-                        topScroll.style.display = board.scrollWidth > board.clientWidth + 2 ? 'block' : 'none';
-                    }
+                    if (topScroll) topScroll.style.display = board.scrollWidth > board.clientWidth + 2 ? 'block' :
+                        'none';
                 }
-
-                let fromTop = false,
-                    fromBoard = false;
-
+                var ft = false,
+                    fb = false;
                 if (topScroll) {
-                    topScroll.addEventListener('scroll', () => {
-                        if (fromBoard) return;
-                        fromTop = true;
+                    topScroll.addEventListener('scroll', function() {
+                        if (fb) return;
+                        ft = true;
                         board.scrollLeft = topScroll.scrollLeft;
-                        fromTop = false;
+                        ft = false;
                     }, {
                         passive: true
                     });
                 }
-
-                board.addEventListener('scroll', () => {
-                    if (fromTop) return;
-                    fromBoard = true;
+                board.addEventListener('scroll', function() {
+                    if (ft) return;
+                    fb = true;
                     if (topScroll) topScroll.scrollLeft = board.scrollLeft;
-                    fromBoard = false;
+                    fb = false;
                 }, {
                     passive: true
                 });
-
-                board.addEventListener('wheel', (e) => {
+                board.addEventListener('wheel', function(e) {
                     if (e.shiftKey) {
                         e.preventDefault();
                         board.scrollLeft += e.deltaY;
@@ -819,67 +744,65 @@
                 }, {
                     passive: false
                 });
-
-                const ro = new ResizeObserver(matchWidth);
+                var ro = new ResizeObserver(mw);
                 ro.observe(board);
-                window.addEventListener('resize', matchWidth);
-                setTimeout(matchWidth, 200);
-                setTimeout(matchWidth, 800);
+                window.addEventListener('resize', mw);
+                setTimeout(mw, 150);
+                setTimeout(mw, 600);
             }
 
-            function startAutoScroll(dir) {
-                stopAutoScroll();
-                const SPEED = 18;
-                scrollDir = dir;
+            function autoScroll(d) {
+                if (raf) cancelAnimationFrame(raf);
+                var SPEED = 16;
+                sDir = d;
 
                 function tick() {
-                    if (!isDragging || !board) {
-                        stopAutoScroll();
+                    if (!dragging || !board) {
+                        if (raf) {
+                            cancelAnimationFrame(raf);
+                            raf = null;
+                        }
                         return;
                     }
-                    board.scrollLeft += dir === 'left' ? -SPEED : SPEED;
+                    board.scrollLeft += d === 'left' ? -SPEED : SPEED;
                     if (topScroll) topScroll.scrollLeft = board.scrollLeft;
-                    rafId = requestAnimationFrame(tick);
+                    raf = requestAnimationFrame(tick);
                 }
-                rafId = requestAnimationFrame(tick);
+                raf = requestAnimationFrame(tick);
             }
 
-            function stopAutoScroll() {
-                if (rafId) {
-                    cancelAnimationFrame(rafId);
-                    rafId = null;
+            function stopScroll() {
+                if (raf) {
+                    cancelAnimationFrame(raf);
+                    raf = null;
                 }
-                scrollDir = null;
+                sDir = null;
             }
 
-            function checkEdge(clientX) {
-                if (!board || !isDragging) return;
-                const rect = board.getBoundingClientRect();
-                const ZONE = 120;
-                const viewW = window.innerWidth;
-                const effectiveX = Math.max(0, Math.min(viewW, clientX));
-                const fromLeft = effectiveX - rect.left;
-                const fromRight = rect.right - effectiveX;
-
-                if (fromLeft < ZONE && board.scrollLeft > 0) {
-                    if (scrollDir !== 'left') startAutoScroll('left');
-                } else if (fromRight < ZONE && board.scrollLeft < board.scrollWidth - board.clientWidth - 1) {
-                    if (scrollDir !== 'right') startAutoScroll('right');
-                } else {
-                    stopAutoScroll();
-                }
+            function checkEdge(x) {
+                if (!board || !dragging) return;
+                var r = board.getBoundingClientRect(),
+                    Z = 100,
+                    vw = window.innerWidth;
+                var ex = Math.max(0, Math.min(vw, x));
+                var fl = ex - r.left,
+                    fr = r.right - ex;
+                if (fl < Z && board.scrollLeft > 0) {
+                    if (sDir !== 'left') autoScroll('left');
+                } else if (fr < Z && board.scrollLeft < board.scrollWidth - board.clientWidth - 1) {
+                    if (sDir !== 'right') autoScroll('right');
+                } else stopScroll();
             }
 
-            function onDocDragOver(e) {
-                dragClientX = e.clientX;
+            function onDragOver(e) {
+                cX = e.clientX;
                 checkEdge(e.clientX);
             }
 
-            function handleDragStart(e) {
-                isDragging = true;
+            function dragStart(e) {
+                dragging = true;
                 this.classList.add('dragging');
-
-                const col = this.closest('.kanban-col');
+                var col = this.closest('.kanban-col');
                 if (col) {
                     e.dataTransfer.setData('text/plain', JSON.stringify({
                         studentId: this.dataset.studentId,
@@ -887,399 +810,335 @@
                     }));
                     e.dataTransfer.effectAllowed = 'move';
                 }
-
-                const ghost = document.createElement('div');
+                var ghost = document.createElement('div');
                 ghost.style.cssText = 'position:fixed;top:-999px;left:-999px;width:1px;height:1px;opacity:0;';
                 document.body.appendChild(ghost);
                 try {
                     e.dataTransfer.setDragImage(ghost, 0, 0);
                 } catch (_) {}
-                setTimeout(() => ghost.remove(), 0);
-
-                document.addEventListener('dragover', onDocDragOver);
+                setTimeout(function() {
+                    ghost.remove();
+                }, 0);
+                document.addEventListener('dragover', onDragOver);
             }
 
-            function handleDragEnd() {
-                isDragging = false;
+            function dragEnd() {
+                dragging = false;
                 this.classList.remove('dragging');
-                stopAutoScroll();
-                document.removeEventListener('dragover', onDocDragOver);
-                clearDragOver();
+                stopScroll();
+                document.removeEventListener('dragover', onDragOver);
+                clearOver();
             }
 
-            function handleDragOver(e) {
+            function dragOver(e) {
                 e.preventDefault();
                 e.dataTransfer.dropEffect = 'move';
-                clearDragOver();
-                const col = e.currentTarget.closest('.kanban-col') || (e.currentTarget.classList.contains(
-                    'kanban-col') ? e.currentTarget : null);
-                if (col) col.classList.add('drag-over');
+                clearOver();
+                var c = e.currentTarget.closest('.kanban-col');
+                if (c) c.classList.add('drag-over');
             }
 
-            function handleDragLeave(e) {
-                const col = e.currentTarget.closest('.kanban-col') || (e.currentTarget.classList.contains(
-                    'kanban-col') ? e.currentTarget : null);
-                if (col && !col.contains(e.relatedTarget)) {
-                    col.classList.remove('drag-over');
-                }
+            function dragLeave(e) {
+                var c = e.currentTarget.closest('.kanban-col');
+                if (c && !c.contains(e.relatedTarget)) c.classList.remove('drag-over');
             }
 
-            function clearDragOver() {
-                document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+            function clearOver() {
+                document.querySelectorAll('.drag-over').forEach(function(el) {
+                    el.classList.remove('drag-over');
+                });
             }
 
-            async function handleDrop(e) {
+            async function drop(e) {
                 e.preventDefault();
                 e.stopPropagation();
-                stopAutoScroll();
-                isDragging = false;
-                clearDragOver();
-                document.removeEventListener('dragover', onDocDragOver);
-
-                const col = e.currentTarget.closest('.kanban-col') || (e.currentTarget.classList.contains(
-                    'kanban-col') ? e.currentTarget : null);
+                stopScroll();
+                dragging = false;
+                clearOver();
+                document.removeEventListener('dragover', onDragOver);
+                var col = e.currentTarget.closest('.kanban-col');
                 if (!col) return;
-                const targetStageId = col.dataset.stageId;
-                if (!targetStageId) return;
-
-                let data;
+                var tId = col.dataset.stageId;
+                if (!tId) return;
+                var d;
                 try {
-                    data = JSON.parse(e.dataTransfer.getData('text/plain'));
-                } catch {
+                    d = JSON.parse(e.dataTransfer.getData('text/plain'));
+                } catch (_) {
                     return;
                 }
-
-                const {
-                    studentId,
-                    sourceStageId
-                } = data;
-                if (!studentId || sourceStageId === targetStageId) return;
-
-                showLoader();
+                var sid = d.studentId,
+                    ssid = d.sourceStageId;
+                if (!sid || ssid === tId) return;
+                sl();
                 try {
-                    const res = await fetch(`/crm/students/${studentId}/stage`, {
+                    var r = await fetch('/crm/students/' + sid + '/stage', {
                         method: 'PUT',
                         headers: {
                             'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': getCsrf()
+                            'X-CSRF-TOKEN': csrf()
                         },
                         body: JSON.stringify({
-                            stage_id: parseInt(targetStageId)
+                            stage_id: parseInt(tId)
                         })
                     });
-                    const result = await res.json();
-                    if (result.success) {
-                        showToast('Student moved successfully', 'success');
-                        setTimeout(() => location.reload(), 300);
-                    } else {
-                        throw new Error(result.error || 'Move failed');
-                    }
+                    var j = await r.json();
+                    if (j.success) {
+                        st('Moved', 'success');
+                        setTimeout(function() {
+                            location.reload();
+                        }, 250);
+                    } else throw new Error(j.error || 'Failed');
                 } catch (err) {
-                    showToast(err.message, 'error');
+                    st(err.message, 'error');
                 } finally {
-                    hideLoader();
+                    hl();
                 }
             }
 
-            function initDragAndDrop() {
-                document.querySelectorAll('.student-card[draggable="true"]').forEach(card => {
-                    card.ondragstart = handleDragStart;
-                    card.ondragend = handleDragEnd;
+            function initDnd() {
+                document.querySelectorAll('.student-card[draggable="true"]').forEach(function(c) {
+                    c.ondragstart = dragStart;
+                    c.ondragend = dragEnd;
                 });
-                document.querySelectorAll('.kanban-col-body, .kanban-col').forEach(el => {
-                    el.ondragover = handleDragOver;
-                    el.ondragleave = handleDragLeave;
-                    el.ondrop = handleDrop;
+                document.querySelectorAll('.kanban-col-body, .kanban-col').forEach(function(el) {
+                    el.ondragover = dragOver;
+                    el.ondragleave = dragLeave;
+                    el.ondrop = drop;
                 });
             }
 
-            const activeFilters = {};
+            var filters = {};
 
-            function applyColFilter(stageId, filter) {
-                const body = document.querySelector(`.kanban-col-body[data-stage-id="${stageId}"]`);
-                const segs = document.querySelectorAll(`.col-progress-bar[data-stage="${stageId}"] .cpb-seg`);
+            function applyFilter(sid, f) {
+                var body = document.querySelector('.kanban-col-body[data-stage-id="' + sid + '"]');
+                var segs = document.querySelectorAll('.col-progress-bar[data-stage="' + sid + '"] .cpb-seg');
                 if (!body) return;
-
-                if (activeFilters[stageId] === filter) {
-                    activeFilters[stageId] = null;
-                    body.querySelectorAll('.student-card').forEach(c => c.classList.remove('filter-hidden'));
-                    segs.forEach(s => s.classList.remove('seg-active'));
+                if (filters[sid] === f) {
+                    filters[sid] = null;
+                    body.querySelectorAll('.student-card').forEach(function(c) {
+                        c.classList.remove('filter-hidden');
+                    });
+                    segs.forEach(function(s) {
+                        s.classList.remove('seg-active');
+                    });
                     return;
                 }
-                activeFilters[stageId] = filter;
-
-                body.querySelectorAll('.student-card').forEach(card => {
-                    card.classList.toggle('filter-hidden', card.dataset.taskFilter !== filter);
+                filters[sid] = f;
+                body.querySelectorAll('.student-card').forEach(function(c) {
+                    c.classList.toggle('filter-hidden', c.dataset.taskFilter !== f);
                 });
-                segs.forEach(s => {
-                    s.classList.toggle('seg-active', s.dataset.filter === filter);
+                segs.forEach(function(s) {
+                    s.classList.toggle('seg-active', s.dataset.filter === f);
                 });
             }
 
-            function initProgressBars() {
-                document.querySelectorAll('.cpb-seg').forEach(seg => {
+            function initProgress() {
+                document.querySelectorAll('.cpb-seg').forEach(function(seg) {
                     seg.addEventListener('click', function(e) {
                         e.stopPropagation();
-                        applyColFilter(this.dataset.stage, this.dataset.filter);
+                        applyFilter(this.dataset.stage, this.dataset.filter);
                     });
                 });
             }
 
-            // ============================================
-            // RATING FUNCTIONS - FIXED
-            // ============================================
-            async function updateRating(studentId, rating) {
-                showLoader();
+            async function updateRating(id, r) {
+                sl();
                 try {
-                    const response = await fetch(`/crm/student/${studentId}/update-rating`, {
+                    var res = await fetch('/crm/student/' + id + '/update-rating', {
                         method: 'PUT',
                         headers: {
                             'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': getCsrf(),
+                            'X-CSRF-TOKEN': csrf(),
                             'Accept': 'application/json'
                         },
                         body: JSON.stringify({
-                            rating: rating
+                            rating: r
                         })
                     });
-
-                    const data = await response.json();
-
-                    if (data.success) {
-                        showToast(rating > 0 ? `Rating updated to ${rating}★` : 'Rating removed', 'success');
-                        setTimeout(() => location.reload(), 500);
-                    } else {
-                        throw new Error(data.error || 'Failed to update rating');
-                    }
+                    var d = await res.json();
+                    if (d.success) {
+                        st(r > 0 ? 'Rated ' + r + '★' : 'Rating removed', 'success');
+                        setTimeout(function() {
+                            location.reload();
+                        }, 400);
+                    } else throw new Error(d.error || 'Failed');
                 } catch (err) {
-                    console.error('Rating error:', err);
-                    showToast('Error updating rating', 'error');
+                    st('Error updating rating', 'error');
                 } finally {
-                    hideLoader();
+                    hl();
                 }
             }
 
-            // ============================================
-            // PIN/UNPIN FUNCTIONS
-            // ============================================
-            async function togglePin(studentId, pinStatus) {
-                showLoader();
+            async function togglePin(id, s) {
+                sl();
                 try {
-                    const response = await fetch(`/crm/students/${studentId}/toggle-pin`, {
+                    var r = await fetch('/crm/students/' + id + '/toggle-pin', {
                         method: 'PUT',
                         headers: {
                             'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': getCsrf(),
+                            'X-CSRF-TOKEN': csrf(),
                             'Accept': 'application/json'
                         },
                         body: JSON.stringify({
-                            pinned: pinStatus
+                            pinned: s
                         })
                     });
-
-                    const data = await response.json();
-
-                    if (data.success) {
-                        showToast(pinStatus == 1 ? 'Student pinned' : 'Student unpinned', 'success');
-                        setTimeout(() => location.reload(), 500);
-                    } else {
-                        throw new Error(data.error || 'Failed to update pin status');
-                    }
+                    var d = await r.json();
+                    if (d.success) {
+                        st(s == 1 ? 'Pinned' : 'Unpinned', 'success');
+                        setTimeout(function() {
+                            location.reload();
+                        }, 400);
+                    } else throw new Error(d.error || 'Failed');
                 } catch (err) {
-                    console.error('Pin error:', err);
-                    showToast('Error updating pin status', 'error');
+                    st('Error', 'error');
                 } finally {
-                    hideLoader();
+                    hl();
                 }
             }
 
-            // ============================================
-            // RATING INIT - Fix event handlers
-            // ============================================
-            function initRatings() {
-                // Handle star clicks
-                document.querySelectorAll('.star-rating label').forEach(label => {
-                    label.removeEventListener('click', starClickHandler);
-                    label.addEventListener('click', starClickHandler);
-                });
-
-                function starClickHandler(e) {
-                    e.stopPropagation();
-                    e.preventDefault();
-
-                    const starRatingDiv = this.closest('.star-rating');
-                    const studentId = starRatingDiv.dataset.studentId;
-                    const forId = this.getAttribute('for');
-                    const radio = document.getElementById(forId);
-
-                    if (radio && !radio.checked) {
-                        radio.checked = true;
-                        const ratingValue = parseInt(radio.value);
-                        updateRating(studentId, ratingValue);
-                    }
-                }
-            }
-
-            // ============================================
-            // TAG FUNCTIONS
-            // ============================================
             function openTagModal(id) {
-                currentStudentId = id;
-                const modal = document.getElementById('tagModal');
-                if (!modal) return;
-                new bootstrap.Modal(modal).show();
-                const input = document.getElementById('tagInput');
-                if (input) input.value = '';
-                loadPopularTags();
+                curId = id;
+                var m = document.getElementById('tagModal');
+                if (m) {
+                    new bootstrap.Modal(m).show();
+                    var i = document.getElementById('tagInput');
+                    if (i) i.value = '';
+                    loadPopularTags();
+                }
             }
-
             async function loadPopularTags() {
                 try {
-                    const res = await fetch('/crm/popular-tags', {
+                    var r = await fetch('/crm/popular-tags', {
                         headers: {
-                            'X-CSRF-TOKEN': getCsrf()
+                            'X-CSRF-TOKEN': csrf()
                         }
                     });
-                    const data = await res.json();
-                    const el = document.getElementById('suggestedTagsList');
-                    if (el && data.tags) {
-                        el.innerHTML = data.tags.map(t =>
-                            `<span class="badge bg-light text-dark p-2 me-1 mb-1" style="cursor:pointer"
-          onclick="document.getElementById('tagInput').value='${escHtml(t)}'">
-          🏷️ ${escHtml(t)}
-      </span>`
-                        ).join('');
-                    }
+                    var d = await r.json();
+                    var el = document.getElementById('suggestedTagsList');
+                    if (el && d.tags) el.innerHTML = d.tags.map(function(t) {
+                        return '<span class="badge bg-light text-dark p-1 me-1 mb-1" style="cursor:pointer;font-size:.55rem;border-radius:4px;" onclick="document.getElementById(\'tagInput\').value=\'' +
+                            esc(t) + '\'">' + esc(t) + '</span>';
+                    }).join('');
                 } catch (e) {
                     console.error(e);
                 }
             }
-
             async function saveTag() {
-                const input = document.getElementById('tagInput');
-                const tag = input?.value.trim();
+                var inp = document.getElementById('tagInput');
+                var tag = inp?.value.trim();
                 if (!tag) {
-                    showToast('Please enter a tag', 'error');
+                    st('Enter a tag', 'error');
                     return;
                 }
-                showLoader();
+                sl();
                 try {
-                    const res = await fetch(`/crm/students/${currentStudentId}/add-tag`, {
+                    var r = await fetch('/crm/students/' + curId + '/add-tag', {
                         method: 'PUT',
                         headers: {
                             'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': getCsrf()
+                            'X-CSRF-TOKEN': csrf()
                         },
                         body: JSON.stringify({
-                            tag
+                            tag: tag
                         })
                     });
-                    const data = await res.json();
-                    if (data.success) {
-                        updateTagsInCard(currentStudentId, data.tags);
+                    var d = await r.json();
+                    if (d.success) {
+                        updateTags(curId, d.tags);
                         bootstrap.Modal.getInstance(document.getElementById('tagModal'))?.hide();
-                        showToast('Tag added', 'success');
-                    } else throw new Error(data.error);
+                        st('Tag added', 'success');
+                    } else throw new Error(d.error);
                 } catch (err) {
-                    showToast(err.message, 'error');
+                    st(err.message, 'error');
                 } finally {
-                    hideLoader();
+                    hl();
                 }
             }
-
             async function removeTag(id, tag) {
-                if (!confirm(`Remove tag "${tag}"?`)) return;
-                showLoader();
+                if (!confirm('Remove tag "' + tag + '"?')) return;
+                sl();
                 try {
-                    const res = await fetch(`/crm/students/${id}/remove-tag`, {
+                    var r = await fetch('/crm/students/' + id + '/remove-tag', {
                         method: 'DELETE',
                         headers: {
                             'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': getCsrf()
+                            'X-CSRF-TOKEN': csrf()
                         },
                         body: JSON.stringify({
-                            tag
+                            tag: tag
                         })
                     });
-                    const data = await res.json();
-                    if (data.success) {
-                        updateTagsInCard(id, data.tags);
-                        showToast('Tag removed', 'success');
-                    } else throw new Error(data.error);
+                    var d = await r.json();
+                    if (d.success) {
+                        updateTags(id, d.tags);
+                        st('Tag removed', 'success');
+                    } else throw new Error(d.error);
                 } catch (err) {
-                    showToast(err.message, 'error');
+                    st(err.message, 'error');
                 } finally {
-                    hideLoader();
+                    hl();
                 }
             }
 
-            function updateTagsInCard(id, tags) {
-                const card = document.querySelector(`.student-card[data-student-id="${id}"]`);
-                const list = card?.querySelector('.tags-list');
+            function updateTags(id, tags) {
+                var card = document.querySelector('.student-card[data-student-id="' + id + '"]');
+                var list = card?.querySelector('.tags-list');
+                var btn = card?.querySelector('.add-tag-btn');
                 if (!list) return;
-                list.innerHTML = (tags?.length > 0) ?
-                    tags.map(t =>
-                        `<span class="tag"><i class="fas fa-tag"></i> ${escHtml(t)}<span class="tag-remove" onclick="event.stopPropagation();window.CrmKanban.removeTag(${id},'${escHtml(t)}')">×</span></span>`
-                    ).join('') : '';
+                if (tags?.length) {
+                    list.innerHTML = tags.map(function(t) {
+                        return '<span class="tag">' + esc(t) +
+                            '<span class="tag-remove" onclick="event.stopPropagation();CrmKanban.removeTag(' +
+                            id + ',\'' + esc(t) + '\')">×</span></span>';
+                    }).join('');
+                } else {
+                    list.innerHTML = '';
+                }
             }
 
-            function openAddStudentModal(stageId, stageName) {
-                const input = document.getElementById('colStageId');
-                const span = document.getElementById('colStageName');
-                if (input) input.value = stageId;
-                if (span) span.innerText = stageName;
-                const modal = document.getElementById('addStudentToColModal');
-                if (modal) new bootstrap.Modal(modal).show();
+            function openAddStudentModal(sid, sn) {
+                var i = document.getElementById('colStageId');
+                if (i) i.value = sid;
+                var s = document.getElementById('colStageName');
+                if (s) s.innerText = sn;
+                var m = document.getElementById('addStudentToColModal');
+                if (m) new bootstrap.Modal(m).show();
             }
 
             function init() {
-                if (isInitialized) return;
-
-                initScrollSync();
-                initDragAndDrop();
-                initRatings();
-                initProgressBars();
-
-                document.body.addEventListener('click', function(e) {
-                    const btn = e.target.closest('.add-tag-btn');
-                    if (btn && btn.closest('.kanban-board')) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        const id = btn.dataset.studentId;
-                        if (id) openTagModal(id);
-                    }
-                });
-
-                const saveBtn = document.getElementById('saveTagBtn');
-                if (saveBtn) saveBtn.addEventListener('click', saveTag);
-
-                isInitialized = true;
+                if (initd) return;
+                syncScroll();
+                initDnd();
+                initProgress();
+                var sb = document.getElementById('saveTagBtn');
+                if (sb) sb.addEventListener('click', saveTag);
+                initd = true;
             }
 
             function destroy() {
-                stopAutoScroll();
-                document.removeEventListener('dragover', onDocDragOver);
-                isInitialized = false;
-                isDragging = false;
+                stopScroll();
+                document.removeEventListener('dragover', onDragOver);
+                initd = false;
+                dragging = false;
             }
-
             return {
-                init,
-                destroy,
-                openAddStudentModal,
-                openTagModal,
-                saveTag,
-                removeTag,
-                updateRating,
-                togglePin
+                init: init,
+                destroy: destroy,
+                openAddStudentModal: openAddStudentModal,
+                openTagModal: openTagModal,
+                saveTag: saveTag,
+                removeTag: removeTag,
+                updateRating: updateRating,
+                togglePin: togglePin
             };
         })();
 
         document.addEventListener('DOMContentLoaded', function() {
-            const view = document.querySelector('[name="view"]')?.value || 'kanban';
-            if (view === 'kanban') {
-                setTimeout(() => window.CrmKanban?.init(), 150);
-            }
+            var v = document.querySelector('[name="view"]')?.value || 'kanban';
+            if (v === 'kanban') setTimeout(function() {
+                window.CrmKanban?.init();
+            }, 100);
         });
     </script>
 @endpush

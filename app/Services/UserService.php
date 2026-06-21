@@ -134,7 +134,9 @@ class UserService
         $user->paid_crm          = $request->boolean('paid_crm');
         $user->subscription_plan = $request->input('subscription_plan', $user->subscription_plan ?? '');
 
-        $slug = strtolower(str_replace(' ', '-', $request->business_name));
+        $slug = strtolower(str_replace(' ', '-',
+            $request->role === 'staff' ? $request->name : $request->business_name
+        ));
         $originalSlug = $slug;
         $counter = 1;
         while (User::where('slug', $slug)->where('id', '!=', $user->id)->exists()) {
@@ -205,6 +207,7 @@ class UserService
                 $user->parent_id = null;
             }
         } else {
+            $user->name    = $request->name;
             $user->email   = $request->email;
             $user->contact = $request->contact;
             $user->address = $request->address;
@@ -215,7 +218,9 @@ class UserService
         }
 
         if (!$user->slug) {
-            $user->slug = Str::slug($user->business_name ?: $user->name);
+            $user->slug = Str::slug(
+                $user->role === 'staff' ? $user->name : ($user->business_name ?: $user->name)
+            );
         }
 
         $user->save();

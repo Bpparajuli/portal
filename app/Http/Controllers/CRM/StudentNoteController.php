@@ -59,7 +59,12 @@ class StudentNoteController extends Controller
         ]);
 
         if ($request->filled('type')) {
-            $note->update(['type' => $validated['type']]);
+            $isLog = $validated['type'] === 'log';
+            $note->update([
+                'type' => $validated['type'],
+                'is_log' => $isLog,
+                'title' => $isLog ? ($note->title ?? 'Note Converted') : null,
+            ]);
         }
 
         // Log the edit
@@ -81,6 +86,25 @@ class StudentNoteController extends Controller
         }
 
         return back()->with('success', 'Note updated.');
+    }
+
+    public function convertType(Request $request, StudentNote $note)
+    {
+        $this->denyAgents();
+        $this->authorizeNote($note);
+
+        $type = $request->input('type', $note->is_log ? 'internal' : 'log');
+        $isLog = $type === 'log';
+
+        $note->update([
+            'type' => $type,
+            'is_log' => $isLog,
+            'title' => $isLog ? ($note->title ?? 'Note Converted') : null,
+            'updated_by' => Auth::id(),
+        ]);
+
+        $label = $isLog ? 'activity log' : 'note';
+        return back()->with('success', "Moved to {$label} successfully.");
     }
 
     public function togglePin(StudentNote $note)

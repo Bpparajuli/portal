@@ -4,6 +4,9 @@
 @section('page-title', 'Admin Dashboard')
 @push('styles')
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        .chart-fill canvas { width: 100% !important; min-height: 200px !important; }
+    </style>
 @endpush
 @section('admin-content')
 
@@ -82,8 +85,8 @@
                     month
                 </span>
             </div>
-            <div class="sc-body">
-                <canvas id="weeklyChart" height="130"></canvas>
+            <div class="sc-body chart-fill">
+                <canvas id="weeklyChart"></canvas>
             </div>
         </div>
         <div class="card uni-stat" style="padding:0;">
@@ -91,8 +94,8 @@
                 <h5 class="sc-title"><span class="sc-icon"><i class="fas fa-university"></i></span> Applications by
                     University</h5>
             </div>
-            <div class="sc-body">
-                <canvas id="universityChart" height="300"></canvas>
+            <div class="sc-body chart-fill">
+                <canvas id="universityChart"></canvas>
             </div>
         </div>
     </div>
@@ -104,7 +107,7 @@
                 <h5 class="sc-title"><span class="sc-icon"><i class="fas fa-chart-pie"></i></span> Applications By Status
                 </h5>
             </div>
-            <div class="sc-body">
+            <div class="sc-body chart-fill">
                 <canvas id="statusChart"></canvas>
                 <div class="status-pills">
                     @foreach ($statusChartData['statuses'] as $status)
@@ -122,7 +125,7 @@
                 </h5>
                 <span style="font-size:.75rem;color:var(--text-muted);">{{ date('Y') }}</span>
             </div>
-            <div class="sc-body"><canvas id="applicationsChart" height="150"></canvas></div>
+            <div class="sc-body chart-fill"><canvas id="applicationsChart"></canvas></div>
         </div>
     </div>
 
@@ -309,10 +312,13 @@
                                         <li>
                                             <hr class="dropdown-divider">
                                         </li>
-                                        <li><button class="dropdown-item text-danger btn-delete"
-                                                data-url="{{ route('admin.applications.destroy', $app->id) }}"
-                                                data-name="Application #{{ $app->id }}"><i
-                                                    class="fas fa-trash me-2"></i> Delete</button></li>
+                                        <li><x-confirm-delete
+                                                url="{{ route('admin.applications.destroy', $app->id) }}"
+                                                label="Delete"
+                                                title="Delete Application #{{ $app->id }}?"
+                                                message="This action cannot be undone."
+                                                class="dropdown-item text-danger"
+                                            /></li>
                                     </ul>
                                 </div>
                             </td>
@@ -398,47 +404,44 @@
                         type: 'bar',
                         label: 'Applications',
                         data: @json($weeklyAppsData),
-                        backgroundColor: 'rgba(130,11,92,.22)',
+                        backgroundColor: 'rgba(130,11,92,.18)',
                         borderColor: '#820b5c',
-                        borderWidth: 2,
-                        borderRadius: 5
+                        borderWidth: 1.5,
+                        borderRadius: 4
                     }, {
                         type: 'line',
                         label: 'Students',
                         data: @json($weeklyStudentsData),
                         borderColor: '#1a0262',
-                        backgroundColor: 'transparent',
+                        backgroundColor: 'rgba(26,2,98,.06)',
                         borderWidth: 2,
+                        fill: true,
                         tension: 0.35,
-                        pointRadius: 3
+                        pointRadius: 3,
+                        pointBackgroundColor: '#1a0262'
                     }]
                 },
                 options: {
                     responsive: true,
-                    maintainAspectRatio: true,
+                    maintainAspectRatio: false,
                     plugins: {
                         legend: {
                             display: true,
                             position: 'bottom',
                             labels: {
-                                font: {
-                                    size: 11
-                                },
-                                padding: 10
+                                font: { size: 10 },
+                                padding: 8,
+                                boxWidth: 12
                             }
                         }
                     },
                     scales: {
                         y: {
                             beginAtZero: true,
-                            grid: {
-                                color: gridColor
-                            }
+                            grid: { color: gridColor }
                         },
                         x: {
-                            grid: {
-                                display: false
-                            }
+                            grid: { display: false }
                         }
                     }
                 }
@@ -449,23 +452,17 @@
                 data: @json($applicationsChartData),
                 options: {
                     responsive: true,
-                    maintainAspectRatio: true,
+                    maintainAspectRatio: false,
                     plugins: {
-                        legend: {
-                            display: false
-                        }
+                        legend: { display: false }
                     },
                     scales: {
                         y: {
                             beginAtZero: true,
-                            grid: {
-                                color: gridColor
-                            }
+                            grid: { color: gridColor }
                         },
                         x: {
-                            grid: {
-                                display: false
-                            }
+                            grid: { display: false }
                         }
                     }
                 }
@@ -479,9 +476,7 @@
                     maintainAspectRatio: false,
                     cutout: '0%',
                     plugins: {
-                        legend: {
-                            display: false
-                        }
+                        legend: { display: false }
                     }
                 }
             });

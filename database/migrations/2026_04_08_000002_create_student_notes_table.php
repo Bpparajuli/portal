@@ -4,54 +4,25 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateStudentNotesTable extends Migration
+return new class extends Migration
 {
-    public function up()
+    public function up(): void
     {
         Schema::create('student_notes', function (Blueprint $table) {
             $table->id();
-
-            // Foreign Keys
-            $table->foreignId('student_id')
-                ->constrained('students')
-                ->cascadeOnDelete();
-
-            $table->foreignId('created_by')
-                ->constrained('users')
-                ->cascadeOnDelete();
-            $table->foreignId('updated_by')->nullable()
-                ->constrained('users')
-                ->nullOnDelete();
-
-            // Note Content
+            $table->foreignId('student_id')->constrained('students')->cascadeOnDelete();
+            $table->foreignId('created_by')->constrained('users')->cascadeOnDelete();
+            $table->foreignId('updated_by')->nullable()->constrained('users')->nullOnDelete();
             $table->text('content');
-
-            // Note Type
-            $table->enum('type', [
-                'internal',
-                'customer_visible',
-                'reminder'
-            ])->default('internal');
-
-            // Pin Important Notes
+            $table->string('title')->nullable();
+            $table->enum('type', ['internal', 'log'])->default('internal');
             $table->boolean('is_pinned')->default(false);
-
-            // Reminder Fields
+            $table->boolean('is_log')->default(false);
             $table->timestamp('remind_at')->nullable();
-
-            $table->enum('reminder_time_slot', [
-                'morning',
-                'day',
-                'evening'
-            ])->nullable();
-
-            // Laravel Default Timestamps
+            $table->enum('reminder_time_slot', ['morning', 'day', 'evening'])->nullable();
             $table->timestamps();
-
-            // Soft Delete
             $table->softDeletes();
 
-            // Indexes (matches your actual table)
             $table->index('student_id');
             $table->index('created_by');
             $table->index('type');
@@ -60,8 +31,8 @@ class CreateStudentNotesTable extends Migration
         });
     }
 
-    public function down()
+    public function down(): void
     {
         Schema::dropIfExists('student_notes');
     }
-}
+};

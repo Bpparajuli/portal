@@ -11,14 +11,14 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 
 class RevenueController extends Controller
 {
     protected $currentAgent;
 
-    public function __construct()
-    {
+    public function __construct(
+        private readonly FileUploadService $fileUploadService,
+    ) {
         $this->middleware('auth');
         $this->middleware(\App\Http\Middleware\IsAdmin::class)->only(['destroy']);
 
@@ -56,11 +56,16 @@ class RevenueController extends Controller
                 'formatted' => $amount
             ]);
 
-            // Handle receipt file upload with custom naming
+            // Handle receipt file upload
             $receiptPath = null;
             if ($request->hasFile('receipt_file')) {
                 try {
-                    $receiptPath = $this->uploadRevenueReceiptWithCustomName($request->file('receipt_file'), $student);
+                    $agent = $student->agent ?? Auth::user();
+                    $receiptPath = $this->fileUploadService->uploadRevenueReceipt(
+                        $request->file('receipt_file'),
+                        $agent,
+                        $student
+                    );
                 } catch (\InvalidArgumentException $e) {
                     return response()->json([
                         'success' => false,
@@ -176,10 +181,13 @@ class RevenueController extends Controller
 
             if ($request->hasFile('receipt_file')) {
                 try {
-                    if ($revenue->receipt_file && Storage::disk('public')->exists($revenue->receipt_file)) {
-                        Storage::disk('public')->delete($revenue->receipt_file);
-                    }
-                    $updateData['receipt_file'] = $this->uploadRevenueReceiptWithCustomName($request->file('receipt_file'), $student);
+                    $agent = $student->agent ?? Auth::user();
+                    $updateData['receipt_file'] = $this->fileUploadService->uploadRevenueReceipt(
+                        $request->file('receipt_file'),
+                        $agent,
+                        $student,
+                        $revenue->receipt_file
+                    );
                 } catch (\InvalidArgumentException $e) {
                     return response()->json([
                         'success' => false,
@@ -353,52 +361,6 @@ class RevenueController extends Controller
             Log::error('Receipt download error: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Failed to download receipt: ' . $e->getMessage());
         }
-    }
-
-    /**
-     * Upload revenue receipt with custom naming (student name + receipt)
-     * 
-     * @param \Illuminate\Http\UploadedFile $file
-     * @param Student $student
-     * @return string
-     * @throws \InvalidArgumentException
-     */
-    private function uploadRevenueReceiptWithCustomName($file, Student $student): string
-    {
-        $agent = Auth::user();
-
-        if (!$agent) {
-            throw new \InvalidArgumentException('No authenticated user found');
-        }
-
-        // Create student name for filename
-        $studentName = Str::slug($student->first_name . '-' . $student->last_name);
-        $extension = $file->getClientOriginalExtension();
-
-        // Create filename: student-name_receipt_timestamp.extension
-        $timestamp = date('Y-m-d_H-i-s');
-        $customFileName = "{$studentName}_receipt_{$timestamp}.{$extension}";
-
-        // Agent slug
-        $agentSlug = $agent->slug;
-
-        // Student folder name
-        $studentFolder = Str::slug($student->first_name . ' ' . $student->last_name);
-
-        // Full folder path
-        $folder = "agents/{$agentSlug}/{$studentFolder}/receipts";
-
-        // Ensure directory exists
-        if (!Storage::disk('public')->exists($folder)) {
-            Storage::disk('public')->makeDirectory($folder, 0755, true);
-        }
-
-        // Store file with custom name
-        $path = $file->storeAs($folder, $customFileName, 'public');
-
-        Log::info('Receipt uploaded for student ' . $student->id . ': ' . $path);
-
-        return $path;
     }
 
     /**

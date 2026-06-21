@@ -249,10 +249,13 @@
                                 </div>
                                 <div class="doc-show-card-actions">
                                     <a href="{{ route($prefix . '.documents.download', ['student' => $student->id, 'document' => $doc->id]) }}" class="btn btn-outline-success"><i class="fas fa-download"></i></a>
-                                    <form action="{{ route($prefix . '.documents.destroy', [$student->id, $doc->id]) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this document?')">
-                                        @csrf @method('DELETE')
-                                        <button type="submit" class="btn btn-outline-danger"><i class="fas fa-trash-alt"></i></button>
-                                    </form>
+                                    <x-confirm-delete
+                                        url="{{ route($prefix . '.documents.destroy', [$student->id, $doc->id]) }}"
+                                        label=""
+                                        title="Delete this document?"
+                                        message="This action cannot be undone."
+                                        class="btn btn-outline-danger"
+                                    />
                                 </div>
                             </div>
                         </div>

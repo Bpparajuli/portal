@@ -167,7 +167,8 @@ class CrmStudentController extends Controller
             $data = $this->studentService->getTaskCategories($student, $user);
             $data['student'] = $student;
             $data['notes'] = $student->notes()->where('is_log', false)->with('creator')->orderBy('is_pinned', 'desc')->orderBy('created_at', 'desc')->get();
-            $data['activityLogs'] = $student->notes()->where('is_log', true)->with('creator')->orderBy('created_at', 'desc')->get();
+            $data['systemLogs'] = $student->notes()->where('is_log', true)->whereIn('title', ['Revenue Added', 'Revenue Updated', 'Revenue Deleted', 'Student Updated'])->with('creator')->orderBy('created_at', 'desc')->get();
+            $data['activityLogs'] = $student->notes()->where('is_log', true)->whereNotIn('title', ['Revenue Added', 'Revenue Updated', 'Revenue Deleted', 'Student Updated'])->with('creator')->orderBy('created_at', 'desc')->get();
             $data['staffUsers'] = User::where('role', 'staff')->orderBy('name')->get(['id', 'name', 'role', 'business_logo']);
             $data['stages'] = StudentStage::active()->ordered()->get();
             $data['currentStage'] = $student->currentStage;
@@ -286,13 +287,68 @@ class CrmStudentController extends Controller
                 $validated['tags'] = [];
             }
 
+            // Capture old values before update
+            $old = [
+                'first_name' => $student->first_name,
+                'last_name' => $student->last_name,
+                'phone_number' => $student->phone_number,
+                'email' => $student->email,
+                'preferred_country' => $student->preferred_country,
+                'applying_for' => $student->applying_for,
+                'expected_revenue' => $student->expected_revenue,
+            ];
+
             $serviceRequest = new \Illuminate\Http\Request($validated);
             $this->studentService->saveStudent($serviceRequest, $student);
             $this->clearTodayTasksCache();
 
+            // Build change description
+            $userName = Auth::user()->name;
+            $fieldLabels = [
+                'first_name' => 'Name',
+                'last_name' => 'Name',
+                'phone_number' => 'Phone number',
+                'email' => 'Email',
+                'preferred_country' => 'Country',
+                'applying_for' => 'Applying for',
+                'expected_revenue' => 'Expected revenue',
+            ];
+
+            $changes = [];
+            $fullNameChanged = false;
+            foreach (['first_name', 'last_name'] as $f) {
+                if ($old[$f] != $validated[$f]) {
+                    $fullNameChanged = true;
+                }
+            }
+            if ($fullNameChanged) {
+                $oldName = trim($old['first_name'] . ' ' . $old['last_name']);
+                $newName = trim($validated['first_name'] . ' ' . $validated['last_name']);
+                $changes[] = "Name '{$oldName}' → '{$newName}'";
+            }
+
+            foreach (['phone_number', 'email', 'preferred_country', 'applying_for'] as $f) {
+                if (($old[$f] ?? '') != ($validated[$f] ?? '')) {
+                    $label = $fieldLabels[$f];
+                    $oldVal = $old[$f] ?? '(not set)';
+                    $newVal = $validated[$f] ?? '(not set)';
+                    $changes[] = "{$label} '{$oldVal}' → '{$newVal}'";
+                }
+            }
+
+            if (($old['expected_revenue'] ?? 0) != ($validated['expected_revenue'] ?? 0)) {
+                $oldVal = '$' . number_format($old['expected_revenue'] ?? 0, 2);
+                $newVal = '$' . number_format($validated['expected_revenue'] ?? 0, 2);
+                $changes[] = "Expected revenue {$oldVal} → {$newVal}";
+            }
+
+            $content = !empty($changes)
+                ? "Student updated by {$userName}:\n" . implode("\n", $changes)
+                : "Student information was updated by {$userName}";
+
             StudentNote::create([
                 'student_id' => $student->id,
-                'content' => "Student information was updated by " . Auth::user()->name,
+                'content' => $content,
                 'type' => 'log',
                 'title' => 'Student Updated',
                 'created_by' => Auth::id(),

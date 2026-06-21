@@ -274,7 +274,6 @@ class CrmNotificationController extends Controller
             $preferences = $user->crm_notification_preferences ?? [
                 'task_assigned' => true,
                 'task_due_today' => true,
-                'task_upcoming' => true,
                 'task_overdue' => true,
                 'email_notifications' => false,
             ];
@@ -302,7 +301,6 @@ class CrmNotificationController extends Controller
             $preferences = [
                 'task_assigned' => $request->has('task_assigned'),
                 'task_due_today' => $request->has('task_due_today'),
-                'task_upcoming' => $request->has('task_upcoming'),
                 'task_overdue' => $request->has('task_overdue'),
                 'email_notifications' => $request->has('email_notifications'),
             ];
@@ -363,5 +361,76 @@ class CrmNotificationController extends Controller
         }
 
         return view('crm.notifications.index');
+    }
+
+    /**
+     * Remove duplicate task notifications (same task_id+subtype, keep newest)
+     */
+    public function destroyDuplicates(Request $request)
+    {
+        try {
+            $user = Auth::user();
+            if (!$user) {
+                return response()->json(['success' => false, 'error' => 'Unauthenticated'], 401);
+            }
+
+            $notifications = $user->notifications()
+                ->where('type', 'App\\Notifications\\CrmTaskNotification')
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            $seen = [];
+            $removed = 0;
+
+            foreach ($notifications as $n) {
+                $data = $n->data;
+                $key = ($data['task_id'] ?? '') . '|' . ($data['subtype'] ?? '');
+                if (isset($seen[$key])) {
+                    $n->delete();
+                    $removed++;
+                } else {
+                    $seen[$key] = true;
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'removed' => $removed,
+                'message' => "Removed {$removed} duplicate notification(s).",
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Destroy duplicates error: ' . $e->getMessage());
+            return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Delete all read notifications older than N days (default 7)
+     */
+    public function destroyOldRead(Request $request)
+    {
+        try {
+            $user = Auth::user();
+            if (!$user) {
+                return response()->json(['success' => false, 'error' => 'Unauthenticated'], 401);
+            }
+
+            $days = (int) $request->get('days', 7);
+            $cutoff = now()->subDays($days);
+
+            $count = $user->notifications()
+                ->whereNotNull('read_at')
+                ->where('created_at', '<', $cutoff)
+                ->delete();
+
+            return response()->json([
+                'success' => true,
+                'removed' => $count,
+                'message' => "Cleaned {$count} old read notification(s).",
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Destroy old read error: ' . $e->getMessage());
+            return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
+        }
     }
 }

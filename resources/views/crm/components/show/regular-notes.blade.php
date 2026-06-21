@@ -9,17 +9,24 @@
             <div class="note-display">{{ $note->content }}</div>
             @if ($canEdit)
                 <div class="note-actions">
-                    <button class="edit-note-btn"
-                        onclick="openEditNoteModal({{ $note->id }}, '{{ addslashes($note->content) }}', {{ $note->is_pinned ? 'true' : 'false' }})">
+                    <button class="edit-note-btn" data-id="{{ $note->id }}" data-content="{{ $note->content }}" data-pinned="{{ $note->is_pinned ? '1' : '0' }}"
+                        onclick="openEditNoteModal(this.dataset.id, this.dataset.content, this.dataset.pinned === '1')">
                         ✏️
                     </button>
                     <button class="note-pin-btn"
                         onclick="togglePin({{ $note->id }})">{{ $pinned ? '📌' : '📍' }}</button>
-                    <form action="{{ route('crm.notes.destroy', $note) }}" method="POST"
-                        onsubmit="return confirm('Delete note?')" class="d-inline">
-                        @csrf @method('DELETE')
-                        <button type="submit" class="note-pin-btn">🗑️</button>
+                    <form action="{{ route('crm.notes.convert', $note) }}" method="POST" class="d-inline" onsubmit="return confirm('Move to activity log?')">
+                        @csrf @method('PATCH')
+                        <input type="hidden" name="type" value="log">
+                        <button type="submit" class="note-pin-btn" title="Move to Activity Log">📋</button>
                     </form>
+                    <x-confirm-delete
+                        url="{{ route('crm.notes.destroy', $note) }}"
+                        label=""
+                        title="Delete note?"
+                        message="Delete note?"
+                        class="note-pin-btn"
+                    />
                 </div>
             @endif
         </div>

@@ -150,15 +150,15 @@
     </div>
 </div>
 
-{{-- Agent Features (shown when role is agent) --}}
-<div id="agentFeaturesSection" class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden" style="display:{{ (old('role', $user->role ?? '') === 'agent') ? 'block' : 'none' }};">
+{{-- Agent/Admin Features (shown when role is agent or admin) --}}
+<div id="agentFeaturesSection" class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden" style="display:{{ in_array(old('role', $user->role ?? ''), ['agent', 'admin']) ? 'block' : 'none' }};">
     <div class="px-4 py-3 d-flex align-items-center gap-3" style="background:linear-gradient(135deg, var(--info) 0%, #2563eb 100%);">
         <div class="rounded-circle d-flex align-items-center justify-content-center" style="width:36px;height:36px;background:rgba(255,255,255,0.2);">
-            <i class="fas fa-user-tie text-white"></i>
+            <i class="fas fa-cogs text-white"></i>
         </div>
         <div>
-            <h6 class="fw-bold mb-0 text-white">Agent Features &amp; Limits</h6>
-            <small class="text-white-50">Configure per-agent limits and feature access</small>
+            <h6 class="fw-bold mb-0 text-white">Package &amp; Access Control</h6>
+            <small class="text-white-50">Configure plan, limits, and CRM access</small>
         </div>
     </div>
     <div class="card-body p-4">
@@ -268,9 +268,9 @@ document.addEventListener('DOMContentLoaded', function() {
                                          class="rounded border shadow-sm" width="70" height="70" style="object-fit:cover;">
                                 </a>
                             @else
-                                <div class="rounded border d-flex align-items-center justify-content-center bg-white" style="width:70px;height:70px;">
-                                    <i class="fas fa-cloud-upload-alt fa-2x text-muted"></i>
-                                </div>
+                                <img id="{{ $doc['id'] }}"
+                                     src="https://placehold.co/70x70?text={{ $doc['placeholder'] }}"
+                                     class="rounded border shadow-sm" width="70" height="70" style="object-fit:cover;">
                             @endif
                         </div>
                         <div class="flex-grow-1">

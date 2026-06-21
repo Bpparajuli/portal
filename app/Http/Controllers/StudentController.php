@@ -261,6 +261,11 @@ class StudentController extends Controller
     {
         $user = Auth::user();
 
+        // Staff use CRM-style student show
+        if ($user->is_staff) {
+            return app(\App\Http\Controllers\CRM\CrmStudentController::class)->show($student);
+        }
+
         $student->load(['agent', 'documents', 'applications.university', 'applications.course', 'applications.messages.user', 'currentStage']);
         $documentStats = $student->getDocumentStats();
 

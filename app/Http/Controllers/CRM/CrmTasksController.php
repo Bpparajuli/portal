@@ -229,6 +229,16 @@ class CrmTasksController extends Controller
         DB::beginTransaction();
 
         try {
+            // Delete all notifications for this task so completed tasks don't clutter the list
+            $userIds = collect([$task->assigned_to]);
+            if ($task->created_by && $task->created_by !== $task->assigned_to) {
+                $userIds->push($task->created_by);
+            }
+            \Illuminate\Notifications\DatabaseNotification::whereIn('notifiable_id', $userIds)
+                ->where('type', 'App\\Notifications\\CrmTaskNotification')
+                ->where('data->task_id', $task->id)
+                ->delete();
+
             $updateData = [
                 'status' => 'completed',
                 'completed_at' => now(),
@@ -446,7 +456,7 @@ class CrmTasksController extends Controller
     }
 
     /**
-     * Check for due tasks and send notifications
+     * Check due/overdue tasks and send one notification per task (no repeats)
      */
     public function checkDueTasks(Request $request)
     {
@@ -459,13 +469,17 @@ class CrmTasksController extends Controller
                 ->where('status', 'pending')
                 ->where(function ($query) use ($today) {
                     $query->whereDate('scheduled_for', $today)
-                        ->orWhereDate('scheduled_for', $today->copy()->addDay())
-                        ->orWhereDate('scheduled_for', '<', $today);
+                        ->orWhere(function ($q) use ($today) {
+                            $q->whereDate('scheduled_for', '<', $today)
+                              ->orWhereNull('scheduled_for');
+                        });
                 })
                 ->get();
 
             foreach ($tasks as $task) {
-                $user->notify(new CrmTaskNotification($task, 'due_today'));
+                $subtype = $task->scheduled_for && $task->scheduled_for->isToday() ? 'due_today' : 'overdue';
+
+                $user->notify(new CrmTaskNotification($task, $subtype));
                 $notificationsSent++;
             }
 

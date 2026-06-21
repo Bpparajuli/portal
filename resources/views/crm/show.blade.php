@@ -32,7 +32,7 @@
             </div>
             <div style="display: flex; gap: 8px;">
                 @if ($todayTaskNavigation['prev'])
-                    <a href="{{ route('crm.student.show', $todayTaskNavigation['prev']['id']) }}"
+                    <a href="{{ route('crm.students.show', $todayTaskNavigation['prev']['id']) }}"
                         style="background: white; color: #1a0262; padding: 4px 12px; border-radius: 6px; text-decoration: none; font-size: 12px; font-weight: 500; display: flex; align-items: center; gap: 5px;">
                         ← {{ $todayTaskNavigation['prev']['first_name'] }}
                         <span
@@ -45,7 +45,7 @@
                 @endif
 
                 @if ($todayTaskNavigation['next'])
-                    <a href="{{ route('crm.student.show', $todayTaskNavigation['next']['id']) }}"
+                    <a href="{{ route('crm.students.show', $todayTaskNavigation['next']['id']) }}"
                         style="background: white; color: #1a0262; padding: 4px 12px; border-radius: 6px; text-decoration: none; font-size: 12px; font-weight: 500; display: flex; align-items: center; gap: 5px;">
                         <span
                             style="background: #e0e0e0; padding: 0px 5px; border-radius: 10px; font-size: 10px;">{{ $todayTaskNavigation['next']['tasks_count'] }}</span>
@@ -78,8 +78,14 @@
         <a href="{{ route('crm.dashboard') }}">← Back to Pipeline</a>
         <div class="d-flex align-items-center gap-2">
             @if ($canEdit)
-                <a href="{{ route('crm.student.edit', $student) }}" class="btn btn-sm btn-outline-primary">✏️ Edit
-                    Student</a>
+                @php
+                    $isAdminUser = auth()->user()->is_admin || auth()->user()->is_admin_staff;
+                @endphp
+                @if ($isAdminUser)
+                    <a href="{{ route('admin.students.edit', $student) }}" class="btn btn-sm btn-outline-purple">✏️ Edit Student</a>
+                @else
+                    <a href="{{ route('agent.students.edit', $student) }}" class="btn btn-sm btn-outline-purple">✏️ Edit Student</a>
+                @endif
             @endif
             @if (!$canEdit)
                 <span class="read-only-badge">👁 Read-only</span>
@@ -104,8 +110,7 @@
                 <div class="crm-section-header">
                     <span>📝 Internal Notes</span>
                     @if ($canEdit)
-                        <button class="btn btn-sm btn-outline-primary" onclick="openLogNoteModal()">📋 Log
-                            Activity</button>
+                        <button class="btn btn-sm btn-outline-purple" onclick="openLogNoteModal()">📋 Log Activity</button>
                     @endif
                 </div>
                 <div class="crm-section-body">
@@ -133,7 +138,7 @@
                                         <input type="checkbox" name="is_pinned" value="1" id="pin_note">
                                         <label for="pin_note">Pin this note</label>
                                     </div>
-                                    <button type="submit" class="btn btn-sm btn-primary">Save Note</button>
+                                    <button type="submit" class="btn btn-sm btn-solid-dark">Save Note</button>
                                 </div>
                             </form>
                         </div>
@@ -146,6 +151,7 @@
                 <div class="crm-tabs">
                     <button class="crm-tab active" onclick="switchTab('tasks', this)">Tasks</button>
                     <button class="crm-tab" onclick="switchTab('documents', this)">Documents</button>
+                    <button class="crm-tab" onclick="switchTab('applications', this)">Applications</button>
                     <button class="crm-tab" onclick="switchTab('history', this)">History</button>
                 </div>
 
@@ -156,6 +162,12 @@
 
                 {{-- DOCUMENTS TAB --}}
                 <div id="tab-documents" style="display:none">
+                    @php $u = auth()->user(); $docPrefix = $u->is_admin ? 'admin' : ($u->is_staff ? 'staff' : 'agent'); @endphp
+                    <div class="crm-section-header" style="padding:8px 12px;border-bottom:1px solid #e9edf2;">
+                        <span>📄 Student Documents</span>
+                        <a href="{{ route($docPrefix . '.documents.index', $student->id) }}"
+                           class="btn btn-sm btn-outline-purple"><i class="fas fa-upload me-1"></i>Upload / Manage</a>
+                    </div>
                     <div class="crm-section-body">
                         @forelse($student->documents as $doc)
                             <div class="d-flex align-items-center gap-3 py-2 border-bottom">
@@ -170,6 +182,34 @@
                             </div>
                         @empty
                             <div class="text-muted text-center py-4">No documents uploaded.</div>
+                        @endforelse
+                    </div>
+                </div>
+
+                {{-- APPLICATIONS TAB --}}
+                <div id="tab-applications" style="display:none">
+                    @php $u2 = auth()->user(); $appPrefix = $u2->is_admin ? 'admin' : ($u2->is_staff ? 'staff' : 'agent'); @endphp
+                    <div class="crm-section-header" style="padding:8px 12px;border-bottom:1px solid #e9edf2;">
+                        <span>📋 Applications</span>
+                        <a href="{{ route($appPrefix . '.applications.create') }}?student_id={{ $student->id }}"
+                           class="btn btn-sm btn-outline-purple"><i class="fas fa-plus me-1"></i>Add Application</a>
+                    </div>
+                    <div class="crm-section-body">
+                        @forelse($student->applications as $app)
+                            <div class="d-flex align-items-center gap-3 py-2 border-bottom">
+                                <span class="fs-5">📋</span>
+                                <div class="flex-grow-1">
+                                    <div class="fw-medium small">{{ $app->university?->name ?? 'Unknown University' }} — {{ $app->course?->title ?? 'Unknown Course' }}</div>
+                                    <div class="text-muted" style="font-size:.72rem">
+                                        Status: <span class="badge bg-{{ $app->application_status_id == 1 ? 'warning' : 'success' }}" style="font-size:.6rem;">{{ $app->applicationStatus?->name ?? 'N/A' }}</span>
+                                        &middot; Created {{ $app->created_at->format('d M Y') }}
+                                    </div>
+                                </div>
+                                <a href="{{ route($appPrefix . '.applications.show', $app->id) }}"
+                                    class="btn btn-sm btn-outline-primary">View</a>
+                            </div>
+                        @empty
+                            <div class="text-muted text-center py-4">No applications yet.</div>
                         @endforelse
                     </div>
                 </div>

@@ -6,71 +6,44 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('users', function (Blueprint $table) {
             $table->bigIncrements('id');
-
-            // Business Info
             $table->string('business_name')->nullable();
             $table->string('owner_name')->nullable();
+            $table->string('name')->unique();
             $table->string('business_logo')->nullable();
             $table->string('registration')->nullable();
             $table->string('pan')->nullable();
-
-            // Basic Info
-            $table->string('name')->unique();
-            $table->string('email')->unique();
             $table->string('contact')->nullable();
+            $table->string('phone', 50)->nullable();
             $table->string('address')->nullable();
-
-            // Slug (for URLs)
-            $table->string('slug', 191)->unique()->nullable();
-
-            // Role system (MAIN CONTROL)
-            $table->enum('role', [
-                'superadmin',
-                'admin',
-                'agent',
-                'staff',
-                'university',
-                'student'
-            ])->default('agent');
-
-            // Parent hierarchy (VERY IMPORTANT)
-            $table->foreignId('parent_id')
-                ->nullable()
-                ->constrained('users')
-                ->nullOnDelete();
-
-            // Auth
+            $table->string('timezone', 100)->nullable()->default('UTC');
+            $table->string('email')->unique();
+            $table->enum('role', ['superadmin', 'admin', 'agent', 'staff', 'university', 'student'])->default('agent');
+            $table->unsignedBigInteger('parent_id')->nullable();
             $table->string('password');
-
-            // Agreement
             $table->string('agreement_file')->nullable();
-            $table->enum('agreement_status', [
-                'not_uploaded',
-                'uploaded',
-                'verified'
-            ])->default('not_uploaded');
+            $table->enum('agreement_status', ['not_uploaded', 'uploaded', 'verified'])->default('not_uploaded');
             $table->timestamp('agreement_uploaded_at')->nullable();
-            $table->json('crm_notification_preferences')->nullable();
-
-            // Status
+            $table->string('slug', 191)->nullable()->unique();
             $table->boolean('active')->default(true);
-            $table->boolean('is_admin')->default(false); //it was wowrking in old version but now it is not working because of role system so i am adding this field for backward compatibility
-            $table->boolean('is_agent')->default(false);
-
             $table->timestamps();
+            $table->json('crm_notification_preferences')->nullable();
+            $table->timestamp('last_login_at')->nullable();
+            $table->string('last_login_ip', 45)->nullable();
+            $table->boolean('paid_crm')->default(false);
+            $table->string('subscription_plan')->nullable();
+            $table->timestamp('subscription_starts_at')->nullable();
+            $table->timestamp('subscription_ends_at')->nullable();
+            $table->integer('max_staff')->default(0);
+            $table->integer('max_students')->default(0);
+
+            $table->foreign('parent_id', 'fk_users_parent')->references('id')->on('users')->nullOnDelete();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('users');

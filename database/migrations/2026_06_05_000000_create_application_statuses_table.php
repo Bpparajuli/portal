@@ -8,14 +8,9 @@ return new class extends Migration
 {
     public function up(): void
     {
-        if (Schema::hasTable('application_statuses')) {
-            return;
-        }
-
         Schema::create('application_statuses', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->string('slug')->nullable()->unique();
             $table->string('bg_color')->nullable();
             $table->string('text_color')->nullable();
             $table->string('icon')->nullable();

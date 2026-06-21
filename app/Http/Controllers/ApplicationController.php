@@ -13,6 +13,7 @@ use App\Notifications\ApplicationMessageAdded;
 use App\Notifications\ApplicationStatusUpdated;
 use App\Notifications\ApplicationSubmitted;
 use App\Notifications\ApplicationWithdrawn;
+use App\Services\FileUploadService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -23,8 +24,9 @@ class ApplicationController extends Controller
 {
     use AuthorizesRequests;
 
-    public function __construct()
-    {
+    public function __construct(
+        private readonly FileUploadService $fileUploadService,
+    ) {
         $this->authorizeResource(Application::class, 'application');
     }
 
@@ -165,8 +167,12 @@ class ApplicationController extends Controller
         $application->application_number = $student->agent_id . '-' . $student->id . '-' . $request->university_id . '-' . ($request->course_id ?? 0) . '-' . $application->id;
 
         if ($request->hasFile('sop_file')) {
-            $folder = "agents/{$student->agent_id}/{$student->id}/applications";
-            $application->sop_file = $request->file('sop_file')->storeAs($folder, 'sop_' . time() . '.' . $request->file('sop_file')->getClientOriginalExtension(), 'public');
+            $agent = $student->agent;
+            $application->sop_file = $this->fileUploadService->uploadStudentSOP(
+                file: $request->file('sop_file'),
+                agent: $agent,
+                student: $student,
+            );
         }
 
         $application->save();
@@ -239,12 +245,14 @@ class ApplicationController extends Controller
         }
 
         if ($request->hasFile('sop_file')) {
-            if ($application->sop_file && Storage::disk('public')->exists($application->sop_file)) {
-                Storage::disk('public')->delete($application->sop_file);
-            }
             $student = $application->student;
-            $folder = "agents/{$student->agent_id}/{$student->id}/applications";
-            $application->sop_file = $request->file('sop_file')->storeAs($folder, 'sop_' . time() . '.' . $request->file('sop_file')->getClientOriginalExtension(), 'public');
+            $agent = $student->agent;
+            $application->sop_file = $this->fileUploadService->uploadStudentSOP(
+                file: $request->file('sop_file'),
+                agent: $agent,
+                student: $student,
+                existingPath: $application->sop_file,
+            );
         }
 
         $application->save();
@@ -318,10 +326,9 @@ class ApplicationController extends Controller
         $filePath = null;
 
         if ($request->hasFile('attachment')) {
-            $filePath = $request->file('attachment')->storeAs(
-                'application_messages/' . $application->id,
-                time() . '_' . $request->file('attachment')->getClientOriginalName(),
-                'public'
+            $filePath = $this->fileUploadService->uploadApplicationAttachment(
+                $request->file('attachment'),
+                $application
             );
         }
 

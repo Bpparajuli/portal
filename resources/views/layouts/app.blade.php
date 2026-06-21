@@ -7,7 +7,8 @@
     <meta name="user-id" content="{{ Auth::id() }}">
     <meta name="user-name" content="{{ Auth::user()->name ?? '' }}">
     <meta name="user-avatar" content="{{ Auth::user()->business_logo ?? '' }}">
-    <title>@yield('title', 'Idea Consultancy') - Portal</title>
+    @php $_siteName = \App\Models\Setting::getValue('site.name', 'Idea Consultancy'); $_siteLogo = \App\Models\Setting::getValue('site.logo', ''); $_favicon = \App\Models\Setting::getValue('site.favicon', ''); @endphp
+    <title>@yield('title', $_siteName) - Portal</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -136,7 +137,7 @@
         .form-control:focus, .form-select:focus { border-color: var(--primary); box-shadow: 0 0 0 0.2rem rgba(from var(--primary) r g b / 0.25); }
 
         /* ── Primary/secondary replacement ── */
-        .nav-pills .nav-link.active, .nav-tabs .nav-link.active { background: var(--primary); border-color: var(--primary); }
+        .nav-pills .nav-link.active, .nav-tabs .nav-link.active { background: var(--primary); border-color: var(--primary); color: #fff; }
         .page-item.active .page-link { background: var(--primary); border-color: var(--primary); }
         .progress-bar { background: linear-gradient(90deg, var(--btn-grad-from), var(--btn-grad-to)); }
         .badge-primary { background: var(--primary); color: #fff; }
@@ -147,7 +148,7 @@
         .badge-danger { background: var(--danger); color: #fff; }
         .list-group-item.active { background: var(--primary); border-color: var(--primary); }
         .dropdown-item:active { background: var(--primary); }
-        .form-check-input:checked { background: var(--primary); border-color: var(--primary); }
+        .form-check-input:checked { background-color: var(--primary); border-color: var(--primary); }
         .btn-outline-primary { color: var(--primary); border-color: var(--primary); }
         .btn-outline-primary:hover { background: linear-gradient(135deg, var(--btn-grad-from), var(--btn-grad-to)); border-color: transparent; color: #fff; }
         .btn-link { color: var(--primary); }
@@ -158,7 +159,7 @@
         .alert-info { background: color-mix(in srgb, var(--info) 10%, white); border-color: var(--info); color: var(--info); }
         .alert-danger { background: color-mix(in srgb, var(--danger) 10%, white); border-color: var(--danger); color: var(--danger); }
     </style>
-    <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
+    <link rel="icon" type="image/x-icon" href="{{ $_favicon ? Storage::url($_favicon) : asset('favicon.ico') }}">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.3/tinymce.min.js" referrerpolicy="origin"></script>
     @stack('styles')
 </head>
@@ -167,9 +168,9 @@
         <!-- ========== SIDEBAR ========== -->
         <aside class="app-sidebar" id="appSidebar">
             <div class="sidebar-brand">
-                <div class="brand-logo">IC</div>
+                <div class="brand-logo">@if($_siteLogo)<img src="{{ Storage::url($_siteLogo) }}" alt="" style="height:32px;width:32px;object-fit:contain;border-radius:6px;">@else{{ substr($_siteName,0,2) }}@endif</div>
                 <div class="brand-text">
-                    Idea Consultancy
+                    {{ $_siteName }}
                     <small>@auth {{ ucfirst(Auth::user()->role) }} Panel @endauth</small>
                 </div>
             </div>
@@ -187,10 +188,18 @@
             @auth
             <div class="sidebar-footer">
                 <div class="user-info">
-                    <div class="user-avatar">{{ strtoupper(substr(Auth::user()->name, 0, 1)) }}</div>
+                    @php $_au = Auth::user(); @endphp
+                    <div class="user-avatar" style="position:relative;overflow:hidden;">
+                        @if ($_au->business_logo && Storage::disk('public')->exists($_au->business_logo))
+                            <img src="{{ Storage::url($_au->business_logo) }}" alt=""
+                                style="width:100%;height:100%;object-fit:cover;position:absolute;top:0;left:0;">
+                        @else
+                            {{ strtoupper(substr($_au->name, 0, 1)) }}
+                        @endif
+                    </div>
                     <div class="flex-grow-1" style="min-width:0;">
-                        <div class="text-white small fw-semibold truncate">{{ Auth::user()->name }}</div>
-                        <div style="font-size:0.7rem;color:rgba(255,255,255,0.4);">{{ Auth::user()->email }}</div>
+                        <div class="text-white small fw-semibold truncate">{{ $_au->name }}</div>
+                        <div style="font-size:0.7rem;color:rgba(255,255,255,0.4);">{{ $_au->email }}</div>
                     </div>
                 </div>
             </div>
@@ -241,11 +250,10 @@
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end shadow-sm">
                             @php $_u = Auth::user(); @endphp
-                            @if($_u->is_agent)
-                                <li><a class="dropdown-item" href="{{ route('agent.users.show', $_u->slug) }}"><i class="fas fa-user me-2"></i>My Profile</a></li>
-                            @elseif($_u->is_staff)
-                                <li><a class="dropdown-item" href="{{ route('staff.users.show', $_u->slug) }}"><i class="fas fa-user me-2"></i>My Profile</a></li>
+                            @if (!$_u->is_staff || $_u->is_admin_staff)
+                            <li><a class="dropdown-item" href="{{ route('profile.show', $_u->slug) }}"><i class="fas fa-user me-2"></i>My Profile</a></li>
                             @endif
+                            <li><a class="dropdown-item" href="{{ route('profile.edit', $_u->slug) }}"><i class="fas fa-edit me-2"></i>Edit Profile</a></li>
                             <li><a class="dropdown-item" href="{{ Auth::user()->is_admin ? route('admin.settings.index') : '#' }}"><i class="fas fa-cog me-2"></i>Settings</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li>
@@ -273,6 +281,7 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="{{ asset('js/app.js') }}"></script>
+    @include('partials.popup-display')
     @stack('scripts')
 </body>
 </html>

@@ -26,7 +26,7 @@ class ApplicationStatusController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name'       => 'required|string|max:255',
+            'name' => 'required|string|max:255',
             'bg_color'      => 'nullable|string|max:255',
             'text_color' => 'nullable|string|max:255',
             'sort_order' => 'nullable|integer',
@@ -53,7 +53,7 @@ class ApplicationStatusController extends Controller
         $status = ApplicationStatus::findOrFail($id);
 
         $request->validate([
-            'name'       => 'required|string|max:255',
+            'name' => 'required|string|max:255',
             'bg_color'      => 'nullable|string|max:255',
             'text_color' => 'nullable|string|max:255',
             'sort_order' => 'nullable|integer',

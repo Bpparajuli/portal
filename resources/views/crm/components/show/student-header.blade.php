@@ -39,9 +39,17 @@
                             <i class="fa-regular fa-building"></i>
                         @endif
                         <span>Student of:
-                            <strong>{{ $student->agent?->business_name ?? ($student->agent?->name ?? '—') }}</strong></span>
+                            <strong>{{ $student->agent?->business_name ?? (\Illuminate\Support\Str::words($student->agent?->name ?? '—', 2, '')) }}</strong></span>
                     </div>
-                    <div>{{ $student->rating }}</div>
+                    @php $rating = (int)($student->rating ?? 0); @endphp
+                    <div class="star-rating mb-1" id="studentStarRating">
+                        <input type="radio" name="sr" value="3" id="sr3"{{ $rating == 3 ? ' checked' : '' }}>
+                        <label for="sr3" onclick="updateStudentRating(3)">&#9733;</label>
+                        <input type="radio" name="sr" value="2" id="sr2"{{ $rating == 2 ? ' checked' : '' }}>
+                        <label for="sr2" onclick="updateStudentRating(2)">&#9733;</label>
+                        <input type="radio" name="sr" value="1" id="sr1"{{ $rating == 1 ? ' checked' : '' }}>
+                        <label for="sr1" onclick="updateStudentRating(1)">&#9733;</label>
+                    </div>
                     @if ($canEdit)
                         <button class="btn-quick-edit" onclick="openMiniEditModal()">
                             <i class="fa-regular fa-pen-to-square"></i> Quick Edit
@@ -71,8 +79,7 @@
                             <div class="no-tags">No tags added yet</div>
                         @endif
                     </div>
-                    <button type="button" class="btn btn-outline-primary mt-2"
-                        onclick="openTagModal({{ $student->id }})">
+                    <button type="button" class="btn btn-sm btn-outline-purple mt-2" onclick="openTagModal({{ $student->id }})">
                         <i class="fa-solid fa-plus"></i> Add Tags
                     </button>
                 </div>

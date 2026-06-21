@@ -7,9 +7,11 @@ use App\Models\Setting;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Address;
+use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Storage;
 
 class InternalEmail extends Mailable
 {
@@ -44,6 +46,18 @@ class InternalEmail extends Mailable
 
     public function attachments(): array
     {
-        return [];
+        $files = [];
+        $atts = $this->email->attachments;
+        if (is_array($atts)) {
+            foreach ($atts as $att) {
+                $path = $att['path'] ?? null;
+                if ($path && Storage::disk('public')->exists($path)) {
+                    $files[] = Attachment::fromPath(
+                        Storage::disk('public')->path($path)
+                    )->as($att['name'] ?? basename($path));
+                }
+            }
+        }
+        return $files;
     }
 }

@@ -3,16 +3,21 @@
 namespace App\Http\Controllers\Staff;
 
 use App\Http\Controllers\Controller;
+use App\Models\Activity;
 use App\Models\Application;
 use App\Models\ApplicationStatus;
+use App\Models\CrmTasks;
+use App\Models\Revenue;
 use App\Models\Student;
-use App\Models\University;
-use App\Models\Course;
-use App\Models\User;
-use App\Models\Activity;
+use App\Models\StudentNote;
+use App\Models\StudentStage;
+use App\Models\StudentStageHistory;
 use App\Services\DashboardService;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
@@ -26,132 +31,204 @@ class DashboardController extends Controller
     public function index()
     {
         $user = Auth::user();
-        $today = Carbon::today();
+        $myStudentIds = Student::where('agent_id', $user->id)->pluck('id');
 
-        // ── Scope-aware query builders ──
-        $studentQuery = Student::query()->accessible();
-        $applicationQuery = Application::query();
+        // ── MONTHLY TASK REPORT (last 12 months, my tasks only) ──
+        $monthlyRows = CrmTasks::where('created_by', $user->id)
+            ->where('created_at', '>=', now()->subMonths(11)->startOfMonth())
+            ->select(DB::raw("DATE_FORMAT(created_at, '%Y-%m') as month"),
+                DB::raw("SUM(CASE WHEN status='pending' THEN 1 ELSE 0 END) as pending"),
+                DB::raw("SUM(CASE WHEN status='completed' THEN 1 ELSE 0 END) as completed"),
+                DB::raw("SUM(CASE WHEN status='cancelled' THEN 1 ELSE 0 END) as cancelled"))
+            ->groupBy('month')
+            ->orderBy('month')
+            ->get()
+            ->keyBy('month');
 
-        if ($user->is_agent_staff) {
-            $applicationQuery->where('agent_id', $user->parent_id);
+        $monthlyLabels = [];
+        $monthlyPending = [];
+        $monthlyCompleted = [];
+        $monthlyCancelled = [];
+        for ($i = 11; $i >= 0; $i--) {
+            $label = now()->subMonths($i)->format('M Y');
+            $key = now()->subMonths($i)->format('Y-m');
+            $monthlyLabels[] = $label;
+            $row = $monthlyRows->get($key);
+            $monthlyPending[] = (int) ($row->pending ?? 0);
+            $monthlyCompleted[] = (int) ($row->completed ?? 0);
+            $monthlyCancelled[] = (int) ($row->cancelled ?? 0);
         }
 
-        // ---------- KPI COUNTS ----------
-        $totalStudents = (clone $studentQuery)->count();
-        $totalApplications = (clone $applicationQuery)->count();
-        $totalUniversities = University::count();
+        // ── STUDENTS BY STAGE (my students only) ──
+        $stages = StudentStage::active()->ordered()->get();
+        $stageLabels = [];
+        $stageCounts = [];
+        $stageColors = [];
+        $studentsByStage = [];
+        foreach ($stages as $stage) {
+            $count = Student::whereIn('id', $myStudentIds)
+                ->where('current_stage_id', $stage->id)->count();
+            $stageLabels[] = $stage->name;
+            $stageCounts[] = $count;
+            $stageColors[] = $stage->color;
+            $studentsByStage[] = [
+                'id' => $stage->id,
+                'name' => $stage->name,
+                'color' => $stage->color,
+                'count' => $count,
+            ];
+        }
 
-        $thisMonthStudents = (clone $studentQuery)
-            ->whereMonth('created_at', now()->month)->whereYear('created_at', now()->year)->count();
+        // ── STUDENTS BY APPLICATION STATUS (my students only, >0 count) ──
+        $statuses = ApplicationStatus::active()->ordered()->get()
+            ->map(fn($s) => (object) [
+                'id' => $s->id, 'name' => $s->name,
+                'bg_color' => $s->bg_color, 'text_color' => $s->text_color,
+                'count' => Application::whereIn('student_id', $myStudentIds)
+                    ->where('application_status_id', $s->id)->count(),
+            ])
+            ->filter(fn($s) => $s->count > 0)
+            ->values();
 
-        $thisMonthApps = (clone $applicationQuery)
-            ->whereMonth('created_at', now()->month)->whereYear('created_at', now()->year)->count();
+        $statusChartData = [
+            'labels' => $statuses->pluck('name'),
+            'datasets' => [[
+                'data' => $statuses->pluck('count'),
+                'backgroundColor' => $statuses->pluck('bg_color'),
+                'borderWidth' => 0,
+            ]],
+        ];
 
-        // ---------- DOC COMPLETION ----------
-        $studentsWithDocs = (clone $studentQuery)->whereHas('documents')->count();
-        $docCompletionRate = $totalStudents > 0 ? round(($studentsWithDocs / $totalStudents) * 100) : 0;
-
-        // ---------- TRENDS ----------
-        $appGrowth = $this->dashboardService->applicationGrowth();
-        $weeklyData = $this->dashboardService->weeklyTrendData();
-        $weeklyLabels = $weeklyData['labels'];
-        $weeklyAppsData = $weeklyData['applications'];
-        $weeklyStudentsData = $weeklyData['students'];
-
-        // ---------- PIPELINE ----------
-        $statuses = ApplicationStatus::where('is_active', 1)
-            ->orderBy('sort_order')
+        // ── WEEKLY TASK REPORT (last 7 days, my tasks only) ──
+        $weekStart = now()->subDays(6)->startOfDay();
+        $weeklyTasks = CrmTasks::where('created_by', $user->id)
+            ->where('created_at', '>=', $weekStart)
+            ->select(DB::raw('DATE(created_at) as date'), 'status', DB::raw('COUNT(*) as count'))
+            ->groupBy('date', 'status')
             ->get()
-            ->map(function ($status) use ($applicationQuery) {
-                $q = clone $applicationQuery;
-                $status->count = $q->where('application_status_id', $status->id)->count();
-                return $status;
-            });
+            ->keyBy(fn($i) => $i->date . '_' . $i->status);
 
-        // ---------- CHARTS ----------
-        $applicationsChartData = $this->dashboardService->monthlyApplicationsChart();
-        $statusChartData = $this->dashboardService->applicationsByStatusChart();
-        $universityChartData = $this->dashboardService->applicationsByUniversityChart();
+        $weeklyLabels = [];
+        $weeklyPending = [];
+        $weeklyCompleted = [];
+        $weeklyCancelled = [];
+        $weeklyTotals = [];
+        for ($i = 6; $i >= 0; $i--) {
+            $date = now()->subDays($i);
+            $key = $date->format('Y-m-d');
+            $weeklyLabels[] = $date->format('D');
+            $p = (int) optional($weeklyTasks->get($key . '_pending'))->count;
+            $c = (int) optional($weeklyTasks->get($key . '_completed'))->count;
+            $x = (int) optional($weeklyTasks->get($key . '_cancelled'))->count;
+            $weeklyPending[] = $p;
+            $weeklyCompleted[] = $c;
+            $weeklyCancelled[] = $x;
+            $weeklyTotals[] = $p + $c + $x;
+        }
 
-        // ---------- TOP LISTS ----------
-        $topAgents = User::agents()
-            ->withCount('applications')
-            ->orderByDesc('applications_count')
-            ->take(10)->get()
-            ->filter(fn($u) => $u->applications_count > 0)
-            ->take(5)->values();
-
-        $topCourses = Course::withCount('applications')
-            ->orderByDesc('applications_count')
-            ->take(10)->get()
-            ->filter(fn($c) => $c->applications_count > 0)
-            ->take(5)->values();
-
-        $topUniversities = University::withCount('applications')
-            ->orderByDesc('applications_count')
-            ->take(10)->get()
-            ->filter(fn($u) => $u->applications_count > 0)
-            ->take(5)->values();
-
-        // ---------- LATEST APPLICATIONS ----------
-        $latestApplications = (clone $applicationQuery)
-            ->with(['student', 'course', 'university', 'status'])
-            ->latest()->take(10)->get();
-
-        // ---------- ACTIVITIES (grouped by type+student+date) ----------
-        $studentGroups = $this->dashboardService->groupActivities(
-            Activity::with('user', 'student')
-                ->whereIn('type', ['student_added','student_deleted','student_updated'])
-                ->latest()->take(50)->get()
-        );
-        $studentActivities = $studentGroups->take(7)->map(function ($g) {
-            return (object) [
-                'link' => $g['notifiable_id'] ? route('staff.students.show', $g['notifiable_id']) : '#',
-                'description' => $this->dashboardService->formatGroupedDescription($g, 'staff'),
-                'user' => $g['user'],
-                'created_at' => $g['latest'],
-            ];
-        });
-
-        $appGroups = $this->dashboardService->groupActivities(
-            Activity::with('user')
-                ->whereIn('type', ['application_submitted','application_withdrawn','application_updated','application_status_changed'])
-                ->latest()->take(50)->get()
-        );
-        $applicationActivities = $appGroups->take(7)->map(function ($g) {
-            return (object) [
-                'link' => $g['notifiable_id'] ? route('staff.applications.show', $g['notifiable_id']) : '#',
-                'description' => $this->dashboardService->formatGroupedDescription($g, 'staff'),
-                'user' => $g['user'],
-                'created_at' => $g['latest'],
-            ];
-        });
-
-        $docGroups = $this->dashboardService->groupActivities(
-            Activity::with('user', 'student')
-                ->whereIn('type', ['document_uploaded','document_deleted','document_updated'])
-                ->latest()->take(50)->get()
-        );
-        $documentActivities = $docGroups->take(7)->map(function ($g) {
-            return (object) [
-                'link' => '#',
-                'description' => $this->dashboardService->formatGroupedDescription($g, 'staff'),
-                'user' => $g['user'],
-                'created_at' => $g['latest'],
-            ];
-        });
+        // ── MY ACTIVITY (all tasks done by me, no limit) ──
+        $recentActivities = $this->buildActivityFeed($user->id, 200);
 
         return view('dashboard.staff-dashboard', compact(
-            'totalStudents','totalApplications','totalUniversities',
-            'thisMonthStudents','thisMonthApps',
-            'studentsWithDocs','docCompletionRate',
-            'appGrowth',
-            'weeklyLabels','weeklyAppsData','weeklyStudentsData',
+            'monthlyLabels', 'monthlyPending', 'monthlyCompleted', 'monthlyCancelled',
+            'stageLabels', 'stageCounts', 'stageColors', 'studentsByStage',
             'statuses',
-            'applicationsChartData','statusChartData','universityChartData',
-            'topAgents','topCourses','topUniversities',
-            'latestApplications',
-            'studentActivities','applicationActivities','documentActivities'
+            'weeklyLabels', 'weeklyPending', 'weeklyCompleted', 'weeklyCancelled', 'weeklyTotals',
+            'recentActivities',
         ));
+    }
+
+    public function activities()
+    {
+        $perPage = 25;
+        $page = request()->get('page', 1);
+        $all = $this->buildActivityFeed(Auth::user()->id, 9999);
+
+        $total = $all->count();
+        $items = $all->forPage($page, $perPage)->values();
+
+        $activities = new LengthAwarePaginator(
+            $items, $total, $perPage, $page,
+            ['path' => request()->url(), 'query' => request()->query()]
+        );
+
+        return view('staff.activities', compact('activities'));
+    }
+
+    private function buildActivityFeed($userId, $take)
+    {
+        $completedTasks = CrmTasks::where('completed_by', $userId)
+            ->with('student')
+            ->latest('completed_at')
+            ->take($take * 3)->get()
+            ->map(fn($t) => $this->makeActivity('task_completed',
+                'Task completed: ' . ($t->title ?? '') . ' for ' . $this->studentName($t->student),
+                $t->student, $t->completed_at ?? $t->updated_at));
+
+        $tasksCreated = CrmTasks::where('created_by', $userId)
+            ->where('created_by', '!=', DB::raw('COALESCE(completed_by, 0)'))
+            ->with('student', 'assignee')
+            ->latest()->take($take * 3)->get()
+            ->map(fn($t) => $this->makeActivity('task_created',
+                ($t->assignee && $t->assignee->id === $userId
+                    ? 'Self-assigned task'
+                    : 'Task assigned to ' . optional($t->assignee)->name)
+                . ': ' . ($t->title ?? '') . ' for ' . $this->studentName($t->student),
+                $t->student, $t->created_at));
+
+        $notes = StudentNote::where('created_by', $userId)
+            ->with('student')
+            ->latest()->take($take * 3)->get()
+            ->map(fn($n) => $this->makeActivity('note_added',
+                'Note added to ' . $this->studentName($n->student)
+                . ($n->title ? ': ' . $n->title : ''),
+                $n->student, $n->created_at));
+
+        $revenues = Revenue::where('created_by', $userId)
+            ->with('student')
+            ->latest()->take($take * 3)->get()
+            ->map(fn($r) => $this->makeActivity('revenue_added',
+                'Revenue $' . number_format($r->amount, 2) . ' added to ' . $this->studentName($r->student),
+                $r->student, $r->created_at));
+
+        $stageChanges = StudentStageHistory::where('changed_by', $userId)
+            ->with('student', 'fromStage', 'toStage')
+            ->latest()->take($take * 3)->get()
+            ->map(fn($h) => $this->makeActivity('stage_changed',
+                'Stage changed: ' . (optional($h->fromStage)->name ?? 'Initial')
+                . ' \u{2192} ' . optional($h->toStage)->name
+                . ' for ' . $this->studentName($h->student),
+                $h->student, $h->created_at));
+
+        $docUploads = Activity::where('user_id', $userId)
+            ->where('type', 'document_uploaded')
+            ->latest()->take($take * 3)->get()
+            ->map(fn($a) => $this->makeActivity('document_uploaded',
+                $a->description ?: 'Document uploaded for student',
+                null, $a->created_at, $a->link));
+
+        return collect()
+            ->merge($completedTasks)->merge($tasksCreated)->merge($notes)
+            ->merge($revenues)->merge($stageChanges)->merge($docUploads)
+            ->sortByDesc('created_at')
+            ->take($take)
+            ->values();
+    }
+
+    private function studentName($student): string
+    {
+        if (!$student) return 'Unknown Student';
+        return trim(($student->first_name ?? '') . ' ' . ($student->last_name ?? ''));
+    }
+
+    private function makeActivity(string $type, string $description, $student = null, $createdAt = null, ?string $link = null): object
+    {
+        return (object) [
+            'type' => $type,
+            'description' => $description,
+            'student' => $student,
+            'created_at' => $createdAt ? Carbon::parse($createdAt) : now(),
+            'link' => $link ?: ($student ? route('staff.students.show', $student->id) : null),
+        ];
     }
 }

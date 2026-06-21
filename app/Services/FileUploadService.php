@@ -4,42 +4,47 @@ namespace App\Services;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 
 class FileUploadService
 {
+    public function __construct(
+        private readonly FolderPathResolver $folderPathResolver,
+    ) {}
+
     /**
      * Upload file for agent (user)
+     *
+     * Admin   → admin/{slug}/{type}.{ext}
+     * Staff   → staff/{parentSlug}/{slug}/{slug}-{type}.{ext}
+     * Agent   → agents/{slug}/{type}.{ext}
      */
     public function uploadAgentFile(Request $request, $user, string $inputName, string $type)
     {
-        // If no file uploaded → keep old value
         if (!$request->hasFile($inputName)) {
             return $user->$inputName;
         }
 
         $file = $request->file($inputName);
-
-        // Validate file
         $this->validateFile($file, $type);
 
-        // ✅ Use slug (VERY IMPORTANT)
-        $folder = "agents/{$user->slug}";
+        $folder = $this->folderPathResolver->resolveUserFolder($user);
+        $fileName = $this->folderPathResolver->resolveUserFileName($user, $type, $file->getClientOriginalExtension());
 
-        // Example: logo.png, pan.pdf
-        $fileName = "{$type}." . $file->getClientOriginalExtension();
-
-        // ✅ Delete old file if exists
         if ($user->$inputName && Storage::disk('public')->exists($user->$inputName)) {
             Storage::disk('public')->delete($user->$inputName);
         }
 
-        // ✅ Store file
         return $file->storeAs($folder, $fileName, 'public');
     }
 
     /**
      * Upload student photo
+     *
+     * Student folder resolved by FolderPathResolver:
+     * - No agent / agent_id=12 → staff/idea-baneswor/{studentName}/
+     * - Agent is staff          → staff/{parentSlug}/{studentName}/
+     * - Agent is admin          → admin/{agentSlug}/{studentName}/
+     * - Regular agent           → agents/{agentSlug}/{studentName}/
      */
     public function uploadStudentFile($file, $agent, $student, string $type, ?string $existingPath = null)
     {
@@ -49,19 +54,10 @@ class FileUploadService
 
         $this->validateFile($file, $type);
 
-        // ✅ Agent slug (already exists)
-        $agentSlug = $agent->slug;
+        $studentName = $this->folderPathResolver->sanitizeName($student->first_name . ' ' . $student->last_name);
+        $folder = $this->folderPathResolver->resolveStudentFolder($agent, $studentName);
+        $fileName = $this->folderPathResolver->resolveStudentFileName($type, $file->getClientOriginalExtension());
 
-        // ✅ Student folder name (clean)
-        $studentName = $this->sanitizeName($student->first_name . ' ' . $student->last_name);
-
-        // ✅ Final folder
-        $folder = "agents/{$agentSlug}/{$studentName}";
-
-        // ✅ File name
-        $fileName = "{$type}." . $file->getClientOriginalExtension();
-
-        // ✅ Delete old file (if exists)
         if ($existingPath && Storage::disk('public')->exists($existingPath)) {
             Storage::disk('public')->delete($existingPath);
         }
@@ -80,20 +76,12 @@ class FileUploadService
 
         $this->validateFile($file, $documentType, ['pdf', 'jpg', 'jpeg', 'png']);
 
-        // ✅ Agent slug
-        $agentSlug = $agent->slug;
+        $studentName = $this->folderPathResolver->sanitizeName($student->first_name . ' ' . $student->last_name);
+        $folder = $this->folderPathResolver->resolveStudentFolder($agent, $studentName);
 
-        // ✅ Student folder
-        $studentName = $this->sanitizeName($student->first_name . ' ' . $student->last_name);
-
-        $folder = "agents/{$agentSlug}/{$studentName}";
-
-        // ✅ Clean document name
         $cleanType = strtolower(str_replace(' ', '_', $documentType));
-
         $fileName = "{$cleanType}." . $file->getClientOriginalExtension();
 
-        // ✅ Delete old file if exists
         if ($existingPath && Storage::disk('public')->exists($existingPath)) {
             Storage::disk('public')->delete($existingPath);
         }
@@ -112,15 +100,11 @@ class FileUploadService
 
         $this->validateFile($file, 'sop', ['pdf', 'doc', 'docx']);
 
-        $agentSlug = $agent->slug;
-
-        $studentName = $this->sanitizeName($student->first_name . ' ' . $student->last_name);
-
-        $folder = "agents/{$agentSlug}/{$studentName}";
+        $studentName = $this->folderPathResolver->sanitizeName($student->first_name . ' ' . $student->last_name);
+        $folder = $this->folderPathResolver->resolveStudentFolder($agent, $studentName);
 
         $fileName = "sop." . $file->getClientOriginalExtension();
 
-        // ✅ Delete old file if exists
         if ($existingPath && Storage::disk('public')->exists($existingPath)) {
             Storage::disk('public')->delete($existingPath);
         }
@@ -129,12 +113,60 @@ class FileUploadService
     }
 
     /**
+     * Upload revenue receipt
+     *
+     * Stores in student's folder (same as photos/documents) as receipt_{timestamp}.{ext}
+     * Path resolved by FolderPathResolver based on student's agent.
+     */
+    public function uploadRevenueReceipt($file, $agent, $student, ?string $existingPath = null): string
+    {
+        $this->validateFile($file, 'receipt', ['jpg', 'jpeg', 'png', 'pdf']);
+
+        $studentName = $this->folderPathResolver->sanitizeName($student->first_name . ' ' . $student->last_name);
+        $folder = $this->folderPathResolver->resolveStudentFolder($agent, $studentName);
+
+        $timestamp = date('Y-m-d_H-i-s');
+        $fileName = "receipt_{$timestamp}." . $file->getClientOriginalExtension();
+
+        if ($existingPath && Storage::disk('public')->exists($existingPath)) {
+            Storage::disk('public')->delete($existingPath);
+        }
+
+        return $file->storeAs($folder, $fileName, 'public');
+    }
+
+    /**
+     * Upload application message attachment
+     *
+     * Stores at: application_messages/{applicationId}/{timestamp}_{originalName}
+     */
+    public function uploadApplicationAttachment($file, $application): string
+    {
+        $this->validateFile($file, 'attachment', ['jpg', 'jpeg', 'png', 'pdf', 'doc', 'docx']);
+
+        $fileName = time() . '_' . $file->getClientOriginalName();
+        return $file->storeAs('application_messages/' . $application->id, $fileName, 'public');
+    }
+
+    /**
+     * Upload chat attachment
+     *
+     * Stores at: chat_files/{auto-hashed-filename}
+     */
+    public function uploadChatAttachment($file): string
+    {
+        $this->validateFile($file, 'chat', ['jpg', 'jpeg', 'png', 'pdf', 'docx', 'zip']);
+
+        return $file->store('chat_files', 'public');
+    }
+
+    /**
      * Delete all files for a student
      */
     public function deleteStudentFiles($agent, $student)
     {
-        $studentName = $this->sanitizeName($student->first_name . ' ' . $student->last_name);
-        $folder = "agents/{$agent->slug}/{$studentName}";
+        $studentName = $this->folderPathResolver->sanitizeName($student->first_name . ' ' . $student->last_name);
+        $folder = $this->folderPathResolver->resolveStudentFolder($agent, $studentName);
 
         if (Storage::disk('public')->exists($folder)) {
             Storage::disk('public')->deleteDirectory($folder);
@@ -154,14 +186,6 @@ class FileUploadService
     }
 
     /**
-     * Sanitize name for folder usage
-     */
-    private function sanitizeName($name)
-    {
-        return strtolower(Str::slug($name));
-    }
-
-    /**
      * Validate uploaded file
      */
     private function validateFile($file, string $type, array $allowedExtensions = null)
@@ -173,15 +197,11 @@ class FileUploadService
             throw new \InvalidArgumentException("Invalid file type for {$type}. Allowed: " . implode(', ', $allowed));
         }
 
-        // Max file size: 5MB
         if ($file->getSize() > 5 * 1024 * 1024) {
             throw new \InvalidArgumentException("File size exceeds 5MB limit");
         }
     }
 
-    /**
-     * Get default extensions based on file type
-     */
     private function getDefaultExtensions(string $type)
     {
         $imageTypes = ['logo', 'photo', 'signature'];

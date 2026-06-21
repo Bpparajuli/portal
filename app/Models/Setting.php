@@ -104,14 +104,14 @@ class Setting extends Model
             return null;
         }
 
-        if (str_starts_with($value, 'settings/')) {
-            return Storage::url($value);
-        }
-
         if (str_starts_with($value, 'http://') || str_starts_with($value, 'https://')) {
             return $value;
         }
 
-        return asset($value);
+        if (str_starts_with($value, 'images/')) {
+            return asset($value);
+        }
+
+        return Storage::url($value);
     }
 }

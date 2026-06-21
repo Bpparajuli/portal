@@ -51,7 +51,7 @@
     ];
 @endphp
 
-<div class="form-group">
+<div class="cform-group">
     <label>Stage Name *</label>
 
     <input type="text" name="name" value="{{ old('name', $stage?->name) }}"
@@ -59,7 +59,7 @@
 </div>
 
 {{-- ───────────────── Color Picker ───────────────── --}}
-<div class="form-group">
+<div class="cform-group">
 
     <label>Stage Color *</label>
 
@@ -99,13 +99,13 @@
     </div>
 </div>
 
-<div class="form-group">
+<div class="cform-group">
     <label>Description</label>
 
     <textarea name="description" rows="2" placeholder="What does this stage mean?">{{ old('description', $stage?->description) }}</textarea>
 </div>
 
-<div class="form-group">
+<div class="cform-group">
     <label>Max Days in Stage</label>
 
     <input type="number" name="max_days_in_stage" value="{{ old('max_days_in_stage', $stage?->max_days_in_stage) }}"
@@ -160,7 +160,7 @@
             .color-preview-label {
                 font-size: .8rem;
                 font-family: monospace;
-                color: var(--crm-muted);
+                color: #6b7280;
                 flex: 1;
             }
 
@@ -171,10 +171,10 @@
                 font-size: .78rem;
                 font-weight: 500;
                 padding: .3rem .65rem;
-                border: 1px solid var(--crm-border);
+                border: 1px solid #e5e7eb;
                 border-radius: 6px;
                 cursor: pointer;
-                background: var(--crm-bg);
+                background: #f9fafb;
             }
 
             .color-native-btn input[type="color"] {
@@ -189,8 +189,8 @@
                 grid-template-columns: repeat(10, 1fr);
                 gap: .35rem;
                 padding: .65rem;
-                background: var(--crm-bg);
-                border: 1px solid var(--crm-border);
+                background: #f9fafb;
+                border: 1px solid #e5e7eb;
                 border-radius: 8px;
             }
 
@@ -210,7 +210,7 @@
 
             .color-preset.selected {
                 border-color: #fff;
-                box-shadow: 0 0 0 2.5px var(--crm-primary);
+                box-shadow: 0 0 0 2.5px #4f46e5;
                 transform: scale(1.12);
             }
         </style>

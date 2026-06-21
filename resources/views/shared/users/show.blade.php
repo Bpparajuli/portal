@@ -611,11 +611,13 @@
                                             <i class="fas fa-download"></i>
                                         </a>
                                         @if ($isMgmt && $docKey === 'agreement_file')
-                                            <button type="button" class="btn btn-sm btn-outline-danger btn-delete"
-                                                data-url="{{ route($routePrefix . '.users.agreement.delete', $profileUser->slug) }}"
-                                                data-name="Agreement Document for {{ $profileUser->business_name }}">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
+                                            <x-confirm-delete
+                                                url="{{ route($routePrefix . '.users.agreement.delete', $profileUser->slug) }}"
+                                                label=""
+                                                title="Delete Agreement Document?"
+                                                message="Delete Agreement Document for {{ $profileUser->business_name }}?"
+                                                class="btn btn-sm btn-outline-danger"
+                                            />
                                         @endif
                                     </div>
                                 </div>
@@ -998,11 +1000,13 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <form action="{{ route($routePrefix . '.users.destroy', $profileUser) }}" method="POST" class="d-inline">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit" class="btn btn-danger">Delete User</button>
-                </form>
+                <x-confirm-delete
+                    url="{{ route($routePrefix . '.users.destroy', $profileUser) }}"
+                    label="Delete User"
+                    title="Delete {{ $profileUser->business_name ?? $profileUser->name }}?"
+                    message="This will permanently delete this user and all associated data."
+                    class="btn btn-danger"
+                />
             </div>
         </div>
     </div>

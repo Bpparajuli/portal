@@ -6,43 +6,26 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('documents', function (Blueprint $table) {
             $table->bigIncrements('id');
-
             $table->unsignedBigInteger('student_id');
-            $table->unsignedBigInteger('uploaded_by')->index();
-
+            $table->unsignedBigInteger('uploaded_by');
             $table->string('file_name');
             $table->string('file_path');
             $table->string('file_type')->nullable();
             $table->string('document_type')->nullable();
             $table->enum('status', ['uploaded', 'missing', 'reviewed', 'downloaded'])->default('uploaded');
             $table->timestamps();
+            $table->softDeletes();
 
-            // Indexes
             $table->index(['student_id', 'document_type']);
-
-            // 🔗 Foreign keys
-            $table->foreign('student_id')
-                ->references('id')->on('students')
-                ->onUpdate('no action')
-                ->onDelete('cascade');
-
-            $table->foreign('uploaded_by')
-                ->references('id')->on('users')
-                ->onUpdate('no action')
-                ->onDelete('cascade');
+            $table->foreign('student_id')->references('id')->on('students')->cascadeOnDelete();
+            $table->foreign('uploaded_by')->references('id')->on('users')->cascadeOnDelete();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('documents');

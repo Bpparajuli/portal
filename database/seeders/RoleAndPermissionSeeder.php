@@ -85,6 +85,13 @@ class RoleAndPermissionSeeder extends Seeder
             ['key' => 'mail_encryption',        'value' => config('mail.mailers.smtp.encryption', 'tls'), 'group' => 'email', 'type' => 'string'],
             ['key' => 'mail_from_address',      'value' => config('mail.from.address', 'hello@example.com'), 'group' => 'email', 'type' => 'string'],
             ['key' => 'mail_from_name',         'value' => config('mail.from.name', 'Portal'), 'group' => 'email', 'type' => 'string'],
+            ['key' => 'imap_enabled',           'value' => 'false',                     'group' => 'email',    'type' => 'boolean'],
+            ['key' => 'imap_host',              'value' => '',                          'group' => 'email',    'type' => 'string'],
+            ['key' => 'imap_port',              'value' => '993',                       'group' => 'email',    'type' => 'number'],
+            ['key' => 'imap_username',          'value' => '',                          'group' => 'email',    'type' => 'string'],
+            ['key' => 'imap_password',          'value' => '',                          'group' => 'email',    'type' => 'string'],
+            ['key' => 'imap_encryption',        'value' => 'ssl',                       'group' => 'email',    'type' => 'string'],
+            ['key' => 'imap_mailbox',           'value' => 'INBOX',                     'group' => 'email',    'type' => 'string'],
             ['key' => 'dashboard_widgets',     'value' => json_encode([
                 'stat_cards' => true, 'application_pipeline' => true, 'recent_students' => true,
                 'recent_applications' => true, 'monthly_chart' => true, 'activity_feed' => true,

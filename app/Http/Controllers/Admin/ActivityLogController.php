@@ -42,9 +42,19 @@ class ActivityLogController extends Controller
         return redirect()->back()->with('success', 'Activity deleted successfully.');
     }
 
-    public function clearAll()
+    public function bulkDestroy(Request $request)
     {
-        Activity::query()->delete();
-        return redirect()->route('admin.activities.index')->with('success', 'All activities cleared.');
+        $ids = $request->input('ids', []);
+        if (empty($ids)) {
+            if ($request->expectsJson()) {
+                return response()->json(['success' => false, 'message' => 'No activities selected.'], 400);
+            }
+            return redirect()->back()->with('error', 'No activities selected.');
+        }
+        Activity::whereIn('id', $ids)->delete();
+        if ($request->expectsJson()) {
+            return response()->json(['success' => true, 'message' => count($ids) . ' activities deleted.']);
+        }
+        return redirect()->back()->with('success', count($ids) . ' activities deleted.');
     }
 }

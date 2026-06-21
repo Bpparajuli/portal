@@ -736,6 +736,67 @@ img {
     background: var(--primary-soft);
 }
 
+.btn-outline-primary {
+    background: transparent;
+    border: 1px solid var(--primary);
+    color: var(--primary);
+}
+.btn-outline-primary:hover {
+    background: var(--primary);
+    color: #fff;
+    box-shadow: var(--shadow-glow);
+}
+
+.btn-outline-secondary {
+    background: transparent;
+    border: 1px solid #64748b;
+    color: #64748b;
+}
+.btn-outline-secondary:hover {
+    background: #64748b;
+    color: #fff;
+}
+
+.btn-outline-success {
+    background: transparent;
+    border: 1px solid #22c55e;
+    color: #22c55e;
+}
+.btn-outline-success:hover {
+    background: #22c55e;
+    color: #fff;
+}
+
+.btn-outline-danger {
+    background: transparent;
+    border: 1px solid #ef4444;
+    color: #ef4444;
+}
+.btn-outline-danger:hover {
+    background: #ef4444;
+    color: #fff;
+}
+
+.btn-outline-warning {
+    background: transparent;
+    border: 1px solid #f59e0b;
+    color: #f59e0b;
+}
+.btn-outline-warning:hover {
+    background: #f59e0b;
+    color: #fff;
+}
+
+.btn-outline-info {
+    background: transparent;
+    border: 1px solid #06b6d4;
+    color: #06b6d4;
+}
+.btn-outline-info:hover {
+    background: #06b6d4;
+    color: #fff;
+}
+
 .btn-ghost {
     background: transparent;
     color: var(--text-muted);
@@ -1068,6 +1129,15 @@ textarea.form-control {
     color: var(--primary);
     border-bottom-color: var(--primary);
     background: transparent;
+}
+
+.nav-pills {
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0;
+}
+
+.nav-tabs {
+    border-bottom: 2px solid var(--border) !important;
 }
 
 /* Tooltip */

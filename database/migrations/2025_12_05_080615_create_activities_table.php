@@ -6,31 +6,22 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('activities', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->unsignedBigInteger('user_id')->nullable()->index(); // index added
+            $table->unsignedBigInteger('user_id')->nullable();
             $table->string('type');
             $table->text('description');
             $table->unsignedBigInteger('notifiable_id')->nullable();
             $table->string('link')->nullable();
             $table->timestamps();
+            $table->softDeletes();
 
-            // Add foreign key
-            $table->foreign('user_id')
-                ->references('id')->on('users')
-                ->onUpdate('no action')
-                ->onDelete('cascade');
+            $table->foreign('user_id')->references('id')->on('users')->cascadeOnDelete();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('activities');

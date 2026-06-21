@@ -1,376 +1,265 @@
 @push('styles')
     <style>
-        /* ============================================ */
-        /* GLOBAL CRM STYLES - Shared across all components */
-        /* ============================================ */
+        :root {
+            --primary: #1a0262;
+            --primary-light: #ede5f8;
+            --primary-dark: #0f0040;
+            --accent: #820b5c;
+            --accent-gradient: linear-gradient(135deg, #1a0262, #820b5c);
+            --bg: #f4f2f8;
+            --card-bg: #ffffff;
+            --card-border: #e8e5ee;
+            --card-shadow: 0 1px 2px rgba(26,2,98,.04), 0 4px 12px rgba(26,2,98,.06);
+            --glass-bg: rgba(255,255,255,0.88);
+            --glass-border: rgba(232,229,238,0.5);
+            --glass-shadow: 0 8px 32px rgba(26,2,98,.06);
+            --radius: 12px;
+            --radius-sm: 8px;
+            --font-xs: .6rem;
+            --font-sm: .68rem;
+            --font-md: .75rem;
+            --font-lg: .82rem;
+            --hd-xs: 2px;
+            --hd-sm: 4px;
+            --hd-md: 8px;
+            --hd-lg: 12px;
+            --hd-xl: 16px;
+            --hd-radius: 8px;
+            --hd-radius-sm: 4px;
+            --hd-font-xs: .6rem;
+            --hd-font-sm: .68rem;
+            --hd-font-md: .75rem;
+            --hd-font-lg: .82rem;
+            --hd-shadow: 0 1px 3px rgba(0,0,0,.04);
+            --hd-shadow-hover: 0 4px 12px rgba(0,0,0,.08);
+            --hd-transition: .15s ease;
+        }
 
-        /* Toast Notifications */
+        body { background: var(--bg); }
+
+        .container-fluid { padding-left: 16px !important; padding-right: 16px !important; }
+        .mb-3,.mb-4 { margin-bottom: 10px !important; }
+        .btn-sm { font-size: var(--font-sm) !important; padding: 3px 10px !important; border-radius: var(--radius-sm) !important; }
+        .badge { font-size: var(--font-xs) !important; padding: 2px 6px !important; border-radius: 4px !important; }
+        .form-control,.form-select { font-size: var(--font-sm) !important; padding: 4px 8px !important; min-height: auto !important; height: auto !important; border-radius: var(--radius-sm) !important; }
+        .table td,.table th { padding: 6px 8px !important; font-size: var(--font-sm) !important; }
+
+        .hd-card {
+            background: var(--card-bg);
+            border-radius: var(--radius); padding: 16px 18px;
+            box-shadow: var(--card-shadow); border: 1px solid var(--card-border);
+            transition: box-shadow .2s, border-color .2s, transform .15s;
+        }
+        .hd-card:hover { box-shadow: 0 4px 16px rgba(26,2,98,.08); border-color: #c8c0d8; }
+        .hd-card-title {
+            font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .4px;
+            display: flex; align-items: center; gap: 6px;
+            padding-bottom: 8px; margin-bottom: 12px;
+            border-bottom: 2px solid var(--primary-light); color: var(--primary-dark);
+        }
+        .hd-card-title i { color: var(--accent) !important; }
+
+        .badge-overdue { background: #fef2f2; color: #dc2626; }
+        .badge-today { background: #fffbeb; color: #d97706; }
+        .badge-upcoming { background: #ede5f8; color: #1a0262; }
+        .badge-notask { background: #f1f5f9; color: #64748b; }
+
+        .hd-star {
+            display: inline-flex; flex-direction: row-reverse; gap: 1px;
+        }
+        .hd-star input { display: none; }
+        .hd-star label {
+            font-size: 11px; color: #d1d5db; cursor: pointer;
+            transition: color .1s; padding: 0 1px;
+        }
+        .hd-star input:checked ~ label,
+        .hd-star label:hover,
+        .hd-star label:hover ~ label { color: var(--primary) !important; }
+
+        .hd-tags { display: flex; flex-wrap: wrap; gap: 3px; }
+        .hd-tag {
+            font-size: .52rem; background: var(--primary-light); color: var(--primary-dark);
+            border-radius: 10px; padding: 2px 8px; display: inline-flex;
+            align-items: center; gap: 3px; line-height: 1.4;
+            border: 1px solid #d4c4ec;
+        }
+        .hd-tag-remove { cursor: pointer; font-weight: 700; opacity: .5; margin-left: 2px; }
+        .hd-tag-remove:hover { opacity: 1; }
+        .hd-add-tag {
+            font-size: .52rem; background: transparent; border: 1px dashed #cbd5e1;
+            border-radius: 10px; padding: 1px 8px; cursor: pointer; color: #94a3b8;
+            transition: all .12s; line-height: 1.4;
+        }
+        .hd-add-tag:hover { background: var(--primary); color: #fff; border-color: var(--primary); }
+
         .crm-toast {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            z-index: 9999;
-            min-width: 280px;
-            background: white;
-            border-radius: 12px;
-            padding: 12px 16px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            animation: crmToastSlideIn 0.3s ease;
-            border-left: 4px solid;
-            cursor: default;
+            position: fixed; bottom: 20px; right: 20px; z-index: 9999;
+            min-width: 260px; background: rgba(255,255,255,0.95); backdrop-filter: blur(8px);
+            border-radius: var(--radius); padding: 10px 14px;
+            box-shadow: 0 8px 32px rgba(0,0,0,.12);
+            display: flex; align-items: center; gap: 8px;
+            animation: crmToastIn .25s ease; border-left: 3px solid; font-size: var(--font-sm);
         }
+        .crm-toast.success { border-left-color: #10b981; }
+        .crm-toast.error { border-left-color: #ef4444; }
+        .crm-toast.warning { border-left-color: #f59e0b; }
+        .crm-toast.info { border-left-color: #0ea5e9; }
+        .crm-toast i:last-child { margin-left: auto; cursor: pointer; opacity: .6; }
+        .crm-toast i:last-child:hover { opacity: 1; }
+        @keyframes crmToastIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 
-        .crm-toast.success {
-            border-left-color: #10b981;
-        }
-
-        .crm-toast.error {
-            border-left-color: #ef4444;
-        }
-
-        .crm-toast.warning {
-            border-left-color: #f59e0b;
-        }
-
-        .crm-toast.info {
-            border-left-color: #3b82f6;
-        }
-
-        .crm-toast i:last-child {
-            margin-left: auto;
-            cursor: pointer;
-            opacity: 0.7;
-        }
-
-        .crm-toast i:last-child:hover {
-            opacity: 1;
-        }
-
-        @keyframes crmToastSlideIn {
-            from {
-                transform: translateX(100%);
-                opacity: 0;
-            }
-
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
-        }
-
-        /* Loader */
         .crm-loader-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 10000;
+            position: fixed; inset: 0; background: rgba(0,0,0,.3); backdrop-filter: blur(2px);
+            display: none; align-items: center; justify-content: center; z-index: 10000;
         }
-
-        .crm-loader-overlay.show {
-            display: flex;
-        }
-
+        .crm-loader-overlay.show { display: flex; }
         .crm-loader-spinner {
-            width: 50px;
-            height: 50px;
-            border: 4px solid #f3f4f6;
-            border-top-color: #4f46e5;
-            border-radius: 50%;
-            animation: crmSpin 0.8s linear infinite;
-            background: white;
-            padding: 10px;
+            width: 36px; height: 36px;
+            border: 3px solid #e2e8f0; border-top-color: var(--primary);
+            border-radius: 50%; animation: crmSpin .7s linear infinite;
         }
+        @keyframes crmSpin { to { transform: rotate(360deg); } }
 
-        @keyframes crmSpin {
-            to {
-                transform: rotate(360deg);
-            }
+        .fab-add-student {
+            position: fixed; bottom: 24px; right: 24px;
+            width: 44px; height: 44px; border-radius: 50%;
+            background: var(--accent-gradient); color: #fff; border: none;
+            box-shadow: 0 4px 16px rgba(130,11,92,.35); z-index: 1000;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px; transition: all .15s;
         }
+        .fab-add-student:hover { transform: scale(1.08) translateY(-2px); box-shadow: 0 6px 24px rgba(130,11,92,.4); }
 
-        /* Common Card Styles */
-        .crm-card {
-            background: white;
-            border-radius: 16px;
-            padding: 1.25rem;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-            transition: all 0.2s;
-        }
-
-        .crm-card:hover {
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-        }
-
-        /* Badge Styles */
-        .badge-overdue {
-            background: #fef2f2;
-            color: #dc2626;
-        }
-
-        .badge-today {
-            background: #fffbeb;
-            color: #d97706;
-        }
-
-        .badge-upcoming {
-            background: #f0fdf4;
-            color: #10b981;
-        }
-
-        /* Star Rating */
-        .crm-star-rating {
-            display: flex;
-            flex-direction: row-reverse;
-            justify-content: flex-end;
-            gap: 2px;
-        }
-
-        .crm-star-rating input {
-            display: none;
-        }
-
-        .crm-star-rating label {
-            font-size: 14px;
-            color: #d1d5db;
-            cursor: pointer;
-        }
-
-        .crm-star-rating input:checked~label,
-        .crm-star-rating label:hover,
-        .crm-star-rating label:hover~label {
-            color: #fbbf24;
-        }
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     </style>
 @endpush
 
 @push('scripts')
     <script>
-        // ============================================
-        // CRM CORE MODULE - Singleton Pattern
-        // ============================================
         window.CrmCore = (function() {
             'use strict';
-
-            let instance = null;
-            let loaderStack = 0;
+            var instance = null, loaderStack = 0;
 
             function getCsrfToken() {
                 return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ||
-                    document.querySelector('meta[name="csrf-token"]')?.content ||
-                    '{{ csrf_token() }}';
+                    document.querySelector('meta[name="csrf-token"]')?.content || '{{ csrf_token() }}';
             }
 
-            function escapeHtml(str) {
-                if (!str) return '';
-                const div = document.createElement('div');
-                div.textContent = str;
-                return div.innerHTML;
+            function esc(s) {
+                if (!s) return '';
+                var d = document.createElement('div');
+                d.textContent = s;
+                return d.innerHTML;
             }
 
-            const Core = {
+            var Core = {
                 config: {
                     isAdmin: {{ isset($isAdmin) && $isAdmin ? 'true' : 'false' }},
                     baseUrl: '{{ url('/') }}',
                     csrfToken: '{{ csrf_token() }}'
                 },
+                getCsrfToken: function() { return this.config.csrfToken || getCsrfToken(); },
+                escapeHtml: function(s) { return esc(s); },
 
-                getCsrfToken: function() {
-                    return this.config.csrfToken || getCsrfToken();
-                },
-                escapeHtml: function(str) {
-                    return escapeHtml(str);
-                },
-
-                showToast: function(message, type = 'success') {
-                    const existingToasts = document.querySelectorAll('.crm-toast');
-                    if (existingToasts.length > 3) existingToasts[0]?.remove();
-
-                    const toast = document.createElement('div');
-                    toast.className = `crm-toast ${type}`;
-                    const icons = {
-                        success: 'fa-check-circle',
-                        error: 'fa-exclamation-circle',
-                        warning: 'fa-exclamation-triangle',
-                        info: 'fa-info-circle'
-                    };
-                    const icon = icons[type] || icons.success;
-
-                    toast.innerHTML =
-                        `<i class="fas ${icon}"></i><span>${this.escapeHtml(message)}</span><i class="fas fa-times"></i>`;
-                    const closeBtn = toast.querySelector('.fa-times');
-                    closeBtn.onclick = () => toast.remove();
-                    document.body.appendChild(toast);
-                    setTimeout(() => {
-                        if (toast.parentElement) toast.remove();
-                    }, 4000);
+                showToast: function(msg, type) {
+                    var existing = document.querySelectorAll('.crm-toast');
+                    if (existing.length > 3) existing[0].remove();
+                    var t = document.createElement('div');
+                    t.className = 'crm-toast ' + (type || 'info');
+                    var icons = { success: 'fa-check-circle', error: 'fa-exclamation-circle', warning: 'fa-exclamation-triangle', info: 'fa-info-circle' };
+                    t.innerHTML = '<i class="fas ' + (icons[type] || icons.info) + '"></i><span>' + esc(msg) + '</span><i class="fas fa-times"></i>';
+                    t.querySelector('.fa-times').onclick = function() { t.remove(); };
+                    document.body.appendChild(t);
+                    setTimeout(function() { if (t.parentElement) t.remove(); }, 4000);
                 },
 
                 showLoader: function() {
                     loaderStack++;
-                    let loader = document.getElementById('crmLoader');
-                    if (!loader) {
-                        loader = document.createElement('div');
-                        loader.id = 'crmLoader';
-                        loader.className = 'crm-loader-overlay';
-                        loader.innerHTML = '<div class="crm-loader-spinner"></div>';
-                        document.body.appendChild(loader);
+                    var el = document.getElementById('crmLoader');
+                    if (!el) {
+                        el = document.createElement('div');
+                        el.id = 'crmLoader';
+                        el.className = 'crm-loader-overlay';
+                        el.innerHTML = '<div class="crm-loader-spinner"></div>';
+                        document.body.appendChild(el);
                     }
-                    loader.classList.add('show');
+                    el.classList.add('show');
                 },
 
                 hideLoader: function() {
                     loaderStack--;
-                    if (loaderStack <= 0) {
-                        loaderStack = 0;
-                        const loader = document.getElementById('crmLoader');
-                        if (loader) loader.classList.remove('show');
-                    }
+                    if (loaderStack <= 0) { loaderStack = 0; var el = document.getElementById('crmLoader'); if (el) el.classList.remove('show'); }
                 },
 
-                fetch: async function(url, options = {}) {
+                fetch: async function(url, opts) {
                     this.showLoader();
                     try {
-                        const response = await fetch(url, {
-                            ...options,
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': this.getCsrfToken(),
-                                'Accept': 'application/json',
-                                ...options.headers
-                            }
-                        });
-                        const data = await response.json();
-                        if (!response.ok) throw new Error(data.error || data.message ||
-                            `HTTP ${response.status}`);
-                        return data;
-                    } catch (error) {
-                        this.showToast(error.message, 'error');
-                        throw error;
-                    } finally {
-                        this.hideLoader();
-                    }
+                        var r = await fetch(url, Object.assign({}, opts, {
+                            headers: Object.assign({ 'Content-Type': 'application/json', 'X-CSRF-TOKEN': this.getCsrfToken(), 'Accept': 'application/json' }, (opts.headers || {}))
+                        }));
+                        var d = await r.json();
+                        if (!r.ok) throw new Error(d.error || d.message || 'HTTP ' + r.status);
+                        return d;
+                    } catch (e) { this.showToast(e.message, 'error'); throw e; }
+                    finally { this.hideLoader(); }
                 },
 
                 switchView: function(view) {
-                    const form = document.getElementById('crmFilterForm');
+                    var form = document.getElementById('crmFilterForm');
                     if (form) {
-                        const viewInput = form.querySelector('[name="view"]');
-                        if (viewInput) viewInput.value = view;
-                        window.dispatchEvent(new CustomEvent('crm:beforeViewChange', {
-                            detail: {
-                                view
-                            }
-                        }));
+                        var i = form.querySelector('[name="view"]');
+                        if (i) i.value = view;
+                        window.dispatchEvent(new CustomEvent('crm:beforeViewChange', { detail: { view: view } }));
                         form.submit();
                     } else {
-                        const params = new URLSearchParams(window.location.search);
-                        params.set('view', view);
-                        window.location.href = `${window.location.pathname}?${params.toString()}`;
+                        var p = new URLSearchParams(window.location.search);
+                        p.set('view', view);
+                        window.location.href = window.location.pathname + '?' + p.toString();
                     }
                 },
 
-                getCurrentView: function() {
-                    return document.querySelector('[name="view"]')?.value || 'kanban';
+                getCurrentView: function() { return (document.querySelector('[name="view"]') || {}).value || 'kanban'; },
+                formatDate: function(d, f) {
+                    var dt = new Date(d);
+                    if (isNaN(dt.getTime())) return '';
+                    if (f === 'short') return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                    if (f === 'long') return dt.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                    return dt.toISOString().split('T')[0];
                 },
-
-                formatDate: function(date, format = 'short') {
-                    const d = new Date(date);
-                    if (isNaN(d.getTime())) return '';
-                    if (format === 'short') return d.toLocaleDateString('en-US', {
-                        month: 'short',
-                        day: 'numeric'
-                    });
-                    if (format === 'long') return d.toLocaleDateString('en-US', {
-                        weekday: 'long',
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                    });
-                    return d.toISOString().split('T')[0];
+                getPriorityBadge: function(p) {
+                    var m = { high: '<span class="badge bg-danger">High</span>', medium: '<span class="badge bg-warning text-dark">Med</span>', low: '<span class="badge bg-success">Low</span>' };
+                    return m[p] || m.medium;
                 },
-
-                getTimeSlotLabel: function(timeSlot) {
-                    const slots = {
-                        morning: '🌅 Morning (9AM-12PM)',
-                        afternoon: '☀️ Afternoon (12PM-3PM)',
-                        evening: '🌙 Evening (3PM-6PM)'
-                    };
-                    return slots[timeSlot] || '📅 No time slot';
+                getStatusBadge: function(s, od) {
+                    if (s === 'completed') return '<span class="badge bg-success">Done</span>';
+                    if (od) return '<span class="badge bg-danger">Overdue</span>';
+                    return '<span class="badge bg-secondary">Pending</span>';
                 },
-
-                getPriorityBadge: function(priority) {
-                    const badges = {
-                        high: '<span class="badge bg-danger">🔴 High Priority</span>',
-                        medium: '<span class="badge bg-warning text-dark">🟡 Medium Priority</span>',
-                        low: '<span class="badge bg-success">🟢 Low Priority</span>'
-                    };
-                    return badges[priority] || badges.medium;
-                },
-
-                getStatusBadge: function(status, isOverdue) {
-                    if (status === 'completed') return '<span class="badge bg-success">✓ Completed</span>';
-                    if (isOverdue) return '<span class="badge bg-danger">⚠️ Overdue</span>';
-                    return '<span class="badge bg-secondary">⏳ Pending</span>';
-                },
-
-                updateStudentStage: async function(studentId, targetStageId) {
-                    this.showLoader();
+                updateStudentStage: async function(id, targetId) {
                     try {
-                        const response = await this.fetch(`/crm/students/${studentId}/stage`, {
-                            method: 'PUT',
-                            body: JSON.stringify({
-                                stage_id: parseInt(targetStageId)
-                            })
-                        });
-                        if (response.success) {
-                            this.showToast('Student moved successfully', 'success');
-                            return true;
-                        }
-                        throw new Error(response.error || 'Failed to move student');
-                    } catch (error) {
-                        this.showToast(error.message, 'error');
-                        return false;
-                    } finally {
-                        this.hideLoader();
-                    }
+                        var r = await this.fetch('/crm/students/' + id + '/stage', { method: 'PUT', body: JSON.stringify({ stage_id: parseInt(targetId) }) });
+                        if (r.success) { this.showToast('Moved', 'success'); return true; }
+                        throw new Error(r.error || 'Failed');
+                    } catch(e) { this.showToast(e.message, 'error'); return false; }
                 }
             };
-
-            return {
-                getInstance: function() {
-                    if (!instance) instance = Core;
-                    return instance;
-                }
-            };
+            return { getInstance: function() { if (!instance) instance = Core; return instance; } };
         })();
 
         document.addEventListener('DOMContentLoaded', function() {
-            const CRM = window.CrmCore.getInstance();
             if (!document.getElementById('crmLoader')) {
-                const loaderDiv = document.createElement('div');
-                loaderDiv.id = 'crmLoader';
-                loaderDiv.className = 'crm-loader-overlay';
-                loaderDiv.innerHTML = '<div class="crm-loader-spinner"></div>';
-                document.body.appendChild(loaderDiv);
+                var d = document.createElement('div');
+                d.id = 'crmLoader'; d.className = 'crm-loader-overlay';
+                d.innerHTML = '<div class="crm-loader-spinner"></div>';
+                document.body.appendChild(d);
             }
+            window.CrmCore.getInstance();
         });
-
-        window.crmShowToast = function(msg, type) {
-            window.CrmCore.getInstance().showToast(msg, type);
-        };
-        window.crmEscapeHtml = function(str) {
-            return window.CrmCore.getInstance().escapeHtml(str);
-        };
-        window.setView = function(view) {
-            window.CrmCore.getInstance().switchView(view);
-        };
+        window.crmShowToast = function(m, t) { window.CrmCore.getInstance().showToast(m, t); };
+        window.crmEscapeHtml = function(s) { return window.CrmCore.getInstance().escapeHtml(s); };
+        window.setView = function(v) { window.CrmCore.getInstance().switchView(v); };
     </script>
 @endpush

@@ -102,4 +102,44 @@ class TrashController extends Controller
         return redirect()->route('admin.trash.index')
             ->with('success', "{$count} " . strtolower($cfg['label']) . ' permanently deleted.');
     }
+
+    public function bulkRestore(Request $request)
+    {
+        $ids = $request->input('ids', []);
+        $modelType = $request->input('model_type');
+        $cfg = $this->models[$modelType] ?? abort(404);
+
+        if (empty($ids)) {
+            return $request->expectsJson()
+                ? response()->json(['success' => false, 'message' => 'No items selected.'], 400)
+                : redirect()->back()->with('error', 'No items selected.');
+        }
+
+        $count = $cfg['class']::onlyTrashed()->whereIn('id', $ids)->restore();
+
+        if ($request->expectsJson()) {
+            return response()->json(['success' => true, 'message' => "{$count} " . strtolower($cfg['label']) . ' restored.']);
+        }
+        return redirect()->route('admin.trash.index')->with('success', "{$count} " . strtolower($cfg['label']) . ' restored.');
+    }
+
+    public function bulkForceDelete(Request $request)
+    {
+        $ids = $request->input('ids', []);
+        $modelType = $request->input('model_type');
+        $cfg = $this->models[$modelType] ?? abort(404);
+
+        if (empty($ids)) {
+            return $request->expectsJson()
+                ? response()->json(['success' => false, 'message' => 'No items selected.'], 400)
+                : redirect()->back()->with('error', 'No items selected.');
+        }
+
+        $count = $cfg['class']::onlyTrashed()->whereIn('id', $ids)->forceDelete();
+
+        if ($request->expectsJson()) {
+            return response()->json(['success' => true, 'message' => "{$count} " . strtolower($cfg['label']) . ' permanently deleted.']);
+        }
+        return redirect()->route('admin.trash.index')->with('success', "{$count} " . strtolower($cfg['label']) . ' permanently deleted.');
+    }
 }

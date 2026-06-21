@@ -15,15 +15,11 @@
     $ctaBtnText = App\Models\Setting::getValue('content.cta_button_text', 'Become a Partner');
     $ctaBtnLink = App\Models\Setting::getValue('content.cta_button_link', '/register');
     $ctaImage = App\Models\Setting::resolveImageUrl(App\Models\Setting::getValue('content.cta_image', 'images/banner-2.png'));
-    $uniCount = App\Models\University::count();
-    $courseCount = App\Models\Course::count();
-    $countryCount = App\Models\University::distinct('country')->count('country');
-    $popupSectionEnabled = App\Models\Setting::getValue('content.section_popup_enabled', '1');
-    $popupEnabled = App\Models\Setting::getValue('content.popup_enabled', '0');
-    $popupTitle = App\Models\Setting::getValue('content.popup_title', 'Welcome');
-    $popupDescription = App\Models\Setting::getValue('content.popup_description', '');
-    $popupImage = App\Models\Setting::resolveImageUrl(App\Models\Setting::getValue('content.popup_image', ''));
-    $popupDuration = (int) App\Models\Setting::getValue('content.popup_duration', '5000');
+    $uniCount = App\Models\Setting::getValue('content.hero_stat1_value', (string)App\Models\University::count());
+    $countryCount = App\Models\Setting::getValue('content.hero_stat2_value', (string)App\Models\University::distinct('country')->count('country'));
+    $courseCount = App\Models\Setting::getValue('content.hero_stat3_value', (string)App\Models\Course::count());
+    $heroFormTitle = App\Models\Setting::getValue('content.hero_form_title', 'Welcome Back');
+    $heroFormDescription = App\Models\Setting::getValue('content.hero_form_description', 'Sign in to access your agent dashboard');
     $heroBadge = App\Models\Setting::getValue('content.hero_badge', 'Idea Portal &mdash; Now Live');
     $heroBtn1Text = App\Models\Setting::getValue('content.hero_btn1_text', 'Register as Agent');
     $heroBtn1Link = App\Models\Setting::getValue('content.hero_btn1_link', '/register');
@@ -283,8 +279,8 @@
 
             {{-- LOGIN CARD --}}
             <div class="gd-login-card">
-                <h3>Welcome Back</h3>
-                <p>Sign in to access your agent dashboard</p>
+                <h3>{{ $heroFormTitle }}</h3>
+                <p>{{ $heroFormDescription }}</p>
                 <form action="{{ route('auth.login.post') }}" method="POST">
                     @csrf
                     <div class="mb-3">
@@ -355,7 +351,7 @@
     <div class="gd-banner-section">
         <div class="gd-section-inner">
             @foreach($banners as $banner)
-            <img src="{{ \App\Models\Setting::resolveImageUrl($banner['image'] ?? '') }}" alt="{{ $banner['alt'] ?? 'Banner' }}" class="mb-3">
+            <img src="{{ \App\Models\Setting::resolveImageUrl($banner['image'] ?? '') }}" alt="{{ $banner['title'] ?? 'Banner' }}" class="mb-3">
             @endforeach
         </div>
     </div>
@@ -384,7 +380,8 @@
                         @endif
                         <h3>{{ $event['title'] ?? '' }}</h3>
                         @if(!empty($event['date']))
-                        <div class="gd-program-date"><i class="fas fa-calendar-alt"></i> {{ $event['date'] }}</div>
+                        @php $eventDate = \Carbon\Carbon::parse($event['date'])->format('M d, Y'); @endphp
+                        <div class="gd-program-date"><i class="fas fa-calendar-alt"></i> {{ $eventDate }}</div>
                         @endif
                         <p class="small text-muted">{{ $event['description'] ?? '' }}</p>
                     </div>
@@ -411,7 +408,7 @@
             <div class="countries-grid mt-4">
                 @foreach($countriesData as $c)
                 <a href="{{ route('guest.universities.index', ['country' => $c['name'] ?? '']) }}" class="country-card">
-                    <img src="{{ $c['image'] ?? '' }}" alt="{{ $c['name'] ?? '' }}" loading="lazy">
+                    <img src="{{ \App\Models\Setting::resolveImageUrl($c['flag'] ?? ($c['image'] ?? '')) }}" alt="{{ $c['name'] ?? '' }}" loading="lazy">
                     <div class="overlay"><h3>{{ $c['name'] ?? '' }}</h3></div>
                 </a>
                 @endforeach
@@ -498,55 +495,11 @@
 
 </div>
 
-{{-- Guest Popup Notice --}}
-@if($popupSectionEnabled === '1' && $popupEnabled === '1')
-<div class="modal fade" id="guestPopupModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg" style="border-radius:16px;">
-            <div class="modal-header border-0" style="background:linear-gradient(135deg,var(--primary),#0f0828);color:#fff;border-radius:16px 16px 0 0;">
-                <h5 class="modal-title fw-bold"><i class="fas fa-bullhorn me-2"></i>{{ $popupTitle }}</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body text-center p-4">
-                @if($popupImage)
-                <img src="{{ $popupImage }}" alt="Popup" style="max-width:100%;max-height:200px;border-radius:8px;margin-bottom:1rem;">
-                @endif
-                @if($popupDescription)
-                <div class="text-muted">{!! $popupDescription !!}</div>
-                @endif
-            </div>
-            <div class="modal-footer border-0 justify-content-center pb-4">
-                <button type="button" class="btn btn-primary px-4" data-bs-dismiss="modal">Close</button>
-            </div>
-        </div>
-    </div>
-</div>
-@endif
 @endsection
 
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
 <script>
 AOS.init({ duration: 900, once: true, offset: 60 });
-document.addEventListener('DOMContentLoaded', function() {
-    const togglePassword = document.getElementById('togglePassword');
-    const passwordInput = document.getElementById('password');
-    if (togglePassword && passwordInput) {
-        togglePassword.addEventListener('click', function() {
-            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-            passwordInput.setAttribute('type', type);
-            this.querySelector('i').classList.toggle('fa-eye');
-            this.querySelector('i').classList.toggle('fa-eye-slash');
-        });
-    }
-    @if($popupSectionEnabled === '1' && $popupEnabled === '1')
-    var popupModal = new bootstrap.Modal(document.getElementById('guestPopupModal'));
-    popupModal.show();
-    setTimeout(function() {
-        var modal = bootstrap.Modal.getInstance(document.getElementById('guestPopupModal'));
-        if (modal) modal.hide();
-    }, {{ $popupDuration }});
-    @endif
-});
 </script>
 @endpush

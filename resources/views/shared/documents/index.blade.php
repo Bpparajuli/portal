@@ -1,5 +1,5 @@
 @php
-    $role = $role ?? auth()->user()->role;
+    $role = $role ?? (auth()->user()->is_admin_staff ? 'admin' : auth()->user()->role);
     $routePrefix = $routePrefix ?? $role;
     $canUpload = in_array($role, ['admin', 'agent', 'staff']);
     $canDelete = in_array($role, ['admin', 'agent', 'staff']);
@@ -108,7 +108,7 @@
                         {{ $count }} Applications submitted
                     @endif
                 @elseif($role === 'staff')
-                    <a href="{{ route("{$routePrefix}.student.show", $student->id) }}" class="text-primary fw-semibold">
+                    <a href="{{ route("{$routePrefix}.students.show", $student->id) }}" class="text-primary fw-semibold">
                         {{ $student->first_name }} {{ $student->last_name }}
                     </a>
                 @endif

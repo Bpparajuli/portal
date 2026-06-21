@@ -1,502 +1,266 @@
 @extends('layouts.staff')
-@section('title', 'Team Member Dashboard')
-@section('page-title', 'Team Member Dashboard')
+@section('title', 'My Dashboard')
+@section('page-title', 'My Dashboard')
 @push('styles')
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+    --staff-primary: #1a0262;
+    --staff-accent: #820b5c;
+    --staff-card-shadow: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+    --staff-card-hover: 0 10px 40px rgba(0,0,0,.08), 0 2px 8px rgba(0,0,0,.06);
+}
+.staff-grid { display:grid; gap:1.25rem; }
+.staff-grid-2 { grid-template-columns: 1fr 1fr; }
+.staff-grid-3 { grid-template-columns: repeat(3, 1fr); }
+@media (max-width:991px) { .staff-grid-2, .staff-grid-3 { grid-template-columns: 1fr; } }
+@media (max-width:575px) { .staff-grid-2, .staff-grid-3 { grid-template-columns: 1fr; } }
+.chart-card {
+    background:#fff; border-radius:16px; padding:0;
+    box-shadow:var(--staff-card-shadow); transition:all .25s; overflow:hidden;
+}
+.chart-card:hover { box-shadow:var(--staff-card-hover); }
+.chart-card .sc-head {
+    padding:.85rem 1.25rem; border-bottom:1px solid #f3f4f6;
+    display:flex; justify-content:space-between; align-items:center;
+}
+.chart-card .sc-title {
+    font-size:.85rem; font-weight:700; margin:0; display:flex; align-items:center; gap:.5rem;
+}
+.chart-card .sc-icon {
+    width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;
+    font-size:.75rem; flex-shrink:0;
+}
+.chart-body { padding:1rem 1.25rem 1.25rem; }
+.chart-fill canvas { width:100%!important; min-height:200px!important; }
+.chart-fill-sm canvas { width:100%!important; min-height:140px!important; }
+.view-all-link {
+    font-size:.72rem; font-weight:600; color:var(--staff-accent); text-decoration:none;
+    display:inline-flex; align-items:center; gap:.35rem; transition:all .15s;
+}
+.view-all-link:hover { gap:.55rem; color:#a00b75; }
+
+.status-pill {
+    display:inline-flex; align-items:center; gap:.3rem;
+    font-size:.65rem; font-weight:600; padding:.25rem .65rem;
+    border-radius:20px; white-space:nowrap; text-decoration:none;
+    transition:all .15s;
+}
+.status-pill:hover { opacity:.8; transform:translateY(-1px); }
+
+.activity-item {
+    display:flex; align-items:flex-start; gap:.75rem; padding:.7rem 0;
+    border-bottom:1px solid #f3f4f6;
+}
+.activity-item:last-child { border-bottom:none; }
+.activity-icon {
+    width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;
+    flex-shrink:0; font-size:.7rem; margin-top:2px;
+}
+.activity-text { flex:1; min-width:0; font-size:.8rem; line-height:1.4; }
+.activity-time { font-size:.65rem; color:#9ca3af; white-space:nowrap; margin-left:.5rem; }
+</style>
 @endpush
 
-@php
-    $isAdminStaff = auth()->user()->is_admin_staff;
-@endphp
-
 @section('staff-content')
+
+<div class="container-fluid px-0" style="font-family:'Inter',sans-serif;">
 
     {{-- ═══════ HERO ═══════ --}}
     <div class="dash-hero">
         <div class="dash-hero-inner">
             <div>
-                <div class="dash-hero-title">👋 Welcome back, {{ Auth::user()->name }}</div>
-                <div class="dash-hero-sub">
-                    {{ $isAdminStaff ? 'Here\'s everything happening across the portal.' : 'Monitoring students and applications across the system.' }}
+                <div style="font-size:.78rem;color:rgba(255,255,255,.6);font-weight:500;margin-bottom:2px;">
+                    {{ now()->format('l, F j, Y') }}
                 </div>
-            </div>
-            <div class="digital-clock-card">
-                <div class="time-wrapper">
-                    <span id="main-time">00:00</span>
-                    <span id="seconds">00</span>
-                </div>
-                <div class="date-wrapper">
-                    <i class="fas fa-calendar-alt"></i>
-                    <span id="live-date"></span>
-                </div>
+                <div class="dash-hero-title" style="font-size:1.6rem;">Hey, {{ Auth::user()->name }} 👋</div>
+                <div class="dash-hero-sub">Here&rsquo;s your activity overview</div>
             </div>
             <div class="d-flex gap-2 flex-wrap align-items-end">
-                <a href="{{ route('staff.students.index') }}" class="btn btn-sm btn-glass"><i class="fas fa-users"></i>
-                    Students</a>
-                <a href="{{ route('staff.applications.index') }}" class="btn btn-sm btn-glass-accent"><i
-                        class="fas fa-file-alt"></i> Applications</a>
+                <a href="{{ route('staff.students.index') }}" class="btn btn-sm btn-glass"><i class="fas fa-users me-1"></i> Students</a>
+                <a href="{{ route('staff.applications.index') }}" class="btn btn-sm btn-glass-accent"><i class="fas fa-file-alt me-1"></i> Applications</a>
             </div>
         </div>
     </div>
 
-    {{-- THIS MONTH SUMMARY --}}
-    <div class="dash-month-strip">
-        <div class="dash-month-item">
-            <div class="month-icon" style="background:var(--primary-soft);color:var(--primary);">
-                <i class="fas fa-user-graduate"></i>
+    {{-- ═══════ ROW 1: Monthly Task Report + Students by Stage ═══════ --}}
+    <div class="staff-grid staff-grid-2" style="margin-bottom:1.25rem;">
+
+        {{-- Monthly Task Report --}}
+        <div class="chart-card">
+            <div class="sc-head">
+                <h5 class="sc-title"><span class="sc-icon" style="background:#eef2ff;color:#4f46e5;"><i class="fas fa-chart-line"></i></span> Monthly Task Report</h5>
             </div>
-            <div>
-                <div class="month-num" style="color:var(--primary);">{{ number_format($thisMonthStudents) }}</div>
-                <div class="month-lbl">Students This Month</div>
-            </div>
+            <div class="chart-body chart-fill"><canvas id="monthlyChart"></canvas></div>
         </div>
-        <div class="dash-month-item">
-            <div class="month-icon" style="background:var(--warning-soft);color:var(--warning);">
-                <i class="fas fa-file-alt"></i>
+
+        {{-- Students by Stage --}}
+        <div class="chart-card">
+            <div class="sc-head">
+                <h5 class="sc-title"><span class="sc-icon" style="background:#fef3c7;color:#d97706;"><i class="fas fa-layer-group"></i></span> Students by Stage</h5>
             </div>
-            <div>
-                <div class="month-num" style="color:var(--warning);">{{ number_format($thisMonthApps) }}</div>
-                <div class="month-lbl">Applications This Month</div>
-            </div>
-        </div>
-        <div class="dash-month-item">
-            <div class="month-icon" style="background:var(--success-soft);color:var(--success);">
-                <i class="fas fa-chart-line"></i>
-            </div>
-            <div>
-                <div class="month-num" style="color:var(--success);">{{ $appGrowth >= 0 ? '+' : '' }}{{ $appGrowth }}%
-                </div>
-                <div class="month-lbl">Growth vs Last Month</div>
-            </div>
+            <div class="chart-body chart-fill"><canvas id="stageChart"></canvas></div>
         </div>
     </div>
 
-    {{-- CHARTS ROW 1 --}}
-    <div class="stat-row">
-        <div class="card" style="padding:0;">
-            <div class="sc-head">
-                <h5 class="sc-title"><span class="sc-icon"><i class="fas fa-chart-area"></i></span> 7-Day Activity Trend
-                </h5>
-                <span class="growth-badge {{ $appGrowth >= 0 ? 'growth-up' : 'growth-down' }}">
-                    <i class="fas fa-arrow-{{ $appGrowth >= 0 ? 'up' : 'down' }}"></i> {{ abs($appGrowth) }}% vs last month
-                </span>
-            </div>
-            <div class="sc-body">
-                <canvas id="weeklyChart" height="130"></canvas>
-            </div>
-        </div>
-        <div class="card uni-stat" style="padding:0;">
-            <div class="sc-head">
-                <h5 class="sc-title"><span class="sc-icon"><i class="fas fa-university"></i></span> Applications by
-                    University</h5>
-            </div>
-            <div class="sc-body">
-                <canvas id="universityChart" height="300"></canvas>
-            </div>
-        </div>
-    </div>
+    {{-- ═══════ ROW 2: Students by App Status + Weekly Task Report ═══════ --}}
+    <div class="staff-grid staff-grid-2" style="margin-bottom:1.25rem;">
 
-    {{-- CHARTS ROW 2 --}}
-    <div class="stat-row reverse">
-        <div class="card" style="padding:0;">
+        {{-- Students by Application Status --}}
+        <div class="chart-card">
             <div class="sc-head">
-                <h5 class="sc-title"><span class="sc-icon"><i class="fas fa-chart-pie"></i></span> Applications By Status
-                </h5>
+                <h5 class="sc-title"><span class="sc-icon" style="background:#d1fae5;color:#059669;"><i class="fas fa-chart-pie"></i></span> Students by Application Status</h5>
             </div>
-            <div class="sc-body">
-                <canvas id="statusChart"></canvas>
-                <div class="status-pills">
-                    @foreach ($statusChartData['statuses'] ?? [] as $st)
-                        <div class="s-pill" style="background:{{ $st->bg_color }}cc;color:{{ $st->text_color }};">
-                            {{ $st->name }}</div>
+            <div class="chart-body">
+                @if(count($statuses))
+                <div style="display:flex;flex-wrap:wrap;gap:.75rem;">
+                    @foreach($statuses as $st)
+                    <a href="{{ route('staff.students.index') }}?application_status_id={{ $st->id }}"
+                       style="display:flex;flex-direction:column;align-items:center;gap:.2rem;min-width:64px;padding:.4rem .6rem;border-radius:10px;text-decoration:none;transition:all .15s;background:{{ $st->bg_color }}15;"
+                       onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
+                        <span style="font-size:1.2rem;font-weight:800;color:{{ $st->text_color }};">{{ $st->count }}</span>
+                        <span style="font-size:.65rem;font-weight:600;color:{{ $st->text_color }};text-align:center;">{{ $st->name }}</span>
+                    </a>
                     @endforeach
                 </div>
+                @else
+                <div style="text-align:center;padding:.75rem 0;color:#9ca3af;font-size:.8rem;">No applications yet</div>
+                @endif
             </div>
         </div>
-        <div class="card" style="padding:0;">
+
+        {{-- Weekly Task Report (detailed) --}}
+        <div class="chart-card">
             <div class="sc-head">
-                <h5 class="sc-title"><span class="sc-icon"><i class="fas fa-chart-line"></i></span> Monthly Applications
-                </h5>
-                <span style="font-size:.75rem;color:var(--text-muted);">{{ date('Y') }}</span>
+                <h5 class="sc-title"><span class="sc-icon" style="background:#fce7f3;color:#db2777;"><i class="fas fa-calendar-week"></i></span> Weekly Task Report</h5>
+                <div class="d-flex gap-2">
+                    <span class="badge bg-warning text-dark" style="font-size:.6rem;">{{ array_sum($weeklyTotals) }} total</span>
+                </div>
             </div>
-            <div class="sc-body"><canvas id="applicationsChart" height="150"></canvas></div>
+            <div class="chart-body chart-fill-sm"><canvas id="weeklyChart"></canvas></div>
         </div>
     </div>
 
-    {{-- TOP LISTS --}}
-    <div class="top-row">
-        <div class="card" style="padding:0;">
-            <div class="sc-head">
-                <h5 class="sc-title"><span class="sc-icon"><i class="fas fa-trophy"></i></span> Top Agents</h5>
-            </div>
-            <div class="m-3">
-                @php $maxApps = $topAgents->first()?->applications_count ?? 1; @endphp
-                @forelse($topAgents as $i => $agent)
-                    <div class="rank-row">
-                        <div class="rank-no {{ ['rk-gold', 'rk-silver', 'rk-bronze'][$i] ?? 'rk-other' }}">
-                            {{ $i + 1 }}</div>
-                        @if ($agent->business_logo && Storage::disk('public')->exists($agent->business_logo))
-                            <img src="{{ Storage::url($agent->business_logo) }}" class="agent-ava" alt="">
-                        @else
-                            <div class="agent-ava-ph">{{ strtoupper(substr($agent->name, 0, 1)) }}</div>
-                        @endif
-                        <div style="flex:1;min-width:0;">
-                            <div class="rank-name">{{ $agent->name }}</div>
-                            <div class="mini-bar">
-                                <div class="mini-bar-fill"
-                                    style="width:{{ $maxApps > 0 ? round(($agent->applications_count / $maxApps) * 100) : 0 }}%;">
-                                </div>
-                            </div>
-                        </div>
-                        <span class="rank-count">{{ $agent->applications_count }}</span>
-                    </div>
-                @empty
-                    <p class="text-muted text-center py-3" style="font-size:.83rem;">No agents yet</p>
-                @endforelse
-            </div>
-        </div>
-        <div class="card" style="padding:0;">
-            <div class="sc-head">
-                <h5 class="sc-title"><span class="sc-icon"><i class="fas fa-book-open"></i></span> Top Courses</h5>
-                <a href="{{ route('staff.courses') }}" class="view-all">View all <i class="fas fa-arrow-right"></i></a>
-            </div>
-            <div class="m-3">
-                @forelse($topCourses as $i => $course)
-                    <div class="rank-row">
-                        <div class="rank-no {{ ['rk-gold', 'rk-silver', 'rk-bronze'][$i] ?? 'rk-other' }}">
-                            {{ $i + 1 }}</div>
-                        <div class="rank-name">{{ $course->title }}</div>
-                        <span class="rank-count">{{ $course->applications_count }}</span>
-                    </div>
-                @empty
-                    <p class="text-muted text-center py-3" style="font-size:.83rem;">No data yet</p>
-                @endforelse
-            </div>
-        </div>
-        <div class="card" style="padding:0;">
-            <div class="sc-head">
-                <h5 class="sc-title"><span class="sc-icon"><i class="fas fa-building"></i></span> Top Universities</h5>
-                <a href="{{ route('staff.universities') }}" class="view-all">View all <i
-                        class="fas fa-arrow-right"></i></a>
-            </div>
-            <div class="m-3">
-                @forelse($topUniversities as $i => $uni)
-                    <div class="rank-row">
-                        <div class="rank-no {{ ['rk-gold', 'rk-silver', 'rk-bronze'][$i] ?? 'rk-other' }}">
-                            {{ $i + 1 }}</div>
-                        <div class="rank-name">{{ $uni->name }}</div>
-                        <span class="rank-count">{{ $uni->applications_count }}</span>
-                    </div>
-                @empty
-                    <p class="text-muted text-center py-3" style="font-size:.83rem;">No data yet</p>
-                @endforelse
-            </div>
-        </div>
-    </div>
-
-    {{-- RECENT APPLICATIONS --}}
-    <div class="card" style="padding:0;margin-bottom:1.25rem;">
+    {{-- ═══════ ROW 3: My Activity (full width) ═══════ --}}
+    <div class="chart-card" style="margin-bottom:1.25rem;">
         <div class="sc-head">
-            <h5 class="sc-title"><span class="sc-icon"><i class="fas fa-file-alt"></i></span> Recent Applications</h5>
-            <a href="{{ route('staff.applications.index') }}" class="view-all">View all <i
-                    class="fas fa-arrow-right"></i></a>
+            <h5 class="sc-title"><span class="sc-icon" style="background:#e0e7ff;color:#6366f1;"><i class="fas fa-history"></i></span> My Activity</h5>
+            <a href="{{ route('staff.activities') }}" class="view-all-link">
+                View All Activity <i class="fas fa-arrow-right"></i>
+            </a>
         </div>
-        <div style="overflow-x:auto;">
-            <table class="apps-table">
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>Applicant</th>
-                        <th>Agent</th>
-                        <th>Date</th>
-                        <th>University & Course</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($latestApplications as $app)
-                        <tr>
-                            <td style="font-weight:700;color:var(--text-muted);">#{{ $app->id }}</td>
-                            <td><a href="{{ $app->student ? route('staff.students.show', $app->student->id) : '#' }}"
-                                    class="app-name">{{ $app->student?->first_name ?? '' }}
-                                    {{ $app->student?->last_name ?? 'N/A' }}</a></td>
-                            <td style="font-size:.78rem;"><a
-                                    href="{{ route('staff.users.show', $app->agent->slug ?? $app->agent->id) }}"
-                                    class="text-secondary"
-                                    style="font-weight:500;text-decoration:none;">{{ $app->agent->business_name ?? ($app->agent->name ?? 'N/A') }}</a>
-                            </td>
-                            <td style="font-size:.78rem;color:var(--text-muted);white-space:nowrap;">
-                                {{ $app->created_at->timezone('Asia/Kathmandu')->format('d M Y') }}</td>
-                            <td>
-                                <div style="font-weight:600;font-size:.8rem;">{{ $app->university->name ?? 'N/A' }}</div>
-                                <div style="font-size:.72rem;color:var(--text-muted);">{{ $app->course->title ?? 'N/A' }}
-                                </div>
-                            </td>
-                            <td><a href="{{ route('staff.applications.show', $app->id) }}"
-                                    style="text-decoration:none;"><span class="status-badge"
-                                        style="background:{{ $app->status?->bg_color ?? '#6c757d' }};color:{{ $app->status?->text_color ?? '#fff' }};font-size:.7rem;">{{ $app->status?->name ?? 'N/A' }}</span></a>
-                            </td>
-                            <td>
-                                <div class="dropdown">
-                                    <button class="btn btn-sm btn-icon" type="button" data-bs-toggle="dropdown"><i
-                                            class="fas fa-ellipsis-h"></i></button>
-                                    <ul class="dropdown-menu dropdown-menu-end">
-                                        <li><a class="dropdown-item"
-                                                href="{{ route('staff.applications.show', $app->id) }}"><i
-                                                    class="fas fa-eye text-info me-2"></i> View</a></li>
-                                        <li><a class="dropdown-item"
-                                                href="{{ route('staff.applications.edit', $app->id) }}"><i
-                                                    class="fas fa-edit text-warning me-2"></i> Edit</a></li>
-                                        <li>
-                                            <hr class="dropdown-divider">
-                                        </li>
-                                        <li><a class="dropdown-item"
-                                                href="{{ $app->student ? route('staff.students.show', $app->student->id) : '#' }}"><i
-                                                    class="fas fa-user-graduate me-2"></i> Student Profile</a></li>
-                                        <li><a class="dropdown-item" href="mailto:{{ $app->student?->email ?? '' }}"><i
-                                                    class="fas fa-envelope me-2"></i> Email Student</a></li>
-                                        <li>
-                                            <hr class="dropdown-divider">
-                                        </li>
-                                        <li><button class="dropdown-item text-danger btn-delete"
-                                                data-url="{{ route('staff.applications.destroy', $app->id) }}"
-                                                data-name="Application #{{ $app->id }}"><i
-                                                    class="fas fa-trash me-2"></i> Delete</button></li>
-                                    </ul>
-                                </div>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="7" class="text-center text-muted py-4">No recent applications</td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    {{-- ACTIVITIES --}}
-    <div class="act-grid">
-        @php
-            $actSections = [
-                [
-                    'title' => 'Student Activities',
-                    'icon' => 'fas fa-graduation-cap',
-                    'dot' => 'dot-stu',
-                    'items' => $studentActivities,
-                ],
-                [
-                    'title' => 'Application Activities',
-                    'icon' => 'fas fa-file-alt',
-                    'dot' => 'dot-app',
-                    'items' => $applicationActivities,
-                ],
-                [
-                    'title' => 'Document Activities',
-                    'icon' => 'fas fa-folder-open',
-                    'dot' => 'dot-doc',
-                    'items' => $documentActivities,
-                ],
-            ];
-        @endphp
-        @foreach ($actSections as $sec)
-            <div class="card">
-                <div class="sc-head">
-                    <h5 class="sc-title"><span class="sc-icon"><i class="{{ $sec['icon'] }}"></i></span>
-                        {{ $sec['title'] }}</h5>
-                </div>
-                <div class="p2">
-                    <ul class="act-feed">
-                        @forelse($sec['items'] as $act)
-                            <a href="{{ $act->link ?? '#' }}" class="act-item">
-                                <div class="act-dot {{ $sec['dot'] }}"></div>
-                                <div>
-                                    <div class="act-desc">{!! $act->description !!}</div>
-
-                                </div>
+        <div class="chart-body" style="padding-top:.25rem;">
+            @forelse($recentActivities as $act)
+                <div class="activity-item">
+                    @php
+                        $iconMap = [
+                            'task_completed' => ['icon' => 'fa-check-circle', 'bg' => '#d1fae5', 'fg' => '#059669'],
+                            'task_created' => ['icon' => 'fa-plus-circle', 'bg' => '#e0e7ff', 'fg' => '#4f46e5'],
+                            'note_added' => ['icon' => 'fa-sticky-note', 'bg' => '#fef3c7', 'fg' => '#d97706'],
+                            'revenue_added' => ['icon' => 'fa-dollar-sign', 'bg' => '#d1fae5', 'fg' => '#059669'],
+                            'stage_changed' => ['icon' => 'fa-random', 'bg' => '#fce7f3', 'fg' => '#db2777'],
+                            'document_uploaded' => ['icon' => 'fa-file-upload', 'bg' => '#dbeafe', 'fg' => '#2563eb'],
+                        ];
+                        $ico = $iconMap[$act->type] ?? ['icon' => 'fa-circle', 'bg' => '#f3f4f6', 'fg' => '#6b7280'];
+                    @endphp
+                    <div class="activity-icon" style="background:{{ $ico['bg'] }};color:{{ $ico['fg'] }};">
+                        <i class="fas {{ $ico['icon'] }}"></i>
+                    </div>
+                    <div class="activity-text">
+                        @if($act->link)
+                            <a href="{{ $act->link }}" style="color:inherit;text-decoration:none;">
+                                <strong>{{ $act->description }}</strong>
                             </a>
-                        @empty
-                            <li style="list-style:none;font-size:.82rem;" class="text-muted text-center py-3">No
-                                {{ strtolower($sec['title']) }} yet</li>
-                        @endforelse
-                    </ul>
+                        @else
+                            <strong>{{ $act->description }}</strong>
+                        @endif
+                    </div>
+                    <div class="activity-time">{{ $act->created_at->diffForHumans() }}</div>
                 </div>
-            </div>
-        @endforeach
+            @empty
+                <div style="text-align:center;padding:1.5rem 0;color:#6b7280;font-size:.82rem;">
+                    <i class="fas fa-inbox" style="font-size:1.5rem;color:#d1d5db;display:block;margin-bottom:.5rem;"></i>
+                    No activity yet
+                </div>
+            @endforelse
+        </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            var gridColor = 'rgba(0,0,0,0.04)';
-            Chart.defaults.font.size = 11;
-            Chart.defaults.color = '#6b7280';
+</div>
 
-            new Chart(document.getElementById('weeklyChart'), {
-                data: {
-                    labels: @json($weeklyLabels),
-                    datasets: [{
-                        type: 'bar',
-                        label: 'Applications',
-                        data: @json($weeklyAppsData),
-                        backgroundColor: 'rgba(130,11,92,.22)',
-                        borderColor: '#820b5c',
-                        borderWidth: 2,
-                        borderRadius: 5
-                    }, {
-                        type: 'line',
-                        label: 'Students',
-                        data: @json($weeklyStudentsData),
-                        borderColor: '#1a0262',
-                        backgroundColor: 'transparent',
-                        borderWidth: 2,
-                        tension: 0.35,
-                        pointRadius: 3
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    plugins: {
-                        legend: {
-                            display: true,
-                            position: 'bottom',
-                            labels: {
-                                font: {
-                                    size: 11
-                                },
-                                padding: 10
-                            }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: {
-                                color: gridColor
-                            }
-                        },
-                        x: {
-                            grid: {
-                                display: false
-                            }
-                        }
-                    }
-                }
-            });
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var grid = 'rgba(0,0,0,0.04)';
+    Chart.defaults.font.size = 10;
+    Chart.defaults.color = '#6b7280';
 
-            new Chart(document.getElementById('applicationsChart'), {
-                type: 'line',
-                data: @json($applicationsChartData),
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: {
-                                color: gridColor
-                            }
-                        },
-                        x: {
-                            grid: {
-                                display: false
-                            }
-                        }
-                    }
-                }
-            });
-
-            new Chart(document.getElementById('statusChart'), {
-                type: 'doughnut',
-                data: @json($statusChartData),
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    cutout: '0%',
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
-                    }
-                }
-            });
-
-            var uniChart = new Chart(document.getElementById('universityChart'), {
-                type: 'bar',
-                data: @json($universityChartData),
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    indexAxis: 'y',
-                    onClick: function(e, els) {
-                        if (els.length) {
-                            var l = uniChart.data.labels[els[0].index];
-                            window.location.href = '/staff/applications?university=' +
-                                encodeURIComponent(l);
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            display: false
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(ctx) {
-                                    return ctx.parsed.x + ' Applications';
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        x: {
-                            beginAtZero: true,
-                            grid: {
-                                color: gridColor
-                            }
-                        },
-                        y: {
-                            grid: {
-                                display: false
-                            },
-                            ticks: {
-                                font: {
-                                    size: 10
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-
-            function updateClock() {
-                var now = new Date();
-                var h = now.getHours(),
-                    m = now.getMinutes(),
-                    s = now.getSeconds();
-                var ampm = h >= 12 ? 'PM' : 'AM';
-                h = h % 12 || 12;
-                h = String(h).padStart(2, '0');
-                m = String(m).padStart(2, '0');
-                s = String(s).padStart(2, '0');
-                document.getElementById('main-time').innerText = h + ':' + m;
-                document.getElementById('seconds').innerText = s;
-                document.getElementById('live-date').innerText = now.toLocaleDateString('en-US', {
-                    weekday: 'short',
-                    day: '2-digit',
-                    month: 'short',
-                    year: 'numeric'
-                });
+    // Monthly Task Report
+    new Chart(document.getElementById('monthlyChart'), {
+        type: 'bar',
+        data: {
+            labels: @json($monthlyLabels),
+            datasets: [
+                { label:'Pending', data:@json($monthlyPending), backgroundColor:'rgba(251,191,36,.65)', borderColor:'#f59e0b', borderWidth:1, borderRadius:3 },
+                { label:'Completed', data:@json($monthlyCompleted), backgroundColor:'rgba(16,185,129,.65)', borderColor:'#10b981', borderWidth:1, borderRadius:3 },
+                { label:'Cancelled', data:@json($monthlyCancelled), backgroundColor:'rgba(239,68,68,.5)', borderColor:'#ef4444', borderWidth:1, borderRadius:3 },
+            ]
+        },
+        options: {
+            responsive:true, maintainAspectRatio:false,
+            plugins: { legend:{ display:true, position:'bottom', labels:{ font:{size:9}, padding:6, boxWidth:10 } } },
+            scales: {
+                x: { stacked:true, grid:{display:false}, ticks:{maxRotation:45,font:{size:9}} },
+                y: { stacked:true, beginAtZero:true, grid:{color:grid} }
             }
-            setInterval(updateClock, 1000);
-            updateClock();
-        });
-    </script>
+        }
+    });
+
+    // Students by Stage
+    new Chart(document.getElementById('stageChart'), {
+        type: 'bar',
+        data: {
+            labels: @json($stageLabels),
+            datasets: [{
+                label:'Students',
+                data:@json($stageCounts),
+                backgroundColor: @json($stageColors),
+                borderColor: @json($stageColors),
+                borderWidth:1,
+                borderRadius:4,
+            }]
+        },
+        options: {
+            responsive:true, maintainAspectRatio:false,
+            indexAxis:'y',
+            plugins: { legend:{ display:false } },
+            scales: {
+                x: { beginAtZero:true, grid:{color:grid}, ticks:{stepSize:1} },
+                y: { grid:{display:false} }
+            }
+        }
+    });
+
+    // Weekly Task Report
+    new Chart(document.getElementById('weeklyChart'), {
+        type: 'bar',
+        data: {
+            labels: @json($weeklyLabels),
+            datasets: [
+                { label:'Pending', data:@json($weeklyPending), backgroundColor:'rgba(251,191,36,.7)', borderColor:'#f59e0b', borderWidth:1, borderRadius:3 },
+                { label:'Completed', data:@json($weeklyCompleted), backgroundColor:'rgba(16,185,129,.7)', borderColor:'#10b981', borderWidth:1, borderRadius:3 },
+                { label:'Cancelled', data:@json($weeklyCancelled), backgroundColor:'rgba(239,68,68,.55)', borderColor:'#ef4444', borderWidth:1, borderRadius:3 },
+            ]
+        },
+        options: {
+            responsive:true, maintainAspectRatio:false,
+            plugins: { legend:{ display:true, position:'bottom', labels:{ font:{size:9}, padding:6, boxWidth:10 } } },
+            scales: {
+                x: { stacked:true, grid:{display:false} },
+                y: { stacked:true, beginAtZero:true, grid:{color:grid} }
+            }
+        }
+    });
+});
+</script>
 @endsection

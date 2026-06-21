@@ -1,4 +1,4 @@
-@php $role = auth()->user()->role; @endphp
+@php $role = auth()->user()->is_admin_staff ? 'admin' : auth()->user()->role; @endphp
 <form method="GET" action="{{ route($role . '.applications.index') }}" class="mb-4">
     <div class="app-filter-card shadow-sm">
         <div class="card-body">

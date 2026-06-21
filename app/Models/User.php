@@ -68,13 +68,17 @@ class User extends Authenticatable
     {
         static::creating(function ($user) {
             if (!$user->slug) {
-                $user->slug = self::makeSlug($user->business_name ?: $user->name);
+                $user->slug = self::makeSlug(
+                    $user->role === 'staff' ? $user->name : ($user->business_name ?: $user->name)
+                );
             }
         });
 
         static::updating(function ($user) {
             if (!$user->slug) {
-                $user->slug = self::makeSlug($user->business_name ?: $user->name);
+                $user->slug = self::makeSlug(
+                    $user->role === 'staff' ? $user->name : ($user->business_name ?: $user->name)
+                );
             }
         });
     }

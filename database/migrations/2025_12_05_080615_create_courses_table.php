@@ -6,9 +6,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('courses', function (Blueprint $table) {
@@ -17,7 +14,7 @@ return new class extends Migration
             $table->string('course_code');
             $table->string('title');
             $table->text('course_link')->nullable();
-            $table->enum('course_type', ['UG', 'PG', 'DIPLOMA']);
+            $table->string('course_type', 50)->nullable();
             $table->text('academic_requirement')->nullable();
             $table->text('description')->nullable();
             $table->string('duration')->nullable();
@@ -27,14 +24,14 @@ return new class extends Migration
             $table->text('moi_acceptance')->nullable();
             $table->string('application_fee')->nullable();
             $table->text('scholarships')->nullable();
+            $table->boolean('is_active')->default(true);
+            $table->boolean('is_featured')->default(false);
             $table->timestamp('created_at')->nullable()->useCurrent();
-            $table->timestamp('updated_at')->useCurrentOnUpdate()->nullable()->useCurrent();
+            $table->timestamp('updated_at')->nullable()->useCurrentOnUpdate()->useCurrent();
+            $table->softDeletes();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('courses');

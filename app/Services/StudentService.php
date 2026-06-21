@@ -27,6 +27,7 @@ class StudentService
 {
     public function __construct(
         private readonly FileUploadService $fileUploadService,
+        private readonly FolderPathResolver $folderPathResolver,
     ) {}
 
     // -----------------------------------------------------------------------
@@ -344,7 +345,8 @@ class StudentService
     // -----------------------------------------------------------------------
 
     /**
-     * Ensure the student's cloud storage folder exists under agents/{slug}/{studentName}/.
+     * Ensure the student's cloud storage folder exists.
+     * Folder resolved by FolderPathResolver based on the student's agent.
      * Creates the directory if missing.
      */
     public function ensureStudentFolderExists(Student $student): void
@@ -355,11 +357,8 @@ class StudentService
             return;
         }
 
-        $folderPath = sprintf(
-            'agents/%s/%s',
-            $agent->slug,
-            $this->sanitizeName($student->first_name . ' ' . $student->last_name)
-        );
+        $studentName = $this->folderPathResolver->sanitizeName($student->first_name . ' ' . $student->last_name);
+        $folderPath = $this->folderPathResolver->resolveStudentFolder($agent, $studentName);
 
         if (!Storage::disk('public')->exists($folderPath)) {
             Storage::disk('public')->makeDirectory($folderPath);

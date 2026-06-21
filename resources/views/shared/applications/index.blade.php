@@ -4,7 +4,7 @@
     $__isStaff = $__user->is_staff && !$__user->is_admin_staff;
     $__layout = $__isAgent ? 'layouts.agent' : ($__isStaff ? 'layouts.staff' : 'layouts.admin');
     $__section = $__isAgent ? 'agent-content' : ($__isStaff ? 'staff-content' : 'admin-content');
-    $role = $__user->role;
+    $role = $__user->is_admin_staff ? 'admin' : $__user->role;
 @endphp
 
 @extends($__layout)

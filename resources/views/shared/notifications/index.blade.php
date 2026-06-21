@@ -88,9 +88,13 @@
                 <button class="btn btn-sm btn-outline-primary" onclick="markAllRead()">
                     <i class="fas fa-check-double me-1"></i>Mark All Read
                 </button>
-                <button class="btn btn-sm btn-outline-danger" onclick="clearAll()">
-                    <i class="fas fa-trash-alt me-1"></i>Clear All
-                </button>
+                <x-confirm-delete
+                    url="{{ route($role . '.notifications.deleteAll') }}"
+                    label="Clear All"
+                    title="Clear all notifications?"
+                    message="This will delete everything."
+                    class="btn btn-sm btn-outline-danger"
+                />
             </div>
         </div>
 
@@ -170,7 +174,7 @@
                             str_contains($data['type'] ?? '', 'payment') => ['fa-credit-card', 'var(--danger)', 'var(--danger-soft)'],
                             default => ['fa-bell', 'var(--primary)', 'var(--primary-soft)'],
                         },
-                        'title' => $data['type'] ? ucfirst(str_replace('_', ' ', $data['type'])) : 'System Update',
+                        'title' => isset($data['type']) && $data['type'] ? ucfirst(str_replace('_', ' ', $data['type'])) : 'System Update',
                         'text' => $data['message'] ?? ($data['title'] ?? 'New notification'),
                         'time' => $n->created_at?->diffForHumans() ?? '',
                         'url' => $data['link'] ?? (!empty($data['application']['id']) ? route($role . '.applications.show', $data['application']['id']) : (!empty($data['student']['id']) ? route($role . '.students.show', $data['student']['id']) : (!empty($data['agent']['id']) && $role === 'admin' ? route('admin.users.show', $data['agent']['id']) : '#'))),
@@ -223,9 +227,13 @@
                         <button class="btn btn-xs btn-ghost" onclick="toggleRead('{{ $item['id'] }}', {{ $item['is_unread'] ? 'true' : 'false' }})">
                             <i class="fas {{ $item['is_unread'] ? 'fa-envelope-open' : 'fa-envelope' }}"></i>
                         </button>
-                        <button class="btn btn-xs btn-ghost text-danger" onclick="deleteNotif('{{ $item['id'] }}')">
-                            <i class="fas fa-trash-alt"></i>
-                        </button>
+                        <x-confirm-delete
+                            url="{{ route($role . '.notifications.delete', $item['id']) }}"
+                            label=""
+                            title="Delete notification?"
+                            message="This cannot be undone."
+                            class="btn btn-xs btn-ghost text-danger"
+                        />
                     </div>
                 </div>
                 <div class="notif-time" title="{{ $item['created_at']?->format('M d, Y h:i A') ?? '' }}">
@@ -279,34 +287,6 @@ async function toggleRead(id, isUnread) {
     document.body.appendChild(form); form.submit();
 }
 
-async function deleteNotif(id) {
-    const result = await Swal.fire({
-        title: 'Delete notification?', text: 'This cannot be undone.',
-        icon: 'warning', showCancelButton: true,
-        confirmButtonColor: '#dc3545', confirmButtonText: 'Delete'
-    });
-    if (result.isConfirmed) {
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = '{{ route($role . ".notifications.delete", "__ID__") }}'.replace('__ID__', id);
-        form.innerHTML = '<input type="hidden" name="_token" value="{{ csrf_token() }}"><input type="hidden" name="_method" value="DELETE">';
-        document.body.appendChild(form); form.submit();
-    }
-}
 
-async function clearAll() {
-    const result = await Swal.fire({
-        title: 'Clear all notifications?', text: 'This will delete everything.',
-        icon: 'warning', showCancelButton: true,
-        confirmButtonColor: '#dc3545', confirmButtonText: 'Clear All'
-    });
-    if (result.isConfirmed) {
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = '{{ route($role . ".notifications.deleteAll") }}';
-        form.innerHTML = '<input type="hidden" name="_token" value="{{ csrf_token() }}"><input type="hidden" name="_method" value="DELETE">';
-        document.body.appendChild(form); form.submit();
-    }
-}
 </script>
 @endsection

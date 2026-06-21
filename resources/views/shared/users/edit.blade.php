@@ -3,10 +3,11 @@
     $__isAdmin = $__user->is_admin;
     $__isAgent = $__user->is_agent;
     $__isStaff = $__user->is_staff && !$__user->is_admin_staff;
-    $__layout = $__isAdmin ? 'layouts.admin' : ($__isAgent ? 'layouts.agent' : 'layouts.staff');
-    $__section = $__isAdmin ? 'admin-content' : ($__isAgent ? 'agent-content' : 'staff-content');
-    $__routePrefix = $__isAdmin ? 'admin' : ($__isAgent ? 'agent' : 'staff');
     $__isOwnProfile = $__user->id === $user->id;
+    $__useCrmForStaff = $__isStaff && $__isOwnProfile;
+    $__layout = $__isAdmin ? 'layouts.admin' : ($__isAgent ? 'layouts.agent' : ($__useCrmForStaff ? 'layouts.crm' : 'layouts.staff'));
+    $__section = $__isAdmin ? 'admin-content' : ($__isAgent ? 'agent-content' : ($__useCrmForStaff ? 'content' : 'staff-content'));
+    $__routePrefix = $__isAdmin ? 'admin' : ($__isAgent ? 'agent' : ($__useCrmForStaff ? 'profile' : 'staff'));
 @endphp
 
 @extends($__layout)
@@ -49,8 +50,8 @@
         @if($__isAdmin)
             {{-- Admin: full form --}}
             @include('shared.users._form')
-        @else
-            {{-- Agent/Staff: limited profile edit --}}
+        @elseif($__isAgent)
+            {{-- Agent: limited profile edit --}}
             <div class="row g-4">
 
                 {{-- Left: Documents --}}
@@ -138,9 +139,10 @@
                                     <small class="text-muted">Contact admin to change</small>
                                 </div>
                                 <div class="col-md-4">
-                                    <label class="form-label fw-semibold small">Contact Person</label>
-                                    <input type="text" class="form-control disabled-field" value="{{ $user->name }}" disabled>
-                                    <small class="text-muted">Contact admin to change</small>
+                                    <label class="form-label fw-semibold small">Name <span class="text-danger">*</span></label>
+                                    <input type="text" name="name" class="form-control @error('name') is-invalid @enderror"
+                                        value="{{ old('name', $user->name) }}" required>
+                                    @error('name')<div class="invalid-feedback">{{ $message }}</div>@enderror
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label fw-semibold small">Email Address <span class="text-danger">*</span></label>
@@ -197,12 +199,88 @@
                                 </div>
                             </div>
                             <div class="mt-4 pt-3 border-top d-flex justify-content-end gap-2">
-                                <a href="{{ route($__routePrefix . '.users.show', $user->slug) }}" class="btn btn-outline-secondary px-4">
+                                <a href="{{ route('crm.dashboard') }}" class="btn btn-outline-secondary px-4">
                                     <i class="fas fa-times me-2"></i>Cancel
                                 </a>
                                 <button type="submit" class="btn px-4 text-white" style="background:linear-gradient(135deg, var(--success) 0%, #059669 100%);border:none;">
                                     <i class="fas fa-save me-2"></i>Save Changes
                                 </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @else
+            {{-- Staff: simplified profile edit (CRM layout) --}}
+            <div class="row g-4">
+                <div class="col-lg-5">
+                    <div class="crm-section">
+                        <div class="crm-section-header"><i class="fas fa-cloud-upload-alt me-2"></i>Profile Photo</div>
+                        <div class="crm-section-body">
+                            <div class="d-flex gap-3 align-items-start">
+                                <img id="logoPreview"
+                                    src="{{ $user->business_logo ? Storage::url($user->business_logo) : 'https://placehold.co/70x70?text=Photo' }}"
+                                    style="width:70px;height:70px;object-fit:cover;border-radius:8px;border:1px solid #dee2e6;flex-shrink:0;">
+                                <div class="flex-grow-1">
+                                    <input type="file" name="business_logo" class="form-control form-control-sm"
+                                        accept="image/*" onchange="previewImage(this, 'logoPreview')">
+                                    <small class="text-muted">Max 10MB</small>
+                                    @error('business_logo')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-7">
+                    <div class="crm-section">
+                        <div class="crm-section-header"><i class="fas fa-user-circle me-2"></i>Basic Information</div>
+                        <div class="crm-section-body">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold small">Name <span class="text-danger">*</span></label>
+                                    <input type="text" name="name" class="form-control form-control-sm @error('name') is-invalid @enderror"
+                                        value="{{ old('name', $user->name) }}" required>
+                                    @error('name')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold small">Email <span class="text-danger">*</span></label>
+                                    <input type="email" name="email" class="form-control form-control-sm @error('email') is-invalid @enderror"
+                                        value="{{ old('email', $user->email) }}" required>
+                                    @error('email')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold small">Contact</label>
+                                    <input type="text" name="contact" class="form-control form-control-sm @error('contact') is-invalid @enderror"
+                                        value="{{ old('contact', $user->contact) }}" placeholder="Contact number">
+                                    @error('contact')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold small">Address</label>
+                                    <input type="text" name="address" class="form-control form-control-sm @error('address') is-invalid @enderror"
+                                        value="{{ old('address', $user->address) }}" placeholder="Your address">
+                                    @error('address')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="crm-section mt-3">
+                        <div class="crm-section-header"><i class="fas fa-lock me-2"></i>Change Password</div>
+                        <div class="crm-section-body">
+                            <small class="text-muted d-block mb-3">Leave blank to keep current password.</small>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold small">New Password</label>
+                                    <input type="password" name="password" id="passwordField" class="form-control form-control-sm" placeholder="New password">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold small">Confirm Password</label>
+                                    <input type="password" name="password_confirmation" id="confirmPasswordField" class="form-control form-control-sm" placeholder="Confirm password">
+                                </div>
+                            </div>
+                            <div class="mt-3 pt-3 border-top d-flex justify-content-end gap-2">
+                                <a href="{{ route('crm.dashboard') }}" class="btn btn-sm btn-outline-purple"><i class="fas fa-times me-1"></i>Cancel</a>
+                                <button type="submit" class="btn btn-sm btn-solid-dark"><i class="fas fa-save me-1"></i>Save Changes</button>
                             </div>
                         </div>
                     </div>
@@ -286,7 +364,7 @@ function toggleParentField() {
 function toggleAgentFeatures() {
     const roleVal = document.getElementById('role')?.value;
     const el = document.getElementById('agentFeaturesSection');
-    if (el) el.style.display = roleVal === 'agent' ? 'block' : 'none';
+    if (el) el.style.display = (roleVal === 'agent' || roleVal === 'admin') ? 'block' : 'none';
 }
 
 function deleteAgreement(url, name) {

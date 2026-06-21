@@ -9,41 +9,25 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('chat_messages', function (Blueprint $table) {
-
             $table->bigIncrements('id');
-
-            // Users
             $table->unsignedBigInteger('sender_id');
             $table->unsignedBigInteger('receiver_id');
-
-            // Message content
             $table->text('message');
-
-            // File support
             $table->string('file')->nullable();
             $table->string('file_type')->nullable();
-
-            // WhatsApp-style status
-            $table->enum('status', ['sent', 'delivered', 'read'])
-                ->default('sent');
-
-            // Tracking timestamps
+            $table->enum('status', ['sent', 'delivered', 'read'])->default('sent');
             $table->timestamp('delivered_at')->nullable();
             $table->timestamp('read_at')->nullable();
-
             $table->timestamps();
+            $table->softDeletes();
 
-            // Indexes
             $table->index(['sender_id', 'receiver_id'], 'idx_sender_receiver');
-
-            // Foreign keys (also create indexes automatically)
-            $table->foreign('sender_id', 'fk_sender')
-                ->references('id')->on('users')
-                ->onDelete('cascade');
-
-            $table->foreign('receiver_id', 'fk_receiver')
-                ->references('id')->on('users')
-                ->onDelete('cascade');
+            $table->index(['receiver_id', 'read_at'], 'idx_receiver_read');
+            $table->index(['sender_id', 'receiver_id', 'created_at'], 'idx_sender_receiver_created');
+            $table->index(['receiver_id', 'sender_id', 'created_at'], 'idx_receiver_sender_created');
+            $table->index(['receiver_id', 'sender_id', 'read_at'], 'idx_receiver_sender_read');
+            $table->foreign('sender_id', 'fk_sender')->references('id')->on('users')->cascadeOnDelete();
+            $table->foreign('receiver_id', 'fk_receiver')->references('id')->on('users')->cascadeOnDelete();
         });
     }
 

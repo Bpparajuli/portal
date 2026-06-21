@@ -3,8 +3,8 @@
     <i class="fas fa-chart-pie"></i> <span>Dashboard</span>
 </a>
 
-<a href="{{ route('staff.users.show', Auth::user()->slug) }}" class="nav-link {{ request()->routeIs('staff.users.*') ? 'active' : '' }}">
-    <i class="fas fa-user"></i> <span>My Profile</span>
+<a href="{{ route('profile.edit', Auth::user()->slug) }}" class="nav-link {{ request()->routeIs('profile.edit') ? 'active' : '' }}">
+    <i class="fas fa-user-edit"></i> <span>Edit Profile</span>
 </a>
 
 <div class="nav-section">Management</div>

@@ -44,7 +44,7 @@
                     </div>
                 </div>
                 <div class="row">
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <div class="form-group">
                             <label>Time Slot</label>
                             <select name="time_slot" class="form-select">
@@ -55,7 +55,21 @@
                             </select>
                         </div>
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label>Time (optional)</label>
+                            <select name="time" class="form-select">
+                                <option value="">Auto (5-min slots 9-6)</option>
+                                @for($h = 9; $h <= 17; $h++)
+                                    @for($m = 0; $m < 60; $m += 5)
+                                        @php $val = sprintf('%02d:%02d', $h, $m); $display = date('g:i A', strtotime($val)); @endphp
+                                        <option value="{{ $val }}">{{ $display }}</option>
+                                    @endfor
+                                @endfor
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
                         <div class="form-group">
                             <label>Priority</label>
                             <select name="priority" class="form-select">
@@ -164,9 +178,12 @@
                                 <label>Time Slot</label>
                                 <select name="next_time_slot" id="next_time_slot" class="form-select">
                                     <option value="">Any time</option>
-                                    <option value="morning" selected>🌅 Morning (9:00 AM - 12:00 PM)</option>
-                                    <option value="afternoon">☀️ Afternoon (12:00 PM - 3:00 PM)</option>
-                                    <option value="evening">🌙 Evening (3:00 PM - 6:00 PM)</option>
+                                    @for($h = 9; $h <= 17; $h++)
+                                        @for($m = 0; $m < 60; $m += 5)
+                                            @php $val = sprintf('%02d:%02d', $h, $m); $display = date('g:i A', strtotime($val)); @endphp
+                                            <option value="{{ $val }}" {{ $h === 9 && $m === 0 ? 'selected' : '' }}>{{ $display }}</option>
+                                        @endfor
+                                    @endfor
                                 </select>
                             </div>
                         </div>
@@ -238,14 +255,32 @@
                     <input type="date" name="due_date" id="reschedule_due_date" class="form-control">
                 </div>
 
-                <div class="form-group">
-                    <label>Time Slot</label>
-                    <select name="time_slot" id="reschedule_time_slot" class="form-select">
-                        <option value="">Any time</option>
-                        <option value="morning">🌅 Morning (9:00 AM - 12:00 PM)</option>
-                        <option value="afternoon">☀️ Afternoon (12:00 PM - 3:00 PM)</option>
-                        <option value="evening">🌙 Evening (3:00 PM - 6:00 PM)</option>
-                    </select>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>Time Slot</label>
+                            <select name="time_slot" id="reschedule_time_slot" class="form-select">
+                                <option value="">Any time</option>
+                                <option value="morning">🌅 Morning (9:00 AM - 12:00 PM)</option>
+                                <option value="afternoon">☀️ Afternoon (12:00 PM - 3:00 PM)</option>
+                                <option value="evening">🌙 Evening (3:00 PM - 6:00 PM)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>Time (optional)</label>
+                            <select name="time" id="reschedule_time" class="form-select">
+                                <option value="">Auto (5-min slots 9-6)</option>
+                                @for($h = 9; $h <= 17; $h++)
+                                    @for($m = 0; $m < 60; $m += 5)
+                                        @php $val = sprintf('%02d:%02d', $h, $m); $display = date('g:i A', strtotime($val)); @endphp
+                                        <option value="{{ $val }}">{{ $display }}</option>
+                                    @endfor
+                                @endfor
+                            </select>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="form-group">
@@ -347,31 +382,45 @@
                         </div>
                     </div>
                 </div>
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label>Time Slot</label>
-                            <select name="time_slot" id="edit_time_slot" class="form-select">
-                                <option value="">Any time</option>
-                                <option value="morning">🌅 Morning (9:00 AM - 12:00 PM)</option>
-                                <option value="afternoon">☀️ Afternoon (12:00 PM - 3:00 PM)</option>
-                                <option value="evening">🌙 Evening (3:00 PM - 6:00 PM)</option>
-                            </select>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>Time Slot</label>
+                                <select name="time_slot" id="edit_time_slot" class="form-select">
+                                    <option value="">Any time</option>
+                                    <option value="morning">🌅 Morning (9:00 AM - 12:00 PM)</option>
+                                    <option value="afternoon">☀️ Afternoon (12:00 PM - 3:00 PM)</option>
+                                    <option value="evening">🌙 Evening (3:00 PM - 6:00 PM)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>Time (optional)</label>
+                                <select name="time" id="edit_time" class="form-select">
+                                    <option value="">Auto (5-min slots 9-6)</option>
+                                    @for($h = 9; $h <= 17; $h++)
+                                        @for($m = 0; $m < 60; $m += 5)
+                                            @php $val = sprintf('%02d:%02d', $h, $m); $display = date('g:i A', strtotime($val)); @endphp
+                                            <option value="{{ $val }}">{{ $display }}</option>
+                                        @endfor
+                                    @endfor
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>Priority</label>
+                                <select name="priority" id="edit_priority" class="form-select">
+                                    <option value="low">🟢 Low</option>
+                                    <option value="medium">🟡 Medium</option>
+                                    <option value="high">🔴 High</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label>Priority</label>
-                            <select name="priority" id="edit_priority" class="form-select">
-                                <option value="low">🟢 Low</option>
-                                <option value="medium">🟡 Medium</option>
-                                <option value="high">🔴 High</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>Assign To</label>
+                    <div class="form-group">
+                        <label>Assign To</label>
                     <select name="assigned_to" id="edit_assigned_to" class="form-select">
                         <option value="">Unassigned</option>
                         @foreach ($assignableUsers as $u)

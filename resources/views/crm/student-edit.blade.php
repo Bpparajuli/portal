@@ -286,7 +286,7 @@
                 <p class="text-muted">{{ $student->full_name }} (ID: {{ $student->id }})</p>
             </div>
             <div>
-                <a href="{{ route('crm.student.show', $student) }}" class="btn btn-outline-secondary">
+                <a href="{{ route('crm.students.show', $student) }}" class="btn btn-outline-secondary">
                     ← Back to Student Profile
                 </a>
             </div>
@@ -673,7 +673,7 @@
 
             {{-- Form Actions --}}
             <div class="form-actions">
-                <a href="{{ route('crm.student.show', $student) }}" class="btn btn-outline-secondary">Cancel</a>
+                <a href="{{ route('crm.students.show', $student) }}" class="btn btn-outline-secondary">Cancel</a>
                 <button type="submit" class="btn btn-primary">Save Changes</button>
             </div>
         </form>

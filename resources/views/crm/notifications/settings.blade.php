@@ -233,30 +233,11 @@
                         <div class="setting-label">
                             <div>
                                 <div class="setting-title">
-                                    <i class="fas fa-calendar-alt me-2"></i>
-                                    Upcoming Tasks
-                                </div>
-                                <div class="setting-description">
-                                    Get notified about tasks due tomorrow
-                                </div>
-                            </div>
-                            <label class="switch">
-                                <input type="checkbox" name="task_upcoming" value="1"
-                                    {{ $preferences['task_upcoming'] ?? true ? 'checked' : '' }}>
-                                <span class="slider"></span>
-                            </label>
-                        </div>
-                    </div>
-
-                    <div class="setting-group">
-                        <div class="setting-label">
-                            <div>
-                                <div class="setting-title">
                                     <i class="fas fa-exclamation-triangle me-2"></i>
                                     Overdue Tasks
                                 </div>
                                 <div class="setting-description">
-                                    Get reminded about overdue tasks (once per day)
+                                    Get notified once when a task becomes overdue
                                 </div>
                             </div>
                             <label class="switch">

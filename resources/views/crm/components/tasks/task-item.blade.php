@@ -53,15 +53,15 @@
                     @endif
 
                     @if ($task->creator && $task->creator->id === $task->assignee->id)
-                        {{ $task->creator->name }}
+                        {{ \Illuminate\Support\Str::words($task->creator->name, 2, '') }}
                         <span class="badge bg-info text-dark ms-1">Self Assigned Task</span>
                     @else
-                        {{ $task->creator?->name }} Assigned this task to:
+                        {{ \Illuminate\Support\Str::words($task->creator?->name ?? '', 2, '') }} Assigned this task to:
                         @if ($task->assignee->business_logo && Storage::disk('public')->exists($task->assignee->business_logo))
                             <img src="{{ Storage::url($task->assignee->business_logo) }}" class="staff-avatar-sm"
                                 alt="{{ $task->assignee->name }}">
                         @endif
-                        {{ $task->assignee->name }}
+                        {{ \Illuminate\Support\Str::words($task->assignee->name, 2, '') }}
                     @endif
                 </div>
             @endif
@@ -71,14 +71,17 @@
     @if ($canEdit && $task->status == 'pending')
         <div class="task-actions d-flex flex-column">
             @if (auth()->user()->is_admin)
-                <button onclick="openEditModal({{ $task->id }})" class="btn btn-sm btn-outline-primary"
+                <button data-id="{{ $task->id }}" onclick="openEditModal(this.dataset.id)" class="btn btn-sm btn-outline-primary"
                     title="Edit">✏️ Edit</button>
             @endif
-            <button onclick="openRescheduleModal({{ $task->id }}, '{{ addslashes($task->subject) }}')"
+            <button data-id="{{ $task->id }}" data-title="{{ $task->subject }}"
+                onclick="openRescheduleModal(this.dataset.id, this.dataset.title)"
                 class="btn btn-sm btn-outline-warning" title="Reschedule">📅 Reschedule</button>
-            <button onclick="openCancelModal({{ $task->id }}, '{{ addslashes($task->subject) }}')"
+            <button data-id="{{ $task->id }}" data-title="{{ $task->subject }}"
+                onclick="openCancelModal(this.dataset.id, this.dataset.title)"
                 class="btn btn-sm btn-outline-danger" title="Cancel">✗ Cancel</button>
-            <button onclick="openCompleteModal({{ $task->id }}, '{{ addslashes($task->subject) }}')"
+            <button data-id="{{ $task->id }}" data-title="{{ $task->subject }}"
+                onclick="openCompleteModal(this.dataset.id, this.dataset.title)"
                 class="btn btn-sm btn-outline-success" title="Complete">✓ Complete</button>
         </div>
     @endif

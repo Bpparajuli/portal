@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\ChatMessage;
 use App\Models\UserStatus;
 use App\Events\MessageSent;
+use App\Services\FileUploadService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -14,6 +15,10 @@ use Carbon\Carbon;
 
 class ChatController extends Controller
 {
+    public function __construct(
+        private readonly FileUploadService $fileUploadService,
+    ) {}
+
     public function index()
     {
         return view('shared.chat.index');
@@ -178,7 +183,7 @@ class ChatController extends Controller
 
         $filePath = null;
         if ($request->hasFile('file')) {
-            $filePath = $request->file('file')->store('chat_files', 'public');
+            $filePath = $this->fileUploadService->uploadChatAttachment($request->file('file'));
         }
 
         try {

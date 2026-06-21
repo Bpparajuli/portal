@@ -30,15 +30,15 @@
     </x-page-header>
 
     @if($activities->count())
-    <div class="d-flex justify-content-end mb-3 gap-2">
-        <x-confirm-delete
-            action="admin.activities.clearAll"
-            label="Clear All"
-            title="Delete ALL activity logs?"
-            message="This will permanently delete all activity logs. This action cannot be undone."
-            mode="form"
-            class="btn btn-outline-danger btn-sm"
-        />
+    <div class="d-flex justify-content-between align-items-center mb-3 gap-2 flex-wrap">
+        <div>
+            <span class="small text-muted" id="selectedCount">0 selected</span>
+        </div>
+        <div>
+            <button type="button" class="btn btn-outline-danger btn-sm" id="deleteSelectedBtn" disabled onclick="bulkDelete()">
+                <i class="fas fa-trash me-1"></i>Delete Selected
+            </button>
+        </div>
     </div>
     @endif
 
@@ -47,6 +47,7 @@
             <table class="table table-hover align-middle mb-0">
                 <thead class="bg-light text-muted small">
                     <tr>
+                        <th style="width:40px"><input type="checkbox" id="selectAll" onchange="toggleAll(this)"></th>
                         <th>Time</th>
                         <th>User</th>
                         <th>Type</th>
@@ -58,6 +59,7 @@
                 <tbody>
                     @forelse($activities as $activity)
                     <tr>
+                        <td><input type="checkbox" value="{{ $activity->id }}" class="activity-checkbox" onchange="updateSelected()"></td>
                         <td class="text-nowrap small">{{ $activity->created_at->format('M d, H:i') }}</td>
                         <td><span class="fw-medium small">{{ $activity->user?->name ?? 'System' }}</span></td>
                         <td>
@@ -83,7 +85,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="6">
+                        <td colspan="7">
                             <x-empty-state icon="fa-history" title="No activities found" description="No activity records match your current filters." />
                         </td>
                     </tr>
@@ -115,6 +117,47 @@
 @push('scripts')
 <script>
 const activities = @json($activities->items());
+function toggleAll(source) {
+    document.querySelectorAll('.activity-checkbox').forEach(cb => cb.checked = source.checked);
+    updateSelected();
+}
+function updateSelected() {
+    const checked = document.querySelectorAll('.activity-checkbox:checked').length;
+    document.getElementById('selectedCount').textContent = checked + ' selected';
+    document.getElementById('deleteSelectedBtn').disabled = checked === 0;
+}
+function bulkDelete() {
+    const checked = document.querySelectorAll('.activity-checkbox:checked');
+    if (!checked.length) return;
+    const count = checked.length;
+    const ids = Array.from(checked).map(cb => cb.value);
+    Swal.fire({
+        title: 'Delete ' + count + ' activities?',
+        text: 'This action cannot be undone.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc3545',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Yes, delete them!',
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+        if (!result.isConfirmed) return;
+        fetch('{{ route("admin.activities.bulkDestroy") }}', {
+            method: 'POST',
+            headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ids })
+        }).then(r => r.json()).then(data => {
+            if (data.success) {
+                Swal.fire({ icon: 'success', title: data.message || 'Deleted.', timer: 1500, showConfirmButton: false });
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                Swal.fire({ icon: 'error', title: 'Error!', text: data.message || 'Something went wrong.' });
+            }
+        }).catch(() => {
+            Swal.fire({ icon: 'error', title: 'Error!', text: 'Something went wrong.' });
+        });
+    });
+}
 function showActivity(id) {
     const a = activities.find(x => x.id === id);
     if (!a) return;

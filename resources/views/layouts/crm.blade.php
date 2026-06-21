@@ -5,7 +5,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'CRM')</title>
+    @php
+        $_crmSiteLogo = \App\Models\Setting::getValue('site.logo', '');
+        $_crmSiteName = \App\Models\Setting::getValue('site.name', 'CRM');
+    @endphp
+    <title>@yield('title', $_crmSiteName . ' — CRM')</title>
 
     <link rel="stylesheet" href="{{ asset('css/styles.css') }}">
     <!-- Bootstrap CSS -->
@@ -26,7 +30,7 @@
         body {
             margin: 0;
             padding: 0;
-            background-color: #f8fafc;
+            background-color: #f4f2f8;
         }
 
         a,
@@ -40,7 +44,6 @@
             text-decoration: none !important;
         }
 
-        /* CRM Wrapper */
         .crm-wrapper {
             display: flex;
             flex-direction: column;
@@ -56,58 +59,111 @@
             background: white;
             border-bottom: 1px solid #e5e7eb;
             z-index: 1030;
-            height: 60px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            height: 56px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+        }
+
+        .crm-navbar .container-fluid {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 0 16px;
+        }
+
+        .nav-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-shrink: 0;
+        }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+
+        .nav-center {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            min-width: 0;
         }
 
         /* Content wrapper */
         .crm-content-wrapper {
-            margin-top: 60px;
-            min-height: calc(100vh - 60px);
-            padding: 20px;
+            margin-top: 56px;
+            min-height: calc(100vh - 56px);
+            padding: 16px 20px;
         }
 
         /* Header Search */
         .header-search-wrapper {
             position: relative;
+            max-width: 320px;
+            width: 100%;
         }
 
         .header-search-wrapper i {
             position: absolute;
-            left: 12px;
+            left: 10px;
             top: 50%;
             transform: translateY(-50%);
             color: #9ca3af;
-            font-size: 14px;
+            font-size: 13px;
+            pointer-events: none;
         }
 
         .header-search-wrapper input {
-            padding-left: 36px;
-            border-radius: 10px;
+            padding-left: 32px;
+            border-radius: 8px;
             border: 1px solid #e5e7eb;
-            font-size: 14px;
-            width: 280px;
+            font-size: 13px;
+            width: 100%;
+            height: 34px;
             transition: all 0.2s;
+            background: #f8fafc;
         }
 
         .header-search-wrapper input:focus {
-            border-color: #4f46e5;
-            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+            border-color: #820b5c;
+            box-shadow: 0 0 0 2px rgba(130, 11, 92, 0.08);
             outline: none;
+            background: #fff;
+        }
+
+        .search-btn {
+            border-radius: 8px;
+            height: 34px;
+            padding: 0 14px;
+            font-size: 13px;
+            background: #1a0262;
+            border-color: #1a0262;
+            color: #fff;
+            white-space: nowrap;
+        }
+
+        .search-btn:hover {
+            background: #2a0272;
+            border-color: #2a0272;
         }
 
         /* Notification Dropdown */
         .notification-badge {
             position: absolute;
-            top: -5px;
-            right: -8px;
+            top: -4px;
+            right: -6px;
             background: #ef4444;
             color: white;
-            font-size: 10px;
+            font-size: 9px;
             border-radius: 50%;
-            padding: 2px 5px;
-            min-width: 18px;
+            padding: 1px 4px;
+            min-width: 16px;
             text-align: center;
+            line-height: 1.4;
         }
 
         .notification-dropdown {
@@ -119,7 +175,7 @@
         .notification-item {
             transition: background 0.15s;
             white-space: normal !important;
-            padding: 12px 16px !important;
+            padding: 10px 14px !important;
             text-decoration: none;
             display: block;
             border-bottom: 1px solid #e5e7eb;
@@ -130,22 +186,69 @@
         }
 
         .notification-item.unread {
-            background: #eff6ff;
-            border-left: 3px solid #4f46e5;
+            background: #ede5f8;
+            border-left: 3px solid #820b5c;
         }
 
         /* User Menu */
         .user-avatar {
-            width: 36px;
-            height: 36px;
+            width: 32px;
+            height: 32px;
             border-radius: 50%;
-            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            background: linear-gradient(135deg, #1a0262, #820b5c);
             color: white;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .nav-icon-btn {
+            background: none;
+            border: none;
+            color: #4b5563;
+            padding: 4px;
+            cursor: pointer;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            border-radius: 8px;
+            transition: background .15s;
+        }
+
+        .nav-icon-btn:hover {
+            background: #f3f4f6;
+        }
+
+        .user-name {
+            font-size: 13px;
+            font-weight: 500;
+            color: #1f2937;
+        }
+
+        .nav-portal-btn {
+            height: 30px;
+            padding: 0 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background: #820b5c;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            transition: background .15s;
+        }
+
+        .nav-portal-btn:hover {
+            background: #9a0d6c;
         }
 
         /* Task Statistics Styles */
@@ -154,60 +257,42 @@
         }
 
         .task-stats-link:hover {
-            background: #e9ecef !important;
+            background: #ede5f8 !important;
             transform: translateX(2px);
         }
 
-        /* Stats Dropdown for Detailed View */
         .task-stats-dropdown {
             width: 320px;
             max-height: 400px;
             overflow-y: auto;
         }
 
-        /* Responsive */
-        @media (max-width: 768px) {
-            .header-search-wrapper input {
-                width: 180px;
-            }
-
-            .crm-navbar .container-fluid {
-                padding: 0 12px;
-            }
-
-            .crm-content-wrapper {
-                padding: 12px;
-            }
-        }
-
         /* Dropdown Styles */
         .dropdown-menu {
-            border-radius: 12px;
+            border-radius: 10px;
             border: 1px solid #e5e7eb;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
         }
 
-        /* Scrollbar */
         ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
+            width: 6px;
+            height: 6px;
         }
 
         ::-webkit-scrollbar-track {
             background: #f1f1f1;
-            border-radius: 4px;
+            border-radius: 3px;
         }
 
         ::-webkit-scrollbar-thumb {
             background: #cbd5e1;
-            border-radius: 4px;
+            border-radius: 3px;
         }
 
         ::-webkit-scrollbar-thumb:hover {
             background: #94a3b8;
         }
 
-        /* Toast notification */
         .toast-notification {
             position: fixed;
             bottom: 20px;
@@ -216,10 +301,21 @@
             min-width: 300px;
         }
 
-        /* Search button */
-        .search-btn {
-            border-radius: 10px;
-            padding: 0.375rem 1rem;
+        @media (max-width: 992px) {
+            .nav-desktop-search {
+                display: none;
+            }
+
+            .crm-navbar .container-fluid {
+                padding: 0 12px;
+                gap: 8px;
+            }
+        }
+
+        @media (min-width: 993px) {
+            .nav-mobile-search-btn {
+                display: none !important;
+            }
         }
     </style>
 
@@ -233,194 +329,175 @@
     <div class="crm-wrapper">
         {{-- TOP NAVIGATION BAR --}}
         <nav class="crm-navbar">
-            <div class="container-fluid h-100 px-3 px-md-4">
-                <div class="row align-items-center h-100 w-100 g-0">
-                    {{-- Left Section --}}
-                    <div class="col-auto d-flex align-items-center gap-3">
-                        <i class="fas fa-chalkboard-user text-primary fs-4"></i>
-                        @if (auth()->user()->is_admin)
-                            <a href="{{ route('crm.dashboard') }}" class="text-decoration-none">
-                                <span class="fw-semibold text-dark fs-5 d-sm-inline">CRM</span>
-                            </a>
-                        @else
-                            <a href="{{ url('/crm?view=list') }}" class="text-decoration-none">
-                                <span class="fw-semibold text-dark fs-5 d-sm-inline">CRM</span>
-                            </a>
-                        @endif
+            <div class="container-fluid">
+                {{-- Left: Logo + Search --}}
+                <div class="nav-left">
+                    @if ($_crmSiteLogo && Storage::disk('public')->exists($_crmSiteLogo))
+                        <img src="{{ Storage::url($_crmSiteLogo) }}" alt="" style="height:28px;width:28px;object-fit:contain;border-radius:6px;">
+                        <a href="{{ route('crm.dashboard') }}" class="fw-semibold"
+                            style="font-size:15px;color:#1f2937;">{{ $_crmSiteName }}</a>
+                    @else
+                        <i class="fas fa-chalkboard-user" style="color:#1a0262;font-size:20px;"></i>
+                        <a href="{{ route('crm.dashboard') }}" class="fw-semibold"
+                            style="font-size:16px;color:#1f2937;">CRM</a>
+                    @endif
+                </div>
 
-                        {{-- Desktop Search with Search Button --}}
-                        <div class="d-flex gap-2">
-                            <div class="header-search-wrapper">
-                                <i class="fas fa-search"></i>
-                                <input type="text" id="quickSearch" class="form-control"
-                                    placeholder="Search students...">
+                {{-- Center: Desktop Search --}}
+                <div class="nav-center nav-desktop-search">
+                    <div class="d-flex gap-2" style="max-width:360px;width:100%;">
+                        <div class="header-search-wrapper">
+                            <i class="fas fa-search"></i>
+                            <input type="text" id="quickSearch" class="form-control"
+                                placeholder="Search students...">
+                        </div>
+                        <button id="quickSearchBtn" class="search-btn" type="button"><i class="fas fa-search"></i>
+                            Search</button>
+                    </div>
+                </div>
+
+                {{-- Right: Actions --}}
+                <div class="nav-right">
+                    {{-- Mobile Search --}}
+                    <button class="nav-icon-btn nav-mobile-search-btn" id="mobileSearchBtn" type="button">
+                        <i class="fas fa-search"></i>
+                    </button>
+
+                    {{-- Admin Links --}}
+                    @if (auth()->user()->is_admin)
+                        <a href="{{ route('crm.configure.index') }}" class="btn btn-sm"
+                            style="color:#4b5563;border:1px solid #e5e7eb;border-radius:6px;font-size:12px;padding:3px 10px;">
+                            <i class="fas fa-cog"></i> Configure
+                        </a>
+                        <a href="{{ route('admin.exports.index') }}" class="btn btn-sm"
+                            style="color:#4b5563;border:1px solid #e5e7eb;border-radius:6px;font-size:12px;padding:3px 10px;">
+                            <i class="fas fa-download"></i> Export
+                        </a>
+                    @endif
+
+                    {{-- Portal Button --}}
+                    @if (auth()->user()->is_admin)
+                        <a href="{{ route('admin.dashboard') }}" class="nav-portal-btn">
+                            <i class="fas fa-upload"></i> Portal
+                        </a>
+                    @elseif (auth()->user()->is_staff)
+                        <a href="{{ route('staff.dashboard') }}" class="nav-portal-btn">
+                            <i class="fas fa-upload"></i> Portal
+                        </a>
+                    @endif
+
+                    {{-- Notification Bell --}}
+                    <div class="dropdown">
+                        <button class="nav-icon-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="far fa-bell"></i>
+                            <span class="notification-badge" id="crmNotificationCount" style="display:none;">0</span>
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-end p-0 notification-dropdown">
+                            <div class="p-2 border-bottom fw-semibold bg-light d-flex justify-content-between align-items-center"
+                                style="font-size:13px;">
+                                <span><i class="far fa-bell me-2"></i>Notifications</span>
+                                <div class="d-flex gap-2">
+                                    <a href="{{ route('crm.notifications.settings') }}" class="small text-muted"><i
+                                            class="fas fa-cog"></i></a>
+                                    <a href="{{ route('crm.notifications.all') }}" class="small text-muted">View All</a>
+                                </div>
                             </div>
-                            <button id="quickSearchBtn" class="btn btn-primary btn-sm search-btn" type="button">
-                                <i class="fas fa-search"></i> Search
-                            </button>
+                            <div id="crmNotificationList" class="notification-list">
+                                <div class="text-center py-4 text-muted small"><i
+                                        class="fas fa-spinner fa-spin me-2"></i>Loading...</div>
+                            </div>
+                            <div class="p-2 border-top d-flex justify-content-between">
+                                <button class="btn btn-link btn-sm text-primary p-1" id="markAllCrmReadBtn"
+                                    style="font-size:12px;">
+                                    <i class="fas fa-check-double me-1"></i>Mark all read
+                                </button>
+                                <button class="btn btn-link btn-sm text-danger p-1" id="clearReadCrmBtn"
+                                    style="font-size:12px;">
+                                    <i class="fas fa-trash-alt me-1"></i>Clear read
+                                </button>
+                            </div>
                         </div>
                     </div>
 
-                    {{-- Right Section --}}
-                    <div class="col-auto ms-auto d-flex align-items-center gap-3">
-                        {{-- Mobile Search Button --}}
-                        <div class="d-lg-none">
-                            <button class="btn btn-link text-dark p-0" id="mobileSearchBtn" type="button">
-                                <i class="fas fa-search fs-5"></i>
-                            </button>
-                        </div>
-
-                        {{-- Admin Links --}}
-                        @if (auth()->user()->is_admin)
-                            <a href="{{ route('crm.configure.index') }}"
-                                class="btn btn-sm btn-outline-secondary d-md-inline-block">
-                                <i class="fas fa-cog"></i> Configure
-                            </a>
-                            <a href="{{ route('crm.export') }}?{{ http_build_query(request()->query()) }}"
-                                class="btn btn-sm btn-outline-secondary d-md-inline-block">
-                                <i class="fas fa-download"></i> Export
-                            </a>
-                        @endif
-
-                        @if (auth()->user()->is_admin)
-                            {{-- Admin Button --}}
-                            <a href="{{ route('admin.dashboard') }}" class="btn btn-sm d-md-inline-block text-white"
-                                style="background-color: #820b5c;">
-                                <i class="fas fa-upload"></i> Admin Portal
-                            </a>
-                        @elseif (auth()->user()->is_staff)
-                            {{-- Staff Button --}}
-                            <a href="{{ route('staff.dashboard') }}" class="btn btn-sm d-md-inline-block text-white"
-                                style="background-color: #820b5c;">
-                                <i class="fas fa-upload"></i> Staff Portal
-                            </a>
-                        @endif
-
-                        {{-- Notification Bell --}}
-                        <div class="dropdown">
-                            <button class="btn btn-link text-dark p-0 position-relative" type="button"
-                                data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="far fa-bell fs-5"></i>
-                                <span class="notification-badge" id="crmNotificationCount"
-                                    style="display: none;">0</span>
-                            </button>
-                            <div class="dropdown-menu dropdown-menu-end p-0 notification-dropdown">
-                                <div
-                                    class="p-3 border-bottom fw-semibold bg-light d-flex justify-content-between align-items-center">
-                                    <span><i class="far fa-bell me-2"></i>CRM Notifications</span>
-                                    <a href="{{ route('crm.notifications.settings') }}"
-                                        class="small text-muted text-decoration-none">
-                                        <i class="fas fa-cog"></i>
-                                    </a>
-                                    <a href="{{ route('crm.notifications.all') }}"
-                                        class="small text-muted text-decoration-none">
-                                        <i class="fas fa-eye"></i> View All
-                                    </a>
-                                </div>
-                                <div id="crmNotificationList" class="notification-list">
-                                    <div class="text-center py-4 text-muted small">
-                                        <i class="fas fa-spinner fa-spin me-2"></i>Loading...
-                                    </div>
-                                </div>
-                                <div class="p-2 border-top text-center d-flex justify-content-between">
-                                    <button class="btn btn-link btn-sm text-primary p-1 text-decoration-none"
-                                        id="markAllCrmReadBtn">
-                                        <i class="fas fa-check-double me-1"></i>Mark all as read
-                                    </button>
-                                    <button class="btn btn-link btn-sm text-danger p-1 text-decoration-none"
-                                        id="clearReadCrmBtn">
-                                        <i class="fas fa-trash-alt me-1"></i>Clear read
-                                    </button>
-                                </div>
+                    {{-- Task Stats --}}
+                    <div class="dropdown">
+                        <button class="nav-icon-btn" type="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-tasks"></i>
+                            <span class="badge bg-danger rounded-pill" id="taskBadge"
+                                style="position:absolute;top:-4px;right:-6px;font-size:9px;padding:1px 4px;min-width:16px;line-height:1.4;">0</span>
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-end p-0 task-stats-dropdown">
+                            <div class="p-2 border-bottom fw-semibold bg-light d-flex justify-content-between align-items-center"
+                                style="font-size:13px;">
+                                <span><i class="fas fa-tasks me-2"></i>Task Overview</span>
+                                <a href="{{ route('crm.dashboard') }}?view=list&activity_filter={{ auth()->user()->is_admin ? 'all_task' : 'my_task' }}"
+                                    class="btn btn-sm btn-primary" style="font-size:11px;padding:2px 8px;">View
+                                    All</a>
+                            </div>
+                            <div class="p-2">
+                                <a href="{{ route('crm.dashboard') }}?view=list&activity_filter={{ auth()->user()->is_admin ? 'overdue' : 'my_overdue' }}"
+                                    class="task-stats-link d-flex justify-content-between align-items-center mb-2 p-2 bg-light rounded text-decoration-none"
+                                    style="font-size:12px;">
+                                    <span><i class="fas fa-exclamation-triangle text-danger me-2"></i><span
+                                            class="fw-semibold">Late</span> <span
+                                            class="small text-muted">(Overdue)</span></span>
+                                    <span class="badge bg-danger" id="dropdownLateCount"
+                                        style="font-size:10px;">0</span>
+                                </a>
+                                <a href="{{ route('crm.dashboard') }}?view=list&activity_filter={{ auth()->user()->is_admin ? 'today' : 'my_today' }}"
+                                    class="task-stats-link d-flex justify-content-between align-items-center mb-2 p-2 bg-light rounded text-decoration-none"
+                                    style="font-size:12px;">
+                                    <span><i class="fas fa-calendar-day text-warning me-2"></i><span
+                                            class="fw-semibold">Today</span> <span class="small text-muted">(Due
+                                            Today)</span></span>
+                                    <span class="badge bg-warning text-dark" id="dropdownTodayCount"
+                                        style="font-size:10px;">0</span>
+                                </a>
+                                <a href="{{ route('crm.dashboard') }}?view=list&activity_filter={{ auth()->user()->is_admin ? 'upcoming' : 'my_upcoming' }}"
+                                    class="task-stats-link d-flex justify-content-between align-items-center p-2 bg-light rounded text-decoration-none"
+                                    style="font-size:12px;">
+                                    <span><i class="fas fa-calendar-alt text-success me-2"></i><span
+                                            class="fw-semibold">Future</span> <span
+                                            class="small text-muted">(Upcoming)</span></span>
+                                    <span class="badge bg-success" id="dropdownFutureCount"
+                                        style="font-size:10px;">0</span>
+                                </a>
                             </div>
                         </div>
+                    </div>
 
-                        {{-- Task Statistics Badges --}}
-                        <div class="dropdown">
-                            <button class="btn btn-link text-dark p-0 d-flex align-items-center gap-2" type="button"
-                                data-bs-toggle="dropdown">
-                                <i class="fas fa-tasks fs-5"></i>
-                                <span class="badge bg-danger rounded-pill" id="taskBadge">0</span>
-                            </button>
-
-                            <div class="dropdown-menu dropdown-menu-end p-0 task-stats-dropdown">
-                                <div class="p-3 border-bottom fw-semibold bg-light">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <span>
-                                            <i class="fas fa-tasks me-2"></i>Task Overview
-                                        </span>
-                                        <a href="{{ route('crm.dashboard') }}?view=list&activity_filter={{ auth()->user()->is_admin ? 'all_task' : 'my_task' }}"
-                                            class="btn btn-primary btn-sm">
-                                            <i class="fas fa-eye me-1"></i>View All
-                                        </a>
-                                    </div>
-                                </div>
-
-                                <div class="p-2">
-                                    {{-- Late Tasks --}}
-                                    <a href="{{ route('crm.dashboard') }}?view=list&activity_filter={{ auth()->user()->is_admin ? 'overdue' : 'my_overdue' }}"
-                                        class="task-stats-link d-flex justify-content-between align-items-center mb-2 p-2 bg-light rounded text-decoration-none">
-                                        <span>
-                                            <i class="fas fa-exclamation-triangle text-danger me-2"></i>
-                                            <span class="fw-semibold">Late</span>
-                                            <span class="small text-muted ms-1">(Overdue)</span>
-                                        </span>
-                                        <span class="badge bg-danger" id="dropdownLateCount">0</span>
-                                    </a>
-
-                                    {{-- Today's Tasks --}}
-                                    <a href="{{ route('crm.dashboard') }}?view=list&activity_filter={{ auth()->user()->is_admin ? 'today' : 'my_today' }}"
-                                        class="task-stats-link d-flex justify-content-between align-items-center mb-2 p-2 bg-light rounded text-decoration-none">
-                                        <span>
-                                            <i class="fas fa-calendar-day text-warning me-2"></i>
-                                            <span class="fw-semibold">Today</span>
-                                            <span class="small text-muted ms-1">(Due Today)</span>
-                                        </span>
-                                        <span class="badge bg-warning text-dark" id="dropdownTodayCount">0</span>
-                                    </a>
-
-                                    {{-- Future Tasks --}}
-                                    <a href="{{ route('crm.dashboard') }}?view=list&activity_filter={{ auth()->user()->is_admin ? 'upcoming' : 'my_upcoming' }}"
-                                        class="task-stats-link d-flex justify-content-between align-items-center p-2 bg-light rounded text-decoration-none">
-                                        <span>
-                                            <i class="fas fa-calendar-alt text-success me-2"></i>
-                                            <span class="fw-semibold">Future</span>
-                                            <span class="small text-muted ms-1">(Upcoming)</span>
-                                        </span>
-                                        <span class="badge bg-success" id="dropdownFutureCount">0</span>
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-
-                        {{-- User Menu --}}
-                        <div class="dropdown">
-                            <button class="btn btn-link text-dark p-0 d-flex align-items-center gap-2" type="button"
-                                data-bs-toggle="dropdown">
-                                <div class="user-avatar">{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}</div>
-                                <span class="d-md-inline text-dark">{{ auth()->user()->name }}</span>
-                                <i class="fas fa-chevron-down text-muted small"></i>
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-end">
-                                <li><a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i>
-                                        Profile</a>
-                                </li>
-                                <li><a class="dropdown-item" href="{{ route('crm.notifications.settings') }}"><i
-                                            class="fas fa-bell me-2"></i> Notification Settings</a>
-                                </li>
-                                <li>
-                                    <hr class="dropdown-divider">
-                                </li>
-                                <li>
-                                    <form method="POST" action="{{ route('logout') }}">
-                                        @csrf
-                                        <button type="submit" class="dropdown-item text-danger">
-                                            <i class="fas fa-sign-out-alt me-2"></i> Logout
-                                        </button>
-                                    </form>
-                                </li>
-                            </ul>
-                        </div>
+                    {{-- User Menu --}}
+                    @php $_crmUser = auth()->user(); @endphp
+                    <div class="dropdown">
+                        <button class="btn btn-link text-dark p-0 d-flex align-items-center gap-2" type="button"
+                            data-bs-toggle="dropdown" style="text-decoration:none;">
+                            @if ($_crmUser->business_logo && Storage::disk('public')->exists($_crmUser->business_logo))
+                                <img src="{{ Storage::url($_crmUser->business_logo) }}" alt=""
+                                    style="width:28px;height:28px;border-radius:50%;object-fit:cover;border:2px solid #ede5f8;">
+                            @else
+                                <div class="user-avatar">{{ strtoupper(substr($_crmUser->name, 0, 1)) }}</div>
+                            @endif
+                            <span class="user-name d-none d-md-inline">{{ $_crmUser->name }}</span>
+                            <i class="fas fa-chevron-down text-muted" style="font-size:10px;"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end" style="font-size:13px;">
+                            @if (!$_crmUser->is_staff || $_crmUser->is_admin_staff)
+                            <li><a class="dropdown-item" href="{{ route('profile.show', $_crmUser->slug) }}"><i class="fas fa-user me-2"></i> Profile</a></li>
+                            @endif
+                            <li><a class="dropdown-item" href="{{ route('profile.edit', $_crmUser->slug) }}"><i class="fas fa-edit me-2"></i> Edit Profile</a></li>
+                            <li><a class="dropdown-item" href="{{ route('crm.notifications.settings') }}"><i
+                                        class="fas fa-bell me-2"></i> Notification Settings</a></li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li>
+                                <form method="POST" action="{{ route('logout') }}">
+                                    @csrf
+                                    <button type="submit" class="dropdown-item text-danger"><i
+                                            class="fas fa-sign-out-alt me-2"></i> Logout</button>
+                                </form>
+                            </li>
+                        </ul>
                     </div>
                 </div>
             </div>
@@ -457,7 +534,10 @@
     </div>
 
     {{-- Scripts --}}
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="{{ asset('js/app.js') }}"></script>
 
     <script>
         // CSRF Token
@@ -485,21 +565,15 @@
             });
         }, 5000);
 
-        // ==================== QUICK SEARCH - Search on button click or Enter key ====================
+        // ==================== QUICK SEARCH - Navigates to CRM dashboard with search results ====================
         function setupHeaderSearch(inputElement, searchButtonElement) {
             if (!inputElement) return;
 
-            // Search function to perform the actual search
             function performSearch() {
                 const search = inputElement.value.trim();
-                if (search.length === 0) {
-                    return;
-                }
-
-                const params = new URLSearchParams(window.location.search);
-                params.set('search', search);
-                params.set('search_type', 'name');
-                window.location.href = window.location.pathname + '?' + params.toString();
+                if (search.length === 0) return;
+                window.location.href = '{{ route('crm.dashboard') }}?view=list&search=' + encodeURIComponent(search) +
+                    '&search_type=name';
             }
 
             // Search on Enter key
@@ -794,12 +868,11 @@
         }
 
         // ==================== AUTO-TRIGGER TASK CHECKS ====================
-        let lastCheckTime = localStorage.getItem('lastTaskCheck') || 0;
-        const CHECK_INTERVAL = 5 * 60 * 1000;
+        let lastCheckDate = localStorage.getItem('lastTaskCheckDate') || '';
+        const todayStr = new Date().toISOString().slice(0, 10);
 
         async function autoCheckTasks() {
-            const now = Date.now();
-            if (now - lastCheckTime < CHECK_INTERVAL) return;
+            if (lastCheckDate === todayStr) return;
 
             try {
                 const response = await fetch('/crm/tasks/check-due', {
@@ -812,15 +885,9 @@
                 });
 
                 if (response.ok) {
-                    lastCheckTime = now;
-                    localStorage.setItem('lastTaskCheck', lastCheckTime);
+                    localStorage.setItem('lastTaskCheckDate', todayStr);
                     await fetchTaskStats();
                     await fetchNotifications();
-
-                    const data = await response.json();
-                    if (data.sent > 0) {
-                        showToastMessage(`${data.sent} new task notification${data.sent > 1 ? 's' : ''} sent`, 'info');
-                    }
                 }
             } catch (error) {
                 console.error('Auto-check error:', error);
@@ -872,7 +939,7 @@
 
             // Auto-check tasks
             autoCheckTasks();
-            setInterval(autoCheckTasks, CHECK_INTERVAL);
+            setInterval(autoCheckTasks, 3600000);
         });
     </script>
     @stack('scripts')

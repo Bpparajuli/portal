@@ -40,7 +40,9 @@ use App\Http\Controllers\Admin\{
     ApplicationStatusController as AdminApplicationStatusController,
     EmailController as AdminEmailController,
     PageController as AdminPageController,
-    SettingController as AdminSettingController,
+    SettingsController as AdminSettingsController,
+    CssController as AdminCssController,
+    ContentController as AdminContentController,
     EnquiryController as AdminEnquiryController,
 };
 
@@ -114,6 +116,9 @@ Route::name('guest.')->group(function () {
 
     // Dynamic Pages
     Route::get('p/{slug}', [GuestPageController::class, 'show'])->name('pages.show');
+
+    // FAQ
+    Route::get('faq', [GuestPageController::class, 'faq'])->name('faq');
 });
 
 /*
@@ -220,6 +225,8 @@ Route::middleware(['auth', \App\Http\Middleware\IsAdmin::class])
             Route::delete('{modelType}/{id}/force-delete', [\App\Http\Controllers\Admin\TrashController::class, 'forceDelete'])->name('force-delete');
             Route::put('{modelType}/restore-all', [\App\Http\Controllers\Admin\TrashController::class, 'restoreAll'])->name('restore-all');
             Route::delete('{modelType}/empty', [\App\Http\Controllers\Admin\TrashController::class, 'emptyTrash'])->name('empty');
+            Route::post('bulk-restore', [\App\Http\Controllers\Admin\TrashController::class, 'bulkRestore'])->name('bulk-restore');
+            Route::post('bulk-force-delete', [\App\Http\Controllers\Admin\TrashController::class, 'bulkForceDelete'])->name('bulk-force-delete');
         });
 
         Route::post('/users/reminder/preview', [AdminReminderController::class, 'previewEmail'])->name('reminder.preview');
@@ -293,6 +300,10 @@ Route::middleware(['auth', \App\Http\Middleware\IsAdmin::class])
             Route::get('drafts', [AdminEmailController::class, 'drafts'])->name('drafts');
             Route::get('create', [AdminEmailController::class, 'create'])->name('create');
             Route::post('store', [AdminEmailController::class, 'store'])->name('store');
+            Route::post('sync-now', [AdminEmailController::class, 'syncNow'])->name('sync-now');
+            Route::get('{email}/edit', [AdminEmailController::class, 'edit'])->name('edit');
+            Route::put('{email}', [AdminEmailController::class, 'update'])->name('update');
+            Route::post('{email}/send', [AdminEmailController::class, 'sendDraft'])->name('send-draft');
             Route::get('{email}', [AdminEmailController::class, 'show'])->name('show');
             Route::post('{email}/reply', [AdminEmailController::class, 'reply'])->name('reply');
             Route::post('save-draft', [AdminEmailController::class, 'saveDraft'])->name('save-draft');
@@ -301,28 +312,49 @@ Route::middleware(['auth', \App\Http\Middleware\IsAdmin::class])
             Route::get('{email}/download/{index}', [AdminEmailController::class, 'downloadAttachment'])->name('download-attachment');
         });
 
-        // ========== NEW: DYNAMIC PAGES ==========
-        Route::resource('pages', AdminPageController::class)->except(['create']);
-        Route::get('pages/dynamic/content', [\App\Http\Controllers\Admin\PageController::class, 'dynamic'])->name('pages.dynamic');
-        Route::get('pages/dynamic/content', [\App\Http\Controllers\Admin\PageController::class, 'create'])->name('pages.create');
-        Route::post('pages/dynamic/update', [\App\Http\Controllers\Admin\PageController::class, 'updateDynamic'])->name('pages.dynamic.update');
-        Route::get('content', [\App\Http\Controllers\Admin\PageController::class, 'consolidated'])->name('content');
+        // ========== THREE PILLARS: SETTINGS / CSS / CONTENT ==========
 
-        // ========== NEW: SETTINGS ==========
+        // Pillar 1: Settings (User/Role, Status, Core Config)
         Route::prefix('settings')->name('settings.')->group(function () {
-            Route::get('/', [AdminSettingController::class, 'index'])->name('index');
-            Route::put('/{setting}', [AdminSettingController::class, 'update'])->name('update');
-            Route::post('/create', [AdminSettingController::class, 'store'])->name('store');
-            Route::delete('{setting}', [AdminSettingController::class, 'destroy'])->name('destroy');
-            Route::post('/upload-image', [AdminSettingController::class, 'uploadImage'])->name('upload-image');
-            Route::post('/rename-image', [AdminSettingController::class, 'renameImage'])->name('rename-image');
-            Route::get('/images', [AdminSettingController::class, 'listImages'])->name('images');
-            Route::post('/branding', [AdminSettingController::class, 'updateBranding'])->name('branding.update');
-            Route::post('/content/save', [AdminSettingController::class, 'saveContent'])->name('content.save');
-            Route::post('/events/save', [AdminSettingController::class, 'saveEvents'])->name('events.save');
-            Route::post('/plans/save', [AdminSettingController::class, 'savePlans'])->name('plans.save');
-            Route::post('/design', [AdminSettingController::class, 'saveDesign'])->name('design.update');
+            Route::get('/', [AdminSettingsController::class, 'index'])->name('index');
+            Route::post('/update', [AdminSettingsController::class, 'update'])->name('update');
+            Route::post('/create', [AdminSettingsController::class, 'store'])->name('store');
+            Route::put('{setting}', [AdminSettingsController::class, 'updateSingle'])->name('updateSingle');
+            Route::delete('{setting}', [AdminSettingsController::class, 'destroy'])->name('destroy');
+            Route::post('/upload-image', [AdminSettingsController::class, 'uploadImage'])->name('upload-image');
+            Route::put('role/{user}', [AdminSettingsController::class, 'updateUserRole'])->name('role.update');
+            Route::put('user/{user}/toggle-status', [AdminSettingsController::class, 'toggleUserStatus'])->name('user.toggle-status');
+            Route::put('user/{user}/toggle-crm', [AdminSettingsController::class, 'toggleCrmAccess'])->name('user.toggle-crm');
         });
+
+        // Pillar 2: CSS/Design (Theme, Custom CSS)
+        Route::prefix('css')->name('css.')->group(function () {
+            Route::get('/', [AdminCssController::class, 'index'])->name('index');
+            Route::post('/update', [AdminCssController::class, 'update'])->name('update');
+            Route::get('/preview', [AdminCssController::class, 'preview'])->name('preview');
+        });
+
+        // Pillar 3: Content (Global Sections, Dynamic UI, Blocks, Media)
+        Route::prefix('content')->name('content.')->group(function () {
+            Route::get('/', [AdminContentController::class, 'index'])->name('index');
+            Route::post('/sections/update', [AdminContentController::class, 'updateSections'])->name('sections.update');
+            Route::post('/dynamic/update', [AdminContentController::class, 'updateDynamic'])->name('dynamic.update');
+            Route::post('/block/store', [AdminContentController::class, 'storeBlock'])->name('block.store');
+            Route::put('/block/{block}', [AdminContentController::class, 'updateBlock'])->name('block.update');
+            Route::delete('/block/{block}', [AdminContentController::class, 'destroyBlock'])->name('block.destroy');
+            Route::post('/testimonial/store', [AdminContentController::class, 'storeTestimonial'])->name('testimonial.store');
+            Route::put('/testimonial/{testimonial}', [AdminContentController::class, 'updateTestimonial'])->name('testimonial.update');
+            Route::delete('/testimonial/{testimonial}', [AdminContentController::class, 'destroyTestimonial'])->name('testimonial.destroy');
+            Route::post('/popup/store', [AdminContentController::class, 'storePopup'])->name('popup.store');
+            Route::post('/popup/{popup}/update', [AdminContentController::class, 'updatePopup'])->name('popup.update');
+            Route::delete('/popup/{popup}', [AdminContentController::class, 'destroyPopup'])->name('popup.destroy');
+            Route::post('/media/upload', [AdminContentController::class, 'uploadMedia'])->name('media.upload');
+            Route::delete('/media/delete', [AdminContentController::class, 'deleteMedia'])->name('media.delete');
+            Route::post('/media/delete-bulk', [AdminContentController::class, 'deleteMediaBulk'])->name('media.delete-bulk');
+        });
+
+        // Keep pages resource for CMS page management
+        Route::resource('pages', AdminPageController::class);
 
         // ========== NEW: ENQUIRIES ==========
         Route::resource('enquiries', AdminEnquiryController::class)->only(['index', 'destroy']);
@@ -336,7 +368,7 @@ Route::middleware(['auth', \App\Http\Middleware\IsAdmin::class])
             Route::get('/', [\App\Http\Controllers\Admin\ActivityLogController::class, 'index'])->name('index');
             Route::get('{activity}', [\App\Http\Controllers\Admin\ActivityLogController::class, 'show'])->name('show');
             Route::delete('{activity}', [\App\Http\Controllers\Admin\ActivityLogController::class, 'destroy'])->name('destroy');
-            Route::post('clear-all', [\App\Http\Controllers\Admin\ActivityLogController::class, 'clearAll'])->name('clearAll');
+            Route::post('bulk-delete', [\App\Http\Controllers\Admin\ActivityLogController::class, 'bulkDestroy'])->name('bulkDestroy');
         });
     });
 
@@ -350,6 +382,7 @@ Route::middleware(['auth', \App\Http\Middleware\IsStaff::class])
     ->name('staff.')
     ->group(function () {
         Route::get('/dashboard', [StaffDashboardController::class, 'index'])->name('dashboard');
+        Route::get('/activities', [StaffDashboardController::class, 'activities'])->name('activities');
 
         // Student management
         Route::get('/students', [StudentController::class, 'index'])->name('students.index');
@@ -420,8 +453,10 @@ Route::middleware(['auth', \App\Http\Middleware\IsStaff::class])
             Route::delete('/all/delete', [NotificationController::class, 'deleteAll'])->name('deleteAll');
         });
 
-        // User profile (staff can view/edit their own profile)
-        Route::get('/profile/{user:slug}', [UserController::class, 'show'])->name('users.show');
+        // User profile (staff edit only — show redirects to edit)
+        Route::get('/profile/{user:slug}', function (\App\Models\User $user) {
+            return redirect()->route('staff.users.edit', $user->slug);
+        })->name('users.show');
         Route::get('/profile/{user:slug}/edit', [UserController::class, 'edit'])->name('users.edit');
         Route::put('/profile/{user:slug}', [UserController::class, 'update'])->name('users.update');
         Route::post('/profile/{user:slug}/reset-password', [UserController::class, 'resetPassword'])->name('users.reset-password');
@@ -533,9 +568,13 @@ Route::middleware(['auth', \App\Http\Middleware\IsPaidCrm::class])
         // ========== STUDENT CRM RECORDS ==========
         Route::put('/students/{student}/mini-update', [CrmStudentController::class, 'miniUpdate'])->name('student.miniUpdate');
         Route::get('/student/{student}/edit', [CrmStudentController::class, 'edit'])->name('student.edit');
+        Route::get('/students/{student}/edit', [CrmStudentController::class, 'edit'])->name('students.edit');
         Route::put('/student/{student}', [CrmStudentController::class, 'update'])->name('student.update');
+        Route::put('/students/{student}', [CrmStudentController::class, 'update'])->name('students.update');
         Route::get('/student/{student}', [CrmStudentController::class, 'show'])->name('student.show');
+        Route::get('/students/{student}', [CrmStudentController::class, 'show'])->name('students.show');
         Route::delete('/student/{student}', [CrmStudentController::class, 'destroy'])->name('student.destroy');
+        Route::delete('/students/{student}', [CrmStudentController::class, 'destroy'])->name('students.destroy');
         Route::post('/student/store', [CrmStudentController::class, 'store'])->name('student.store');
         Route::post('/student/{student}/stage', [CrmStudentController::class, 'changeStage'])->name('student.stage');
         Route::post('/student/{student}/note', [CrmStudentController::class, 'saveNote'])->name('student.saveNote');
@@ -572,6 +611,7 @@ Route::middleware(['auth', \App\Http\Middleware\IsPaidCrm::class])
         Route::post('/notes', [CrmStudentNoteController::class, 'store'])->name('notes.store');
         Route::put('/notes/{note}', [CrmStudentNoteController::class, 'update'])->name('notes.update');
         Route::patch('/notes/{note}/pin', [CrmStudentNoteController::class, 'togglePin'])->name('notes.pin');
+        Route::patch('/notes/{note}/convert', [CrmStudentNoteController::class, 'convertType'])->name('notes.convert');
         Route::delete('/notes/{note}', [CrmStudentNoteController::class, 'destroy'])->name('notes.destroy');
 
         // ========== STAGE HISTORY ==========
@@ -591,6 +631,8 @@ Route::middleware(['auth', \App\Http\Middleware\IsPaidCrm::class])
 
             // Important: Put delete routes BEFORE any wildcard routes
             Route::delete('/read/all', [CrmNotificationController::class, 'destroyRead'])->name('destroy-read');
+            Route::delete('/duplicates', [CrmNotificationController::class, 'destroyDuplicates'])->name('destroy-duplicates');
+            Route::delete('/old-read', [CrmNotificationController::class, 'destroyOldRead'])->name('destroy-old-read');
             Route::delete('/{id}/delete-ajax', [CrmNotificationController::class, 'deleteNotification'])->name('delete-ajax');
 
             Route::get('/settings', [CrmNotificationController::class, 'settings'])->name('settings');
@@ -700,3 +742,12 @@ Route::get('/receipt-view/{path}', function ($path) {
         'X-Content-Type-Options' => 'nosniff'
     ]);
 })->where('path', '.*')->name('receipt.view');
+
+// ============================================
+// COMMON PROFILE ROUTES (all roles) — must be last to avoid conflicts
+// ============================================
+Route::middleware('auth')->group(function () {
+    Route::get('/{user:slug}', [UserController::class, 'show'])->name('profile.show');
+    Route::get('/{user:slug}/edit', [UserController::class, 'edit'])->name('profile.edit');
+    Route::put('/{user:slug}', [UserController::class, 'update'])->name('profile.update');
+});

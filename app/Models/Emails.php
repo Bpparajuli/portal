@@ -20,6 +20,8 @@ class Emails extends Model
         'folder', 'status',
         'parent_id', 'reference_type', 'reference_id',
         'attachments', 'is_starred', 'is_important',
+        'is_external', 'external_folder',
+        'message_id', 'references', 'in_reply_to',
         'read_at', 'sent_at',
     ];
 

@@ -44,7 +44,8 @@ class DocumentController extends Controller
         $allDocumentTypes = self::allDocumentTypes();
         $predefinedDocs = $documents->filter(fn($doc) => in_array(strtolower($doc->document_type), $allDocumentTypes));
         $otherDocs = $documents->filter(fn($doc) => !in_array(strtolower($doc->document_type), $allDocumentTypes));
-        $routePrefix = Auth::user()->role;
+        $user = Auth::user();
+        $routePrefix = $user->is_admin_staff ? 'admin' : $user->role;
         return view('shared.documents.index', compact('student', 'predefinedDocs', 'otherDocs', 'allDocumentTypes', 'routePrefix'));
     }
 
