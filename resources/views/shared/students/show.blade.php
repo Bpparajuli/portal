@@ -86,7 +86,7 @@
                 @if($isMgmt)
                 <div class="profile-quick-stat">
                     <div class="stat-icon"><i class="fas fa-dollar-sign"></i></div>
-                    <div class="stat-num">{{ number_format((float)($student->received_revenue ?? 0), 0) }}</div>
+                    <div class="stat-num">{{ number_format((float)($student->revenues()->sum('amount') ?? 0), 0) }}</div>
                     <div class="stat-lbl">Revenue</div>
                 </div>
                 @endif

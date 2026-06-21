@@ -15,8 +15,6 @@
     /* ================= BRAND COLORS ================= */
     --primary: #1a0262;
     --primary-dark: #0f013b;
-    --primary-light: #2c0e8a;
-    --primary-lighter: #3f19ab;
     --primary-soft: #f0edfa;
 
     --secondary: #820b5c;
@@ -61,29 +59,29 @@
     --gray-900: #0f172a;
 
     /* ================= SURFACE ================= */
-    --bg-main: #f8fafc;
-    --bg-card: #ffffff;
-    --bg-hover: #f1f5f9;
-    --bg-sidebar: #10013d;
-    --bg-sidebar-hover: #1a0262;
-    --bg-dark: #10013d;
+    --bg-main: var(--bg, #f8fafc);
+    --bg-card: var(--card-bg, #ffffff);
+    --bg-hover: color-mix(in srgb, var(--primary) 8%, var(--bg, #f8fafc));
+    --bg-sidebar: color-mix(in srgb, var(--primary) 80%, #000);
+    --bg-sidebar-hover: var(--primary);
+    --bg-dark: color-mix(in srgb, var(--primary) 80%, #000);
 
     /* ================= TEXT ================= */
-    --text-color: #1e293b;
+    --text-color: var(--text, #1e293b);
     --text-muted: #64748b;
     --text-light: #f8fafc;
 
     /* ================= BORDER ================= */
-    --border: rgba(26, 2, 98, 0.12);
-    --border-light: rgba(26, 2, 98, 0.06);
+    --border: color-mix(in srgb, var(--primary) 12%, transparent);
+    --border-light: color-mix(in srgb, var(--primary) 6%, transparent);
 
     /* ================= GRADIENTS ================= */
     --gradient-primary: linear-gradient(
         135deg,
-        var(--primary),
-        var(--primary-light)
+        var(--primary-dark),
+        var(--primary)
     );
-    --gradient-secondary: linear-gradient(135deg, var(--secondary), #a61b7b);
+    --gradient-secondary: linear-gradient(135deg, var(--secondary), var(--secondary));
     --gradient-success: linear-gradient(
         135deg,
         var(--success),
@@ -100,9 +98,9 @@
         var(--accent-light)
     );
     --gradient-info: linear-gradient(135deg, var(--info), var(--info-light));
-    --gradient-premium: linear-gradient(135deg, #1a0262, #820b5c, #a61b7b);
-    --gradient-sunset: linear-gradient(135deg, #ef4444, #f59e0b, #fbbf24);
-    --gradient-ocean: linear-gradient(135deg, #0284c7, #3b82f6, #1a0262);
+    --gradient-premium: linear-gradient(135deg, var(--primary), var(--secondary), var(--secondary));
+    --gradient-sunset: linear-gradient(135deg, var(--danger), var(--warning), var(--warning-light));
+    --gradient-ocean: linear-gradient(135deg, var(--info), var(--info), var(--primary));
     --gradient-glass: linear-gradient(
         135deg,
         rgba(255, 255, 255, 0.15),
@@ -200,6 +198,7 @@
 }
 
 html {
+    font-size: 110%;
     scroll-behavior: smooth;
 }
 
@@ -2316,7 +2315,7 @@ h6 {
     gap: 0.25rem;
 }
 .view-all:hover {
-    color: var(--primary-light);
+    color: var(--primary-dark);
     text-decoration: underline;
 }
 

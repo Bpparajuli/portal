@@ -125,7 +125,7 @@
 
     .dropzone-content i {
         font-size: 48px;
-        color: var(--primary-light);
+color: var(--primary);
         margin-bottom: 15px;
     }
 
@@ -202,7 +202,7 @@
 
     .instruction-card:hover {
         transform: translateX(5px);
-        border-color: var(--primary-light);
+        border-color: var(--primary);
     }
 
     .step-num {

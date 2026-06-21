@@ -136,7 +136,7 @@
                                 <span class="app-status-badge"
                                     style="background:{{ $app->status?->bg_color ?? '#6c757d' }}20;color:{{ $app->status?->bg_color ?? '#6c757d' }};">
                                     <span
-                                        style="width:6px;height:6px;border-radius:50%;background:{{ $app->status?->bg_color ?? '#6c757d' }};display:inline-block;"></span>
+                                        style="width:6px;height:6px;border-radius:40%;background:{{ $app->status?->bg_color ?? '#6c757d' }};display:inline-block;"></span>
                                     {{ $app->status?->name ?? '—' }}
                                 </span>
                             </td>
@@ -208,7 +208,11 @@
 
     @push('scripts')
         <script>
-            const statusOptions = {!! json_encode($statuses->map(fn($s) => ['id' => $s->id, 'name' => $s->name])->values()) !!};
+            const statusOptions = {!! json_encode(
+                $statuses->map(
+                        fn($s) => ['id' => $s->id, 'name' => $s->name, 'bg_color' => $s->bg_color, 'text_color' => $s->text_color],
+                    )->values(),
+            ) !!};
 
             async function withdrawApp(id) {
                 const {
@@ -251,7 +255,7 @@
                     value: statusId
                 } = await Swal.fire({
                     title: '<h5 class="fw-bold mb-0"><i class="fas fa-exchange-alt text-warning me-2"></i>Update Status</h5>',
-                    html: `<div style="text-align:left;padding:0.5rem 0;"><label class="fw-semibold mb-2" style="font-size:0.85rem;">Current status: <span class="badge bg-secondary ms-1" style="font-size:0.75rem;">${statusOptions.find(s => s.id == currentStatusId)?.name || 'Unknown'}</span></label><select id="swal-status-select" class="form-select" style="font-size:0.85rem;padding:2px 14px;border-radius:8px;border-color:#d1d5db;">${opts}</select></div>`,
+                    html: `<div style="text-align:left;padding:0.5rem 0;"><label class="fw-semibold mb-2" style="font-size:0.85rem;">Current status: <span class="badge ms-1" style="font-size:0.75rem;background:${statusOptions.find(s => s.id == currentStatusId)?.bg_color || '#6c757d'};color:${statusOptions.find(s => s.id == currentStatusId)?.text_color || '#fff'};">${statusOptions.find(s => s.id == currentStatusId)?.name || 'Unknown'}</span></label><select id="swal-status-select" class="form-select" style="font-size:0.85rem;padding:2px 14px;border-radius:8px;border-color:#d1d5db;">${opts}</select></div>`,
                     focusConfirm: false,
                     showCancelButton: true,
                     confirmButtonColor: '#4f46e5',

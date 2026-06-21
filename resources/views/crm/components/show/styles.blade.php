@@ -267,7 +267,7 @@
     }
 
     .note-item.log-entry {
-        border-left: 3px solid var(--primary-light);
+        border-left: 3px solid var(--primary);
         background: #f0f3ff;
     }
 
@@ -286,7 +286,7 @@
     }
 
     .edit-note-btn:hover {
-        color: var(--primary-light);
+        color: var(--primary);
     }
 
     .note-actions {

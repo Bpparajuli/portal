@@ -6,25 +6,21 @@
                     class="btn-close" data-bs-dismiss="alert"></button></div>
         @endif
 
-        <div class=" d-flex justify-content-between mb-4">
-
-            <div class="div">
-                <x-page-header title="Collected Revenue" subtitle="View, edit, and manage revenue transactions">
-                </x-page-header>
-            </div>
-            <div class="col-md-3">
-                <div class="card border-0 shadow-sm rounded-4 bg-success text-white">
-                    <div class="card-body p-4">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h6 class="text-white-50 mb-1 text-uppercase small fw-semibold">Grand Total</h6>
-                                <h2 class="mb-0 fw-bold">{{ number_format($grandTotal, 2) }}</h2>
-                            </div>
-                            <div class="bg-white bg-opacity-25 rounded-circle p-3"><i class="fas fa-dollar-sign fa-2x"></i>
-                            </div>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <x-page-header title="Collected Revenue" subtitle="View, edit, and manage revenue transactions">
+            </x-page-header>
+            <div class="d-flex align-items-center gap-3">
+                <div class="card border-0 shadow-sm rounded-4 bg-success text-white mb-0">
+                    <div class="card-body p-3 px-4">
+                        <div class="d-flex align-items-center gap-3">
+                            <h6 class="mb-0 text-white-50 small fw-semibold">Grand Total</h6>
+                            <h4 class="mb-0 fw-bold">{{ number_format($grandTotal, 2) }}</h4>
                         </div>
                     </div>
                 </div>
+                <button type="button" class="btn btn-primary rounded-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#addRevenueModal">
+                    <i class="fas fa-plus me-1"></i> Add Revenue
+                </button>
             </div>
         </div>
 
@@ -66,6 +62,7 @@
                             <tr>
                                 <th class="px-3">Student</th>
                                 <th>Agent</th>
+                                <th>Method</th>
                                 <th class="text-end">Amount</th>
                                 <th>Description</th>
                                 <th>Payment Date</th>
@@ -85,6 +82,7 @@
                                                 class="text-decoration-none text-secondary small">{{ $rev->student->agent->business_name ?? $rev->student->agent->name }}</a>
                                         @endif
                                     </td>
+                                    <td class="small text-capitalize">{{ str_replace('_', ' ', $rev->method ?? '—') }}</td>
                                     <td class="text-end fw-bold">{{ number_format($rev->amount, 2) }}</td>
                                     <td class="small text-muted"
                                         style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
@@ -104,12 +102,11 @@
                                         <x-confirm-delete action="admin.revenues.destroy" :id="$rev->id"
                                             title="Delete Payment made of {{ number_format($rev->amount, 2) }}?"
                                             message="This action cannot be undone." class="btn btn-sm btn-outline-danger" />
-
                                     </td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="7" class="text-center py-5 text-muted"><i
+                                    <td colspan="8" class="text-center py-5 text-muted"><i
                                             class="fas fa-inbox fa-3x mb-3"></i>
                                         <p class="mb-0">No revenues found</p>
                                     </td>
@@ -119,7 +116,7 @@
                         @if ($revenues->count())
                             <tfoot class="table-light fw-bold">
                                 <tr>
-                                    <td colspan="2" class="px-3 text-end text-uppercase small text-muted">Filtered Total
+                                    <td colspan="3" class="px-3 text-end text-uppercase small text-muted">Filtered Total
                                     </td>
                                     <td class="text-end">{{ number_format($filteredTotal, 2) }}</td>
                                     <td colspan="4"></td>
@@ -137,6 +134,70 @@
         </div>
     </div>
 
+    {{-- Add Revenue Modal --}}
+    <div class="modal fade" id="addRevenueModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <form method="POST" action="{{ route('admin.revenues.store') }}" enctype="multipart/form-data">
+                    @csrf
+                    <div class="modal-header">
+                        <h5 class="modal-title"><i class="fas fa-plus-circle me-2 text-success"></i>Add Revenue</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">Student <span class="text-danger">*</span></label>
+                                <select name="student_id" class="form-select" required>
+                                    <option value="">Select Student</option>
+                                    @foreach($students as $s)
+                                        <option value="{{ $s->id }}">{{ $s->full_name }} @if($s->agent) ({{ $s->agent->business_name ?? $s->agent->name }}) @endif</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Amount <span class="text-danger">*</span></label>
+                                <input type="number" name="amount" class="form-control" step="0.01" min="0" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Payment Method <span class="text-danger">*</span></label>
+                                <select name="method" class="form-select" required>
+                                    <option value="cash">Cash</option>
+                                    <option value="bank_transfer">Bank Transfer</option>
+                                    <option value="credit_card">Credit Card</option>
+                                    <option value="cheque">Cheque</option>
+                                    <option value="online_payment">Online Payment</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Transaction Date <span class="text-danger">*</span></label>
+                                <input type="date" name="transaction_date" class="form-control" value="{{ date('Y-m-d') }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Reference Number</label>
+                                <input type="text" name="reference_number" class="form-control" placeholder="Transaction ID, Cheque No, etc.">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Receipt (Optional)</label>
+                                <input type="file" name="receipt_file" class="form-control" accept="image/*,.pdf">
+                                <small class="text-muted">Max 5MB. JPG, PNG, PDF</small>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">Description</label>
+                                <textarea name="description" class="form-control" rows="2" placeholder="Additional details..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-success"><i class="fas fa-save me-1"></i>Save Revenue</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    {{-- Edit Revenue Modal --}}
     <div class="modal fade" id="editRevenueModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">

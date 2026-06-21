@@ -47,7 +47,7 @@
         <div class="task-meta mt-2">
             @if ($task->assignee)
                 <div class="task-meta mt-1">
-                    @if ($task->creator && $task->creator->business_logo)
+                    @if ($task->creator && $task->creator->business_logo && Storage::disk('public')->exists($task->creator->business_logo))
                         <img src="{{ Storage::url($task->creator->business_logo) }}" class="staff-avatar-sm"
                             alt="{{ $task->creator->name }}">
                     @endif
@@ -57,7 +57,7 @@
                         <span class="badge bg-info text-dark ms-1">Self Assigned Task</span>
                     @else
                         {{ $task->creator?->name }} Assigned this task to:
-                        @if ($task->assignee->business_logo)
+                        @if ($task->assignee->business_logo && Storage::disk('public')->exists($task->assignee->business_logo))
                             <img src="{{ Storage::url($task->assignee->business_logo) }}" class="staff-avatar-sm"
                                 alt="{{ $task->assignee->name }}">
                         @endif

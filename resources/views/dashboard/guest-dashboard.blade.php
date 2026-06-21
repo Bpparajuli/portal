@@ -18,13 +18,37 @@
     $uniCount = App\Models\University::count();
     $courseCount = App\Models\Course::count();
     $countryCount = App\Models\University::distinct('country')->count('country');
+    $popupSectionEnabled = App\Models\Setting::getValue('content.section_popup_enabled', '1');
+    $popupEnabled = App\Models\Setting::getValue('content.popup_enabled', '0');
+    $popupTitle = App\Models\Setting::getValue('content.popup_title', 'Welcome');
+    $popupDescription = App\Models\Setting::getValue('content.popup_description', '');
+    $popupImage = App\Models\Setting::resolveImageUrl(App\Models\Setting::getValue('content.popup_image', ''));
+    $popupDuration = (int) App\Models\Setting::getValue('content.popup_duration', '5000');
+    $heroBadge = App\Models\Setting::getValue('content.hero_badge', 'Idea Portal &mdash; Now Live');
+    $heroBtn1Text = App\Models\Setting::getValue('content.hero_btn1_text', 'Register as Agent');
+    $heroBtn1Link = App\Models\Setting::getValue('content.hero_btn1_link', '/register');
+    $heroBtn2Text = App\Models\Setting::getValue('content.hero_btn2_text', 'Explore Universities');
+    $heroBtn2Link = App\Models\Setting::getValue('content.hero_btn2_link', '/universities');
+    $heroStat1Label = App\Models\Setting::getValue('content.hero_stat1_label', 'Universities');
+    $heroStat2Label = App\Models\Setting::getValue('content.hero_stat2_label', 'Countries');
+    $heroStat3Label = App\Models\Setting::getValue('content.hero_stat3_label', 'Courses');
+    $sectionFilterTitle = App\Models\Setting::getValue('content.section_filter_title', 'Find Universities & Courses');
+    $sectionFilterDesc = App\Models\Setting::getValue('content.section_filter_desc', 'Search by country, city, university or specific course &mdash; discover your best fit.');
+    $sectionFeaturesTag = App\Models\Setting::getValue('content.section_features_tag', 'Why Choose Us');
+    $sectionFeaturesTitle = App\Models\Setting::getValue('content.section_features_title', 'Everything You Need to <br>Place Students Globally');
+    $sectionEventsTag = App\Models\Setting::getValue('content.section_events_tag', 'Events');
+    $sectionEventsTitle = App\Models\Setting::getValue('content.section_events_title', 'Upcoming Trainings & Webinars');
+    $sectionTestimonialsTag = App\Models\Setting::getValue('content.section_testimonials_tag', 'Testimonials');
+    $sectionTestimonialsTitle = App\Models\Setting::getValue('content.section_testimonials_title', 'What Our Agents Say');
+    $sectionLogosTag = App\Models\Setting::getValue('content.section_logos_tag', 'Our Network');
+    $sectionLogosTitle = App\Models\Setting::getValue('content.section_logos_title', 'Partner Universities');
 @endphp
 @push('styles')
 <link href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" rel="stylesheet">
 <style>
 .gd-hero {
     min-height: 92vh;
-    background: linear-gradient(135deg, #0f0828 0%, #1a0262 45%, #820b5c 100%);
+    background: linear-gradient(135deg, #0f0828 0%, var(--primary) 45%, var(--secondary) 100%);
     display: flex;
     align-items: center;
     position: relative;
@@ -132,7 +156,7 @@
 }
 .gd-program-card h3 { font-size:1.05rem; font-weight:700; color:var(--text-color); margin-bottom:0.5rem; }
 .gd-program-date { font-size:0.8rem; color:var(--text-muted); font-weight:500; margin-bottom:1.25rem; display:flex; align-items:center; gap:0.4rem; }
-.gd-testimonials-section { background:linear-gradient(135deg,#0f0828,#1a0262); padding:5rem 2rem; }
+.gd-testimonials-section { background:linear-gradient(135deg,#0f0828,var(--primary)); padding:5rem 2rem; }
 .gd-testimonials-section .gd-section-tag { background:rgba(255,255,255,0.1); color:rgba(255,255,255,0.8); }
 .gd-testimonials-section .gd-section-title { color:#fff; }
 .gd-testimonial-track { display:grid; grid-template-columns:repeat(3,1fr); gap:1.5rem; margin-top:3rem; }
@@ -229,30 +253,30 @@
             <div class="gd-hero-left">
                 <div class="gd-hero-badge">
                     <div class="pulse-dot"></div>
-                    Idea Portal — Now Live
+                    {!! $heroBadge !!}
                 </div>
                 <h1 class="gd-hero-heading">{!! $heroTitle !!}</h1>
                 <p class="gd-hero-desc">{{ $heroSubtitle }}</p>
                 <div class="gd-hero-ctas">
-                    <a href="{{ route('auth.register') }}" class="btn btn-light">
-                        <i class="fa fa-user-plus"></i> Register as Agent
+                    <a href="{{ $heroBtn1Link }}" class="btn btn-light">
+                        <i class="fa fa-user-plus"></i> {{ $heroBtn1Text }}
                     </a>
-                    <a href="{{ route('guest.universities.index') }}" class="btn btn-outline-light">
-                        <i class="fa fa-university"></i> Explore Universities
+                    <a href="{{ $heroBtn2Link }}" class="btn btn-outline-light">
+                        <i class="fa fa-university"></i> {{ $heroBtn2Text }}
                     </a>
                 </div>
                 <div class="gd-hero-stats">
                     <div class="gd-hero-stat">
                         <span class="gd-hero-stat-val">{{ $uniCount }}+</span>
-                        <span class="gd-hero-stat-lbl">Universities</span>
+                        <span class="gd-hero-stat-lbl">{{ $heroStat1Label }}</span>
                     </div>
                     <div class="gd-hero-stat">
                         <span class="gd-hero-stat-val">{{ $countryCount }}+</span>
-                        <span class="gd-hero-stat-lbl">Countries</span>
+                        <span class="gd-hero-stat-lbl">{{ $heroStat2Label }}</span>
                     </div>
                     <div class="gd-hero-stat">
                         <span class="gd-hero-stat-val">{{ $courseCount }}+</span>
-                        <span class="gd-hero-stat-lbl">Courses</span>
+                        <span class="gd-hero-stat-lbl">{{ $heroStat3Label }}</span>
                     </div>
                 </div>
             </div>
@@ -299,8 +323,8 @@
     {{-- ───── FILTER ───── --}}
     <section class="gd-filter-section">
         <div class="gd-filter-inner">
-            <h2>Find Universities & Courses</h2>
-            <p>Search by country, city, university or specific course — discover your best fit.</p>
+            <h2>{{ $sectionFilterTitle }}</h2>
+            <p>{!! $sectionFilterDesc !!}</p>
             @include('partials.uni_filter')
         </div>
     </section>
@@ -310,8 +334,8 @@
     <section class="gd-section">
         <div class="gd-section-inner">
             <div style="text-align:center;max-width:600px;margin:0 auto;">
-                <div class="gd-section-tag">Why Choose Us</div>
-                <h2 class="gd-section-title">Everything You Need to <br>Place Students Globally</h2>
+                <div class="gd-section-tag">{{ $sectionFeaturesTag }}</div>
+                <h2 class="gd-section-title">{!! $sectionFeaturesTitle !!}</h2>
             </div>
             <div class="gd-features-grid">
                 @foreach($features as $f)
@@ -342,8 +366,8 @@
     <section class="gd-section" style="background:var(--bg-card);">
         <div class="gd-section-inner">
             <div style="text-align:center;max-width:600px;margin:0 auto;">
-                <div class="gd-section-tag">Events</div>
-                <h2 class="gd-section-title">Upcoming Trainings & Webinars</h2>
+                <div class="gd-section-tag">{{ $sectionEventsTag }}</div>
+                <h2 class="gd-section-title">{!! $sectionEventsTitle !!}</h2>
             </div>
             <div class="gd-programs-grid">
                 @foreach($events as $event)
@@ -382,7 +406,7 @@
         <div class="gd-section-inner">
             <div style="text-align:center;max-width:600px;margin:0 auto;">
                 <div class="gd-section-tag">Global Reach</div>
-                <h2 class="gd-section-title">{{ $countriesTitle }}</h2>
+                <h2 class="gd-section-title">{!! $countriesTitle !!}</h2>
             </div>
             <div class="countries-grid mt-4">
                 @foreach($countriesData as $c)
@@ -400,8 +424,8 @@
     <section class="gd-testimonials-section">
         <div class="gd-section-inner">
             <div style="text-align:center;margin-bottom:0.5rem;">
-                <div class="gd-section-tag">Testimonials</div>
-                <h2 class="gd-section-title">What Our Agents Say</h2>
+                <div class="gd-section-tag">{{ $sectionTestimonialsTag }}</div>
+                <h2 class="gd-section-title">{!! $sectionTestimonialsTitle !!}</h2>
             </div>
             @if($testimonials->count())
             <div class="gd-testimonial-track">
@@ -455,8 +479,8 @@
     {{-- ───── UNIVERSITY LOGOS ───── --}}
     <section class="gd-unis-section">
         <div style="max-width:1200px;margin:0 auto;text-align:center;">
-            <div class="gd-section-tag">Our Network</div>
-            <h2 class="gd-section-title" style="font-size:1.75rem;">Partner Universities</h2>
+            <div class="gd-section-tag">{{ $sectionLogosTag }}</div>
+            <h2 class="gd-section-title" style="font-size:1.75rem;">{!! $sectionLogosTitle !!}</h2>
             @if(File::exists(storage_path('app/public/uni_logo')) && count(File::files(storage_path('app/public/uni_logo'))))
             <div class="gd-uni-logos-track">
                 @foreach(File::files(storage_path('app/public/uni_logo')) as $file)
@@ -473,6 +497,31 @@
     </section>
 
 </div>
+
+{{-- Guest Popup Notice --}}
+@if($popupSectionEnabled === '1' && $popupEnabled === '1')
+<div class="modal fade" id="guestPopupModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius:16px;">
+            <div class="modal-header border-0" style="background:linear-gradient(135deg,var(--primary),#0f0828);color:#fff;border-radius:16px 16px 0 0;">
+                <h5 class="modal-title fw-bold"><i class="fas fa-bullhorn me-2"></i>{{ $popupTitle }}</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center p-4">
+                @if($popupImage)
+                <img src="{{ $popupImage }}" alt="Popup" style="max-width:100%;max-height:200px;border-radius:8px;margin-bottom:1rem;">
+                @endif
+                @if($popupDescription)
+                <div class="text-muted">{!! $popupDescription !!}</div>
+                @endif
+            </div>
+            <div class="modal-footer border-0 justify-content-center pb-4">
+                <button type="button" class="btn btn-primary px-4" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
 @endsection
 
 @push('scripts')
@@ -490,6 +539,14 @@ document.addEventListener('DOMContentLoaded', function() {
             this.querySelector('i').classList.toggle('fa-eye-slash');
         });
     }
+    @if($popupSectionEnabled === '1' && $popupEnabled === '1')
+    var popupModal = new bootstrap.Modal(document.getElementById('guestPopupModal'));
+    popupModal.show();
+    setTimeout(function() {
+        var modal = bootstrap.Modal.getInstance(document.getElementById('guestPopupModal'));
+        if (modal) modal.hide();
+    }, {{ $popupDuration }});
+    @endif
 });
 </script>
 @endpush

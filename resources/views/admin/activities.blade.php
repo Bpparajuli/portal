@@ -51,6 +51,7 @@
                         <th>User</th>
                         <th>Type</th>
                         <th>Description</th>
+                        <th>Student</th>
                         <th style="width:100px">Actions</th>
                     </tr>
                 </thead>
@@ -63,6 +64,7 @@
                             <span class="badge bg-info bg-opacity-10 text-info text-capitalize">{{ str_replace('_', ' ', $activity->type) }}</span>
                         </td>
                         <td class="small">{{ $activity->description }}</td>
+                        <td class="small">{{ $activity->student?->full_name ?? '—' }}</td>
                         <td>
                             <div class="d-flex gap-1">
                                 <button type="button" class="btn btn-sm btn-outline-primary" title="View"
@@ -81,7 +83,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="5">
+                        <td colspan="6">
                             <x-empty-state icon="fa-history" title="No activities found" description="No activity records match your current filters." />
                         </td>
                     </tr>

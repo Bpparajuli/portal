@@ -150,6 +150,87 @@
     </div>
 </div>
 
+{{-- Agent Features (shown when role is agent) --}}
+<div id="agentFeaturesSection" class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden" style="display:{{ (old('role', $user->role ?? '') === 'agent') ? 'block' : 'none' }};">
+    <div class="px-4 py-3 d-flex align-items-center gap-3" style="background:linear-gradient(135deg, var(--info) 0%, #2563eb 100%);">
+        <div class="rounded-circle d-flex align-items-center justify-content-center" style="width:36px;height:36px;background:rgba(255,255,255,0.2);">
+            <i class="fas fa-user-tie text-white"></i>
+        </div>
+        <div>
+            <h6 class="fw-bold mb-0 text-white">Agent Features &amp; Limits</h6>
+            <small class="text-white-50">Configure per-agent limits and feature access</small>
+        </div>
+    </div>
+    <div class="card-body p-4">
+        <div class="row g-3 mb-4">
+            <div class="col-12">
+                <label class="form-label fw-semibold small">Select Plan / Package</label>
+                <div class="d-flex flex-wrap gap-2" id="planSelector">
+                    @php
+                        $planColors = ['secondary', 'info', 'success', 'warning', 'danger', 'primary'];
+                        $savedPlans = \App\Models\Setting::getValue('agent_plans', []);
+                        $plans = array_merge(
+                            [['id' => '', 'name' => 'Custom', 'staff_limit' => 1, 'student_limit' => 0, 'crm_enabled' => false]],
+                            $savedPlans
+                        );
+                        $currentPlan = old('subscription_plan', $user->subscription_plan ?? '');
+                    @endphp
+                    @foreach($plans as $pi => $plan)
+                    <button type="button" class="btn btn-outline-{{ $planColors[$pi] ?? 'secondary' }} btn-sm plan-option {{ $currentPlan === $plan['id'] ? 'active' : '' }}"
+                        data-plan="{{ $plan['id'] }}" data-staff="{{ $plan['staff_limit'] ?? 1 }}" data-students="{{ $plan['student_limit'] ?? 0 }}" data-crm="{{ ($plan['crm_enabled'] ?? false) ? '1' : '0' }}">
+                        <span class="fw-bold d-block">{{ $plan['name'] }}</span>
+                        <small>{{ $plan['staff_limit'] ?? 1 }} staff, {{ $plan['student_limit'] ?? 0 }} students{{ ($plan['crm_enabled'] ?? false) ? ', CRM' : '' }}</small>
+                    </button>
+                    @endforeach
+                </div>
+                <input type="hidden" name="subscription_plan" id="subscriptionPlan" value="{{ $currentPlan }}">
+            </div>
+        </div>
+        <div class="row g-4 border-top pt-4">
+            <div class="col-md-4">
+                <label class="form-label fw-semibold small">Max Staff Members</label>
+                <input type="number" name="max_staff" id="agentMaxStaff" class="form-control" value="{{ old('max_staff', $user->max_staff ?? 1) }}" min="0" max="100">
+                <small class="text-muted">Number of staff accounts this agent can create</small>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label fw-semibold small">Max Students</label>
+                <input type="number" name="max_students" id="agentMaxStudents" class="form-control" value="{{ old('max_students', $user->max_students ?? 0) }}" min="0" max="10000">
+                <small class="text-muted">Total student limit (0 = unlimited)</small>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label fw-semibold small">CRM Access</label>
+                <div class="form-check form-switch mt-2">
+                    <input class="form-check-input" type="checkbox" name="paid_crm" value="1" role="switch" id="crmToggle" {{ old('paid_crm', $user->paid_crm ?? false) ? 'checked' : '' }}>
+                    <label class="form-check-label small" for="crmToggle">Enable CRM module for this agent</label>
+                </div>
+                <small class="text-muted d-block mt-1">Grants access to CRM features</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const planSelector = document.getElementById('planSelector');
+    if (!planSelector) return;
+    planSelector.addEventListener('click', function(e) {
+        const btn = e.target.closest('.plan-option');
+        if (!btn) return;
+        planSelector.querySelectorAll('.plan-option').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('subscriptionPlan').value = btn.dataset.plan;
+        // If not custom, auto-fill the fields
+        if (btn.dataset.plan !== '') {
+            document.getElementById('agentMaxStaff').value = btn.dataset.staff;
+            document.getElementById('agentMaxStudents').value = btn.dataset.students;
+            document.getElementById('crmToggle').checked = btn.dataset.crm === '1';
+        }
+    });
+});
+</script>
+@endpush
+
 {{-- Documents & Files --}}
 <div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden">
     <div class="px-4 py-3 d-flex align-items-center gap-3" style="background:linear-gradient(135deg, var(--success) 0%, var(--success-dark) 100%);">

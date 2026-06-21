@@ -4,7 +4,7 @@
 
 @push('styles')
 <style>
-    :root { --primary: #1a0262; --primary-light: #2d0a8a; --accent: #820b5c; }
+    :root { --primary: #1a0262; --secondary: #820b5c; --accent: #820b5c; }
     * { font-family: 'Inter', sans-serif; }
     body { background: #f4f5f7; min-height: 100vh; }
     .gradient-header {

@@ -24,10 +24,6 @@
     class="nav-link {{ request()->routeIs('admin.courses.*') ? 'active' : '' }}">
     <i class="fas fa-book"></i> <span>Courses</span>
 </a>
-<a href="{{ route('admin.settings.index', ['group' => 'content']) }}"
-    class="nav-link {{ request('group') === 'content' ? 'active' : '' }}">
-    <i class="fas fa-palette"></i><span>Content</span>
-</a>
 <a href="{{ route('admin.testimonials.index') }}"
     class="nav-link {{ request()->routeIs('admin.testimonials.*') ? 'active' : '' }}">
     <i class="fas fa-star"></i><span>Testimonials</span>
@@ -58,27 +54,32 @@
     <i class="fas fa-question-circle"></i> <span>Enquiries</span>
 </a>
 
+<div class="nav-section">Settings</div>
+<a href="{{ route('admin.content') }}" class="nav-link {{ request()->routeIs('admin.content') ? 'active' : '' }}">
+    <i class="fas fa-edit"></i> <span>Content Manager</span>
+</a>
+<a href="{{ route('admin.settings.index', ['group' => 'global']) }}" class="nav-link {{ request()->routeIs('admin.settings.*') && request('group') === 'global' ? 'active' : '' }}">
+    <i class="fas fa-globe"></i> <span>Global</span>
+</a>
+<a href="{{ route('admin.settings.index', ['group' => 'appearance']) }}" class="nav-link {{ request()->routeIs('admin.settings.*') && request('group') === 'appearance' ? 'active' : '' }}">
+    <i class="fas fa-palette"></i> <span>Appearance</span>
+</a>
+
 <div class="nav-section">System</div>
 <a href="{{ route('admin.activities.index') }}"
     class="nav-link {{ request()->routeIs('admin.activities.*') ? 'active' : '' }}">
     <i class="fas fa-history"></i> <span>Activity Log</span>
 </a>
 <a href="{{ route('admin.users.index') }}" class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
-    <i class="fas fa-users-cog"></i> <span>Users</span>
+    <i class="fas fa-users-cog"></i> <span>Users &amp; Permissions</span>
 </a>
 <a href="{{ route('admin.users.waiting') }}"
     class="nav-link {{ request()->routeIs('admin.users.waiting') ? 'active' : '' }}">
     <i class="fas fa-clock"></i> <span>Waiting List</span>
 </a>
-<a href="{{ route('admin.pages.index') }}" class="nav-link {{ request()->routeIs('admin.pages.*') ? 'active' : '' }}">
-    <i class="fas fa-file"></i> <span>Pages</span>
-</a>
-<a href="{{ route('admin.settings.index') }}"
-    class="nav-link {{ request()->routeIs('admin.settings.*') ? 'active' : '' }}">
-    <i class="fas fa-cogs"></i> <span>Settings</span>
-</a>
-<a href="{{ route('admin.qr-code') }}" class="nav-link {{ request()->routeIs('admin.qr-code') ? 'active' : '' }}">
-    <i class="fas fa-qrcode"></i> <span>QR Code</span>
+<a href="{{ route('admin.trash.index') }}"
+    class="nav-link {{ request()->routeIs('admin.trash.*') ? 'active' : '' }}">
+    <i class="fas fa-trash-alt"></i> <span>Recycle Bin</span>
 </a>
 <a href="{{ route('admin.backup.index') }}"
     class="nav-link {{ request()->routeIs('admin.backup.*') ? 'active' : '' }}">
@@ -87,4 +88,3 @@
 <a href="{{ route('crm.dashboard') }}" class="nav-link">
     <i class="fas fa-tasks"></i> <span>CRM</span>
 </a>
-

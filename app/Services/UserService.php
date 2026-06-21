@@ -129,6 +129,10 @@ class UserService
         $user->name          = $request->name;
         $user->email         = $request->email;
         $user->role          = $request->role;
+        $user->max_staff         = $request->input('max_staff', $user->max_staff ?? 1);
+        $user->max_students      = $request->input('max_students', $user->max_students ?? 0);
+        $user->paid_crm          = $request->boolean('paid_crm');
+        $user->subscription_plan = $request->input('subscription_plan', $user->subscription_plan ?? '');
 
         $slug = strtolower(str_replace(' ', '-', $request->business_name));
         $originalSlug = $slug;
@@ -302,7 +306,7 @@ class UserService
         }
 
         $applications = Application::whereIn('student_id', $students->pluck('id'))
-            ->with(['student', 'course.university'])->get();
+            ->with(['student', 'course.university', 'status'])->get();
 
         $studentActivities = Activity::where('user_id', $user->id)
             ->whereIn('type', ['student_added', 'student_deleted'])
@@ -531,7 +535,7 @@ class UserService
         $staffCount = User::where('parent_id', $agent->id)
             ->where('role', 'staff')->count();
 
-        $staffLimit = 1;
+        $staffLimit = $agent->max_staff ?? 1;
         if ($staffCount >= $staffLimit) {
             throw new \RuntimeException("Staff limit ({$staffLimit}) reached. Cannot create more staff.");
         }
@@ -670,7 +674,7 @@ class UserService
      */
     public function canCreateStaff(User $agent): bool
     {
-        $staffLimit = 1;
+        $staffLimit = $agent->max_staff ?? 1;
         $staffCount = User::where('parent_id', $agent->id)
             ->where('role', 'staff')->count();
         return $staffCount < $staffLimit;

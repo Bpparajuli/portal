@@ -4,6 +4,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\StudentIntakeController;
 use App\Http\Controllers\Api\StudentApiController;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 // ============================================
 // PUBLIC API ROUTES

@@ -274,7 +274,7 @@
                                 <tr>
                                     <td class="align-middle">{{ $admin->id }}</td>
                                     <td class="align-middle">
-                                        @if ($admin->business_logo)
+                                        @if ($admin->business_logo && Storage::disk('public')->exists($admin->business_logo))
                                             <img src="{{ Storage::url($admin->business_logo) }}" alt="Logo"
                                                 width="50" height="50"
                                                 class="rounded shadow-sm border"
@@ -319,6 +319,16 @@
                                                 <li><a class="dropdown-item py-2"
                                                         href="{{ route('admin.users.edit', $admin->slug) }}"><i
                                                             class="fas fa-edit me-2"></i> Edit</a></li>
+                                                <li>
+                                                    <a class="dropdown-item py-2" href="#"
+                                                        data-bs-toggle="modal" data-bs-target="#changeRoleModal"
+                                                        data-slug="{{ $admin->slug }}"
+                                                        data-role="{{ $admin->role }}"
+                                                        data-active="{{ $admin->active }}"
+                                                        data-agreement="{{ $admin->agreement_status }}">
+                                                        <i class="fas fa-user-tag me-2"></i> Change Role
+                                                    </a>
+                                                </li>
                                                 @if (in_array(auth()->id(), [1, 2]) && $admin->id !== auth()->id())
                                                     <li>
                                                         <hr class="dropdown-divider">
@@ -383,7 +393,7 @@
                                 <tr>
                                     <td class="align-middle">{{ $staff->id }}</td>
                                     <td class="align-middle">
-                                        @if ($staff->business_logo)
+                                        @if ($staff->business_logo && Storage::disk('public')->exists($staff->business_logo))
                                             <img src="{{ Storage::url($staff->business_logo) }}" alt="Logo"
                                                 width="50" height="50"
                                                 class="rounded shadow-sm border"
@@ -429,6 +439,17 @@
                                                 <li><a class="dropdown-item py-2"
                                                         href="{{ route('admin.users.edit', $staff->slug) }}"><i
                                                             class="fas fa-edit me-2"></i> Edit</a></li>
+                                                <li>
+                                                    <a class="dropdown-item py-2" href="#"
+                                                        data-bs-toggle="modal" data-bs-target="#changeRoleModal"
+                                                        data-slug="{{ $staff->slug }}"
+                                                        data-role="{{ $staff->role }}"
+                                                        data-active="{{ $staff->active }}"
+                                                        data-agreement="{{ $staff->agreement_status }}"
+                                                        data-parent="{{ $staff->parent_id }}">
+                                                        <i class="fas fa-user-tag me-2"></i> Change Role
+                                                    </a>
+                                                </li>
                                                 @if (in_array(auth()->id(), [1, 2]) && $staff->id !== auth()->id())
                                                     <li>
                                                         <hr class="dropdown-divider">
@@ -481,6 +502,7 @@
                                 <th width="250">Contact Details</th>
                                 <th width="100">Status</th>
                                 <th width="120">Agreement</th>
+                                <th width="100">Plan</th>
                                 <th class="text-center" width="80">Students</th>
                                 <th class="text-center" width="80">Apps</th>
                                 <th width="80" class="text-end">Actions</th>
@@ -493,7 +515,7 @@
                                     <td class="align-middle">
                                         <div class="d-flex align-items-center">
                                             <div class="me-3">
-                                                @if ($agent->business_logo)
+                                                @if ($agent->business_logo && Storage::disk('public')->exists($agent->business_logo))
                                                     <img src="{{ Storage::url($agent->business_logo) }}" alt="Logo"
                                                         width="50" height="50"
                                                         class="rounded shadow-sm border"
@@ -560,6 +582,24 @@
                                             {{ str_replace('_', ' ', ucfirst($agent->agreement_status)) }}
                                         </span>
                                     </td>
+                                    <td class="align-middle">
+                                        @php
+                                            $planName = $agent->subscription_plan ? ucfirst($agent->subscription_plan) : '—';
+                                            $planClass = match ($agent->subscription_plan) {
+                                                'free' => 'bg-info bg-opacity-10 text-info',
+                                                'starter' => 'bg-success bg-opacity-10 text-success',
+                                                'professional' => 'bg-warning bg-opacity-10 text-warning',
+                                                'enterprise' => 'bg-danger bg-opacity-10 text-danger',
+                                                default => 'bg-secondary bg-opacity-10 text-secondary',
+                                            };
+                                        @endphp
+                                        <span class="badge {{ $planClass }} rounded-pill small fw-medium px-2 py-1">
+                                            {{ $planName }}
+                                        </span>
+                                        <small class="d-block text-muted" style="font-size:9px;line-height:1.2;">
+                                            S:{{ $agent->max_staff ?? 0 }} / St:{{ $agent->max_students ?? 0 }}{{ $agent->paid_crm ? ' / CRM' : '' }}
+                                        </small>
+                                    </td>
                                     <td class="align-middle text-center">
                                         <a href="{{ route('admin.users.students', $agent->slug) }}"
                                             class="btn btn-sm btn-outline-primary">
@@ -584,6 +624,27 @@
                                                 <li><a class="dropdown-item py-2"
                                                         href="{{ route('admin.users.edit', $agent->slug) }}"><i
                                                             class="fas fa-edit me-2"></i> Edit</a></li>
+                                                <li>
+                                                    <a class="dropdown-item py-2" href="#"
+                                                        data-bs-toggle="modal" data-bs-target="#quickPlanModal"
+                                                        data-slug="{{ $agent->slug }}"
+                                                        data-plan="{{ $agent->subscription_plan }}"
+                                                        data-staff="{{ $agent->max_staff }}"
+                                                        data-students="{{ $agent->max_students }}"
+                                                        data-crm="{{ $agent->paid_crm ? '1' : '0' }}">
+                                                        <i class="fas fa-box me-2"></i> Quick Plan
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a class="dropdown-item py-2" href="#"
+                                                        data-bs-toggle="modal" data-bs-target="#changeRoleModal"
+                                                        data-slug="{{ $agent->slug }}"
+                                                        data-role="{{ $agent->role }}"
+                                                        data-active="{{ $agent->active }}"
+                                                        data-agreement="{{ $agent->agreement_status }}">
+                                                        <i class="fas fa-user-tag me-2"></i> Change Role
+                                                    </a>
+                                                </li>
                                                 @if (in_array(auth()->id(), [1, 2]) && !in_array($agent->id, [1, 2]))
                                                     <li>
                                                         <hr class="dropdown-divider">
@@ -629,6 +690,134 @@
             </a>
         </div>
     @endif
+
+    {{-- Change Role Modal --}}
+    <div class="modal fade" id="changeRoleModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form method="POST" action="" id="changeRoleForm">
+                    @csrf
+                    @method('PUT')
+                    <div class="modal-header">
+                        <h5 class="modal-title"><i class="fas fa-user-tag me-2"></i>Change Role</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">User</label>
+                            <p class="fw-bold mb-0" id="changeRoleUserName">—</p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">New Role</label>
+                            <select name="role" class="form-select" id="changeRoleSelect" onchange="toggleParentField()">
+                                <option value="admin">Admin</option>
+                                <option value="agent">Agent</option>
+                                <option value="staff">Staff</option>
+                                <option value="university">University</option>
+                                <option value="student">Student</option>
+                            </select>
+                        </div>
+                        <div class="mb-3" id="changeRoleParentGroup" style="display:none;">
+                            <label class="form-label">Parent Agent/Admin</label>
+                            <select name="parent_id" class="form-select">
+                                <option value="">— Select Parent —</option>
+                                @foreach ($parents as $parent)
+                                    <option value="{{ $parent->id }}" data-role="{{ $parent->role }}">
+                                        {{ $parent->business_name }} ({{ ucfirst($parent->role) }})
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Status</label>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" name="status" id="changeRoleStatus" value="1">
+                                <label class="form-check-label" for="changeRoleStatus">Active</label>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Agreement Status</label>
+                            <select name="agreement_status" class="form-select" id="changeRoleAgreement">
+                                <option value="">— No Change —</option>
+                                <option value="not_uploaded">Not Uploaded</option>
+                                <option value="uploaded">Uploaded</option>
+                                <option value="verified">Verified</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    {{-- Quick Plan Modal --}}
+    <div class="modal fade" id="quickPlanModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <form method="POST" action="" id="quickPlanForm">
+                    @csrf
+                    @method('PUT')
+                    <div class="modal-header">
+                        <h5 class="modal-title"><i class="fas fa-box me-2 text-primary"></i>Quick Plan</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="small text-muted mb-3" id="quickPlanUserName">Set plan for —</p>
+
+                        @php $savedPlans = \App\Models\Setting::getValue('agent_plans', []); @endphp
+                        @if(count($savedPlans))
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold small">Select Plan</label>
+                            <div class="d-flex flex-wrap gap-2" id="quickPlanSelector">
+                                @php $planColors = ['info', 'success', 'warning', 'danger', 'primary']; @endphp
+                                @foreach($savedPlans as $pi => $plan)
+                                <button type="button" class="btn btn-outline-{{ $planColors[$pi] ?? 'secondary' }} btn-sm quick-plan-option"
+                                    data-plan="{{ $plan['id'] }}" data-staff="{{ $plan['staff_limit'] ?? 1 }}" data-students="{{ $plan['student_limit'] ?? 0 }}" data-crm="{{ ($plan['crm_enabled'] ?? false) ? '1' : '0' }}">
+                                    <span class="fw-bold d-block">{{ $plan['name'] }}</span>
+                                    <small>{{ $plan['staff_limit'] ?? 1 }} staff, {{ $plan['student_limit'] ?? 0 }} students{{ ($plan['crm_enabled'] ?? false) ? ', CRM' : '' }}</small>
+                                </button>
+                                @endforeach
+                                <button type="button" class="btn btn-outline-secondary btn-sm quick-plan-option active"
+                                    data-plan="" data-staff="0" data-students="0" data-crm="0">
+                                    <span class="fw-bold d-block">Custom</span>
+                                    <small>Manual entry</small>
+                                </button>
+                            </div>
+                        </div>
+                        <hr>
+                        @endif
+
+                        <input type="hidden" name="subscription_plan" id="quickSubscriptionPlan" value="">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold small">Max Staff</label>
+                                <input type="number" name="max_staff" id="quickMaxStaff" class="form-control" min="0" max="100">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold small">Max Students</label>
+                                <input type="number" name="max_students" id="quickMaxStudents" class="form-control" min="0" max="10000">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold small">CRM Access</label>
+                                <div class="form-check form-switch mt-2">
+                                    <input class="form-check-input" type="checkbox" name="paid_crm" value="1" id="quickCrmToggle">
+                                    <label class="form-check-label small" for="quickCrmToggle">Enabled</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-sm btn-primary"><i class="fas fa-save me-1"></i>Save Plan</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 @endsection
 
 @push('scripts')
@@ -692,5 +881,72 @@
             url.searchParams.set('export', type);
             window.location.href = url.toString();
         }
+
+        // Change Role Modal
+        document.querySelectorAll('[data-bs-target="#changeRoleModal"]').forEach(el => {
+            el.addEventListener('click', function(e) {
+                const slug = this.dataset.slug;
+                const role = this.dataset.role;
+                const active = this.dataset.active;
+                const agreement = this.dataset.agreement;
+                const parentId = this.dataset.parent;
+
+                const form = document.getElementById('changeRoleForm');
+                form.action = '/admin/users/' + slug + '/change-role';
+
+                document.getElementById('changeRoleSelect').value = role;
+                document.getElementById('changeRoleStatus').checked = active === '1';
+                document.getElementById('changeRoleAgreement').value = agreement || '';
+
+                const parentSelect = form.querySelector('[name="parent_id"]');
+                if (parentSelect) parentSelect.value = parentId || '';
+
+                toggleParentField();
+            });
+        });
+
+        function toggleParentField() {
+            const role = document.getElementById('changeRoleSelect').value;
+            const group = document.getElementById('changeRoleParentGroup');
+            group.style.display = role === 'staff' ? 'block' : 'none';
+            const select = group.querySelector('select');
+            if (role !== 'staff') select.value = '';
+        }
+
+        // Quick Plan Modal
+        document.querySelectorAll('[data-bs-target="#quickPlanModal"]').forEach(el => {
+            el.addEventListener('click', function(e) {
+                const slug = this.dataset.slug;
+                const plan = this.dataset.plan || '';
+                const staff = this.dataset.staff || '1';
+                const students = this.dataset.students || '0';
+                const crm = this.dataset.crm || '0';
+
+                const form = document.getElementById('quickPlanForm');
+                form.action = '/admin/users/' + slug + '/update-plan';
+
+                document.getElementById('quickSubscriptionPlan').value = plan;
+                document.getElementById('quickMaxStaff').value = staff;
+                document.getElementById('quickMaxStudents').value = students;
+                document.getElementById('quickCrmToggle').checked = crm === '1';
+
+                document.querySelectorAll('#quickPlanSelector .quick-plan-option').forEach(b => {
+                    b.classList.toggle('active', b.dataset.plan === plan);
+                });
+            });
+        });
+
+        document.getElementById('quickPlanSelector')?.addEventListener('click', function(e) {
+            const btn = e.target.closest('.quick-plan-option');
+            if (!btn) return;
+            this.querySelectorAll('.quick-plan-option').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById('quickSubscriptionPlan').value = btn.dataset.plan;
+            if (btn.dataset.plan !== '') {
+                document.getElementById('quickMaxStaff').value = btn.dataset.staff;
+                document.getElementById('quickMaxStudents').value = btn.dataset.students;
+                document.getElementById('quickCrmToggle').checked = btn.dataset.crm === '1';
+            }
+        });
     </script>
 @endpush

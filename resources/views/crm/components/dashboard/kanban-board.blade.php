@@ -241,7 +241,7 @@
         .student-card:hover {
             box-shadow: var(--shadow-md);
             transform: translateY(-0.5px);
-            border-color: var(--primary-light);
+            border-color: var(--primary);
         }
 
         .student-card:active {

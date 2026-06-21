@@ -17,6 +17,11 @@
                 str_contains(strtolower($s->name ?? ''), 'offer'),
         )
         ->sum('applications_count');
+    $agentPopupEnabled = App\Models\Setting::getValue('content.agent_popup_enabled', '0');
+    $agentPopupTitle = App\Models\Setting::getValue('content.agent_popup_title', 'Notice');
+    $agentPopupDescription = App\Models\Setting::getValue('content.agent_popup_description', '');
+    $agentPopupImage = App\Models\Setting::resolveImageUrl(App\Models\Setting::getValue('content.agent_popup_image', ''));
+    $agentPopupDuration = (int) App\Models\Setting::getValue('content.agent_popup_duration', '5000');
 @endphp
 
 @section('agent-content')
@@ -227,9 +232,9 @@
                     @forelse($latestApplications as $app)
                         <tr>
                             <td style="font-weight:700;color:var(--text-muted);">#{{ $app->id }}</td>
-                            <td><a href="{{ route('agent.students.show', $app->student->id) }}"
-                                    class="app-name">{{ $app->student->first_name ?? '' }}
-                                    {{ $app->student->last_name ?? 'N/A' }}</a></td>
+                            <td><a href="{{ $app->student ? route('agent.students.show', $app->student->id) : '#' }}"
+                                    class="app-name">{{ $app->student?->first_name ?? '' }}
+                                    {{ $app->student?->last_name ?? 'N/A' }}</a></td>
                             <td style="font-size:.78rem;color:var(--text-muted);white-space:nowrap;">
                                 {{ $app->created_at->timezone('Asia/Kathmandu')->format('d M Y') }}</td>
                             <td>
@@ -256,7 +261,7 @@
                                             <hr class="dropdown-divider">
                                         </li>
                                         <li><a class="dropdown-item"
-                                                href="{{ route('agent.students.show', $app->student->id) }}"><i
+                                                href="{{ $app->student ? route('agent.students.show', $app->student->id) : '#' }}"><i
                                                     class="fas fa-user-graduate me-2"></i> Student Profile</a></li>
                                         <li>
                                             <hr class="dropdown-divider">
@@ -501,4 +506,44 @@
             updateClock();
         });
     </script>
+
+    <div class="modal fade" id="agentPopupModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg" style="border-radius:16px;">
+                <div class="modal-header border-0" style="background:linear-gradient(135deg,var(--primary),#0f0828);color:#fff;border-radius:16px 16px 0 0;">
+                    <h5 class="modal-title fw-bold"><i class="fas fa-bullhorn me-2"></i>{{ $agentPopupTitle }}</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center p-4">
+                    @if($agentPopupImage)
+                    <img src="{{ $agentPopupImage }}" alt="Popup" style="max-width:100%;max-height:200px;border-radius:8px;margin-bottom:1rem;">
+                    @endif
+                    @if($agentPopupDescription)
+                    <div class="text-muted">{!! $agentPopupDescription !!}</div>
+                    @endif
+                </div>
+                <div class="modal-footer border-0 justify-content-center pb-4">
+                    <button type="button" class="btn btn-primary px-4" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    @if($agentPopupEnabled === '1')
+    var el = document.getElementById('agentPopupModal');
+    if (el) {
+        var popupModal = new bootstrap.Modal(el, { backdrop: 'static', keyboard: false });
+        popupModal.show();
+        setTimeout(function() {
+            var modal = bootstrap.Modal.getInstance(el);
+            if (modal) modal.hide();
+        }, {{ $agentPopupDuration }});
+    }
+    @endif
+});
+</script>
+@endpush

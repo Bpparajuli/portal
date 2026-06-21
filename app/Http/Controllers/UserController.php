@@ -105,6 +105,10 @@ class UserController extends Controller
             'registration'    => 'nullable|file|max:20480',
             'pan'             => 'nullable|file|max:20480',
             'agreement_file'  => 'nullable|file|max:20480',
+            'max_staff'          => 'nullable|integer|min:0|max:100',
+            'max_students'       => 'nullable|integer|min:0|max:10000',
+            'paid_crm'           => 'nullable|boolean',
+            'subscription_plan'  => 'nullable|string|max:50',
         ]);
 
         $user = $this->userService->createUser($request);
@@ -182,6 +186,10 @@ class UserController extends Controller
             'registration'    => 'nullable|file|max:20480',
             'pan'             => 'nullable|file|max:20480',
             'agreement_file'  => 'nullable|file|max:20480',
+            'max_staff'          => 'nullable|integer|min:0|max:100',
+            'max_students'       => 'nullable|integer|min:0|max:10000',
+            'paid_crm'           => 'nullable|boolean',
+            'subscription_plan'  => 'nullable|string|max:50',
         ]);
 
         $this->userService->updateUser($user, $request);
@@ -202,6 +210,62 @@ class UserController extends Controller
 
         $this->userService->deleteUser($user);
         return redirect()->route('admin.users.index')->with('success', 'User deleted successfully.');
+    }
+
+    public function changeRole(Request $request, User $user)
+    {
+        if (!Auth::user()->is_admin) abort(403);
+
+        $request->validate([
+            'role'             => 'required|in:admin,agent,staff,university,student',
+            'status'           => 'nullable|boolean',
+            'parent_id'        => 'nullable|exists:users,id|required_if:role,staff',
+            'agreement_status' => 'nullable|in:not_uploaded,uploaded,verified',
+            'max_staff'          => 'nullable|integer|min:0|max:100',
+            'max_students'       => 'nullable|integer|min:0|max:10000',
+            'paid_crm'           => 'nullable|boolean',
+            'subscription_plan'  => 'nullable|string|max:50',
+        ]);
+
+        $user->role = $request->role;
+        $user->active = $request->input('status', 0) == 1 ? 1 : 0;
+        $user->agreement_status = $request->agreement_status ?? $user->agreement_status;
+        $user->max_staff = $request->input('max_staff', $user->max_staff ?? 1);
+        $user->max_students = $request->input('max_students', $user->max_students ?? 0);
+        $user->paid_crm = $request->boolean('paid_crm');
+        $user->subscription_plan = $request->input('subscription_plan', $user->subscription_plan ?? '');
+
+        if ($request->role === 'staff' && $request->filled('parent_id')) {
+            $user->parent_id = $request->parent_id;
+        } elseif ($request->role !== 'staff') {
+            $user->parent_id = null;
+        }
+
+        $user->save();
+
+        return redirect()->route('admin.users.index')
+            ->with('success', "{$user->business_name} role updated to " . ucfirst($request->role) . ".");
+    }
+
+    public function updatePlan(Request $request, User $user)
+    {
+        if (!Auth::user()->is_admin) abort(403);
+
+        $request->validate([
+            'max_staff'         => 'nullable|integer|min:0|max:100',
+            'max_students'      => 'nullable|integer|min:0|max:10000',
+            'paid_crm'          => 'nullable|boolean',
+            'subscription_plan' => 'nullable|string|max:50',
+        ]);
+
+        $user->max_staff = $request->input('max_staff', $user->max_staff ?? 1);
+        $user->max_students = $request->input('max_students', $user->max_students ?? 0);
+        $user->paid_crm = $request->boolean('paid_crm');
+        $user->subscription_plan = $request->input('subscription_plan', $user->subscription_plan ?? '');
+        $user->save();
+
+        return redirect()->route('admin.users.index')
+            ->with('success', "{$user->business_name} plan updated successfully.");
     }
 
     // ================================================

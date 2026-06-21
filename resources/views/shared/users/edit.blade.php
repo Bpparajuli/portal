@@ -228,8 +228,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     const roleSelect = document.getElementById('role');
     if (roleSelect) {
-        roleSelect.addEventListener('change', toggleParentField);
+        roleSelect.addEventListener('change', function() { toggleParentField(); toggleAgentFeatures(); });
         toggleParentField();
+        toggleAgentFeatures();
     }
     @endif
 
@@ -280,6 +281,12 @@ function toggleParentField() {
     const roleVal = document.getElementById('role')?.value;
     const c = document.getElementById('parentFieldContainer');
     if (c) c.style.display = roleVal === 'staff' ? 'block' : 'none';
+}
+
+function toggleAgentFeatures() {
+    const roleVal = document.getElementById('role')?.value;
+    const el = document.getElementById('agentFeaturesSection');
+    if (el) el.style.display = roleVal === 'agent' ? 'block' : 'none';
 }
 
 function deleteAgreement(url, name) {

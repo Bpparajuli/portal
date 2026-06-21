@@ -32,7 +32,7 @@
                         <span><i class="fa-regular fa-envelope"></i> {{ $student->email ?? '—' }}</span>
                     </div>
                     <div class="student-agent-info">
-                        @if ($student->agent && $student->agent->business_logo)
+                        @if ($student->agent && $student->agent->business_logo && Storage::disk('public')->exists($student->agent->business_logo))
                             <img src="{{ Storage::url($student->agent->business_logo) }}" alt="Logo"
                                 class="agent-logo-sm">
                         @else

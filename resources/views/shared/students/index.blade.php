@@ -181,14 +181,14 @@
         <div class="card border-0 shadow-sm mb-4 rounded-3">
             <div class="card-body p-3">
                 <form method="GET" action="{{ route($__routePrefix . '.index') }}" id="filterForm">
-                    <div class="row g-2 align-items-end">
-                        <div class="col-md-3">
+                    <div class="row g-1 align-items-end">
+                        <div class="col-md-2">
                             <label class="form-label small fw-semibold mb-1">Search</label>
                             <input type="text" name="search" value="{{ request('search') }}"
-                                class="form-control form-control-sm" placeholder="Name, email, agent, course..."
+                                class="form-control form-control-sm" placeholder="Name, email, course..."
                                 id="searchInput">
                         </div>
-                        <div class="col-md-2">
+                        <div class="col-md-1">
                             <label class="form-label small fw-semibold mb-1">Country</label>
                             <select name="country" class="form-select form-select-sm" id="countrySelect">
                                 <option value="">All Countries</option>
@@ -213,7 +213,7 @@
                             </select>
                         </div>
                         @if ($__isMgmt)
-                            <div class="col-md-2">
+                            <div class="col-md-1">
                                 <label class="form-label small fw-semibold mb-1">Agent</label>
                                 <select name="agent" class="form-select form-select-sm" id="agentSelect">
                                     <option value="">All</option>
@@ -239,8 +239,8 @@
                             </select>
                         </div>
                         @if (!$__isStaff)
-                            <div class="col-md-2">
-                                <label class="form-label small fw-semibold mb-1">Document Status</label>
+                            <div class="col-md-1">
+                                <label class="form-label small fw-semibold mb-1">Documents</label>
                                 <select name="document_status" class="form-select form-select-sm">
                                     <option value="">All</option>
                                     @foreach (['Not Uploaded', 'Incomplete', 'Completed'] as $ds)
@@ -251,7 +251,7 @@
                                 </select>
                             </div>
                         @endif
-                        <div class="col-md-1 d-flex gap-1">
+                        <div class="col-auto d-flex gap-1">
                             <a href="{{ route($__routePrefix . '.index') }}" class="btn btn-outline-danger btn-sm">
                                 <i class="fa-solid fa-xmark"></i>
                             </a>

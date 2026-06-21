@@ -92,7 +92,7 @@
     }
 
     .student-icon {
-        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+        background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
         color: var(--white);
     }
 
@@ -852,7 +852,7 @@
                                             <td>
                                                 @if ($application)
                                                     <a href="{{ route($routePrefix . '.applications.show', $application->id) }}">
-                                                        <span class="badge {{ $application->status_class ?? 'bg-secondary' }}">{{ $application->application_status ?? 'Pending' }}</span>
+                                                        <span class="badge" style="background:{{ $application->status?->bg_color ?? '#6c757d' }};color:{{ $application->status?->text_color ?? '#fff' }};">{{ $application->status?->name ?? 'Pending' }}</span>
                                                     </a>
                                                 @else
                                                     <span class="badge bg-light text-muted">No Application</span>

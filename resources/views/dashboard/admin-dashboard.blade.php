@@ -140,9 +140,9 @@
                     <div class="rank-row">
                         <div class="rank-no {{ ['rk-gold', 'rk-silver', 'rk-bronze'][$i] ?? 'rk-other' }}">
                             {{ $i + 1 }}</div>
-                        @if ($agent->business_logo)
-                            <img src="{{ Storage::url($agent->business_logo) }}" class="agent-ava" alt="">
-                        @else
+                    @if ($agent->business_logo && Storage::disk('public')->exists($agent->business_logo))
+                        <img src="{{ Storage::url($agent->business_logo) }}" class="agent-ava" alt="">
+                    @else
                             <div class="agent-ava-ph">{{ strtoupper(substr($agent->name, 0, 1)) }}</div>
                         @endif
                         <div style="flex:1;min-width:0;">
@@ -268,9 +268,9 @@
                     @forelse($latestApplications as $app)
                         <tr>
                             <td style="font-weight:700;color:var(--text-muted);">#{{ $app->id }}</td>
-                            <td><a href="{{ route('admin.students.show', $app->student->id) }}"
-                                    class="app-name">{{ $app->student->first_name ?? '' }}
-                                    {{ $app->student->last_name ?? 'N/A' }}</a></td>
+                            <td><a href="{{ $app->student ? route('admin.students.show', $app->student->id) : '#' }}"
+                                    class="app-name">{{ $app->student?->first_name ?? '' }}
+                                    {{ $app->student?->last_name ?? 'N/A' }}</a></td>
                             <td style="font-size:.78rem;"><a
                                     href="{{ route('admin.users.show', $app->agent->slug ?? $app->agent->id) }}"
                                     class="text-secondary"
@@ -302,9 +302,9 @@
                                             <hr class="dropdown-divider">
                                         </li>
                                         <li><a class="dropdown-item"
-                                                href="{{ route('admin.students.show', $app->student->id) }}"><i
+                                                href="{{ $app->student ? route('admin.students.show', $app->student->id) : '#' }}"><i
                                                     class="fas fa-user-graduate me-2"></i> Student Profile</a></li>
-                                        <li><a class="dropdown-item" href="mailto:{{ $app->student->email ?? '' }}"><i
+                                        <li><a class="dropdown-item" href="mailto:{{ $app->student?->email ?? '' }}"><i
                                                     class="fas fa-envelope me-2"></i> Email Student</a></li>
                                         <li>
                                             <hr class="dropdown-divider">

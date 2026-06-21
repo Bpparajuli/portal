@@ -209,7 +209,18 @@ Route::middleware(['auth', \App\Http\Middleware\IsAdmin::class])
         Route::get('users/{agent:slug}/students', [UserController::class, 'students'])->name('users.students');
         Route::get('users/{agent:slug}/applications', [UserController::class, 'applications'])->name('users.applications');
         Route::get('users/get-parents', [UserController::class, 'getParents'])->name('users.get-parents');
+        Route::put('users/{user:slug}/change-role', [UserController::class, 'changeRole'])->name('users.changeRole');
+        Route::put('users/{user:slug}/update-plan', [UserController::class, 'updatePlan'])->name('users.updatePlan');
         Route::resource('users', UserController::class)->parameters(['users' => 'user:slug']);
+
+        // Trash / Recycle Bin
+        Route::prefix('trash')->name('trash.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Admin\TrashController::class, 'index'])->name('index');
+            Route::put('{modelType}/{id}/restore', [\App\Http\Controllers\Admin\TrashController::class, 'restore'])->name('restore');
+            Route::delete('{modelType}/{id}/force-delete', [\App\Http\Controllers\Admin\TrashController::class, 'forceDelete'])->name('force-delete');
+            Route::put('{modelType}/restore-all', [\App\Http\Controllers\Admin\TrashController::class, 'restoreAll'])->name('restore-all');
+            Route::delete('{modelType}/empty', [\App\Http\Controllers\Admin\TrashController::class, 'emptyTrash'])->name('empty');
+        });
 
         Route::post('/users/reminder/preview', [AdminReminderController::class, 'previewEmail'])->name('reminder.preview');
         // Dynamic Data
@@ -252,6 +263,7 @@ Route::middleware(['auth', \App\Http\Middleware\IsAdmin::class])
 
         // Revenue routes
         Route::get('revenues', [\App\Http\Controllers\Admin\RevenueController::class, 'index'])->name('revenues.index');
+        Route::post('revenues', [\App\Http\Controllers\Admin\RevenueController::class, 'store'])->name('revenues.store');
         Route::get('revenues/{revenue}/edit', [\App\Http\Controllers\Admin\RevenueController::class, 'edit'])->name('revenues.edit');
         Route::put('revenues/{revenue}', [\App\Http\Controllers\Admin\RevenueController::class, 'update'])->name('revenues.update');
         Route::delete('revenues/{revenue}', [\App\Http\Controllers\Admin\RevenueController::class, 'destroy'])->name('revenues.destroy');
@@ -290,9 +302,11 @@ Route::middleware(['auth', \App\Http\Middleware\IsAdmin::class])
         });
 
         // ========== NEW: DYNAMIC PAGES ==========
-        Route::resource('pages', AdminPageController::class);
+        Route::resource('pages', AdminPageController::class)->except(['create']);
         Route::get('pages/dynamic/content', [\App\Http\Controllers\Admin\PageController::class, 'dynamic'])->name('pages.dynamic');
+        Route::get('pages/dynamic/content', [\App\Http\Controllers\Admin\PageController::class, 'create'])->name('pages.create');
         Route::post('pages/dynamic/update', [\App\Http\Controllers\Admin\PageController::class, 'updateDynamic'])->name('pages.dynamic.update');
+        Route::get('content', [\App\Http\Controllers\Admin\PageController::class, 'consolidated'])->name('content');
 
         // ========== NEW: SETTINGS ==========
         Route::prefix('settings')->name('settings.')->group(function () {
@@ -301,7 +315,13 @@ Route::middleware(['auth', \App\Http\Middleware\IsAdmin::class])
             Route::post('/create', [AdminSettingController::class, 'store'])->name('store');
             Route::delete('{setting}', [AdminSettingController::class, 'destroy'])->name('destroy');
             Route::post('/upload-image', [AdminSettingController::class, 'uploadImage'])->name('upload-image');
+            Route::post('/rename-image', [AdminSettingController::class, 'renameImage'])->name('rename-image');
             Route::get('/images', [AdminSettingController::class, 'listImages'])->name('images');
+            Route::post('/branding', [AdminSettingController::class, 'updateBranding'])->name('branding.update');
+            Route::post('/content/save', [AdminSettingController::class, 'saveContent'])->name('content.save');
+            Route::post('/events/save', [AdminSettingController::class, 'saveEvents'])->name('events.save');
+            Route::post('/plans/save', [AdminSettingController::class, 'savePlans'])->name('plans.save');
+            Route::post('/design', [AdminSettingController::class, 'saveDesign'])->name('design.update');
         });
 
         // ========== NEW: ENQUIRIES ==========

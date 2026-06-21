@@ -17,12 +17,33 @@
         $siteName = App\Models\Setting::getValue('site.name', 'Idea Consultancy');
         $siteLogo = App\Models\Setting::getValue('site.logo', '');
         $notice = App\Models\Setting::getValue('site.notice', '');
+
+        $_gPrimary = App\Models\Setting::getValue('theme_primary', '#1a0262');
+        $_gSecondary = App\Models\Setting::getValue('theme_secondary', '#820b5c');
+        $_gSuccess = App\Models\Setting::getValue('theme_success', '#10b981');
+        $_gWarning = App\Models\Setting::getValue('theme_warning', '#f59e0b');
+        $_gInfo = App\Models\Setting::getValue('theme_info', '#3b82f6');
+        $_gDanger = App\Models\Setting::getValue('theme_danger', '#ef4444');
+        $_gText = App\Models\Setting::getValue('theme_text', '#1e293b');
+        $_gHeadingColor = App\Models\Setting::getValue('theme_heading_color', '#0f172a');
+        $_gBg = App\Models\Setting::getValue('theme_bg', '#f8fafc');
+        $_gBtnGradFrom = App\Models\Setting::getValue('theme_btn_gradient_from', '#1a0262');
+        $_gBtnGradTo = App\Models\Setting::getValue('theme_btn_gradient_to', '#2c0e8a');
     @endphp
     <style>
         :root {
-            --primary: #1a0262;
-            --primary-light: #2d0a8a;
-            --accent: #820b5c;
+            --primary: {{ $_gPrimary }};
+            --secondary: {{ $_gSecondary }};
+            --success: {{ $_gSuccess }};
+            --warning: {{ $_gWarning }};
+            --info: {{ $_gInfo }};
+            --danger: {{ $_gDanger }};
+            --accent: {{ $_gSecondary }};
+            --text: {{ $_gText }};
+            --heading-color: {{ $_gHeadingColor }};
+            --bg: {{ $_gBg }};
+            --btn-grad-from: {{ $_gBtnGradFrom }};
+            --btn-grad-to: {{ $_gBtnGradTo }};
             --font-family: 'Inter', sans-serif;
         }
 
@@ -31,14 +52,16 @@
         }
 
         body {
-            background: #fff;
+            background: var(--bg);
+            color: var(--text);
             min-height: 100vh;
             overflow-x: hidden;
         }
+        h1, h2, h3, h4, h5, h6 { color: var(--heading-color); }
 
         /* ───── Top Navbar ───── */
         .guest-header {
-            background: linear-gradient(135deg, #1a0262 0%, #0d013a 100%);
+            background: linear-gradient(135deg, var(--btn-grad-from) 0%, var(--btn-grad-to) 100%);
             padding: 0;
             position: sticky;
             top: 0;
@@ -143,15 +166,15 @@
         }
 
         .guest-header .btn-register {
-            background: linear-gradient(135deg, #820b5c, #a30e74);
+            background: linear-gradient(135deg, var(--secondary), #a30e74);
             color: #fff;
             border: 1.5px solid transparent;
-            box-shadow: 0 4px 14px rgba(130, 11, 92, 0.35);
+            box-shadow: 0 4px 14px rgba(from var(--secondary) r g b / 0.35);
         }
 
         .guest-header .btn-register:hover {
             transform: translateY(-1px);
-            box-shadow: 0 6px 20px rgba(130, 11, 92, 0.45);
+            box-shadow: 0 6px 20px rgba(from var(--secondary) r g b / 0.45);
         }
 
         .guest-header .navbar-toggler {
@@ -166,7 +189,7 @@
 
         /* ───── Notice Bar ───── */
         .notice-bar {
-            background: linear-gradient(90deg, #820b5c, #a30e74);
+            background: linear-gradient(90deg, var(--secondary), #a30e74);
             font-size: 0.85rem;
             color: #fff;
             overflow: hidden;
@@ -253,7 +276,7 @@
         <div class="container">
             <a class="navbar-brand" href="{{ route('home') }}">
                 @if($siteLogo)
-                    @php $logoSrc = str_starts_with($siteLogo, 'settings/') ? \Illuminate\Support\Facades\Storage::url($siteLogo) : asset('storage/uni_logo/' . $siteLogo); @endphp
+                    @php $logoSrc = str_starts_with($siteLogo, 'settings/') ? \Illuminate\Support\Facades\Storage::url($siteLogo) : (str_starts_with($siteLogo, 'images/') ? asset($siteLogo) : asset('storage/uni_logo/' . $siteLogo)); @endphp
                     <img src="{{ $logoSrc }}" alt="{{ $siteName }} logo">
                 @else
                     <span class="d-inline-flex align-items-center justify-content-center"

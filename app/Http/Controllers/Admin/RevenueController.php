@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Revenue;
+use App\Models\Student;
 use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 
 class RevenueController extends Controller
@@ -32,8 +34,33 @@ class RevenueController extends Controller
         $revenues = $query->latest('transaction_date')->paginate(20);
         $filteredTotal = $revenues->sum('amount');
         $agents = User::agents()->orderBy('business_name')->get();
+        $students = Student::with('agent')->orderBy('first_name')->get();
 
-        return view('admin.revenues', compact('revenues', 'grandTotal', 'filteredTotal', 'agents'));
+        return view('admin.revenues', compact('revenues', 'grandTotal', 'filteredTotal', 'agents', 'students'));
+    }
+
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'student_id' => 'required|exists:students,id',
+            'amount' => 'required|numeric|min:0',
+            'method' => 'required|in:cash,bank_transfer,credit_card,cheque,online_payment',
+            'transaction_date' => 'required|date',
+            'reference_number' => 'nullable|string|max:255',
+            'description' => 'nullable|string|max:1000',
+            'receipt_file' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
+        ]);
+
+        $validated['amount'] = round((float) $validated['amount'], 2);
+        $validated['created_by'] = Auth::id();
+
+        if ($request->hasFile('receipt_file')) {
+            $validated['receipt_file'] = $request->file('receipt_file')->store('revenues/receipts', 'public');
+        }
+
+        Revenue::create($validated);
+
+        return back()->with('success', 'Revenue added successfully.');
     }
 
     public function edit(Revenue $revenue)
