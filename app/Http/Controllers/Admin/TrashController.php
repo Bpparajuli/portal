@@ -24,7 +24,7 @@ class TrashController extends Controller
         'chat_message'       => ['class' => \App\Models\ChatMessage::class,        'label' => 'Chat Messages',    'icon' => 'fa-comments',          'title' => 'message'],
         'crm_task'           => ['class' => \App\Models\CrmTasks::class,           'label' => 'CRM Tasks',        'icon' => 'fa-tasks',             'title' => 'title'],
         'email'              => ['class' => \App\Models\Emails::class,             'label' => 'Emails',           'icon' => 'fa-envelope',          'title' => 'subject'],
-        'student_note'       => ['class' => \App\Models\StudentNote::class,        'label' => 'Student Notes',    'icon' => 'fa-sticky-note',        'title' => 'note'],
+        'student_note'       => ['class' => \App\Models\StudentNote::class,        'label' => 'Student Notes',    'icon' => 'fa-sticky-note',        'title' => 'content'],
         'student_stage'      => ['class' => \App\Models\StudentStage::class,       'label' => 'Student Stages',   'icon' => 'fa-layer-group',       'title' => 'name'],
     ];
 
@@ -34,7 +34,6 @@ class TrashController extends Controller
         'crm_task'     => 'student',
         'student_note' => 'student',
         'activity'     => 'student',
-        'email'        => 'student',
     ];
 
     public function index()

@@ -4,6 +4,7 @@
     let currentStudentId = {{ $student->id }};
     let historyLoaded = false;
     let currentRevenueId = null;
+    const isAdmin = {{ auth()->user()->is_admin ? 'true' : 'false' }};
 
     // ========== CSRF TOKEN HELPER ==========
     function getCsrfToken() {
@@ -33,21 +34,64 @@
                         '<div class="text-muted text-center py-4 small">No stage changes recorded.</div>';
                     return;
                 }
-                el.innerHTML = data.map(h => `
-                    <div style="display:flex;gap:.75rem;padding:.75rem 0;border-bottom:1px solid #e5e9f2">
+                el.innerHTML = data.map(h => {
+                    const deleteBtn = isAdmin ?
+                        `<button class="btn btn-sm btn-outline-danger" onclick="deleteHistory(${h.id})" title="Delete">
+                              <i class="fa fa-trash"></i>
+                          </button>` :
+                        '';
+                    return `
+                    <div style="display:flex;gap:.75rem;padding:.75rem 0;border-bottom:1px solid #e5e9f2;align-items:center">
                         <span style="font-size:1.1rem">🔄</span>
-                        <div>
+                        <div style="flex:1">
                             <div style="font-size:.85rem;font-weight:500">${escapeHtml(h.from)} → ${escapeHtml(h.to)}</div>
-                            <div style="font-size:.72rem;color:#6b7280">By ${escapeHtml(h.changed_by)} &bull; ${escapeHtml(h.date)}</div>
+                            <div style="font-size:.72rem;color:#6b7280">${escapeHtml(h.label)} &bull; ${escapeHtml(h.date)}</div>
                         </div>
-                    </div>
-                `).join('');
+                        ${deleteBtn}
+                    </div>`;
+                }).join('');
             })
             .catch(error => {
                 console.error('Error loading history:', error);
                 document.getElementById('stageHistoryContent').innerHTML =
                     '<div class="text-danger text-center py-3">Failed to load history.</div>';
             });
+    }
+
+    function deleteHistory(historyId) {
+        const url = '{{ route('crm.student.history.destroy', ['student' => $student, 'history' => '__HID__']) }}'.replace('__HID__', historyId);
+        Swal.fire({
+            title: 'Delete Stage History?',
+            text: 'Remove this stage change record?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Yes, delete it!',
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch(url, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': getCsrfToken(),
+                        'Accept': 'application/json',
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        historyLoaded = false;
+                        loadHistory();
+                        showToast(data.message || 'Deleted', 'success');
+                    } else {
+                        showToast(data.message || 'Failed to delete', 'error');
+                    }
+                })
+                .catch(() => {
+                    showToast('An error occurred', 'error');
+                });
+            }
+        });
     }
 
     // ========== NOTE FUNCTIONS ==========
@@ -1058,19 +1102,25 @@
     // ========== STUDENT RATING ==========
     function updateStudentRating(r) {
         fetch('/crm/student/' + currentStudentId + '/update-rating', {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': getCsrfToken(), 'Accept': 'application/json' },
-            body: JSON.stringify({ rating: r })
-        })
-        .then(res => res.json())
-        .then(d => {
-            if (d.success) {
-                showToast(d.message || 'Rating updated');
-                document.querySelectorAll('#studentStarRating input').forEach(el => {
-                    el.checked = parseInt(el.value) === r;
-                });
-            } else showToast(d.error || 'Failed', 'error');
-        })
-        .catch(() => showToast('Error updating rating', 'error'));
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': getCsrfToken(),
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    rating: r
+                })
+            })
+            .then(res => res.json())
+            .then(d => {
+                if (d.success) {
+                    showToast(d.message || 'Rating updated');
+                    document.querySelectorAll('#studentStarRating input').forEach(el => {
+                        el.checked = parseInt(el.value) === r;
+                    });
+                } else showToast(d.error || 'Failed', 'error');
+            })
+            .catch(() => showToast('Error updating rating', 'error'));
     }
 </script>

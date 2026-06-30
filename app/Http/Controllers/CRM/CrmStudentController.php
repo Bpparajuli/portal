@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\CRM;
 
 use App\Http\Controllers\Controller;
+use App\Models\Activity;
 use App\Models\CrmTasks;
 use App\Models\Student;
 use App\Models\StudentNote;
@@ -355,6 +356,16 @@ class CrmStudentController extends Controller
                 'is_log' => true,
             ]);
 
+            // Log student update activity
+            $changes = !empty($changes) ? implode('; ', $changes) : 'No changes';
+            Activity::create([
+                'user_id' => Auth::id(),
+                'type' => 'student_updated',
+                'description' => "✏️ Student updated: {$student->full_name} — {$changes}",
+                'notifiable_id' => $student->id,
+                'link' => route('crm.dashboard'),
+            ]);
+
             return redirect()->back()
                 ->with('success', 'Student updated successfully!');
         } catch (\Exception $e) {
@@ -426,6 +437,15 @@ class CrmStudentController extends Controller
             $updatedStudent = $this->studentService->saveStudent($serviceRequest, $student);
             $this->clearTodayTasksCache();
 
+            // Log student update activity
+            Activity::create([
+                'user_id' => Auth::id(),
+                'type' => 'student_updated',
+                'description' => "✏️ Student profile updated: {$updatedStudent->full_name}",
+                'notifiable_id' => $updatedStudent->id,
+                'link' => route('crm.student.show', $updatedStudent),
+            ]);
+
             $successMessage = sprintf(
                 "Student updated successfully!\n\nStudent: %s %s\nPhone: %s\nEmail: %s",
                 $updatedStudent->first_name,
@@ -450,11 +470,20 @@ class CrmStudentController extends Controller
             $this->authorizeStudent($student);
             $this->denyAgents();
 
+            $user = Auth::user();
             $studentName = $student->full_name;
             $this->studentService->deleteStudent($student);
             $this->clearTodayTasksCache();
 
-            return redirect()->route('crm.dashboard')
+            // Record who deleted the student
+            Activity::create([
+                'user_id' => $user->id,
+                'type' => 'student_deleted',
+                'description' => "Student deleted: {$studentName} by {$user->name}",
+                'notifiable_id' => $student->id,
+            ]);
+
+            return redirect()->back()
                 ->with('success', "Student '{$studentName}' has been deleted successfully!");
         } catch (\Exception $e) {
             Log::error('Student deletion failed: ' . $e->getMessage());

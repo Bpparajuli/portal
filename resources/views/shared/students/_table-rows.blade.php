@@ -179,7 +179,7 @@
                                 <x-confirm-delete url="{{ route($__routePrefix . '.destroy', $student->id) }}"
                                     label="Delete" title="Delete {{ $student->full_name }}?"
                                     message="This will permanently delete this student and all associated data."
-                                    mode="native" class="dropdown-item text-danger" />
+                                    class="dropdown-item text-danger" />
                             </li>
                         @endcan
                     </ul>

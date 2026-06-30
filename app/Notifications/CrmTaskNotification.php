@@ -26,13 +26,21 @@ class CrmTaskNotification extends Notification
 
     public function via($notifiable)
     {
-        if (!$this->shouldSend($notifiable)) {
+        if (!$this->shouldSendNotification($notifiable)) {
             return [];
         }
         return ['database'];
     }
 
-    private function shouldSend($notifiable)
+    /**
+     * Laravel 12 calls this from NotificationSender — must be public.
+     */
+    public function shouldSend($notifiable, $channel): bool
+    {
+        return $this->shouldSendNotification($notifiable);
+    }
+
+    private function shouldSendNotification($notifiable)
     {
         $preferences = $notifiable->crm_notification_preferences ?? [];
 

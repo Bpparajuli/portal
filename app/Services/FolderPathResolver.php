@@ -30,20 +30,21 @@ class FolderPathResolver
     /**
      * Resolve folder path for student files (photo, documents, SOP).
      *
-     * - Student has no agent or agent_id = 12 → staff/idea-baneswor/{studentName}/
-     * - Student's agent is staff              → staff/{agentParentSlug}/{studentName}/
-     * - Student's agent is admin              → admin/{agentSlug}/{studentName}/
-     * - Otherwise (regular agent)             → agents/{agentSlug}/{studentName}/
+     * - Student has no agent or agent_id = 12 → agents/idea-baneswor/{studentName}/
+     * - Student's is of admin staff  → agents/{agentParentSlug}/{studentName}/
+     * - Student's agent is admin     → admin/{agentSlug}/{studentName}/
+     * - Otherwise (regular agent)    → agents/{agentSlug}/{studentName}/
      */
     public function resolveStudentFolder(?User $studentAgent, string $studentName): string
     {
         if (!$studentAgent || $studentAgent->id === 12) {
-            return "staff/idea-baneswor/{$studentName}";
+            $slug = $studentAgent?->slug ?? 'idea-baneswor';
+            return "agents/{$slug}/{$studentName}";
         }
 
         if ($studentAgent->role === 'staff') {
             $parentSlug = $studentAgent->parent?->slug ?? 'unknown';
-            return "staff/{$parentSlug}/{$studentName}";
+            return "agents/{$parentSlug}/{$studentName}";
         }
 
         if ($studentAgent->role === 'admin') {

@@ -288,7 +288,12 @@ class DashboardController extends Controller
                 return response()->json(['success' => false, 'error' => 'Unauthorized'], 403);
             }
 
-            $student->update(['current_stage_id' => $request->stage_id]);
+            $newStageId = (int) $request->stage_id;
+
+            // Track stage change via moveToStage (creates StudentStageHistory + CrmTasks)
+            if ($student->current_stage_id != $newStageId) {
+                $student->moveToStage($newStageId, 'Stage changed via kanban drag-and-drop');
+            }
 
             return response()->json([
                 'success' => true,

@@ -3,11 +3,13 @@
 namespace App\Http\Controllers\CRM;
 
 use App\Http\Controllers\Controller;
+use App\Models\Activity;
 use App\Models\CrmTasks;
 use App\Models\Student;
 use App\Models\User;
 use App\Notifications\CrmTaskNotification;
 use Illuminate\Http\Request;
+use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -146,6 +148,16 @@ class CrmTasksController extends Controller
                 }
             }
 
+            // Log task creation activity
+            $student = Student::find($validated['student_id']);
+            Activity::create([
+                'user_id' => Auth::id(),
+                'type' => 'task_created',
+                'description' => "📋 Task created: {$validated['title']}" . ($student ? " for {$student->full_name}" : ''),
+                'notifiable_id' => $validated['student_id'],
+                'link' => route('crm.dashboard'),
+            ]);
+
             DB::commit();
             return redirect()->back()->with('success', '✅ Task created successfully.');
         } catch (\Exception $e) {
@@ -204,6 +216,9 @@ class CrmTasksController extends Controller
             'meta_data'          => json_encode($metaData),
         ]);
 
+        // Cleanup stale notifications if schedule or assignee changed
+        $this->cleanupTaskNotifications($task);
+
         return redirect()->back()->with('success', 'Task updated successfully.');
     }
 
@@ -229,15 +244,8 @@ class CrmTasksController extends Controller
         DB::beginTransaction();
 
         try {
-            // Delete all notifications for this task so completed tasks don't clutter the list
-            $userIds = collect([$task->assigned_to]);
-            if ($task->created_by && $task->created_by !== $task->assigned_to) {
-                $userIds->push($task->created_by);
-            }
-            \Illuminate\Notifications\DatabaseNotification::whereIn('notifiable_id', $userIds)
-                ->where('type', 'App\\Notifications\\CrmTaskNotification')
-                ->where('data->task_id', $task->id)
-                ->delete();
+            // Cleanup notifications for this task
+            $this->cleanupTaskNotifications($task);
 
             $updateData = [
                 'status' => 'completed',
@@ -279,6 +287,16 @@ class CrmTasksController extends Controller
                 ]);
             }
 
+            // Log task completion activity
+            $student = Student::find($task->student_id);
+            Activity::create([
+                'user_id' => Auth::id(),
+                'type' => 'task_completed',
+                'description' => "✅ Task completed: {$task->subject}" . ($student ? " for {$student->full_name}" : ''),
+                'notifiable_id' => $task->student_id,
+                'link' => $task->student_id ? route('crm.dashboard') : null,
+            ]);
+
             DB::commit();
 
             return redirect()->back()->with('success', 'Task completed successfully.');
@@ -301,11 +319,23 @@ class CrmTasksController extends Controller
         DB::beginTransaction();
 
         try {
+            $this->cleanupTaskNotifications($task);
+
             $task->update([
                 'status'             => 'cancelled',
                 'cancelled_at'       => now(),
                 'cancelled_by'       => Auth::id(),
                 'cancellation_note'  => $request->input('cancellation_reason'),
+            ]);
+
+            // Log task cancellation activity
+            $student = Student::find($task->student_id);
+            Activity::create([
+                'user_id' => Auth::id(),
+                'type' => 'task_cancelled',
+                'description' => "❌ Task cancelled: {$task->subject}" . ($student ? " for {$student->full_name}" : ''),
+                'notifiable_id' => $task->student_id,
+                'link' => $task->student_id ? route('crm.dashboard') : null,
             ]);
 
             DB::commit();
@@ -347,6 +377,9 @@ class CrmTasksController extends Controller
             'priority_time_slot' => $validated['time_slot'] ?? $task->priority_time_slot,
             'assigned_to' => $validated['assigned_to'] ?? $task->assigned_to,
         ]);
+
+        // Cleanup stale notifications after reschedule
+        $this->cleanupTaskNotifications($task);
 
         return redirect()->back()->with('success', 'Task rescheduled successfully.');
     }
@@ -397,6 +430,7 @@ class CrmTasksController extends Controller
                 ], 403);
             }
 
+            $this->cleanupTaskNotifications($task);
             $task->delete();
 
             return response()->json([
@@ -423,7 +457,15 @@ class CrmTasksController extends Controller
             'completion_note' => ['nullable', 'string'],
         ]);
 
-        $count = CrmTasks::whereIn('id', $request->input('task_ids'))
+        $taskIds = $request->input('task_ids');
+
+        // Cleanup notifications for all completed tasks
+        $tasks = CrmTasks::whereIn('id', $taskIds)->where('status', 'pending')->get();
+        foreach ($tasks as $t) {
+            $this->cleanupTaskNotifications($t);
+        }
+
+        $count = CrmTasks::whereIn('id', $taskIds)
             ->where('status', 'pending')
             ->update([
                 'status' => 'completed',
@@ -443,7 +485,15 @@ class CrmTasksController extends Controller
             'cancellation_reason' => ['required', 'string'],
         ]);
 
-        $count = CrmTasks::whereIn('id', $request->input('task_ids'))
+        $taskIds = $request->input('task_ids');
+
+        // Cleanup notifications for all cancelled tasks
+        $tasks = CrmTasks::whereIn('id', $taskIds)->where('status', 'pending')->get();
+        foreach ($tasks as $t) {
+            $this->cleanupTaskNotifications($t);
+        }
+
+        $count = CrmTasks::whereIn('id', $taskIds)
             ->where('status', 'pending')
             ->update([
                 'status' => 'cancelled',
@@ -622,5 +672,21 @@ class CrmTasksController extends Controller
         } catch (\Exception $e) {
             return response()->json(['has_duplicate' => false, 'error' => $e->getMessage()], 500);
         }
+    }
+
+    // =========================================================================
+    // CLEANUP HELPERS
+    // =========================================================================
+
+    private function cleanupTaskNotifications(CrmTasks $task)
+    {
+        $userIds = collect([$task->assigned_to]);
+        if ($task->created_by && $task->created_by !== $task->assigned_to) {
+            $userIds->push($task->created_by);
+        }
+        DatabaseNotification::whereIn('notifiable_id', $userIds)
+            ->where('type', 'App\\Notifications\\CrmTaskNotification')
+            ->where('data->task_id', $task->id)
+            ->delete();
     }
 }

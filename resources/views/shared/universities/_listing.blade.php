@@ -62,8 +62,7 @@
                 <div class="uni-listing-stat-card">
                     <div class="uni-listing-stat-icon" style="background:linear-gradient(135deg,#0284c7,#38bdf8)"><i
                             class="fas fa-globe-asia"></i></div>
-                    <div class="uni-listing-stat-num">
-                        {{ \App\Models\University::select('country')->distinct()->count() }}+</div>
+                    <div class="uni-listing-stat-num">{{ $countries->count() }}+</div>
                     <div class="uni-listing-stat-label">Countries</div>
                 </div>
             </div>

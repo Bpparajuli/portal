@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreStudentRequest;
 use App\Http\Requests\UpdateStudentRequest;
+use App\Models\Activity;
 use App\Models\Application;
 use App\Models\ApplicationStatus;
 use App\Models\Course;
@@ -310,15 +311,24 @@ class StudentController extends Controller
 
     public function destroy(Student $student)
     {
+        $user = Auth::user();
+        $studentName = $student->full_name;
+
         $this->studentService->deleteStudent($student);
 
-        $user = Auth::user();
+        // Record who deleted the student
+        Activity::create([
+            'user_id' => $user->id,
+            'type' => 'student_deleted',
+            'description' => "Student deleted: {$studentName} by {$user->name}",
+            'notifiable_id' => $student->id,
+        ]);
+
         if ($user->is_agent) {
             Cache::forget('agent_dashboard_stats_' . $user->id);
         }
 
-        return redirect()->route($user->role . '.students.index')
-            ->with('success', 'Student deleted successfully.');
+        return redirect()->back()->with('success', "Student '{$studentName}' deleted successfully.");
     }
 
     public function export(Request $request)

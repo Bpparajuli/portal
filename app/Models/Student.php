@@ -473,18 +473,14 @@ class Student extends Model
         $this->current_stage_id = $newStageId;
         $this->save();
 
-        // Create activity for stage change
-        CrmTasks::create([
-            'student_id' => $this->id,
-            'created_by' => Auth::id(),
-            'activity_type' => 'stage_change',
-            'subject' => 'Stage Changed',
-            'description' => "Student moved from " .
-                ($oldStageId ? StudentStage::find($oldStageId)?->name : 'Initial') .
-                " to " . $newStage->name .
-                ($reason ? " Reason: {$reason}" : ""),
-            'status' => 'completed',
-            'completed_at' => now(),
+        // Log stage change in admin activity list
+        $oldName = $oldStageId ? (StudentStage::find($oldStageId)?->name ?? 'Unknown') : 'Initial';
+        Activity::create([
+            'user_id' => Auth::id(),
+            'type' => 'stage_changed',
+            'description' => "🔄 Stage changed: {$this->full_name} from {$oldName} to {$newStage->name}" . ($reason ? " ({$reason})" : ''),
+            'notifiable_id' => $this->id,
+            'link' => null,
         ]);
 
         return true;

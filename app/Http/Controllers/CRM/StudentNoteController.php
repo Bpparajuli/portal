@@ -26,12 +26,12 @@ class StudentNoteController extends Controller
 
         $note = StudentNote::create([
             'student_id' => $validated['student_id'],
-            'content' => $validated['content'], // SAME AS NORMAL
+            'content' => $validated['content'],
             'created_by' => Auth::id(),
             'is_pinned' => $request->boolean('is_pinned', false),
             'is_log' => $isLog,
-            'title' => $validated['title'] ?? null, // SAME AS NORMAL
-            'type' => $validated['type'] ?? 'internal', // NO OVERRIDE
+            'title' => $isLog ? ($validated['title'] ?: 'Activity Log') : ($validated['title'] ?? null),
+            'type' => $validated['type'] ?? 'internal',
         ]);
         $message = $note->is_log ? 'Activity logged successfully.' : 'Note added successfully.';
 

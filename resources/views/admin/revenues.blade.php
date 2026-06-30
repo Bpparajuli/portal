@@ -90,8 +90,8 @@
                                     <td>{{ $rev->transaction_date?->format('d M Y') }}</td>
                                     <td class="text-center">
                                         @if ($rev->receipt_file)
-                                            <a href="{{ route('receipt.view', $rev->receipt_file) }}" target="_blank"
-                                                class="btn btn-sm btn-outline-secondary"><i class="fas fa-file"></i></a>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary"
+                                                onclick="previewReceipt('{{ route('receipt.view', $rev->receipt_file) }}')"><i class="fas fa-file"></i></button>
                                         @else
                                             <span class="text-muted small">N/A</span>
                                         @endif
@@ -199,22 +199,55 @@
 
     {{-- Edit Revenue Modal --}}
     <div class="modal fade" id="editRevenueModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content">
-                <form method="POST" id="editRevenueForm">
+                <form method="POST" id="editRevenueForm" enctype="multipart/form-data">
                     @csrf @method('PUT')
                     <div class="modal-header">
                         <h5 class="modal-title"><i class="fas fa-edit me-2"></i>Edit Revenue</h5><button type="button"
                             class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">
-                        <div class="mb-3"><label class="form-label">Amount</label><input type="number" step="0.01"
-                                name="amount" class="form-control" required></div>
-                        <div class="mb-3"><label class="form-label">Description</label>
-                            <textarea name="description" class="form-control" rows="2"></textarea>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Amount <span class="text-danger">*</span></label>
+                                <input type="number" step="0.01" name="amount" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Payment Method <span class="text-danger">*</span></label>
+                                <select name="method" class="form-select" required>
+                                    <option value="cash">Cash</option>
+                                    <option value="bank_transfer">Bank Transfer</option>
+                                    <option value="credit_card">Credit Card</option>
+                                    <option value="cheque">Cheque</option>
+                                    <option value="online_payment">Online Payment</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Transaction Date <span class="text-danger">*</span></label>
+                                <input type="date" name="transaction_date" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Reference Number</label>
+                                <input type="text" name="reference_number" class="form-control" placeholder="Transaction ID, Cheque No, etc.">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">Receipt (Optional)</label>
+                                <input type="file" name="receipt_file" class="form-control" accept="image/*,.pdf">
+                                <small class="text-muted">Max 5MB. JPG, PNG, PDF</small>
+                                <div id="editCurrentReceipt" style="margin-top:8px;display:none;">
+                                    <div style="background:#f8f9fa;padding:8px 12px;border-radius:6px;border:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;">
+                                        <span id="editReceiptFilename" style="font-size:13px;color:#4a5568;">📎 </span>
+                                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="previewReceipt(document.getElementById('editReceiptUrl').value)">👁️ Preview</button>
+                                        <input type="hidden" id="editReceiptUrl" value="">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">Description</label>
+                                <textarea name="description" class="form-control" rows="2" placeholder="Additional details..."></textarea>
+                            </div>
                         </div>
-                        <div class="mb-3"><label class="form-label">Transaction Date</label><input type="date"
-                                name="transaction_date" class="form-control" required></div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -225,8 +258,44 @@
         </div>
     </div>
 
+    {{-- Receipt Preview Modal --}}
+    <div class="modal fade" id="receiptPreviewModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-file me-2 text-info"></i>Receipt Preview</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center p-4" id="receiptPreviewBody">
+                    <div class="text-center py-4 text-muted">Loading...</div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <a href="#" id="receiptDownloadBtn" class="btn btn-primary" target="_blank"><i class="fas fa-download me-1"></i>Download</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
     @push('scripts')
         <script>
+            function previewReceipt(url) {
+                const body = document.getElementById('receiptPreviewBody');
+                const btn = document.getElementById('receiptDownloadBtn');
+                btn.href = url;
+                body.innerHTML = '<div class="text-center py-4 text-muted">Loading...</div>';
+                new bootstrap.Modal(document.getElementById('receiptPreviewModal')).show();
+
+                const ext = url.split('.').pop().toLowerCase();
+                if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) {
+                    body.innerHTML = `<img src="${url}" style="max-width:100%;max-height:70vh;border-radius:8px;" alt="Receipt">`;
+                } else if (ext === 'pdf') {
+                    body.innerHTML = `<iframe src="${url}" style="width:100%;height:70vh;border:none;border-radius:8px;"></iframe>`;
+                } else {
+                    body.innerHTML = `<a href="${url}" target="_blank" class="btn btn-primary">Open File</a>`;
+                }
+            }
+
             function editRevenue(id) {
                 fetch(`/admin/revenues/${id}/edit`)
                     .then(r => r.json())
@@ -234,12 +303,34 @@
                         const form = document.getElementById('editRevenueForm');
                         form.action = `/admin/revenues/${id}`;
                         form.querySelector('[name="amount"]').value = data.amount;
-                        form.querySelector('[name="description"]').value = data.description || '';
+
+                        const methodSelect = form.querySelector('[name="method"]');
+                        if (methodSelect && data.method) {
+                            methodSelect.value = data.method;
+                        }
+
                         form.querySelector('[name="transaction_date"]').value = data.transaction_date ? data
                             .transaction_date.substring(0, 10) : '';
+
+                        const refInput = form.querySelector('[name="reference_number"]');
+                        if (refInput) refInput.value = data.reference_number || '';
+
+                        form.querySelector('[name="description"]').value = data.description || '';
+
+                        const receiptContainer = document.getElementById('editCurrentReceipt');
+                        if (data.receipt_url) {
+                            const filename = (data.receipt_file || '').split('/').pop();
+                            document.getElementById('editReceiptFilename').textContent = '📎 ' + filename;
+                            document.getElementById('editReceiptUrl').value = data.receipt_url;
+                            receiptContainer.style.display = 'block';
+                        } else {
+                            receiptContainer.style.display = 'none';
+                        }
+
                         new bootstrap.Modal(document.getElementById('editRevenueModal')).show();
                     });
             }
+
         </script>
     @endpush
 @endsection

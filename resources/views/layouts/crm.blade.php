@@ -942,6 +942,7 @@
             setInterval(autoCheckTasks, 3600000);
         });
     </script>
+    @include('components.file-preview-modal')
     @stack('scripts')
 </body>
 

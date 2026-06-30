@@ -101,8 +101,6 @@
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 8px;
-            margin-bottom: 12px;
-            padding-bottom: 10px;
             border-bottom: 1px solid #f1f5f9;
         }
 
@@ -111,13 +109,13 @@
         }
 
         .weekly-summary-item .num {
-            font-size: 1.1rem;
+            font-size: .5rem;
             font-weight: 700;
             display: block;
         }
 
         .weekly-summary-item .lbl {
-            font-size: .58rem;
+            font-size: .5rem;
             color: #6b7280;
             text-transform: uppercase;
             letter-spacing: .3px;
@@ -128,18 +126,18 @@
             border-radius: 4px;
             overflow: hidden;
             display: flex;
-            margin-bottom: 12px;
+            margin-bottom: 4px;
         }
 
         .weekly-table {
             width: 100%;
-            font-size: .68rem;
+            font-size: .5rem;
             border-collapse: collapse;
         }
 
         .weekly-table th,
         .weekly-table td {
-            padding: 5px 6px;
+            padding: 2px 3px;
             text-align: center;
             border-bottom: 1px solid #f1f5f9;
         }
@@ -166,7 +164,7 @@
             justify-content: space-between;
             align-items: center;
             background: #f8fafc;
-            font-size: .7rem;
+            font-size: .5rem;
             transition: all .12s;
             cursor: pointer;
         }
@@ -183,7 +181,7 @@
 
         .task-day .day-name {
             font-weight: 600;
-            font-size: .78rem;
+            font-size: .5rem;
             color: #1e293b;
         }
 
@@ -193,7 +191,7 @@
         }
 
         .task-stat .count {
-            font-size: .9rem;
+            font-size: .5rem;
             font-weight: 700;
             display: block;
             line-height: 1.2;
@@ -252,7 +250,7 @@
                 }
             }
         @endphp
-        @foreach ($pipelineStages->take(10) as $stage)
+        @foreach ($pipelineStages->take(15) as $stage)
             @php
                 $colCount = isset($students[$stage->id]) ? $students[$stage->id]->count() : 0;
                 $percent = $totalSt > 0 ? ($colCount / $totalSt) * 100 : 0;
@@ -410,7 +408,7 @@
                             '</div>' +
                             '<div class="weekly-summary-bar">' +
                             (donePct > 0 ? '<div style="flex:' + donePct + ';background:#10b981;"></div>' :
-                            '') +
+                                '') +
                             (overduePct > 0 ? '<div style="flex:' + overduePct +
                                 ';background:#dc2626;"></div>' : '') +
                             (100 - donePct - overduePct > 0 ? '<div style="flex:' + (100 - donePct -
@@ -428,7 +426,7 @@
                                 '<span class="task-stat completed"><span class="count">' + day
                                 .completed + '</span><span class="label">Done</span></span>' +
                                 '<span class="task-stat upcoming"><span class="count">' + day.upcoming +
-                                '</span><span class="label">Next</span></span>' +
+                                '</span><span class="label">Upcoming</span></span>' +
                                 '</div></div>';
                         });
                         c.innerHTML = html;

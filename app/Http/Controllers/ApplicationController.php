@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreApplicationRequest;
+use App\Models\Activity;
 use App\Models\Application;
 use App\Models\ApplicationStatus;
 use App\Models\Course;
@@ -176,6 +177,15 @@ class ApplicationController extends Controller
         }
 
         $application->save();
+
+        // Synchronous activity logging (not dependent on queue)
+        Activity::create([
+            'user_id' => $user->id,
+            'type' => 'application_submitted',
+            'description' => "📨 Application submitted for {$student->full_name} to {$application->university?->name}" . ($application->course ? " on {$application->course->name}" : ''),
+            'notifiable_id' => $student->id,
+            'link' => route($user->role . '.applications.show', $application->id),
+        ]);
 
         if ($user->is_agent) {
             User::admins()->first()?->notify(new ApplicationSubmitted($application));

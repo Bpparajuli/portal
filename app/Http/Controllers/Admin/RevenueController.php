@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Services\FileUploadService;
 use Illuminate\Http\Request;
 use App\Models\Revenue;
 use App\Models\Student;
@@ -12,6 +13,10 @@ use Illuminate\Support\Facades\Storage;
 
 class RevenueController extends Controller
 {
+    public function __construct(
+        private readonly FileUploadService $fileUploadService
+    ) {}
+
     public function index(Request $request)
     {
         $query = Revenue::with(['student.agent']);
@@ -55,7 +60,11 @@ class RevenueController extends Controller
         $validated['created_by'] = Auth::id();
 
         if ($request->hasFile('receipt_file')) {
-            $validated['receipt_file'] = $request->file('receipt_file')->store('revenues/receipts', 'public');
+            $student = Student::findOrFail($validated['student_id']);
+            $agent = $student->agent ?? Auth::user();
+            $validated['receipt_file'] = $this->fileUploadService->uploadRevenueReceipt(
+                $request->file('receipt_file'), $agent, $student
+            );
         }
 
         Revenue::create($validated);
@@ -66,16 +75,31 @@ class RevenueController extends Controller
     public function edit(Revenue $revenue)
     {
         $revenue->load('student.agent');
-        return response()->json($revenue);
+        $data = $revenue->toArray();
+        $data['receipt_url'] = $revenue->receipt_file && Storage::disk('public')->exists($revenue->receipt_file)
+            ? route('receipt.view', ['path' => $revenue->receipt_file])
+            : null;
+        return response()->json($data);
     }
 
     public function update(Request $request, Revenue $revenue)
     {
         $validated = $request->validate([
             'amount' => 'required|numeric|min:0',
-            'description' => 'nullable|string|max:500',
+            'method' => 'required|in:cash,bank_transfer,credit_card,cheque,online_payment',
             'transaction_date' => 'required|date',
+            'reference_number' => 'nullable|string|max:255',
+            'description' => 'nullable|string|max:1000',
+            'receipt_file' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
         ]);
+
+        if ($request->hasFile('receipt_file')) {
+            $student = $revenue->student;
+            $agent = $student?->agent ?? Auth::user();
+            $validated['receipt_file'] = $this->fileUploadService->uploadRevenueReceipt(
+                $request->file('receipt_file'), $agent, $student, $revenue->receipt_file
+            );
+        }
 
         $revenue->update($validated);
 

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\CRM;
 
 use App\Http\Controllers\Controller;
+use App\Models\Activity;
 use App\Models\Revenue;
 use App\Models\Student;
 use App\Models\StudentNote;
@@ -101,6 +102,15 @@ class RevenueController extends Controller
             } catch (\Exception $e) {
                 Log::warning('Failed to create revenue log: ' . $e->getMessage());
             }
+
+            // Log revenue activity
+            Activity::create([
+                'user_id' => Auth::id(),
+                'type' => 'revenue_added',
+                'description' => "💰 Revenue added: \$" . number_format($revenue->amount, 2) . " via " . ucfirst(str_replace('_', ' ', $revenue->method)) . " for {$student->full_name}",
+                'notifiable_id' => $student->id,
+                'link' => route('crm.student.show', $student),
+            ]);
 
             $student->refresh();
             $formattedRevenue = $this->formatRevenueData($revenue);
@@ -216,6 +226,15 @@ class RevenueController extends Controller
                 Log::warning('Failed to create revenue update log: ' . $e->getMessage());
             }
 
+            // Log revenue update activity
+            Activity::create([
+                'user_id' => Auth::id(),
+                'type' => 'revenue_updated',
+                'description' => "✏️ Revenue updated: \$" . number_format($revenue->amount, 2) . " for {$student->full_name}",
+                'notifiable_id' => $student->id,
+                'link' => route('crm.student.show', $student),
+            ]);
+
             $formattedRevenue = $this->formatRevenueData($revenue->fresh());
 
             if ($request->ajax() || $request->wantsJson()) {
@@ -320,6 +339,19 @@ class RevenueController extends Controller
                 ]);
             } catch (\Exception $e) {
                 Log::warning('Failed to create revenue deletion log: ' . $e->getMessage());
+            }
+
+            // Log revenue deletion activity
+            try {
+                Activity::create([
+                    'user_id' => Auth::id(),
+                    'type' => 'revenue_deleted',
+                    'description' => "🗑️ Revenue deleted: \$" . number_format($amount, 2) . " for {$student->full_name}",
+                    'notifiable_id' => $student->id,
+                    'link' => route('crm.student.show', $student),
+                ]);
+            } catch (\Exception $e) {
+                Log::warning('Failed to create revenue deletion activity: ' . $e->getMessage());
             }
 
             return response()->json([

@@ -13,9 +13,11 @@
 namespace App\Services;
 
 use App\Models\CrmTasks;
+use App\Services\ActivityLogger;
 use App\Models\Student;
 use App\Models\StudentNote;
 use App\Models\StudentStage;
+use App\Models\StudentStageHistory;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -157,6 +159,26 @@ class StudentService
 
             // Ensure agent student folder exists on disk
             $this->ensureStudentFolderExists($student);
+
+            // Log student creation activity and initial stage history
+            if ($isNew) {
+                $user = Auth::user();
+                $creatorName = $user ? $user->name : 'System';
+                ActivityLogger::log('student_added', "Student added: {$student->full_name} by {$creatorName}", $student->id, route('admin.students.show', $student));
+
+                $initialStageId = $student->current_stage_id;
+                if ($initialStageId) {
+                    StudentStageHistory::create([
+                        'student_id' => $student->id,
+                        'from_stage_id' => null,
+                        'to_stage_id' => $initialStageId,
+                        'changed_by' => $user?->id ?? 0,
+                        'reason' => 'Student created',
+                        'metadata' => ['source' => $student->source ?? 'manual'],
+                        'days_in_previous_stage' => null,
+                    ]);
+                }
+            }
 
             return $student->fresh();
         });
@@ -472,20 +494,8 @@ class StudentService
             );
         }
 
-        return DB::transaction(function () use ($student, $stageId, $reason, $user, $oldStageName) {
+        return DB::transaction(function () use ($student, $stageId, $reason, $user) {
             $student->moveToStage($stageId, $reason);
-            $newStage = StudentStage::find($stageId);
-
-            // Log the change in the student's activity feed
-            StudentNote::create([
-                'student_id' => $student->id,
-                'created_by' => $user->id,
-                'content'    => "Stage changed from '{$oldStageName}' to '{$newStage?->name}'"
-                              . ($reason ? " Reason: {$reason}" : ''),
-                'type'       => 'log',
-                'title'      => 'Stage Changed',
-                'is_log'     => true,
-            ]);
 
             return $student->fresh();
         });
@@ -545,7 +555,7 @@ class StudentService
      *
      * @param  Student $student  The student whose tasks to fetch.
      * @param  User    $user     The currently authenticated user.
-     * @return array             Keys: dueTasks, todayTasks, plannedTasks, completedTasks, activityHistory.
+     * @return array             Keys: dueTasks, todayTasks, plannedTasks, completedTasks.
      */
     public function getTaskCategories(Student $student, User $user): array
     {
@@ -573,16 +583,10 @@ class StudentService
 
         $completedTasks = $this->buildTaskQuery($student, $user)
             ->whereIn('status', ['completed', 'cancelled'])
-            ->orderBy('completed_at', 'desc')
-            ->paginate(10);
+            ->orderByRaw('COALESCE(completed_at, cancelled_at, updated_at) DESC')
+            ->get();
 
-        $activityHistory = CrmTasks::where('student_id', $student->id)
-            ->where('status', 'completed')
-            ->with('assignee', 'creator')
-            ->latest('completed_at')
-            ->paginate(10);
-
-        return compact('dueTasks', 'todayTasks', 'plannedTasks', 'completedTasks', 'activityHistory');
+        return compact('dueTasks', 'todayTasks', 'plannedTasks', 'completedTasks');
     }
 
     /**

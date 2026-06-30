@@ -1,7 +1,7 @@
 @php
     $__user = auth()->user();
     $__isMgmt = $__user->is_admin || $__user->is_admin_staff;
-    $__isAgent = $__user->is_agent;
+    $__isAgent = $__user->is_agent || $__user->is_agent_staff;
     $__isStaff = $__user->is_staff && !$__user->is_admin_staff;
     $__layout = $__isAgent ? 'layouts.agent' : ($__isStaff ? 'layouts.staff' : 'layouts.admin');
     $__section = $__isAgent ? 'agent-content' : ($__isStaff ? 'staff-content' : 'admin-content');

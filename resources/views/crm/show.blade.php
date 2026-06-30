@@ -165,8 +165,12 @@
                     @php $u = auth()->user(); $docPrefix = $u->is_admin ? 'admin' : ($u->is_staff ? 'staff' : 'agent'); @endphp
                     <div class="crm-section-header" style="padding:8px 12px;border-bottom:1px solid #e9edf2;">
                         <span>📄 Student Documents</span>
-                        <a href="{{ route($docPrefix . '.documents.index', $student->id) }}"
-                           class="btn btn-sm btn-outline-purple"><i class="fas fa-upload me-1"></i>Upload / Manage</a>
+                        <div class="d-flex gap-2">
+                            <a href="{{ route($docPrefix . '.documents.downloadAll', $student->id) }}"
+                               class="btn btn-sm btn-outline-success"><i class="fas fa-download me-1"></i>Download All</a>
+                            <a href="{{ route($docPrefix . '.documents.index', $student->id) }}"
+                               class="btn btn-sm btn-outline-purple"><i class="fas fa-upload me-1"></i>Upload / Manage</a>
+                        </div>
                     </div>
                     <div class="crm-section-body">
                         @forelse($student->documents as $doc)
@@ -177,8 +181,10 @@
                                     <div class="text-muted" style="font-size:.72rem">Uploaded
                                         {{ $doc->created_at->format('d M Y') }}</div>
                                 </div>
-                                <a href="{{ asset('storage/' . $doc->file_path) }}" target="_blank"
-                                    class="btn btn-sm btn-outline-primary">View</a>
+                                <a href="{{ asset('storage/' . $doc->file_path) }}"
+                                    class="btn btn-sm btn-outline-primary previewable"
+                                    data-url="{{ asset('storage/' . $doc->file_path) }}"
+                                    data-filename="{{ $doc->file_name }}">View</a>
                             </div>
                         @empty
                             <div class="text-muted text-center py-4">No documents uploaded.</div>

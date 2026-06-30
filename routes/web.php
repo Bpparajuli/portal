@@ -616,6 +616,7 @@ Route::middleware(['auth', \App\Http\Middleware\IsPaidCrm::class])
 
         // ========== STAGE HISTORY ==========
         Route::get('/student/{student}/history', [CrmStudentStageHistoryController::class, 'forStudent'])->name('student.history');
+        Route::delete('/student/{student}/history/{history}', [CrmStudentStageHistoryController::class, 'destroy'])->name('student.history.destroy');
 
         // ========== CALENDAR ROUTES ==========
         Route::get('/weekly-tasks', [CrmDashboardController::class, 'weeklyTasks'])->name('weekly.tasks');

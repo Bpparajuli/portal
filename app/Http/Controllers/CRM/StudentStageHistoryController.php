@@ -31,9 +31,28 @@ class StudentStageHistoryController extends Controller
                 'days_in_previous' => $h->days_in_previous_stage,
                 'date'             => $h->created_at->format('d M Y'),
                 'description'      => $h->stage_change_description ?? null,
+                'label'            => $h->reason === 'Student created'
+                    ? 'Student created by ' . ($h->changer?->name ?? 'Unknown')
+                    : 'By ' . ($h->changer?->name ?? 'Unknown'),
             ]);
 
         return response()->json($history);
+    }
+
+    /**
+     * Delete a stage history record (admin only).
+     */
+    public function destroy(Student $student, StudentStageHistory $history)
+    {
+        abort_unless(Auth::user()->is_admin, 403);
+
+        if ($history->student_id !== $student->id) {
+            return response()->json(['message' => 'History record does not belong to this student.'], 422);
+        }
+
+        $history->delete();
+
+        return response()->json(['success' => true, 'message' => 'Stage history deleted.']);
     }
 
     // =========================================================================

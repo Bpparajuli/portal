@@ -45,4 +45,24 @@ class Activity extends Model
 
         return null;
     }
+
+    public function getViewUrlAttribute()
+    {
+        if ($this->link) {
+            return $this->link;
+        }
+
+        $id = $this->notifiable_id;
+        if (!$id) return null;
+
+        return match ($this->type) {
+            'student_added', 'student_updated', 'student_deleted', 'stage_changed' => $id ? route('crm.student.show', $id) : null,
+            'task_completed', 'task_cancelled', 'task_created', 'crm_task_assigned' => $this->student ? route('crm.student.show', $this->student) : null,
+            'document_uploaded', 'document_deleted' => $this->student ? route('crm.student.show', $this->student) : null,
+            'application_submitted', 'application_status_updated', 'application_withdrawn', 'application_message_added' => $this->application ? route('admin.applications.show', $this->application) : null,
+            'revenue_added', 'revenue_updated', 'revenue_deleted' => $this->student ? route('crm.student.show', $this->student) : null,
+            'user_registered', 'user_approved', 'staff_created', 'profile_updated' => route('admin.users.show', $id),
+            default => null,
+        };
+    }
 }

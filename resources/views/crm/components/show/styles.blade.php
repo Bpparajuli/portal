@@ -1025,8 +1025,11 @@
 
     .log-pre {
         white-space: pre-wrap;
+        word-break: break-word;
+        overflow-wrap: anywhere;
         font-family: inherit;
         margin: 0;
+        max-width: 100%;
     }
 
     .revenue-card {

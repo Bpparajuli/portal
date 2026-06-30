@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Activity;
 use App\Models\Document;
 use App\Models\Student;
 use App\Models\User;
@@ -98,6 +99,15 @@ class DocumentController extends Controller
             'document_type' => $documentType,
             'status' => 'uploaded',
         ]);
+        // Synchronous activity logging (not dependent on queue)
+        Activity::create([
+            'user_id' => $user->id,
+            'type' => 'document_uploaded',
+            'description' => "📤 {$documentType} uploaded for {$student->full_name}",
+            'notifiable_id' => $student->id,
+            'link' => route(Auth::user()->role . '.documents.index', $student->id),
+        ]);
+
         if ($student->agent_id) {
             $agent = User::find($student->agent_id);
             if ($agent) {
@@ -141,24 +151,31 @@ class DocumentController extends Controller
             return back()->with('error', 'No documents found for this student.');
         }
         $zipFileName = strtolower(str_replace(' ', '_', $student->first_name . '_' . $student->last_name)) . '_documents.zip';
-        $tempDir = storage_path('app/public/temp');
-        if (!file_exists($tempDir)) {
-            mkdir($tempDir, 0777, true);
-        }
+        $tempDir = rtrim(sys_get_temp_dir(), '\\/');
         $zipPath = $tempDir . DIRECTORY_SEPARATOR . $zipFileName;
         if (file_exists($zipPath)) unlink($zipPath);
         $zip = new ZipArchive;
         if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
             return back()->with('error', 'Could not create ZIP file.');
         }
+        $added = 0;
         foreach ($documents as $doc) {
             $fileFullPath = Storage::disk('public')->path($doc->file_path);
             if (file_exists($fileFullPath)) {
                 $zip->addFile($fileFullPath, basename($doc->file_name));
+                $added++;
             }
         }
         $zip->close();
-        return response()->download($zipPath, $zipFileName)->deleteFileAfterSend(true);
+        if ($added === 0) {
+            if (file_exists($zipPath)) unlink($zipPath);
+            return back()->with('error', 'No document files found on server to download.');
+        }
+        $response = response()->download($zipPath, $zipFileName);
+        register_shutdown_function(function () use ($zipPath) {
+            if (file_exists($zipPath)) @unlink($zipPath);
+        });
+        return $response;
     }
 
     public function updateStatus(Request $request, Student $student, Document $document)
