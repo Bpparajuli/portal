@@ -7,7 +7,11 @@
         flex-direction: row-reverse;
         gap: 2px;
     }
-    .star-rating input { display: none; }
+
+    .star-rating input {
+        display: none;
+    }
+
     .star-rating label {
         font-size: 1.1rem;
         color: #d1d5db;
@@ -15,9 +19,10 @@
         line-height: 1;
         transition: color .1s;
     }
-    .star-rating input:checked ~ label,
+
+    .star-rating input:checked~label,
     .star-rating label:hover,
-    .star-rating label:hover ~ label {
+    .star-rating label:hover~label {
         color: #f59e0b;
     }
 
@@ -36,6 +41,7 @@
         gap: 4px;
         transition: all .12s;
     }
+
     .btn.btn-outline-purple:hover {
         background: #d4c0f0;
         border-color: #820b5c;
@@ -56,6 +62,7 @@
         gap: 4px;
         transition: all .12s;
     }
+
     .btn.btn-solid-dark:hover {
         background: #2a0272;
         color: #fff;
@@ -71,7 +78,7 @@
         position: sticky;
         top: 0;
         z-index: 100;
-        box-shadow: 0 1px 3px rgba(0,0,0,.04);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, .04);
     }
 
     .crm-back-bar a {
@@ -138,27 +145,17 @@
 
     .revenue-method-cash {
         background: #e0e7ff;
-        color: #3730a3;
-    }
-
-    .revenue-method-bank_transfer {
-        background: #dcfce7;
         color: #166534;
-    }
-
-    .revenue-method-credit_card {
-        background: #fed7aa;
-        color: #9a3412;
-    }
-
-    .revenue-method-cheque {
-        background: #fef9c3;
-        color: #854d0e;
     }
 
     .revenue-method-online_payment {
         background: #e0f2fe;
         color: #075985;
+    }
+
+    .revenue-method-other {
+        background: #f3e8ff;
+        color: #6b21a8;
     }
 
     /* Stage Pipeline */
@@ -229,6 +226,7 @@
         font-weight: 700;
         border-color: transparent;
     }
+
     .stage-card.current:hover {
         background: linear-gradient(135deg, #9a0d6c, #2a0272);
         border-color: transparent;
@@ -239,6 +237,7 @@
         color: #065f46;
         border: 1.5px solid #6ee7b7;
     }
+
     .stage-card.passed:hover {
         background: #d1fae5;
         border-color: #10b981;
@@ -257,6 +256,7 @@
         color: #6b5b8a;
         border: 1.5px solid #e0d8ec;
     }
+
     .stage-card.pending:hover {
         background: #ede5f8;
         border-color: #820b5c;
@@ -272,7 +272,7 @@
     .stage-days {
         font-size: 7px;
         opacity: .7;
-        background: rgba(255,255,255,.2);
+        background: rgba(255, 255, 255, .2);
         padding: 0 3px;
         border-radius: 2px;
         line-height: 1.4;
@@ -297,7 +297,7 @@
         border-radius: 10px;
         overflow: hidden;
         margin-bottom: 12px;
-        box-shadow: 0 1px 3px rgba(26,2,98,.04);
+        box-shadow: 0 1px 3px rgba(26, 2, 98, .04);
     }
 
     .crm-section-header {
@@ -331,7 +331,10 @@
         background: #fff;
         transition: box-shadow .12s;
     }
-    .note-item:hover { box-shadow: 0 2px 6px rgba(26,2,98,.05); }
+
+    .note-item:hover {
+        box-shadow: 0 2px 6px rgba(26, 2, 98, .05);
+    }
 
     .note-item.pinned {
         border-left: 3px solid #f59e0b;
@@ -533,13 +536,20 @@
         width: 100%;
         max-height: 85vh;
         overflow-y: auto;
-        box-shadow: 0 25px 60px rgba(15, 23, 42, 0.2), 0 0 0 1px rgba(0,0,0,0.04);
+        box-shadow: 0 25px 60px rgba(15, 23, 42, 0.2), 0 0 0 1px rgba(0, 0, 0, 0.04);
         animation: modalIn .2s ease-out;
     }
 
     @keyframes modalIn {
-        from { opacity: 0; transform: scale(.96) translateY(8px); }
-        to { opacity: 1; transform: scale(1) translateY(0); }
+        from {
+            opacity: 0;
+            transform: scale(.96) translateY(8px);
+        }
+
+        to {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+        }
     }
 
     .modal-content.large {
@@ -645,7 +655,13 @@
         padding-bottom: 6px;
         border-bottom: 1px solid #f0eef5;
     }
-    .sidebar-field:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+
+    .sidebar-field:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+        padding-bottom: 0;
+    }
+
     .sidebar-field label {
         font-size: .6rem;
         text-transform: uppercase;
@@ -654,6 +670,7 @@
         display: block;
         margin-bottom: 1px;
     }
+
     .sidebar-field .val {
         font-size: .76rem;
         color: #1e293b;
@@ -1114,7 +1131,7 @@
         background: white;
         border-radius: 16px;
         overflow: hidden;
-        box-shadow: 0 2px 12px rgba(0,0,0,.04);
+        box-shadow: 0 2px 12px rgba(0, 0, 0, .04);
         border: 1px solid #e5e7eb;
     }
 
@@ -1133,29 +1150,40 @@
         min-width: 280px;
     }
 
-    .student-avatar-wrapper { flex-shrink: 0; }
+    .student-avatar-wrapper {
+        flex-shrink: 0;
+    }
 
     .student-avatar-img {
-        width: 80px; height: 80px;
+        width: 80px;
+        height: 80px;
         object-fit: cover;
         border-radius: 12px;
         border: 3px solid white;
-        box-shadow: 0 2px 8px rgba(0,0,0,.08);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, .08);
         background: white;
     }
 
     .student-avatar-placeholder {
-        width: 80px; height: 80px;
+        width: 80px;
+        height: 80px;
         border-radius: 12px;
         background: linear-gradient(135deg, #820b5c, #1a0262);
         display: flex;
-        align-items: center; justify-content: center;
+        align-items: center;
+        justify-content: center;
         border: 3px solid white;
-        box-shadow: 0 2px 8px rgba(0,0,0,.08);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, .08);
     }
-    .student-avatar-placeholder i { font-size: 2rem; color: white; }
 
-    .student-identity { flex: 1; }
+    .student-avatar-placeholder i {
+        font-size: 2rem;
+        color: white;
+    }
+
+    .student-identity {
+        flex: 1;
+    }
 
     .student-name {
         font-size: 1.25rem;
@@ -1190,6 +1218,7 @@
         gap: .75rem;
         margin-bottom: .4rem;
     }
+
     .student-contact-info span {
         display: inline-flex;
         align-items: center;
@@ -1197,7 +1226,11 @@
         font-size: .75rem;
         color: #475569;
     }
-    .student-contact-info i { width: .85rem; color: #94a3b8; }
+
+    .student-contact-info i {
+        width: .85rem;
+        color: #94a3b8;
+    }
 
     .student-agent-info {
         display: inline-flex;
@@ -1211,7 +1244,8 @@
     }
 
     .agent-logo-sm {
-        width: 18px; height: 18px;
+        width: 18px;
+        height: 18px;
         border-radius: 50%;
         object-fit: cover;
         border: 1px solid #c8b8e0;
@@ -1229,7 +1263,9 @@
         gap: .5rem;
     }
 
-    .tags-section { flex: 1; }
+    .tags-section {
+        flex: 1;
+    }
 
     .tags-header {
         display: flex;
@@ -1237,6 +1273,7 @@
         align-items: center;
         margin-bottom: .5rem;
     }
+
     .tags-header span {
         font-size: .68rem;
         font-weight: 600;
@@ -1264,7 +1301,11 @@
         border: 1px solid #e2e8f0;
     }
 
-    .no-tags { font-size: .68rem; color: #94a3b8; font-style: italic; }
+    .no-tags {
+        font-size: .68rem;
+        color: #94a3b8;
+        font-style: italic;
+    }
 
     .btn-quick-edit {
         display: inline-flex;
@@ -1282,6 +1323,7 @@
         transition: all .15s;
         width: 100%;
     }
+
     .btn-quick-edit:hover {
         background: #f9fafb;
         border-color: #d1d5db;
@@ -1312,7 +1354,10 @@
         letter-spacing: .5px;
         font-weight: 600;
     }
-    .revenue-header i { font-size: .75rem; }
+
+    .revenue-header i {
+        font-size: .75rem;
+    }
 
     .stat-label {
         display: block;
@@ -1331,16 +1376,17 @@
         width: 100%;
         padding: .35rem .5rem;
         border-radius: 8px;
-        border: 1px solid rgba(255,255,255,.2);
-        background: rgba(255,255,255,.08);
+        border: 1px solid rgba(255, 255, 255, .2);
+        background: rgba(255, 255, 255, .08);
         color: #fde68a;
         font-size: .7rem;
         font-weight: 500;
         cursor: pointer;
         transition: all .12s;
     }
+
     .btn-add-revenue:hover {
-        background: rgba(255,255,255,.15);
+        background: rgba(255, 255, 255, .15);
     }
 
     .stat-value.text-success {

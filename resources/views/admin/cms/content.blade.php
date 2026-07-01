@@ -35,7 +35,7 @@
                                     <label class="form-label fw-semibold mb-1" style="font-size:var(--text-sm);">Site
                                         Logo</label>
                                     <div class="d-flex align-items-center gap-2">
-                                        <img id="logoPreview" src="{{ $siteLogo ? Storage::url($siteLogo) : '' }}" alt=""
+                                        <img id="logoPreview" src="{{ $siteLogo ? \App\Models\Setting::resolveImageUrl($siteLogo) : '' }}" alt=""
                                             style="height:32px;border-radius:4px;{{ $siteLogo ? '' : 'display:none;' }}">
                                         <input type="file" name="site.logo" class="form-control form-control-sm"
                                             style="font-size:11px;" accept="image/*">
@@ -56,7 +56,7 @@
                                     <label class="form-label fw-semibold mb-1"
                                         style="font-size:var(--text-sm);">Favicon</label>
                                     <div class="d-flex align-items-center gap-2">
-                                        <img id="faviconPreview" src="{{ $favicon ? Storage::url($favicon) : '' }}" alt=""
+                                        <img id="faviconPreview" src="{{ $favicon ? \App\Models\Setting::resolveImageUrl($favicon) : '' }}" alt=""
                                             style="height:24px;border-radius:2px;{{ $favicon ? '' : 'display:none;' }}">
                                         <input type="file" name="site.favicon" class="form-control form-control-sm"
                                             style="font-size:11px;" accept="image/*">

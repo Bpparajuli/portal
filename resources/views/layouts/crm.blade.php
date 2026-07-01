@@ -332,8 +332,9 @@
             <div class="container-fluid">
                 {{-- Left: Logo + Search --}}
                 <div class="nav-left">
-                    @if ($_crmSiteLogo && Storage::disk('public')->exists($_crmSiteLogo))
-                        <img src="{{ Storage::url($_crmSiteLogo) }}" alt="" style="height:28px;width:28px;object-fit:contain;border-radius:6px;">
+                    @if ($_crmSiteLogo)
+                        <img src="{{ \App\Models\Setting::resolveImageUrl($_crmSiteLogo) }}" alt=""
+                            style="height:28px;width:28px;object-fit:contain;border-radius:6px;">
                         <a href="{{ route('crm.dashboard') }}" class="fw-semibold"
                             style="font-size:15px;color:#1f2937;">{{ $_crmSiteName }}</a>
                     @else
@@ -347,7 +348,6 @@
                 <div class="nav-center nav-desktop-search">
                     <div class="d-flex gap-2" style="max-width:360px;width:100%;">
                         <div class="header-search-wrapper">
-                            <i class="fas fa-search"></i>
                             <input type="text" id="quickSearch" class="form-control"
                                 placeholder="Search students...">
                         </div>
@@ -399,7 +399,8 @@
                                 <div class="d-flex gap-2">
                                     <a href="{{ route('crm.notifications.settings') }}" class="small text-muted"><i
                                             class="fas fa-cog"></i></a>
-                                    <a href="{{ route('crm.notifications.all') }}" class="small text-muted">View All</a>
+                                    <a href="{{ route('crm.notifications.all') }}" class="small text-muted">View
+                                        All</a>
                                 </div>
                             </div>
                             <div id="crmNotificationList" class="notification-list">
@@ -482,9 +483,11 @@
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end" style="font-size:13px;">
                             @if (!$_crmUser->is_staff || $_crmUser->is_admin_staff)
-                            <li><a class="dropdown-item" href="{{ route('profile.show', $_crmUser->slug) }}"><i class="fas fa-user me-2"></i> Profile</a></li>
+                                <li><a class="dropdown-item" href="{{ route('profile.show', $_crmUser->slug) }}"><i
+                                            class="fas fa-user me-2"></i> Profile</a></li>
                             @endif
-                            <li><a class="dropdown-item" href="{{ route('profile.edit', $_crmUser->slug) }}"><i class="fas fa-edit me-2"></i> Edit Profile</a></li>
+                            <li><a class="dropdown-item" href="{{ route('profile.edit', $_crmUser->slug) }}"><i
+                                        class="fas fa-edit me-2"></i> Edit Profile</a></li>
                             <li><a class="dropdown-item" href="{{ route('crm.notifications.settings') }}"><i
                                         class="fas fa-bell me-2"></i> Notification Settings</a></li>
                             <li>
@@ -510,7 +513,6 @@
                     <div class="modal-body p-3">
                         <div class="d-flex gap-2">
                             <div class="header-search-wrapper w-100">
-                                <i class="fas fa-search"></i>
                                 <input type="text" id="mobileQuickSearch" class="form-control"
                                     placeholder="Search students...">
                             </div>

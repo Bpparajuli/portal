@@ -111,29 +111,34 @@ class ContentController extends Controller
 
     public function updateSections(Request $request)
     {
-        $fields = [
-            'site.name', 'site.logo', 'site.notice', 'site.favicon',
-        ];
+        $post = $request->request->all();
 
-        foreach ($fields as $key) {
-            if ($request->has($key)) {
-                $group = explode('.', $key)[0];
-                Setting::setValue($key, $request->$key, $group);
-            }
+        if (isset($post['site.name'])) {
+            Setting::setValue('site.name', $post['site.name'], 'site');
         }
 
-        if ($request->hasFile('site.logo')) {
-            $file = $request->file('site.logo');
+        if (isset($post['site.notice'])) {
+            Setting::setValue('site.notice', $post['site.notice'], 'site');
+        }
+
+        $files = $request->files->all();
+
+        if (isset($files['site.logo']) && $files['site.logo']->isValid()) {
+            $file = $files['site.logo'];
             $filename = 'logo-' . time() . '.' . $file->getClientOriginalExtension();
             $file->storeAs('media', $filename);
             Setting::setValue('site.logo', 'media/' . $filename, 'site');
+        } elseif (isset($post['site.logo']) && !empty($post['site.logo'])) {
+            Setting::setValue('site.logo', $post['site.logo'], 'site');
         }
 
-        if ($request->hasFile('site.favicon')) {
-            $file = $request->file('site.favicon');
+        if (isset($files['site.favicon']) && $files['site.favicon']->isValid()) {
+            $file = $files['site.favicon'];
             $filename = 'favicon-' . time() . '.' . $file->getClientOriginalExtension();
             $file->storeAs('media', $filename);
             Setting::setValue('site.favicon', 'media/' . $filename, 'site');
+        } elseif (isset($post['site.favicon']) && !empty($post['site.favicon'])) {
+            Setting::setValue('site.favicon', $post['site.favicon'], 'site');
         }
 
         return redirect()->back()->with('success', 'Global sections updated.');
@@ -607,6 +612,25 @@ class ContentController extends Controller
                     'size' => Storage::size($file),
                     'last_modified' => Storage::lastModified($file),
                     'dir' => $dir,
+                ];
+            }
+        }
+        // Also scan public/images/ for legacy files
+        $publicImagesDir = public_path('images');
+        if (is_dir($publicImagesDir)) {
+            foreach (scandir($publicImagesDir) as $file) {
+                if ($file === '.' || $file === '..') continue;
+                $path = $publicImagesDir . DIRECTORY_SEPARATOR . $file;
+                if (!is_file($path)) continue;
+                $extension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+                if (!in_array($extension, ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'])) continue;
+                $images[] = [
+                    'filename' => $file,
+                    'path' => 'images/' . $file,
+                    'url' => asset('images/' . $file),
+                    'size' => filesize($path),
+                    'last_modified' => filemtime($path),
+                    'dir' => 'images',
                 ];
             }
         }

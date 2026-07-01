@@ -41,7 +41,7 @@ class RevenueController extends Controller
 
             $validated = $request->validate([
                 'amount' => 'required|numeric|min:0|regex:/^\d+(\.\d{1,2})?$/',
-                'method' => 'required|in:cash,bank_transfer,credit_card,cheque,online_payment',
+                'method' => 'required|in:cash,online_payment,other',
                 'transaction_date' => 'required|date',
                 'reference_number' => 'nullable|string|max:255',
                 'description' => 'nullable|string',
@@ -163,7 +163,7 @@ class RevenueController extends Controller
 
             $validated = $request->validate([
                 'amount' => 'required|numeric|min:0|regex:/^\d+(\.\d{1,2})?$/',
-                'method' => 'required|in:cash,bank_transfer,credit_card,cheque,online_payment',
+                'method' => 'required|in:cash,online_payment,other',
                 'transaction_date' => 'required|date',
                 'reference_number' => 'nullable|string|max:255',
                 'description' => 'nullable|string',
@@ -393,6 +393,21 @@ class RevenueController extends Controller
             Log::error('Receipt download error: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Failed to download receipt: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Show printable receipt view.
+     */
+    public function printReceipt(Student $student, Revenue $revenue)
+    {
+        if ($revenue->student_id !== $student->id) {
+            abort(404);
+        }
+
+        return view('crm.revenue.receipt', [
+            'student' => $student->fresh(),
+            'revenue' => $revenue,
+        ]);
     }
 
     /**

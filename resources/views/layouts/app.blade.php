@@ -159,7 +159,7 @@
         .alert-info { background: color-mix(in srgb, var(--info) 10%, white); border-color: var(--info); color: var(--info); }
         .alert-danger { background: color-mix(in srgb, var(--danger) 10%, white); border-color: var(--danger); color: var(--danger); }
     </style>
-    <link rel="icon" type="image/x-icon" href="{{ $_favicon ? Storage::url($_favicon) : asset('favicon.ico') }}">
+    <link rel="icon" type="image/x-icon" href="{{ \App\Models\Setting::resolveImageUrl($_favicon) ?? asset('favicon.ico') }}">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.3/tinymce.min.js" referrerpolicy="origin"></script>
     @stack('styles')
 </head>
@@ -168,7 +168,7 @@
         <!-- ========== SIDEBAR ========== -->
         <aside class="app-sidebar" id="appSidebar">
             <div class="sidebar-brand">
-                <div class="brand-logo">@if($_siteLogo)<img src="{{ Storage::url($_siteLogo) }}" alt="" style="height:32px;width:32px;object-fit:contain;border-radius:6px;">@else{{ substr($_siteName,0,2) }}@endif</div>
+                <div class="brand-logo">@if($_siteLogo)<img src="{{ \App\Models\Setting::resolveImageUrl($_siteLogo) }}" alt="" style="height:32px;width:32px;object-fit:contain;border-radius:6px;">@else{{ substr($_siteName,0,2) }}@endif</div>
                 <div class="brand-text">
                     {{ $_siteName }}
                     <small>@auth {{ ucfirst(Auth::user()->role) }} Panel @endauth</small>

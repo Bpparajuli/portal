@@ -49,7 +49,7 @@ class RevenueController extends Controller
         $validated = $request->validate([
             'student_id' => 'required|exists:students,id',
             'amount' => 'required|numeric|min:0',
-            'method' => 'required|in:cash,bank_transfer,credit_card,cheque,online_payment',
+            'method' => 'required|in:cash,online_payment,other',
             'transaction_date' => 'required|date',
             'reference_number' => 'nullable|string|max:255',
             'description' => 'nullable|string|max:1000',
@@ -86,7 +86,7 @@ class RevenueController extends Controller
     {
         $validated = $request->validate([
             'amount' => 'required|numeric|min:0',
-            'method' => 'required|in:cash,bank_transfer,credit_card,cheque,online_payment',
+            'method' => 'required|in:cash,online_payment,other',
             'transaction_date' => 'required|date',
             'reference_number' => 'nullable|string|max:255',
             'description' => 'nullable|string|max:1000',

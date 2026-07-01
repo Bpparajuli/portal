@@ -18,7 +18,8 @@
                         </div>
                     </div>
                 </div>
-                <button type="button" class="btn btn-primary rounded-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#addRevenueModal">
+                <button type="button" class="btn btn-primary rounded-3 shadow-sm" data-bs-toggle="modal"
+                    data-bs-target="#addRevenueModal">
                     <i class="fas fa-plus me-1"></i> Add Revenue
                 </button>
             </div>
@@ -91,12 +92,16 @@
                                     <td class="text-center">
                                         @if ($rev->receipt_file)
                                             <button type="button" class="btn btn-sm btn-outline-secondary"
-                                                onclick="previewReceipt('{{ route('receipt.view', $rev->receipt_file) }}')"><i class="fas fa-file"></i></button>
+                                                onclick="previewReceipt('{{ route('receipt.view', $rev->receipt_file) }}')"><i
+                                                    class="fas fa-file"></i></button>
                                         @else
                                             <span class="text-muted small">N/A</span>
                                         @endif
                                     </td>
                                     <td class="text-end">
+                                        <a href="{{ route('crm.student.revenues.print', ['student' => $rev->student_id, 'revenue' => $rev->id]) }}"
+                                            target="_blank" class="btn btn-sm btn-outline-secondary me-1"
+                                            title="Print Receipt"><i class="fas fa-print"></i></a>
                                         <button type="button" class="btn btn-sm btn-outline-primary me-1"
                                             onclick="editRevenue({{ $rev->id }})"><i class="fas fa-edit"></i></button>
                                         <x-confirm-delete action="admin.revenues.destroy" :id="$rev->id"
@@ -150,32 +155,38 @@
                                 <label class="form-label fw-semibold">Student <span class="text-danger">*</span></label>
                                 <select name="student_id" class="form-select" required>
                                     <option value="">Select Student</option>
-                                    @foreach($students as $s)
-                                        <option value="{{ $s->id }}">{{ $s->full_name }} @if($s->agent) ({{ $s->agent->business_name ?? $s->agent->name }}) @endif</option>
+                                    @foreach ($students as $s)
+                                        <option value="{{ $s->id }}">{{ $s->full_name }} @if ($s->agent)
+                                                ({{ $s->agent->business_name ?? $s->agent->name }})
+                                            @endif
+                                        </option>
                                     @endforeach
                                 </select>
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label fw-semibold">Amount <span class="text-danger">*</span></label>
-                                <input type="number" name="amount" class="form-control" step="0.01" min="0" required>
+                                <input type="number" name="amount" class="form-control" step="0.01" min="0"
+                                    required>
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label fw-semibold">Payment Method <span class="text-danger">*</span></label>
+                                <label class="form-label fw-semibold">Payment Method <span
+                                        class="text-danger">*</span></label>
                                 <select name="method" class="form-select" required>
                                     <option value="cash">Cash</option>
-                                    <option value="bank_transfer">Bank Transfer</option>
-                                    <option value="credit_card">Credit Card</option>
-                                    <option value="cheque">Cheque</option>
                                     <option value="online_payment">Online Payment</option>
+                                    <option value="other">Other</option>
                                 </select>
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label fw-semibold">Transaction Date <span class="text-danger">*</span></label>
-                                <input type="date" name="transaction_date" class="form-control" value="{{ date('Y-m-d') }}" required>
+                                <label class="form-label fw-semibold">Transaction Date <span
+                                        class="text-danger">*</span></label>
+                                <input type="date" name="transaction_date" class="form-control"
+                                    value="{{ date('Y-m-d') }}" required>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">Reference Number</label>
-                                <input type="text" name="reference_number" class="form-control" placeholder="Transaction ID, Cheque No, etc.">
+                                <input type="text" name="reference_number" class="form-control"
+                                    placeholder="Transaction ID, Cheque No, etc.">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">Receipt (Optional)</label>
@@ -190,7 +201,8 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-success"><i class="fas fa-save me-1"></i>Save Revenue</button>
+                        <button type="submit" class="btn btn-success"><i class="fas fa-save me-1"></i>Save
+                            Revenue</button>
                     </div>
                 </form>
             </div>
@@ -214,31 +226,35 @@
                                 <input type="number" step="0.01" name="amount" class="form-control" required>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label fw-semibold">Payment Method <span class="text-danger">*</span></label>
+                                <label class="form-label fw-semibold">Payment Method <span
+                                        class="text-danger">*</span></label>
                                 <select name="method" class="form-select" required>
                                     <option value="cash">Cash</option>
-                                    <option value="bank_transfer">Bank Transfer</option>
-                                    <option value="credit_card">Credit Card</option>
-                                    <option value="cheque">Cheque</option>
                                     <option value="online_payment">Online Payment</option>
+                                    <option value="other">Other</option>
                                 </select>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label fw-semibold">Transaction Date <span class="text-danger">*</span></label>
+                                <label class="form-label fw-semibold">Transaction Date <span
+                                        class="text-danger">*</span></label>
                                 <input type="date" name="transaction_date" class="form-control" required>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">Reference Number</label>
-                                <input type="text" name="reference_number" class="form-control" placeholder="Transaction ID, Cheque No, etc.">
+                                <input type="text" name="reference_number" class="form-control"
+                                    placeholder="Transaction ID, Cheque No, etc.">
                             </div>
                             <div class="col-12">
                                 <label class="form-label fw-semibold">Receipt (Optional)</label>
                                 <input type="file" name="receipt_file" class="form-control" accept="image/*,.pdf">
                                 <small class="text-muted">Max 5MB. JPG, PNG, PDF</small>
                                 <div id="editCurrentReceipt" style="margin-top:8px;display:none;">
-                                    <div style="background:#f8f9fa;padding:8px 12px;border-radius:6px;border:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;">
+                                    <div
+                                        style="background:#f8f9fa;padding:8px 12px;border-radius:6px;border:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;">
                                         <span id="editReceiptFilename" style="font-size:13px;color:#4a5568;">📎 </span>
-                                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="previewReceipt(document.getElementById('editReceiptUrl').value)">👁️ Preview</button>
+                                        <button type="button" class="btn btn-sm btn-outline-primary"
+                                            onclick="previewReceipt(document.getElementById('editReceiptUrl').value)">👁️
+                                            Preview</button>
                                         <input type="hidden" id="editReceiptUrl" value="">
                                     </div>
                                 </div>
@@ -271,7 +287,8 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <a href="#" id="receiptDownloadBtn" class="btn btn-primary" target="_blank"><i class="fas fa-download me-1"></i>Download</a>
+                    <a href="#" id="receiptDownloadBtn" class="btn btn-primary" target="_blank"><i
+                            class="fas fa-download me-1"></i>Download</a>
                 </div>
             </div>
         </div>
@@ -288,9 +305,11 @@
 
                 const ext = url.split('.').pop().toLowerCase();
                 if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) {
-                    body.innerHTML = `<img src="${url}" style="max-width:100%;max-height:70vh;border-radius:8px;" alt="Receipt">`;
+                    body.innerHTML =
+                        `<img src="${url}" style="max-width:100%;max-height:70vh;border-radius:8px;" alt="Receipt">`;
                 } else if (ext === 'pdf') {
-                    body.innerHTML = `<iframe src="${url}" style="width:100%;height:70vh;border:none;border-radius:8px;"></iframe>`;
+                    body.innerHTML =
+                        `<iframe src="${url}" style="width:100%;height:70vh;border:none;border-radius:8px;"></iframe>`;
                 } else {
                     body.innerHTML = `<a href="${url}" target="_blank" class="btn btn-primary">Open File</a>`;
                 }
@@ -330,7 +349,6 @@
                         new bootstrap.Modal(document.getElementById('editRevenueModal')).show();
                     });
             }
-
         </script>
     @endpush
 @endsection

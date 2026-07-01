@@ -585,6 +585,7 @@ Route::middleware(['auth', \App\Http\Middleware\IsPaidCrm::class])
         Route::put('/students/{student}/revenues/{revenue}', [CrmRevenueController::class, 'update'])->name('student.revenues.update');
         Route::delete('/students/{student}/revenues/{revenue}', [CrmRevenueController::class, 'destroy'])->name('student.revenues.destroy');
         Route::get('/students/{student}/revenues/{revenue}/download', [CrmRevenueController::class, 'downloadReceipt'])->name('student.revenues.download');
+        Route::get('/students/{student}/revenues/{revenue}/print', [CrmRevenueController::class, 'printReceipt'])->name('student.revenues.print');
         // ========== TASKS ROUTES ==========
         Route::post('/tasks', [CrmTasksController::class, 'store'])->name('tasks.store');
         Route::put('/tasks/{task}', [CrmTasksController::class, 'update'])->name('tasks.update');

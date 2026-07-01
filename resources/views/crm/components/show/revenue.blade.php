@@ -60,22 +60,20 @@
                     @else
                         <div></div>
                     @endif
-                    @if (auth()->user()->is_admin)
-                        <div class="d-flex gap-1">
-                            <button class="btn btn-sm"
-                                onclick="openRevenueModal({{ $student->id }}, {{ $revenue->id }})"
-                                style="background:transparent;color:#820b5c;border:1px solid #d4c4ec;border-radius:6px;font-size:.62rem;padding:1px 8px;cursor:pointer;">✏️</button>
+                    <div class="d-flex gap-1">
+                        <a href="{{ route('crm.student.revenues.print', ['student' => $student, 'revenue' => $revenue]) }}" target="_blank"
+                            style="background:#1a0262;color:#fff;border:none;border-radius:6px;font-size:.65rem;padding:2px 12px;cursor:pointer;text-decoration:none;font-weight:600;white-space:nowrap;">
+                            🖨️ Print Receipt
+                        </a>
+                        <button class="btn btn-sm"
+                            onclick="openRevenueModal({{ $student->id }}, {{ $revenue->id }})"
+                            style="background:transparent;color:#820b5c;border:1px solid #d4c4ec;border-radius:6px;font-size:.62rem;padding:1px 8px;cursor:pointer;">✏️</button>
+                        @if (auth()->user()->is_admin)
                             <button class="btn btn-sm"
                                 onclick="deleteRevenue({{ $student->id }}, {{ $revenue->id }}, '{{ number_format($revenue->amount, 2) }}')"
                                 style="background:transparent;color:#ef4444;border:1px solid #fecaca;border-radius:6px;font-size:.62rem;padding:1px 8px;cursor:pointer;">🗑️</button>
-                        </div>
-                    @else
-                        <div class="d-flex gap-1">
-                            <button class="btn btn-sm"
-                                onclick="openRevenueModal({{ $student->id }}, {{ $revenue->id }})"
-                                style="background:transparent;color:#820b5c;border:1px solid #d4c4ec;border-radius:6px;font-size:.62rem;padding:1px 8px;cursor:pointer;">✏️</button>
-                        </div>
-                    @endif
+                        @endif
+                    </div>
                 </div>
             </div>
         @empty

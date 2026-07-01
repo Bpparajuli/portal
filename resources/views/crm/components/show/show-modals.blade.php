@@ -543,10 +543,8 @@
                     <label>Payment Method *</label>
                     <select name="method" id="revenue_method" class="form-select" required>
                         <option value="cash">Cash</option>
-                        <option value="bank_transfer">Bank Transfer</option>
-                        <option value="credit_card">Credit Card</option>
-                        <option value="cheque">Cheque</option>
                         <option value="online_payment">Online Payment</option>
+                        <option value="other">Other</option>
                     </select>
                 </div>
                 <div class="form-group">

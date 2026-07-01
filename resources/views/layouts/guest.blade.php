@@ -299,7 +299,7 @@
         <div class="container">
             <a class="navbar-brand" href="{{ route('home') }}">
                 @if ($siteLogo)
-                    @php $logoSrc = str_starts_with($siteLogo, 'settings/') ? \Illuminate\Support\Facades\Storage::url($siteLogo) : (str_starts_with($siteLogo, 'images/') ? asset($siteLogo) : asset('storage/uni_logo/' . $siteLogo)); @endphp
+                    @php $logoSrc = \App\Models\Setting::resolveImageUrl($siteLogo); @endphp
                     <img src="{{ $logoSrc }}" alt="{{ $siteName }} logo">
                 @else
                     <span class="d-inline-flex align-items-center justify-content-center"
