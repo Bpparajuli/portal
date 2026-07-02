@@ -8,6 +8,17 @@
             </x-slot:actions>
         </x-page-header>
 
+        @if (!empty($groups['_debug']))
+            <!-- DBG: {{ json_encode($groups['_debug']) }} -->
+            <div class="alert alert-info small py-1 px-3 mb-2">
+                <strong>Debug:</strong>
+                type={{ $groups['_debug']['type'] ?? '?' }},
+                ids=[{{ implode(',', $groups['_debug']['ids'] ?? []) }}],
+                activities={{ $groups['_debug']['rows'] ?? 0 }},
+                error={{ $groups['_debug']['error'] ?? 'none' }}
+            </div>
+        @endif
+
         @forelse($groups as $type => $group)
             <div class="card border-0 shadow-sm rounded-4 mb-4">
                 <div class="card-header bg-white border-bottom py-3 d-flex align-items-center gap-2">
@@ -54,6 +65,7 @@
                                     @if (!empty($group['has_student']))
                                         <th width="160">Student</th>
                                     @endif
+                                    <th width="140">Deleted By</th>
                                     <th width="180">Deleted At</th>
                                     <th width="140" class="text-end">Actions</th>
                                 </tr>
@@ -95,6 +107,9 @@
                                                 @endif
                                             </td>
                                         @endif
+                                        <td class="small">
+                                            <span class="fw-semibold">{{ $record->deleted_by_name }}</span>
+                                        </td>
                                         <td class="small text-muted">
                                             {{ $record->deleted_at ? $record->deleted_at->format('M d, Y h:i A') : '—' }}
                                         </td>

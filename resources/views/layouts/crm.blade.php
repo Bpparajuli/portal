@@ -386,6 +386,14 @@
                         </a>
                     @endif
 
+                    {{-- Chat Button --}}
+                    <button class="nav-icon-btn position-relative" type="button"
+                        onclick="window.location.href='{{ auth()->user()->is_admin ? route('admin.chat') : route('staff.chat.index') }}'"
+                        title="Chat">
+                        <i class="far fa-comment-dots"></i>
+                        <span class="notification-badge" id="chatUnreadBadge" style="display:none;">0</span>
+                    </button>
+
                     {{-- Notification Bell --}}
                     <div class="dropdown">
                         <button class="nav-icon-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">

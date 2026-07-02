@@ -10,6 +10,7 @@ use App\Models\Document;
 use App\Models\Emails;
 use App\Models\StudentNote;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class TrashController extends Controller
 {
@@ -36,6 +37,10 @@ class TrashController extends Controller
         'activity'     => 'student',
     ];
 
+    protected array $deletedByMapping = [
+        'student' => ['activity_type' => 'student_deleted', 'foreign_key' => 'notifiable_id'],
+    ];
+
     public function index()
     {
         $groups = [];
@@ -43,13 +48,50 @@ class TrashController extends Controller
             $model = $cfg['class'];
             $query = $model::onlyTrashed()->orderBy('deleted_at', 'desc');
 
-            // Eager-load student relationship where available
             if (isset($this->studentRelations[$type])) {
                 $query->with($this->studentRelations[$type]);
             }
 
             $records = $query->get();
+
             if ($records->isNotEmpty()) {
+                if (isset($this->deletedByMapping[$type])) {
+                    $map = $this->deletedByMapping[$type];
+                    $ids = $records->pluck('id')->toArray();
+                    $deletedByDebug = ['type' => $type, 'ids' => $ids, 'rows' => 0, 'nameMap' => []];
+                    $nameMap = [];
+                    try {
+                        $rows = DB::table('activities')
+                            ->where('type', $map['activity_type'])
+                            ->whereIn($map['foreign_key'], $ids)
+                            ->get();
+                        $deletedByDebug['rows'] = $rows->count();
+                        $userIds = $rows->pluck('user_id')->filter()->unique()->toArray();
+                        $users = [];
+                        if (!empty($userIds)) {
+                            $userRows = DB::table('users')->whereIn('id', $userIds)->get();
+                            foreach ($userRows as $u) {
+                                $users[$u->id] = $u->name;
+                            }
+                        }
+                        foreach ($rows as $r) {
+                            $fk = $r->{$map['foreign_key']};
+                            $nameMap[$fk] = $users[$r->user_id] ?? 'Unknown';
+                            $deletedByDebug['nameMap'][$fk] = $nameMap[$fk];
+                        }
+                    } catch (\Exception $e) {
+                        $deletedByDebug['error'] = $e->getMessage();
+                    }
+                    $groups['_debug'] = $deletedByDebug;
+                    foreach ($records as $record) {
+                        $record->setAttribute('deleted_by_name', $nameMap[$record->id] ?? '—');
+                    }
+                } else {
+                    foreach ($records as $record) {
+                        $record->setAttribute('deleted_by_name', '—');
+                    }
+                }
+
                 $groups[$type] = [
                     'label'   => $cfg['label'],
                     'icon'    => $cfg['icon'],

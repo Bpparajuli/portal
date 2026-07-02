@@ -10,53 +10,19 @@
         if ($num == 0) {
             return 'Zero';
         }
-        $ones = [
-            '',
-            'One',
-            'Two',
-            'Three',
-            'Four',
-            'Five',
-            'Six',
-            'Seven',
-            'Eight',
-            'Nine',
-            'Ten',
-            'Eleven',
-            'Twelve',
-            'Thirteen',
-            'Fourteen',
-            'Fifteen',
-            'Sixteen',
-            'Seventeen',
-            'Eighteen',
-            'Nineteen',
-        ];
+        $ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten',
+                 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
         $tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+        $sub100 = function ($n) use ($ones, $tens) {
+            if ($n < 20) return $ones[$n];
+            return trim($tens[floor($n / 10)] . ' ' . $ones[$n % 10]);
+        };
         $words = '';
-        if ($num >= 10000000) {
-            $words .= $ones[floor($num / 10000000)] . ' Crore ';
-            $num %= 10000000;
-        }
-        if ($num >= 100000) {
-            $words .= $ones[floor($num / 100000)] . ' Lakh ';
-            $num %= 100000;
-        }
-        if ($num >= 1000) {
-            $words .= $ones[floor($num / 1000)] . ' Thousand ';
-            $num %= 1000;
-        }
-        if ($num >= 100) {
-            $words .= $ones[floor($num / 100)] . ' Hundred ';
-            $num %= 100;
-        }
-        if ($num > 0) {
-            if ($num < 20) {
-                $words .= $ones[$num];
-            } else {
-                $words .= $tens[floor($num / 10)] . ' ' . $ones[$num % 10];
-            }
-        }
+        if ($num >= 10000000) { $words .= $sub100(floor($num / 10000000)) . ' Crore '; $num %= 10000000; }
+        if ($num >= 100000) { $words .= $sub100(floor($num / 100000)) . ' Lakh '; $num %= 100000; }
+        if ($num >= 1000) { $words .= $sub100(floor($num / 1000)) . ' Thousand '; $num %= 1000; }
+        if ($num >= 100) { $words .= $sub100(floor($num / 100)) . ' Hundred '; $num %= 100; }
+        if ($num > 0) { $words .= $sub100($num); }
         return trim($words) . ' Only';
     };
 @endphp
