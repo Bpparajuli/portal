@@ -66,7 +66,7 @@ class StudentService
             $existing = Student::where('id', '!=', $excludeId)
                 ->where(function ($q) use ($cleanPhone, $request) {
                     $q->where('phone_number', $request->phone_number)
-                      ->orWhere('phone_number', $cleanPhone);
+                        ->orWhere('phone_number', $cleanPhone);
                 })->first();
             if ($existing) {
                 return $existing;
@@ -80,7 +80,7 @@ class StudentService
                 ->where('last_name', $request->last_name)
                 ->where(function ($q) use ($request) {
                     $q->where('phone_number', $request->phone_number)
-                      ->orWhere('phone_number', $this->cleanPhoneNumber($request->phone_number));
+                        ->orWhere('phone_number', $this->cleanPhoneNumber($request->phone_number));
                 })->first();
             if ($existing) {
                 return $existing;
@@ -108,7 +108,7 @@ class StudentService
         $detailText = $details ? ' (' . implode(', ', $details) . ')' : '';
 
         return "Duplicate student found! Student '{$existingStudent->full_name}' already exists{$detailText}. "
-             . "Last added on: {$existingStudent->created_at->format('Y-m-d H:i')}";
+            . "Last added on: {$existingStudent->created_at->format('Y-m-d H:i')}";
     }
 
     // -----------------------------------------------------------------------
@@ -201,12 +201,33 @@ class StudentService
 
         // Map standard fields from request to model attributes
         $fieldMappings = [
-            'first_name', 'last_name', 'email', 'phone_number', 'gender', 'dob',
-            'marital_status', 'permanent_address', 'temporary_address', 'nationality',
-            'passport_number', 'passport_expiry', 'applying_for', 'qualification',
-            'passed_year', 'gap', 'last_grades', 'education_board',
-            'preferred_country', 'preferred_city', 'preferred_course', 'preferred_university',
-            'remarks', 'rating', 'expected_revenue', 'current_stage_id', 'created_by',
+            'first_name',
+            'last_name',
+            'email',
+            'phone_number',
+            'gender',
+            'dob',
+            'marital_status',
+            'permanent_address',
+            'temporary_address',
+            'nationality',
+            'passport_number',
+            'passport_expiry',
+            'applying_for',
+            'qualification',
+            'passed_year',
+            'gap',
+            'last_grades',
+            'education_board',
+            'preferred_country',
+            'preferred_city',
+            'preferred_course',
+            'preferred_university',
+            'remarks',
+            'rating',
+            'expected_revenue',
+            'current_stage_id',
+            'created_by',
         ];
         foreach ($fieldMappings as $field) {
             if ($request->has($field)) {
@@ -241,9 +262,11 @@ class StudentService
             $data['agent_id'] = $this->resolveAgentId($request, $intakeMethod);
         }
 
-        // Stage: default to first pipeline stage if none provided
+        // Stage: default based on creator role if none provided
         if (!$student && empty($data['current_stage_id'])) {
-            $initialStage = StudentStage::where('stage_order', 1)->first();
+            $user = Auth::user();
+            $defaultOrder = $user && $user->role === 'agent' ? 5 : 1;
+            $initialStage = StudentStage::where('stage_order', $defaultOrder)->first();
             $data['current_stage_id'] = $initialStage?->id;
         }
 
