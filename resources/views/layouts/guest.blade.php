@@ -94,6 +94,7 @@
             font-weight: 800;
             font-size: 1.25rem;
             letter-spacing: -0.02em;
+            flex-shrink: 0;
         }
 
         .guest-header .navbar-brand img {
@@ -122,6 +123,8 @@
             list-style: none;
             margin: 0;
             padding: 0;
+            flex-wrap: nowrap;
+            min-width: 0;
         }
 
         .guest-header .nav-links .nav-item {
@@ -148,6 +151,7 @@
             display: flex;
             gap: 0.5rem;
             align-items: center;
+            flex-shrink: 0;
         }
 
         .guest-header .btn-auth {
@@ -224,10 +228,29 @@
             z-index: 1;
         }
 
+        .notice-bar .notice-viewport {
+            overflow: hidden;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            padding-left: 1.5rem;
+        }
+
         .notice-bar .notice-track {
-            display: inline-block;
-            padding-left: 2rem;
+            display: flex;
+            align-items: center;
+            white-space: nowrap;
             animation: notice-scroll 35s linear infinite;
+        }
+
+        .notice-bar .notice-track .notice-item {
+            flex-shrink: 0;
+            padding: 0 2rem;
+        }
+
+        .notice-bar .notice-track .notice-item i {
+            margin: 0 1rem;
+            color: rgba(255, 255, 255, 0.5);
         }
 
         @keyframes notice-scroll {
@@ -247,6 +270,27 @@
         /* ───── Main Content ───── */
         .guest-content {
             min-height: calc(100vh - 200px);
+        }
+
+        /* ───── Narrower Desktops / Laptops ───── */
+        @media (max-width: 1199.98px) and (min-width: 992px) {
+            .guest-header .container {
+                flex-wrap: wrap;
+                justify-content: space-between;
+            }
+
+            .guest-header .navbar-collapse {
+                order: 3;
+                width: 100%;
+                justify-content: center;
+                margin-top: 0.5rem;
+                flex-basis: 100%;
+            }
+
+            .guest-header .nav-links {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
         }
 
         /* ───── Mobile Navbar ───── */
@@ -313,7 +357,7 @@
                 </span>
             </a>
 
-            <button class="navbar-toggler d-lg-none" type="button" data-bs-toggle="collapse" data-bs-target="#guestNav"
+            <button class="navbar-toggler d-lg-none" type="button" id="guestNavToggler"
                 aria-controls="guestNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -377,8 +421,12 @@
         <div class="notice-bar">
             <div class="container notice-inner">
                 <span class="notice-icon"><i class="fas fa-bullhorn"></i> Notice</span>
-                <div class="notice-track">{{ $notice }} &nbsp;&bull;&nbsp; {{ $notice }}
-                    &nbsp;&bull;&nbsp; {{ $notice }}</div>
+                <div class="notice-viewport">
+                    <div class="notice-track">
+                        <span class="notice-item">{{ $notice }}<i class="fas fa-circle"></i>{{ $notice }}</span>
+                        <span class="notice-item">{{ $notice }}<i class="fas fa-circle"></i>{{ $notice }}</span>
+                    </div>
+                </div>
             </div>
         </div>
     @endif
@@ -400,6 +448,20 @@
             once: true,
             offset: 60
         });
+    </script>
+
+    {{-- Guest Navbar Mobile Toggle --}}
+    <script>
+        (function() {
+            var toggler = document.getElementById('guestNavToggler');
+            var nav = document.getElementById('guestNav');
+            if (!toggler || !nav) return;
+            toggler.addEventListener('click', function() {
+                var isOpen = nav.classList.toggle('show');
+                toggler.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+                nav.classList.toggle('collapsing', false);
+            });
+        })();
     </script>
 
     {{-- Tawk.to Live Chat --}}

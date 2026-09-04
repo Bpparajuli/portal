@@ -10,6 +10,18 @@
     $showAdminActions = Auth::check() && (Auth::user()->is_admin || Auth::user()->is_staff);
     $countries = $countries ?? \App\Models\University::select('country')->distinct()->pluck('country');
     $courseTypes = $courseTypes ?? \App\Models\Course::distinct()->pluck('course_type');
+
+    $hasEligibleStudent = true;
+    if (Auth::check() && (Auth::user()->is_agent)) {
+        $requiredTypes = \App\Http\Controllers\DocumentController::allDocumentTypes();
+        $hasEligibleStudent = \App\Models\Student::where('agent_id', Auth::id())
+            ->with('documents:student_id,document_type')
+            ->get()
+            ->contains(function($s) use ($requiredTypes) {
+                $docTypes = $s->documents->pluck('document_type')->map(fn($t) => strtolower(str_replace(' ', '', $t)))->unique()->toArray();
+                return empty(array_diff($requiredTypes, $docTypes));
+            });
+    }
 @endphp
 
 {{-- Hero --}}
@@ -173,12 +185,14 @@
                                         @endcan
                                     </div>
                                 @elseif($user->is_agent)
-                                    <div class="d-flex gap-1 mb-2">
-                                        <a href="{{ route('agent.applications.quick-start', ['course_id' => $c->id]) }}"
-                                            class="btn btn-sm btn-success">
-                                            <i class="fas fa-paper-plane me-1"></i>Apply
-                                        </a>
-                                    </div>
+                                    @if($hasEligibleStudent)
+                                        <div class="d-flex gap-1 mb-2">
+                                            <a href="{{ route('agent.applications.quick-start', ['course_id' => $c->id]) }}"
+                                                class="btn btn-sm btn-success">
+                                                <i class="fas fa-paper-plane me-1"></i>Apply
+                                            </a>
+                                        </div>
+                                    @endif
                                 @elseif($user->is_staff)
                                     @can('update', $c)
                                         <div class="d-flex gap-1 mb-2">

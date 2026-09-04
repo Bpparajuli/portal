@@ -194,11 +194,17 @@
 
                 {{-- APPLICATIONS TAB --}}
                 <div id="tab-applications" style="display:none">
-                    @php $u2 = auth()->user(); $appPrefix = $u2->is_admin ? 'admin' : ($u2->is_staff ? 'staff' : 'agent'); @endphp
+                    @php $u2 = auth()->user(); $appPrefix = $u2->is_admin ? 'admin' : ($u2->is_staff ? 'staff' : 'agent'); 
+                         $requiredTypes = \App\Http\Controllers\DocumentController::allDocumentTypes();
+                         $uploadedDocTypes = $student->documents->pluck('document_type')->map(fn($t) => strtolower(str_replace(' ', '', $t)))->unique()->toArray();
+                         $canApply = $u2->is_agent ? empty(array_diff($requiredTypes, $uploadedDocTypes)) : true;
+                    @endphp
                     <div class="crm-section-header" style="padding:8px 12px;border-bottom:1px solid #e9edf2;">
                         <span>📋 Applications</span>
+                        @if ($u2->is_admin || $u2->is_admin_staff || $canApply)
                         <a href="{{ route($appPrefix . '.applications.create') }}?student_id={{ $student->id }}"
                            class="btn btn-sm btn-outline-purple"><i class="fas fa-plus me-1"></i>Add Application</a>
+                        @endif
                     </div>
                     <div class="crm-section-body">
                         @forelse($student->applications as $app)

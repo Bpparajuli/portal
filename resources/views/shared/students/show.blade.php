@@ -9,6 +9,9 @@
     $apps = $student->applications ?? collect();
     $docs = $student->documents ?? collect();
     $showRemarks = !$isAgent && $student->remarks;
+    $requiredTypes = \App\Http\Controllers\DocumentController::allDocumentTypes();
+    $uploadedTypes = $docs->pluck('document_type')->map(fn($t) => strtolower(str_replace(' ', '', $t)))->unique()->toArray();
+    $canApply = $isAgent ? empty(array_diff($requiredTypes, $uploadedTypes)) : true;
 @endphp
 
 @extends($layout)
@@ -179,7 +182,9 @@
                 @if(!$isStaff)
                 <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
                     <h6 class="fw-bold mb-0" style="color:var(--primary);"><i class="fas fa-file-alt me-1"></i>Applications</h6>
+                    @if(!$isAgent || $canApply)
                     <a href="{{ route($prefix . '.applications.create', ['student_id' => $student->id]) }}" class="btn btn-sm btn-primary" style="border-radius:8px;">+ New Application</a>
+                    @endif
                 </div>
                 @endif
                 @if($apps->isNotEmpty())
@@ -216,7 +221,9 @@
                         <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
                         <p class="text-muted" style="font-size:0.85rem;">No applications yet.</p>
                         @if(!$isStaff)
+                        @if(!$isAgent || $canApply)
                         <a href="{{ route($prefix . '.applications.create', ['student_id' => $student->id]) }}" class="btn btn-sm btn-primary rounded-pill">Create Application</a>
+                        @endif
                         @endif
                     </div>
                 @endif

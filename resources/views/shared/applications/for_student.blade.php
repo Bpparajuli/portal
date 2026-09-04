@@ -63,9 +63,11 @@
         <div class="text-center py-5" style="color:#9ca3af;">
             <i class="fas fa-file-alt fa-3x mb-3" style="color:#d1d5db;"></i>
             <p style="font-size:0.9rem;">No applications found for this student.</p>
+            @if(!$__isAgent || ($student->getDocumentStats()['uploaded_count'] >= 10))
             @can('create', App\Models\Application::class)
                 <a href="{{ route($role . '.applications.create', ['student_id' => $student->id]) }}" class="btn btn-primary" style="border-radius:10px;font-size:0.82rem;padding:8px 24px;"><i class="fas fa-plus me-1"></i>Create Application</a>
             @endcan
+            @endif
         </div>
     @endif
 </div>

@@ -22,7 +22,7 @@ class UniversityController extends Controller
     public function index(Request $request)
     {
         $countries = University::select('country')->distinct()->pluck('country');
-        $universities = $this->filteredUniversities($request, 40);
+        $universities = $this->filteredUniversities($request, 60);
 
         return view('shared.universities.index', compact('universities', 'countries'));
     }
@@ -35,15 +35,19 @@ class UniversityController extends Controller
     public function store(StoreUniversityRequest $request)
     {
         $university = new University($request->only([
-            'name', 'short_name', 'country', 'city', 'website', 'contact_email', 'description'
+            'name',
+            'short_name',
+            'country',
+            'city',
+            'website',
+            'contact_email',
+            'description'
         ]));
 
         if ($request->hasFile('university_logo')) {
-            $file = $request->file('university_logo');
-            $extension = $file->getClientOriginalExtension();
-            $safeShortName = str_replace(' ', '_', strtolower($request->short_name ?? 'university'));
-            $file->storeAs('uni_logo', $safeShortName . '.' . $extension, 'public');
-            $university->university_logo = $safeShortName . '.' . $extension;
+            $logoName = $this->resolveLogoName($request->short_name ?: $request->name, $request->file('university_logo'));
+            $request->file('university_logo')->storeAs('uni_logo', $logoName, 'public');
+            $university->university_logo = $logoName;
         }
 
         $university->save();
@@ -67,18 +71,23 @@ class UniversityController extends Controller
     public function update(StoreUniversityRequest $request, University $university)
     {
         $university->fill($request->only([
-            'name', 'short_name', 'country', 'city', 'website', 'contact_email', 'description'
+            'name',
+            'short_name',
+            'country',
+            'city',
+            'website',
+            'contact_email',
+            'description'
         ]));
 
         if ($request->hasFile('university_logo')) {
             if ($university->university_logo && Storage::disk('public')->exists('uni_logo/' . $university->university_logo)) {
                 Storage::disk('public')->delete('uni_logo/' . $university->university_logo);
             }
-            $file = $request->file('university_logo');
-            $extension = $file->getClientOriginalExtension();
-            $safeShortName = str_replace(' ', '_', strtolower($request->short_name ?? 'university'));
-            $file->storeAs('uni_logo', $safeShortName . '.' . $extension, 'public');
-            $university->university_logo = $safeShortName . '.' . $extension;
+            $baseName = $request->short_name ?: $university->short_name ?: $request->name ?: $university->name;
+            $logoName = $this->resolveLogoName($baseName, $request->file('university_logo'));
+            $request->file('university_logo')->storeAs('uni_logo', $logoName, 'public');
+            $university->university_logo = $logoName;
         }
 
         $university->save();
@@ -97,5 +106,18 @@ class UniversityController extends Controller
 
         return redirect()->route(auth()->user()->role . '.universities.index')
             ->with('success', 'University deleted successfully.');
+    }
+
+    /**
+     * Build a safe, shortname-based filename for a university logo,
+     * preserving the uploaded image's original extension.
+     */
+    protected function resolveLogoName(string $baseName, $file): string
+    {
+        $extension = strtolower($file->getClientOriginalExtension() ?: 'png');
+        $base = preg_replace('/[^A-Za-z0-9_-]/', '_', trim($baseName) ?: 'university');
+        $base = trim($base, '_-');
+        $base = $base ?: 'university';
+        return $base . '.' . $extension;
     }
 }

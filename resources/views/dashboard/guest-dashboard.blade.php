@@ -501,5 +501,19 @@
 <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
 <script>
 AOS.init({ duration: 900, once: true, offset: 60 });
+
+document.addEventListener('DOMContentLoaded', function() {
+    const toggle = document.getElementById('togglePassword');
+    const input = document.getElementById('password');
+    if (toggle && input) {
+        toggle.addEventListener('click', function() {
+            const isPw = input.type === 'password';
+            input.type = isPw ? 'text' : 'password';
+            const icon = this.querySelector('i');
+            icon.classList.toggle('fa-eye', !isPw);
+            icon.classList.toggle('fa-eye-slash', isPw);
+        });
+    }
+});
 </script>
 @endpush

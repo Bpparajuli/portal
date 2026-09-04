@@ -145,7 +145,12 @@
                                                 @elseif($setting->type === 'number')
                                                     <input type="number" name="{{ $setting->key }}" class="form-control form-control-sm" style="width:120px;font-size:12px;" value="{{ $setting->value }}">
                                                 @elseif(str_contains($setting->key, 'password'))
-                                                    <input type="password" name="{{ $setting->key }}" class="form-control form-control-sm" style="max-width:300px;font-size:12px;" value="{{ $setting->value }}" placeholder="Leave empty to keep current">
+                                                    <div class="input-group" style="max-width:300px;">
+                                                        <input type="password" name="{{ $setting->key }}" id="settingPw_{{ $setting->id }}" class="form-control form-control-sm" style="font-size:12px;" value="{{ $setting->value }}" placeholder="Leave empty to keep current">
+                                                        <span class="input-group-text bg-light" onclick="toggleSettingPassword({{ $setting->id }})" style="cursor:pointer;font-size:12px;">
+                                                            <i id="settingPwIcon_{{ $setting->id }}" class="fas fa-eye"></i>
+                                                        </span>
+                                                    </div>
                                                 @else
                                                     <input type="text" name="{{ $setting->key }}" class="form-control form-control-sm" style="max-width:300px;font-size:12px;" value="{{ $setting->value }}">
                                                 @endif
@@ -172,3 +177,16 @@
         @endforeach
     </div>
 @endsection
+
+@push('scripts')
+<script>
+function toggleSettingPassword(id) {
+    const field = document.getElementById('settingPw_' + id);
+    const icon = document.getElementById('settingPwIcon_' + id);
+    if (!field || !icon) return;
+    const isPassword = field.type === 'password';
+    field.type = isPassword ? 'text' : 'password';
+    icon.className = isPassword ? 'fas fa-eye-slash' : 'fas fa-eye';
+}
+</script>
+@endpush

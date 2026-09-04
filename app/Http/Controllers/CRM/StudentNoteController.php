@@ -8,7 +8,6 @@ use App\Models\StudentNote;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 
 class StudentNoteController extends Controller
 {
@@ -50,8 +49,6 @@ class StudentNoteController extends Controller
             'is_pinned' => ['boolean'],
         ]);
 
-        $oldContent = $note->content;
-
         $note->update([
             'content' => $validated['content'],
             'title' => $validated['title'] ?? $note->title,
@@ -66,15 +63,6 @@ class StudentNoteController extends Controller
                 'title' => $isLog ? ($note->title ?? 'Note Converted') : null,
             ]);
         }
-
-        // Log the edit
-        Log::info('Note edited', [
-            'note_id' => $note->id,
-            'student_id' => $note->student_id,
-            'edited_by' => Auth::id(),
-            'old_content_length' => strlen($oldContent),
-            'new_content_length' => strlen($validated['content'])
-        ]);
 
         if ($request->ajax()) {
             return response()->json([

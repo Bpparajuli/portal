@@ -28,10 +28,27 @@
             </div>
             <div class="d-flex gap-2">
                 @can('create', App\Models\Application::class)
+                    @php
+                        $hasEligibleStudent = true;
+                        if ($__isAgent) {
+                            $requiredTypes = \App\Http\Controllers\DocumentController::allDocumentTypes();
+                            $hasEligibleStudent = \App\Models\Student::where('agent_id', $__user->id)
+                                ->with('documents')
+                                ->get()
+                                ->contains(function($s) use ($requiredTypes) {
+                                    $types = $s->documents->pluck('document_type')
+                                        ->map(fn($t) => strtolower(str_replace(' ', '', $t)))
+                                        ->unique()->toArray();
+                                    return empty(array_diff($requiredTypes, $types));
+                                });
+                        }
+                    @endphp
+                    @if($hasEligibleStudent)
                     <a href="{{ route($role . '.applications.create') }}" class="btn btn-primary"
                         style="font-size:0.82rem;padding:8px 20px;border-radius:10px;">
                         <i class="fas fa-plus me-1"></i>New Application
                     </a>
+                    @endif
                 @endcan
             </div>
         </div>

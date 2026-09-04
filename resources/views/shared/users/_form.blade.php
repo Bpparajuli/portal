@@ -213,21 +213,54 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const planSelector = document.getElementById('planSelector');
-    if (!planSelector) return;
-    planSelector.addEventListener('click', function(e) {
-        const btn = e.target.closest('.plan-option');
-        if (!btn) return;
-        planSelector.querySelectorAll('.plan-option').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        document.getElementById('subscriptionPlan').value = btn.dataset.plan;
-        // If not custom, auto-fill the fields
-        if (btn.dataset.plan !== '') {
-            document.getElementById('agentMaxStaff').value = btn.dataset.staff;
-            document.getElementById('agentMaxStudents').value = btn.dataset.students;
-            document.getElementById('crmToggle').checked = btn.dataset.crm === '1';
-        }
-    });
+    if (planSelector) {
+        planSelector.addEventListener('click', function(e) {
+            const btn = e.target.closest('.plan-option');
+            if (!btn) return;
+            planSelector.querySelectorAll('.plan-option').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById('subscriptionPlan').value = btn.dataset.plan;
+            // If not custom, auto-fill the fields
+            if (btn.dataset.plan !== '') {
+                document.getElementById('agentMaxStaff').value = btn.dataset.staff;
+                document.getElementById('agentMaxStudents').value = btn.dataset.students;
+                document.getElementById('crmToggle').checked = btn.dataset.crm === '1';
+            }
+        });
+    }
+
+    const pw = document.getElementById('passwordField');
+    const con = document.getElementById('confirmPassword');
+    const mi = document.getElementById('passwordMatchIcon');
+    function cm() {
+        if (!con || !mi) return;
+        if (!con.value) { mi.innerHTML = ''; return; }
+        mi.innerHTML = (pw.value === con.value)
+            ? '<i class="fas fa-check-circle text-success"></i>'
+            : '<i class="fas fa-times-circle text-danger"></i>';
+    }
+    if (pw && con) {
+        pw.addEventListener('input', cm);
+        con.addEventListener('input', cm);
+    }
 });
+
+function togglePassword() {
+    const field = document.getElementById('passwordField');
+    const icon = document.getElementById('passwordIcon');
+    if (!field || !icon) return;
+    const isPassword = field.type === 'password';
+    field.type = isPassword ? 'text' : 'password';
+    icon.className = isPassword ? 'fas fa-eye-slash' : 'fas fa-eye';
+}
+function toggleConfirmPassword() {
+    const field = document.getElementById('confirmPassword');
+    const icon = document.getElementById('confirmPasswordIcon');
+    if (!field || !icon) return;
+    const isPassword = field.type === 'password';
+    field.type = isPassword ? 'text' : 'password';
+    icon.className = isPassword ? 'fas fa-eye-slash' : 'fas fa-eye';
+}
 </script>
 @endpush
 
@@ -342,6 +375,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         name="password_confirmation" id="confirmPassword"
                         placeholder="{{ !$isEdit ? 'Confirm password' : 'Confirm new password' }}"
                         {{ !$isEdit ? 'required' : '' }}>
+                    <span class="input-group-text" onclick="toggleConfirmPassword()" style="cursor:pointer;">
+                        <i id="confirmPasswordIcon" class="fas fa-eye"></i>
+                    </span>
                     <span class="input-group-text"><span id="passwordMatchIcon"></span></span>
                     @error('password_confirmation')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>

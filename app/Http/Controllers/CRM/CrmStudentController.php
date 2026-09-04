@@ -82,10 +82,6 @@ class CrmStudentController extends Controller
                     ->distinct()
                     ->pluck('student_id')
                     ->toArray();
-
-                Log::info('Admin students (all students with tasks today)', [
-                    'student_ids' => $studentIdsWithTodayTasks
-                ]);
             } else {
                 $studentIdsWithTodayTasks = CrmTasks::whereDate('scheduled_for', $today)
                     ->where('assigned_to', $user->id)
@@ -229,14 +225,6 @@ class CrmStudentController extends Controller
                 $student->source ?? 'manual',
                 $student->agent_id ?? 'Not assigned'
             );
-
-            Log::info('Student created via CRM modal', [
-                'student_id' => $student->id,
-                'name' => $student->full_name,
-                'source' => $student->source,
-                'agent_id' => $student->agent_id,
-                'created_by' => Auth::id()
-            ]);
 
             return redirect()->route('crm.dashboard')
                 ->with('success', $successMessage)
@@ -723,9 +711,5 @@ class CrmStudentController extends Controller
         Cache::forget('crm_today_tasks');
         Cache::forget('crm_dashboard_stats');
         Cache::forget('crm_task_stats');
-
-        Log::info('CRM cache cleared', [
-            'user_id' => Auth::id()
-        ]);
     }
 }

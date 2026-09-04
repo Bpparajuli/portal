@@ -40,22 +40,28 @@
                 @error('name')<div class="invalid-feedback">{{ $message }}</div>@enderror
             </div>
             <div class="col-md-6 mb-3">
+                <label for="short_name" class="form-label">Short Name</label>
+                <input type="text" id="short_name" name="short_name" value="{{ old('short_name', $university->short_name) }}" class="form-control @error('short_name') is-invalid @enderror" placeholder="e.g. PFH">
+                <small class="text-muted">Used as the logo filename (e.g. PFH.png)</small>
+                @error('short_name')<div class="invalid-feedback">{{ $message }}</div>@enderror
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6 mb-3">
                 <label for="country" class="form-label">Country <span class="text-danger">*</span></label>
                 <input type="text" id="country" name="country" value="{{ old('country', $university->country) }}" class="form-control @error('country') is-invalid @enderror" required>
                 @error('country')<div class="invalid-feedback">{{ $message }}</div>@enderror
             </div>
-        </div>
-        <div class="row">
             <div class="col-md-6 mb-3">
                 <label for="city" class="form-label">City</label>
                 <input type="text" id="city" name="city" value="{{ old('city', $university->city) }}" class="form-control @error('city') is-invalid @enderror">
                 @error('city')<div class="invalid-feedback">{{ $message }}</div>@enderror
             </div>
-            <div class="col-md-6 mb-3">
-                <label for="website" class="form-label">Website</label>
-                <input type="url" id="website" name="website" value="{{ old('website', $university->website) }}" class="form-control @error('website') is-invalid @enderror">
-                @error('website')<div class="invalid-feedback">{{ $message }}</div>@enderror
-            </div>
+        </div>
+        <div class="mb-3">
+            <label for="website" class="form-label">Website</label>
+            <input type="url" id="website" name="website" value="{{ old('website', $university->website) }}" class="form-control @error('website') is-invalid @enderror">
+            @error('website')<div class="invalid-feedback">{{ $message }}</div>@enderror
         </div>
         <div class="mb-3">
             <label for="address" class="form-label">Address</label>

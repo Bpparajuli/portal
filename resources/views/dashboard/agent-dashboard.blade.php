@@ -48,8 +48,20 @@
                 @if (!$isStaffSub)
                     <a href="{{ route('agent.students.create') }}" class="btn btn-sm btn-glass">
                         <i class="fas fa-plus"></i><i class="fas fa-user-graduate"></i>Student</a>
+                    @php
+                        $requiredTypes = \App\Http\Controllers\DocumentController::allDocumentTypes();
+                        $hasEligibleStudent = \App\Models\Student::where('agent_id', auth()->id())
+                            ->with('documents:student_id,document_type')
+                            ->get()
+                            ->contains(function($s) use ($requiredTypes) {
+                                $docTypes = $s->documents->pluck('document_type')->map(fn($t) => strtolower(str_replace(' ', '', $t)))->unique()->toArray();
+                                return empty(array_diff($requiredTypes, $docTypes));
+                            });
+                    @endphp
+                    @if($hasEligibleStudent)
                     <a href="{{ route('agent.applications.create') }}" class="btn btn-sm btn-glass-accent"><i
                             class="fas fa-plus"></i> <i class="fas fa-file-alt"></i>Application</a>
+                    @endif
                 @endif
             </div>
         </div>

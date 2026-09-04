@@ -106,19 +106,28 @@ class ApplicationController extends Controller
             $selectedCourseId = session('quick_start_course_id') ?? $request->query('course_id');
             session()->forget(['quick_start_university_id', 'quick_start_course_id']);
 
-            $courses = $selectedUniversityId ? Course::where('university_id', $selectedUniversityId)->get() : collect();
-
             if ($selectedCourseId && !$selectedUniversityId) {
                 $course = Course::find($selectedCourseId);
                 if ($course) {
                     $selectedUniversityId = $course->university_id;
-                    $courses = Course::where('university_id', $selectedUniversityId)->get();
                 }
             }
 
+            $courses = $selectedUniversityId ? Course::where('university_id', $selectedUniversityId)->get() : collect();
+
+            // When both university and course are pre-selected (from course popup), lock both
+            $lockUniCourse = (bool) $selectedUniversityId && (bool) $selectedCourseId;
+
             if ($request->has('student_id')) {
                 $student = Student::where('id', $request->student_id)->where('agent_id', $user->id)->firstOrFail();
-                return view('shared.applications.create', compact('student', 'universities', 'courses', 'selectedUniversityId', 'selectedCourseId'));
+                $student->load('documents');
+
+                if (count(array_diff(\App\Http\Controllers\DocumentController::allDocumentTypes(), $student->documents->pluck('document_type')->map(fn($t) => strtolower(str_replace(' ', '', $t)))->unique()->toArray())) > 0) {
+                    return redirect()->route($user->is_admin_staff ? 'admin.documents.index' : $user->role . '.documents.index', $student->id)
+                        ->with('error', 'You must complete all required documents before applying.');
+                }
+
+                return view('shared.applications.create', compact('student', 'universities', 'courses', 'selectedUniversityId', 'selectedCourseId', 'lockUniCourse'));
             }
 
             $requiredTypes = \App\Http\Controllers\DocumentController::allDocumentTypes();
@@ -126,7 +135,7 @@ class ApplicationController extends Controller
                 ->with(['documents' => fn($q) => $q->whereIn('document_type', $requiredTypes)])
                 ->get()->filter(fn($s) => empty(array_diff($requiredTypes, $s->documents->pluck('document_type')->toArray())));
 
-            return view('shared.applications.create', compact('students', 'courses', 'universities', 'selectedUniversityId', 'selectedCourseId'));
+            return view('shared.applications.create', compact('students', 'courses', 'universities', 'selectedUniversityId', 'selectedCourseId', 'lockUniCourse'));
         }
 
         $selectedStudent = $request->has('student_id') ? Student::find($request->student_id) : null;
@@ -150,6 +159,15 @@ class ApplicationController extends Controller
         $student = $user->is_agent
             ? Student::where('agent_id', $user->id)->findOrFail($request->student_id)
             : Student::findOrFail($request->student_id);
+
+        if ($user->is_agent) {
+            $student->load('documents');
+            $requiredTypes = \App\Http\Controllers\DocumentController::allDocumentTypes();
+            $studentDocTypes = $student->documents->pluck('document_type')->map(fn($t) => strtolower(str_replace(' ', '', $t)))->unique()->toArray();
+            if (count(array_diff($requiredTypes, $studentDocTypes)) > 0) {
+                return back()->with('error', 'You must complete all required documents before submitting an application. <a href="' . route($user->is_admin_staff ? 'admin.documents.index' : $user->role . '.documents.index', $student->id) . '" class="fw-bold">Go to documents</a>');
+            }
+        }
 
         if (Application::where('student_id', $student->id)->where('university_id', $request->university_id)->where('course_id', $request->course_id)->exists()) {
             return back()->withErrors(['course_id' => 'Duplicate application.'])->withInput();

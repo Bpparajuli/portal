@@ -24,6 +24,18 @@
                 ? route('staff.universities')
                 : route($prefix . '.universities.index'));
     $countries = \App\Models\University::select('country')->distinct()->pluck('country');
+
+    $hasEligibleStudent = true;
+    if (Auth::check() && (Auth::user()->is_agent)) {
+        $requiredTypes = \App\Http\Controllers\DocumentController::allDocumentTypes();
+        $hasEligibleStudent = \App\Models\Student::where('agent_id', Auth::id())
+            ->with('documents:student_id,document_type')
+            ->get()
+            ->contains(function($s) use ($requiredTypes) {
+                $docTypes = $s->documents->pluck('document_type')->map(fn($t) => strtolower(str_replace(' ', '', $t)))->unique()->toArray();
+                return empty(array_diff($requiredTypes, $docTypes));
+            });
+    }
 @endphp
 
 <link rel="stylesheet" href="{{ asset('css/university.css') }}">
@@ -229,14 +241,16 @@
                                             class="btn btn-sm btn-outline-danger" />
                                     @endcan
                                 </div>
-                            @elseif($user->is_agent)
-                                <div class="mt-2 d-flex gap-1">
-                                    <a href="{{ route('agent.applications.quick-start', ['university_id' => $u->id]) }}"
-                                        class="btn btn-sm btn-success">
-                                        <i class="fas fa-paper-plane me-1"></i> Apply for Course
-                                    </a>
-                                </div>
-                            @elseif($user->is_staff)
+                                    @elseif($user->is_agent)
+                                        @if($hasEligibleStudent)
+                                            <div class="mt-2 d-flex gap-1">
+                                                <a href="{{ route('agent.applications.quick-start', ['university_id' => $u->id]) }}"
+                                                    class="btn btn-sm btn-success">
+                                                    <i class="fas fa-paper-plane me-1"></i> Apply for Course
+                                                </a>
+                                            </div>
+                                        @endif
+                                    @elseif($user->is_staff)
                                 @can('update', $u)
                                     <div class="mt-2 d-flex gap-1">
                                         <a href="{{ route($prefix . '.universities.edit', $u) }}"
@@ -349,9 +363,11 @@
                                                                             class="fas fa-edit"></i></a>
                                                                 @endcan
                                                             @elseif($authUser->is_agent)
-                                                                <a href="{{ route('agent.applications.quick-start', ['course_id' => $course->id]) }}"
-                                                                    class="btn btn-sm btn-success"><i
-                                                                        class="fas fa-paper-plane"></i></a>
+                                                                @if($hasEligibleStudent)
+                                                                    <a href="{{ route('agent.applications.quick-start', ['course_id' => $course->id]) }}"
+                                                                        class="btn btn-sm btn-success"><i
+                                                                            class="fas fa-paper-plane"></i></a>
+                                                                @endif
                                                             @elseif($authUser->is_staff)
                                                                 @can('update', $course)
                                                                     <a href="{{ route($prefix . '.courses.edit', $course) }}"

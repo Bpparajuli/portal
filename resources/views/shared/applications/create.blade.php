@@ -70,7 +70,7 @@
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label class="app-form-label">University <span class="text-danger">*</span></label>
-                                <select name="university_id" class="app-form-control form-select @error('university_id') is-invalid @enderror" id="university_select" required>
+                                <select name="university_id" class="app-form-control form-select @error('university_id') is-invalid @enderror" id="university_select" required {{ ($lockUniCourse ?? false) || !empty($selectedUniversityId) ? 'disabled' : '' }}>
                                     <option value="">-- Select University --</option>
                                     @foreach ($universities as $uni)
                                         <option value="{{ $uni->id }}" {{ old('university_id', $selectedUniversityId ?? '') == $uni->id ? 'selected' : '' }}>
@@ -82,8 +82,13 @@
                             </div>
                             <div class="col-md-6">
                                 <label class="app-form-label">Course <span class="text-danger">*</span></label>
-                                <select name="course_id" class="app-form-control form-select @error('course_id') is-invalid @enderror" id="course_select" {{ empty($selectedUniversityId) ? 'disabled' : '' }} required>
+                                <select name="course_id" class="app-form-control form-select @error('course_id') is-invalid @enderror" id="course_select" {{ ($lockUniCourse ?? false) || empty($selectedUniversityId) ? 'disabled' : '' }} required>
                                     <option value="">-- {{ empty($selectedUniversityId) ? 'Select university first' : 'Select Course' }} --</option>
+                                    @if (!empty($courses))
+                                        @foreach ($courses as $c)
+                                            <option value="{{ $c->id }}" {{ old('course_id', $selectedCourseId ?? '') == $c->id ? 'selected' : '' }}>{{ $c->title }}</option>
+                                        @endforeach
+                                    @endif
                                 </select>
                                 @error('course_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
                             </div>
@@ -204,6 +209,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     courseSelect.disabled = true;
                 }
                 courseSelect.innerHTML = options;
+                @if (!empty($selectedCourseId))
+                const selCourseId = '{{ $selectedCourseId }}';
+                const opt = Array.from(courseSelect.options).find(o => o.value == selCourseId);
+                if (opt) { courseSelect.value = selCourseId; courseSelect.disabled = true; }
+                @endif
                 updatePreview(); checkFormCompletion();
             });
     }
@@ -230,8 +240,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     if (uniSelect) {
+        @if (!($lockUniCourse ?? false))
         if (uniSelect.value) loadCourses(uniSelect.value);
         uniSelect.addEventListener('change', function() { loadCourses(this.value); updatePreview(); checkFormCompletion(); });
+        @endif
     }
     if (studentSelect) studentSelect.addEventListener('change', function() { updatePreview(); checkFormCompletion(); });
     if (courseSelect) courseSelect.addEventListener('change', function() { updatePreview(); checkFormCompletion(); });

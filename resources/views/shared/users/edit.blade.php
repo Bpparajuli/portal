@@ -192,8 +192,10 @@
                                 <div class="col-md-6">
                                     <label class="form-label fw-semibold small" style="color:var(--warning-dark);">Confirm Password</label>
                                     <div class="input-group">
-                                        <span class="input-group-text bg-light"><i class="fas fa-check-circle" style="color:var(--warning);"></i></span>
                                         <input type="password" name="password_confirmation" id="confirmPasswordField" class="form-control" placeholder="Confirm new password">
+                                        <span class="input-group-text" onclick="toggleConfirmPassword()" style="cursor:pointer;">
+                                            <i id="confirmPasswordIcon" class="fas fa-eye"></i>
+                                        </span>
                                         <span class="input-group-text"><span id="passwordMatchIcon"></span></span>
                                     </div>
                                 </div>
@@ -271,11 +273,24 @@
                             <div class="row g-3">
                                 <div class="col-md-6">
                                     <label class="form-label fw-semibold small">New Password</label>
-                                    <input type="password" name="password" id="passwordField" class="form-control form-control-sm" placeholder="New password">
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light"><i class="fas fa-key text-warning"></i></span>
+                                        <input type="password" name="password" id="passwordField" class="form-control form-control-sm" placeholder="New password">
+                                        <span class="input-group-text" onclick="togglePassword()" style="cursor:pointer;">
+                                            <i id="passwordIcon" class="fas fa-eye"></i>
+                                        </span>
+                                    </div>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label fw-semibold small">Confirm Password</label>
-                                    <input type="password" name="password_confirmation" id="confirmPasswordField" class="form-control form-control-sm" placeholder="Confirm password">
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light"><i class="fas fa-check-circle text-warning"></i></span>
+                                        <input type="password" name="password_confirmation" id="confirmPasswordField" class="form-control form-control-sm" placeholder="Confirm password">
+                                        <span class="input-group-text" onclick="toggleConfirmPassword()" style="cursor:pointer;">
+                                            <i id="confirmPasswordIcon" class="fas fa-eye"></i>
+                                        </span>
+                                        <span class="input-group-text"><span id="passwordMatchIcon"></span></span>
+                                    </div>
                                 </div>
                             </div>
                             <div class="mt-3 pt-3 border-top d-flex justify-content-end gap-2">
@@ -334,6 +349,14 @@ document.addEventListener('DOMContentLoaded', function() {
 function togglePassword() {
     const field = document.getElementById('passwordField');
     const icon = document.getElementById('passwordIcon');
+    if (!field || !icon) return;
+    const isPassword = field.type === 'password';
+    field.type = isPassword ? 'text' : 'password';
+    icon.className = isPassword ? 'fas fa-eye-slash' : 'fas fa-eye';
+}
+function toggleConfirmPassword() {
+    const field = document.getElementById('confirmPasswordField');
+    const icon = document.getElementById('confirmPasswordIcon');
     if (!field || !icon) return;
     const isPassword = field.type === 'password';
     field.type = isPassword ? 'text' : 'password';
