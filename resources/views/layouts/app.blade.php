@@ -221,10 +221,7 @@
                 </div>
                 <div class="header-right">
                     @auth
-                    <button class="btn-icon-header position-relative" onclick="window.location.href='{{ Auth::user()->is_admin ? route('admin.chat') : (Auth::user()->is_agent ? route('agent.chat') : (Auth::user()->is_staff ? route('staff.chat.index') : '#')) }}'" title="Chat">
-                        <i class="fas fa-comment-dots"></i>
-                        <span class="chat-unread-badge" id="chatUnreadBadge" style="display:none;position:absolute;top:-4px;right:-6px;background:var(--danger,#ef4444);color:#fff;font-size:0.6rem;font-weight:700;min-width:16px;height:16px;border-radius:8px;align-items:center;justify-content:center;padding:0 4px;box-shadow:0 2px 4px rgba(0,0,0,0.2);">0</span>
-                    </button>
+                    @include('partials.email-bell')
                     <div class="dropdown" id="notifDropdown">
                         <button class="btn-icon-header" id="notifToggle" data-bs-toggle="dropdown" aria-expanded="false" title="Notifications">
                             <i class="fas fa-bell"></i>
@@ -277,6 +274,7 @@
     </div>
 
     @include('components.file-preview-modal')
+    @include('partials.chat-widget')
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>

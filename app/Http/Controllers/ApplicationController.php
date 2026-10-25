@@ -209,6 +209,21 @@ class ApplicationController extends Controller
             User::admins()->first()?->notify(new ApplicationSubmitted($application));
         }
 
+        // Route activity email to portal@ + application admin
+        \App\Services\PortalNotifier::send(
+            \App\Services\PortalNotifier::APPLICATION,
+            '📨 Application Submitted',
+            [
+                \App\Services\PortalNotifier::line('Student', $student->full_name),
+                \App\Services\PortalNotifier::line('University', $application->university?->name ?? '—'),
+                \App\Services\PortalNotifier::line('Course', $application->course?->name ?? '—'),
+                \App\Services\PortalNotifier::line('Submitted by', $user->name . ' (' . ucfirst($user->role) . ')'),
+                \App\Services\PortalNotifier::line('Submitted at', now()->format('d M Y, g:i A')),
+            ],
+            'View Application',
+            url('/crm/students/' . $student->id)
+        );
+
         return redirect()->route($user->role . '.applications.index')
             ->with('success', 'Application created successfully.');
     }

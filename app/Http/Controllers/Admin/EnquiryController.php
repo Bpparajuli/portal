@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Mail\InternalEmail;
+use App\Mail\EnquiryReply;
 use App\Models\Enquiry;
-use App\Models\Setting;
+use App\Services\MailConfigService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
@@ -38,26 +38,11 @@ class EnquiryController extends Controller
 
         $enquiry->markAsReplied(Auth::user(), $validated['reply_message']);
 
-        // Also send email to the enquirer
+        // Send the reply email to the enquirer.
         try {
-            $fromEmail = Setting::getValue('mail_from_address', config('mail.from.address'));
-            $fromName = Setting::getValue('mail_from_name', config('mail.from.name'));
-
-            if ($fromEmail && Setting::getValue('mail_enabled', false)) {
-                $host = Setting::getValue('mail_host', config('mail.mailers.smtp.host'));
-                $port = Setting::getValue('mail_port', config('mail.mailers.smtp.port'));
-                $username = Setting::getValue('mail_username', config('mail.mailers.smtp.username'));
-                $password = Setting::getValue('mail_password', config('mail.mailers.smtp.password'));
-                $encryption = Setting::getValue('mail_encryption', config('mail.mailers.smtp.encryption'));
-
-                config([
-                    'mail.mailers.smtp.host' => $host, 'mail.mailers.smtp.port' => $port,
-                    'mail.mailers.smtp.username' => $username, 'mail.mailers.smtp.password' => $password,
-                    'mail.mailers.smtp.encryption' => $encryption,
-                    'mail.from.address' => $fromEmail, 'mail.from.name' => $fromName,
-                ]);
-
-                Mail::mailer('smtp')->to($enquiry->email)->send(new \App\Mail\EnquiryReply($enquiry));
+            if (MailConfigService::isEnabled()) {
+                MailConfigService::configure();
+                Mail::mailer('smtp')->to($enquiry->email)->send(new EnquiryReply($enquiry));
             }
         } catch (\Exception $e) {
             logger()->error('Enquiry reply email failed: ' . $e->getMessage());

@@ -440,6 +440,12 @@
             font-size: .75rem;
         }
 
+        .todo {
+            font-size: 0.65rem;
+            color: #820b5c;
+            margin-top: 2px;
+        }
+
         @media (max-width: 768px) {
             .kanban-col {
                 min-width: 250px;
@@ -599,7 +605,20 @@
                             <div class="student-sub"><i class="fas fa-globe-americas"></i>
                                 {{ $s->preferred_country ?? 'N/A' }}</div>
 
-                            {{-- Row 3: phone + rating --}}
+                            {{-- Row 3 Task Type  --}}
+                            <div class="card-row" style="margin-top:3px;">
+                                @php
+                                    $typeTask = $s->pendingActivities->first() ?? $s->upcomingActivities->first();
+                                    $taskType = $typeTask?->activity_type;
+                                @endphp
+
+                                @if ($taskType)
+                                    <x-task-type-badge :type="$taskType" />
+                                @else
+                                    <span style="font-size:.55rem;color:#9ca3af">—</span>
+                                @endif
+                            </div>
+                            {{-- Row 4: phone + rating --}}
                             <div class="card-row" style="margin-top:3px;">
                                 <span style="font-size:0.65rem;color:#6b7280;"><i class="fas fa-phone-alt"
                                         style="width:13px;text-align:center;margin-right:3px;color:#9ca3af;"></i>
@@ -620,7 +639,7 @@
                                 </div>
                             </div>
 
-                            {{-- Row 4: tags list + add tag --}}
+                            {{-- Row 5: tags list + add tag --}}
                             <div class="card-row">
                                 <div class="tags-list">
                                     @if ($s->tags && is_array($s->tags))
@@ -636,7 +655,7 @@
                                         class="fas fa-plus"></i></button>
                             </div>
 
-                            {{-- Row 5: assignee + task date --}}
+                            {{-- Row 6: assignee + task date --}}
                             <div class="card-row">
                                 <div>
                                     @foreach ($assignees as $a)

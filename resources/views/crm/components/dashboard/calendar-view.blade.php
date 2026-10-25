@@ -82,6 +82,8 @@
         .staff-task-item { background: #fafbff; padding: 6px 8px; margin-bottom: 4px; border-radius: var(--hd-radius-sm); cursor: pointer; transition: all .12s; border: 1px solid #f0f2f5; font-size: var(--hd-font-xs); }
         .staff-task-item:hover { background: #fff; transform: translateX(3px); box-shadow: var(--hd-shadow); border-color: #c7d2fe; }
         .task-student-name { font-weight: 700; color: #1e293b; font-size: var(--hd-font-sm); display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+        .task-student-link { text-decoration: none; }
+        .task-student-link:hover { color: var(--crm-primary); text-decoration: underline; }
 
         .task-detail-body { padding: var(--hd-lg); font-size: var(--hd-font-sm); }
         .task-detail-item { margin-bottom: var(--hd-md); padding-bottom: var(--hd-sm); border-bottom: 1px solid #f1f5f9; }
@@ -162,7 +164,7 @@
                             html += '<div style="margin-bottom:var(--hd-sm);"><button onclick="openStaffTasksPopup(\'' + date + '\')" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:4px;padding:2px 8px;font-size:var(--hd-font-xs);cursor:pointer;">← All Staff</button></div>';
                             html += '<div class="staff-task-list">';
                             d.tasks.forEach(function(t) {
-                                html += '<div class="staff-task-item" onclick="openTaskDetailPopup(\'' + t.id + '\',\'' + esc(t.title) + '\',\'' + t.student_id + '\',\'' + esc(t.student_name) + '\',\'' + esc(t.student_country || 'N/A') + '\',\'' + (t.priority_time_slot || 'evening') + '\',\'' + (t.priority || 'medium') + '\',\'' + (t.status) + '\',' + (t.is_overdue ? 'true' : 'false') + ',\'' + esc(t.description || '') + '\')"><div class="task-student-name"><i class="fas fa-user-graduate"></i>' + esc(t.student_name) + '</div><div style="margin-top:2px;"><strong>' + esc(t.title) + '</strong></div><div style="margin-top:2px;display:flex;gap:4px;flex-wrap:wrap;">' + window.CrmCore.getInstance().getPriorityBadge(t.priority) + ' ' + window.CrmCore.getInstance().getStatusBadge(t.status, t.is_overdue) + ' <span class="badge bg-secondary" style="font-size:.55rem;">' + slotLabel(t.priority_time_slot) + '</span></div></div>';
+                                html += '<div class="staff-task-item" onclick="openTaskDetailPopup(\'' + t.id + '\',\'' + esc(t.title) + '\',\'' + t.student_id + '\',\'' + esc(t.student_name) + '\',\'' + esc(t.student_country || 'N/A') + '\',\'' + (t.priority_time_slot || 'evening') + '\',\'' + (t.priority || 'medium') + '\',\'' + (t.status) + '\',' + (t.is_overdue ? 'true' : 'false') + ',\'' + esc(t.description || '') + '\')"><a href="/crm/student/' + t.student_id + '" class="task-student-name task-student-link" onclick="event.stopPropagation()"><i class="fas fa-user-graduate"></i>' + esc(t.student_name) + '</a><div style="margin-top:2px;"><strong>' + esc(t.title) + '</strong></div><div style="margin-top:2px;display:flex;gap:4px;flex-wrap:wrap;">' + window.CrmCore.getInstance().getPriorityBadge(t.priority) + ' ' + window.CrmCore.getInstance().getStatusBadge(t.status, t.is_overdue) + ' <span class="badge bg-secondary" style="font-size:.55rem;">' + slotLabel(t.priority_time_slot) + '</span></div></div>';
                             });
                             html += '</div>';
                         } else {
@@ -173,7 +175,7 @@
                                 html += '<div class="staff-group"><div class="staff-group-header" data-sid="' + sd.staffId + '" data-sname="' + esc(sn) + '" data-date="' + date + '"><span><i class="fas fa-user-tie me-1"></i>' + esc(sn) + '</span><span class="badge" style="background:#e0e7ff;color:var(--crm-primary);">' + sd.tasks.length + '</span></div>';
                                 html += '<div class="staff-task-list">';
                                 sd.tasks.forEach(function(t) {
-                                    html += '<div class="staff-task-item" onclick="openTaskDetailPopup(\'' + t.id + '\',\'' + esc(t.title) + '\',\'' + t.student_id + '\',\'' + esc(t.student_name) + '\',\'' + esc(t.student_country || 'N/A') + '\',\'' + (t.priority_time_slot || 'evening') + '\',\'' + (t.priority || 'medium') + '\',\'' + (t.status) + '\',' + (t.is_overdue ? 'true' : 'false') + ',\'' + esc(t.description || '') + '\')"><div class="task-student-name"><i class="fas fa-user-graduate"></i>' + esc(t.student_name) + '</div><div><strong>' + esc(t.title) + '</strong></div><div style="display:flex;gap:4px;margin-top:2px;">' + window.CrmCore.getInstance().getPriorityBadge(t.priority) + ' ' + window.CrmCore.getInstance().getStatusBadge(t.status, t.is_overdue) + ' <span class="badge bg-secondary" style="font-size:.55rem;">' + slotLabel(t.priority_time_slot) + '</span></div></div>';
+                                    html += '<div class="staff-task-item" onclick="openTaskDetailPopup(\'' + t.id + '\',\'' + esc(t.title) + '\',\'' + t.student_id + '\',\'' + esc(t.student_name) + '\',\'' + esc(t.student_country || 'N/A') + '\',\'' + (t.priority_time_slot || 'evening') + '\',\'' + (t.priority || 'medium') + '\',\'' + (t.status) + '\',' + (t.is_overdue ? 'true' : 'false') + ',\'' + esc(t.description || '') + '\')"><a href="/crm/student/' + t.student_id + '" class="task-student-name task-student-link" onclick="event.stopPropagation()"><i class="fas fa-user-graduate"></i>' + esc(t.student_name) + '</a><div><strong>' + esc(t.title) + '</strong></div><div style="display:flex;gap:4px;margin-top:2px;">' + window.CrmCore.getInstance().getPriorityBadge(t.priority) + ' ' + window.CrmCore.getInstance().getStatusBadge(t.status, t.is_overdue) + ' <span class="badge bg-secondary" style="font-size:.55rem;">' + slotLabel(t.priority_time_slot) + '</span></div></div>';
                                 });
                                 html += '</div></div>';
                             });
@@ -194,7 +196,7 @@
         function openTaskDetailPopup(id, title, sid, sname, scountry, slot, priority, status, overdue, desc) {
             var body = document.getElementById('taskDetailBody');
             var CRM = window.CrmCore?.getInstance();
-            body.innerHTML = '<div class="task-detail-item"><div class="task-detail-label">Student</div><div class="task-detail-value"><strong>' + esc(sname) + '</strong> <span class="text-muted">· ' + esc(scountry) + '</span></div></div>' +
+            body.innerHTML = '<div class="task-detail-item"><div class="task-detail-label">Student</div><div class="task-detail-value"><a href="/crm/student/' + sid + '" class="task-student-link" style="font-weight:700;">' + esc(sname) + '</a> <span class="text-muted">· ' + esc(scountry) + '</span></div></div>' +
                 '<div class="task-detail-item"><div class="task-detail-label">Task</div><div class="task-detail-value"><strong>' + esc(title) + '</strong></div></div>' +
                 (desc ? '<div class="task-detail-item"><div class="task-detail-label">Description</div><div class="task-detail-value">' + esc(desc) + '</div></div>' : '') +
                 '<div class="task-detail-item"><div class="task-detail-label">Time Slot</div><div class="task-detail-value">' + slotLabel(slot) + '</div></div>' +
@@ -260,7 +262,7 @@
                 eventClick: function(info) {
                     var p = info.event.extendedProps;
                     if (p?.staff_name && p?.tasks) { openStaffTasksPopup(info.event.startStr.split('T')[0], p.staff_id, p.staff_name); }
-                    else if (p?.student_id) { openTaskDetailPopup(p.task_id || info.event.id, p.task_title || info.event.title, p.student_id, p.student_name || 'Unknown', p.student_country || 'N/A', p.time_slot || 'evening', p.priority || 'medium', p.status || 'pending', p.is_overdue || false, p.description || ''); }
+                    else if (p?.student_id) { window.location.href = '/crm/student/' + p.student_id; }
                     else { openStaffTasksPopup(info.event.startStr.split('T')[0]); }
                 },
                 height: 520, weekends: true, nowIndicator: true

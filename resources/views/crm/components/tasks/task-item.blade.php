@@ -22,7 +22,7 @@
                     </span> {{ $task->subject }}
                 </div>
                 <div class="small">
-                    <span>📋 {{ ucfirst(str_replace('_', ' ', $task->activity_type)) }}</span>
+                    <x-task-type-badge :type="$task->activity_type" />
                 </div>
             </div>
 

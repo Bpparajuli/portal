@@ -271,4 +271,58 @@ class ChatController extends Controller
 
         return response()->json(['status' => 'ok']);
     }
+
+    /**
+     * Lightweight feed for the navbar chat dropdown: the top conversations,
+     * unread ones first, then most recent. Returns at most 5.
+     */
+    public function conversations(Request $request)
+    {
+        $authId = Auth::id();
+        $allowedRoles = Auth::user()->is_agent ? ['admin', 'staff'] : ['admin', 'agent', 'staff'];
+        $limit = min(100, max(5, (int) $request->query('limit', 50)));
+
+        $conversations = User::where('id', '!=', $authId)
+            ->whereIn('role', $allowedRoles)
+            ->get()
+            ->map(function ($user) use ($authId) {
+                $unread = ChatMessage::where('sender_id', $user->id)
+                    ->where('receiver_id', $authId)
+                    ->whereNull('read_at')
+                    ->count();
+
+                $last = ChatMessage::where(function ($q) use ($authId, $user) {
+                    $q->where('sender_id', $authId)->where('receiver_id', $user->id);
+                })->orWhere(function ($q) use ($authId, $user) {
+                    $q->where('sender_id', $user->id)->where('receiver_id', $authId);
+                })->orderByDesc('id')->first();
+
+                return [
+                    'id' => $user->id,
+                    'name' => $user->business_name ?: $user->name,
+                    'role' => $user->role,
+                    'avatar' => $user->business_logo,
+                    'unread' => $unread,
+                    'last_message' => $last ? ($last->message ?: ($last->file ? '📎 Attachment' : '')) : '',
+                    'time' => $last?->created_at,
+                ];
+            })
+            ->filter(fn ($c) => $c['unread'] > 0 || $c['time'] !== null)
+            ->sortByDesc(fn ($c) => ($c['unread'] > 0 ? 1 : 0) * 1000000000 + ($c['time'] ? $c['time']->timestamp : 0))
+            ->take($limit)
+            ->values();
+
+        return response()->json([
+            'total_unread' => ChatMessage::where('receiver_id', $authId)->whereNull('read_at')->count(),
+            'conversations' => $conversations->map(fn ($c) => [
+                'id' => $c['id'],
+                'name' => $c['name'],
+                'role' => $c['role'],
+                'avatar' => $c['avatar'],
+                'unread' => $c['unread'],
+                'last_message' => \Illuminate\Support\Str::limit($c['last_message'], 40),
+                'time' => $c['time']?->diffForHumans(),
+            ]),
+        ]);
+    }
 }

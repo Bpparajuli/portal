@@ -89,6 +89,7 @@ class CrmTasksController extends Controller
             'priority'    => ['required', 'in:low,medium,high'],
             'due_date'    => ['nullable', 'date'],
             'time_slot'   => ['nullable', 'in:morning,afternoon,evening'],
+            'time'        => ['nullable', 'date_format:H:i'],
             'assigned_to' => ['nullable', 'exists:users,id'],
         ]);
 
@@ -110,7 +111,9 @@ class CrmTasksController extends Controller
         }
 
         $scheduledDateTime = null;
-        if (!empty($validated['due_date']) && !empty($validated['time_slot'])) {
+        if (!empty($validated['due_date']) && !empty($validated['time'])) {
+            $scheduledDateTime = Carbon::parse($validated['due_date'] . ' ' . $validated['time'])->toDateTimeString();
+        } elseif (!empty($validated['due_date']) && !empty($validated['time_slot'])) {
             $calculatedTime = $this->calculateTaskTime(
                 $validated['due_date'],
                 $validated['time_slot'],
@@ -237,6 +240,7 @@ class CrmTasksController extends Controller
             'next_task_type' => ['nullable', 'string'],
             'next_task_description' => ['nullable', 'string'],
             'next_time_slot' => ['nullable', 'in:morning,afternoon,evening'],
+            'next_time' => ['nullable', 'date_format:H:i'],
             'next_priority' => ['nullable', 'in:low,medium,high'],
             'next_assigned_to' => ['nullable', 'exists:users,id'],
         ]);
@@ -264,7 +268,11 @@ class CrmTasksController extends Controller
                 $nextAssignee = $request->input('next_assigned_to') ?? $request->input('reassign_to') ?? $task->assigned_to;
 
                 $nextScheduledDateTime = null;
-                if ($request->input('due_date') && $request->input('next_time_slot')) {
+                if ($request->input('due_date') && $request->input('next_time')) {
+                    $nextScheduledDateTime = Carbon::parse(
+                        $request->input('due_date') . ' ' . $request->input('next_time')
+                    );
+                } elseif ($request->input('due_date') && $request->input('next_time_slot')) {
                     $nextScheduledDateTime = $this->calculateTaskTime(
                         $request->input('due_date'),
                         $request->input('next_time_slot'),

@@ -83,7 +83,7 @@ class ApplicationService
      */
     public function createApplication(Student $student, Request $request): Application
     {
-        return DB::transaction(function () use ($student, $request) {
+        $application = DB::transaction(function () use ($student, $request) {
             $defaultStatus = ApplicationStatus::where('is_active', true)->orderBy('sort_order')->first();
 
             $application = Application::create([
@@ -109,6 +109,22 @@ class ApplicationService
 
             return $application;
         });
+
+        \App\Services\PortalNotifier::send(
+            \App\Services\PortalNotifier::APPLICATION,
+            '📨 Application Submitted',
+            [
+                \App\Services\PortalNotifier::line('Student', $student->full_name),
+                \App\Services\PortalNotifier::line('University', $application->university?->name ?? '—'),
+                \App\Services\PortalNotifier::line('Course', $application->course?->name ?? '—'),
+                \App\Services\PortalNotifier::line('Submitted by', optional(Auth::user())->name ?? 'System'),
+                \App\Services\PortalNotifier::line('Submitted at', now()->format('d M Y, g:i A')),
+            ],
+            'View Application',
+            url('/crm/students/' . $student->id)
+        );
+
+        return $application;
     }
 
     /**

@@ -130,6 +130,22 @@ class WaitingController extends Controller
                     Notification::send($defaultAdmin, new AgreementSubmitted($user));
                 }
             }
+
+            // Route activity email to portal@ + admin@
+            \App\Services\PortalNotifier::send(
+                \App\Services\PortalNotifier::ADMIN,
+                '📄 Agreement Uploaded',
+                [
+                    \App\Services\PortalNotifier::line('Business', $user->business_name),
+                    \App\Services\PortalNotifier::line('Name', $user->name),
+                    \App\Services\PortalNotifier::line('Email', $user->email),
+                    \App\Services\PortalNotifier::line('Agreement status', ucfirst(str_replace('_', ' ', (string) $user->agreement_status))),
+                    \App\Services\PortalNotifier::line('Uploaded at', now()->format('d M Y, g:i A')),
+                ],
+                'Review Agreements',
+                url('/admin/users/waiting'),
+                ['An agent has uploaded their agreement for verification.']
+            );
         } catch (\Exception $e) {
             Log::warning('Notification system error: ' . $e->getMessage());
             // Don't rethrow - we don't want to fail the upload

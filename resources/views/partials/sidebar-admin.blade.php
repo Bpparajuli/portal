@@ -41,9 +41,14 @@
 
 <div class="nav-section">Communication</div>
 
-<a href="{{ route('admin.emails.inbox') }}"
-    class="nav-link {{ request()->routeIs('admin.emails.*') ? 'active' : '' }}">
-    <i class="fas fa-envelope"></i> <span>Emails</span>
+<a href="{{ route('mail.index') }}"
+    class="nav-link {{ request()->routeIs('mail.*') ? 'active' : '' }}">
+    <i class="fas fa-envelope"></i> <span>Mailboxes</span>
+</a>
+
+<a href="{{ route('admin.emails.bulk') }}"
+    class="nav-link {{ request()->routeIs('admin.emails.bulk*') ? 'active' : '' }}">
+    <i class="fas fa-users"></i> <span>Bulk Email</span>
 </a>
 
 <a href="{{ route('admin.chat') }}" class="nav-link {{ request()->routeIs('admin.chat') ? 'active' : '' }}">

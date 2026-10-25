@@ -7,7 +7,6 @@ use App\Models\Activity;
 use App\Models\Application;
 use App\Models\CrmTasks;
 use App\Models\Document;
-use App\Models\Emails;
 use App\Models\StudentNote;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -24,7 +23,6 @@ class TrashController extends Controller
         'application_status' => ['class' => \App\Models\ApplicationStatus::class,  'label' => 'Application Status','icon' => 'fa-tasks',             'title' => 'status'],
         'chat_message'       => ['class' => \App\Models\ChatMessage::class,        'label' => 'Chat Messages',    'icon' => 'fa-comments',          'title' => 'message'],
         'crm_task'           => ['class' => \App\Models\CrmTasks::class,           'label' => 'CRM Tasks',        'icon' => 'fa-tasks',             'title' => 'title'],
-        'email'              => ['class' => \App\Models\Emails::class,             'label' => 'Emails',           'icon' => 'fa-envelope',          'title' => 'subject'],
         'student_note'       => ['class' => \App\Models\StudentNote::class,        'label' => 'Student Notes',    'icon' => 'fa-sticky-note',        'title' => 'content'],
         'student_stage'      => ['class' => \App\Models\StudentStage::class,       'label' => 'Student Stages',   'icon' => 'fa-layer-group',       'title' => 'name'],
     ];

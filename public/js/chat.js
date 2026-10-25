@@ -20,6 +20,7 @@
     let isLoadingMessages = false;
     let messageIds = new Set();
     let audioCtx = null;
+    let autoOpenDone = false;
 
     function initAudio() {
         if (!audioCtx || audioCtx.state === 'closed') {
@@ -114,7 +115,24 @@
             }
             allSections = data.sections || [];
             renderUserList();
+            autoOpenFromUrl();
         } catch(e) { console.error('loadUsers', e); }
+    }
+
+    // Open a specific conversation when the page is loaded with ?user=<id>
+    function autoOpenFromUrl() {
+        if (autoOpenDone) return;
+        var uid = parseInt(new URLSearchParams(window.location.search).get('user'));
+        if (!uid) { autoOpenDone = true; return; }
+        for (var i = 0; i < allSections.length; i++) {
+            for (var j = 0; j < allSections[i].users.length; j++) {
+                if (allSections[i].users[j].id === uid) {
+                    autoOpenDone = true;
+                    window.selectUser(allSections[i].users[j]);
+                    return;
+                }
+            }
+        }
     }
 
     function getActiveUserId() {

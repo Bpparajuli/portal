@@ -140,32 +140,34 @@
                 <div id="newTaskSection"
                     style="display:none; margin-top: 1.5rem; padding: 1rem; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
                     <div class="form-group">
-                        <label style="font-weight: 600;">📋 Schedule Next Activity</label>
+                        <label style="font-weight: 600;">📋 Schedule Next Task</label>
                     </div>
                     <div class="form-group">
-                        <label>Activity Type *</label>
-                        <select name="next_task_type" id="next_task_type" class="form-select">
-                            <option value="todo">✅ To-Do</option>
-                            <option value="call">📞 Call</option>
-                            <option value="email">✉️ Email</option>
-                            <option value="whatsapp">💬 WhatsApp</option>
-                            <option value="meeting">👥 Meeting</option>
-                            <option value="follow_up" selected>⏰ Follow Up</option>
-                            <option value="counseling">🎓 Counseling</option>
-                            <option value="document_review">📄 Document Review</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Summary *</label>
+                        <label>Task Title *</label>
                         <input type="text" name="next_task_title" id="next_task_title" class="form-control"
-                            placeholder="e.g., Follow up on application">
+                            placeholder="e.g., Call student for follow-up">
                     </div>
                     <div class="form-group">
-                        <label>Log a note...</label>
-                        <textarea name="next_task_description" id="next_task_description" rows="2" class="form-control"
-                            placeholder="Additional details..."></textarea>
+                        <label>Description</label>
+                        <textarea name="next_task_description" id="next_task_description" rows="3" class="form-control"
+                            placeholder="Task details..."></textarea>
                     </div>
                     <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Task Type *</label>
+                                <select name="next_task_type" id="next_task_type" class="form-select">
+                                    <option value="call">📞 Call</option>
+                                    <option value="email">✉️ Email</option>
+                                    <option value="whatsapp">💬 WhatsApp</option>
+                                    <option value="meeting">👥 Meeting</option>
+                                    <option value="follow_up" selected>⏰ Follow Up</option>
+                                    <option value="counseling">🎓 Counseling</option>
+                                    <option value="document_review">📄 Document Review</option>
+                                    <option value="todo">✅ To Do</option>
+                                </select>
+                            </div>
+                        </div>
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label>Due Date *</label>
@@ -173,23 +175,34 @@
                                     class="form-control" value="{{ date('Y-m-d', strtotime('+1 days')) }}">
                             </div>
                         </div>
-                        <div class="col-md-6">
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <label>Time Slot</label>
                                 <select name="next_time_slot" id="next_time_slot" class="form-select">
                                     <option value="">Any time</option>
+                                    <option value="morning">🌅 Morning (9:00 AM - 12:00 PM)</option>
+                                    <option value="afternoon">☀️ Afternoon (12:00 PM - 3:00 PM)</option>
+                                    <option value="evening">🌙 Evening (3:00 PM - 6:00 PM)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>Time (optional)</label>
+                                <select name="next_time" id="next_time" class="form-select">
+                                    <option value="">Auto (5-min slots 9-6)</option>
                                     @for($h = 9; $h <= 17; $h++)
                                         @for($m = 0; $m < 60; $m += 5)
                                             @php $val = sprintf('%02d:%02d', $h, $m); $display = date('g:i A', strtotime($val)); @endphp
-                                            <option value="{{ $val }}" {{ $h === 9 && $m === 0 ? 'selected' : '' }}>{{ $display }}</option>
+                                            <option value="{{ $val }}">{{ $display }}</option>
                                         @endfor
                                     @endfor
                                 </select>
                             </div>
                         </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <label>Priority</label>
                                 <select name="next_priority" id="next_priority" class="form-select">
@@ -199,17 +212,15 @@
                                 </select>
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label>Assign To</label>
-                                <select name="next_assigned_to" id="next_assigned_to" class="form-select">
-                                    <option value="">Same assignee</option>
-                                    @foreach ($assignableUsers as $u)
-                                        <option value="{{ $u->id }}">{{ $u->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Assign To</label>
+                        <select name="next_assigned_to" id="next_assigned_to" class="form-select">
+                            <option value="">Same assignee</option>
+                            @foreach ($assignableUsers as $u)
+                                <option value="{{ $u->id }}">{{ $u->name }}</option>
+                            @endforeach
+                        </select>
                     </div>
                 </div>
             </div>

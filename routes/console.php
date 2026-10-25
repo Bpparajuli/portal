@@ -363,5 +363,5 @@ Artisan::command('migrate:old-data', function () {
     $this->info("=== DONE. {$totalMigrated} total rows migrated ===");
 })->purpose('Clear new DB and migrate all data from old portaldb');
 
-// ─── Email sync schedule ───
-Schedule::command('emails:sync')->everyFiveMinutes()->withoutOverlapping();
+// ─── Mailbox unread count polling (runs every minute; internally throttled) ───
+Schedule::command('mailboxes:poll')->everyMinute()->withoutOverlapping();

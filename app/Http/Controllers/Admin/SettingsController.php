@@ -38,9 +38,24 @@ class SettingsController extends Controller
                 $emailSettings = Setting::where('group', 'email')->get();
                 if ($emailSettings->isEmpty()) {
                     $this->seedEmailSettings();
-                    $emailSettings = Setting::where('group', 'email')->get();
                 }
-                $settings['email'] = $emailSettings;
+                // Ensure required keys always exist (older installs).
+                $ensure = [
+                    'mail_enabled' => ['true', 'boolean', 'Enable outgoing email via the SMTP server below'],
+                    'mail_refresh_seconds' => ['60', 'number', 'How often (seconds) mailboxes are checked for new mail'],
+                ];
+                foreach ($ensure as $key => $meta) {
+                    if (!Setting::where('key', $key)->exists()) {
+                        Setting::create([
+                            'key' => $key,
+                            'value' => $meta[0],
+                            'group' => 'email',
+                            'type' => $meta[1],
+                            'description' => $meta[2],
+                        ]);
+                    }
+                }
+                $settings['email'] = Setting::where('group', 'email')->get();
             } else {
                 $settings[$module] = Setting::where('group', $module)->get();
             }
@@ -163,7 +178,7 @@ class SettingsController extends Controller
     protected function seedEmailSettings(): void
     {
         $defaults = [
-            ['key' => 'mail_driver', 'value' => 'smtp', 'type' => 'string', 'description' => 'Mail driver (smtp, sendmail, log)'],
+            ['key' => 'mail_enabled', 'value' => 'true', 'type' => 'boolean', 'description' => 'Enable outgoing email via the SMTP server'],
             ['key' => 'mail_host', 'value' => 'smtp.gmail.com', 'type' => 'string', 'description' => 'SMTP host address'],
             ['key' => 'mail_port', 'value' => '587', 'type' => 'number', 'description' => 'SMTP port (587 for TLS, 465 for SSL)'],
             ['key' => 'mail_username', 'value' => '', 'type' => 'string', 'description' => 'SMTP username / email address'],
@@ -171,8 +186,6 @@ class SettingsController extends Controller
             ['key' => 'mail_encryption', 'value' => 'tls', 'type' => 'string', 'description' => 'Encryption (tls, ssl, null)'],
             ['key' => 'mail_from_address', 'value' => 'noreply@example.com', 'type' => 'string', 'description' => 'Default from email address'],
             ['key' => 'mail_from_name', 'value' => 'Portal', 'type' => 'string', 'description' => 'Default from name'],
-            ['key' => 'mail_reply_to_address', 'value' => 'support@example.com', 'type' => 'string', 'description' => 'Reply-to email address'],
-            ['key' => 'mail_reply_to_name', 'value' => 'Support', 'type' => 'string', 'description' => 'Reply-to name'],
         ];
         foreach ($defaults as $s) {
             $this->settingService->set($s['key'], $s['value'], 'email', $s['type'], $s['description'] ?? null);

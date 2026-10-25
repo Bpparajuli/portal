@@ -93,6 +93,16 @@ Route::get('/', function () {
 // Unified Dashboard (single entry point for all roles)
 Route::middleware('auth')->get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
+// Mailbox overview / unread notifications (admin + staff)
+Route::middleware('auth')->prefix('mail')->name('mail.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\MailboxController::class, 'index'])->name('index');
+    Route::get('unread', [\App\Http\Controllers\MailboxController::class, 'unread'])->name('unread');
+    Route::post('poll', [\App\Http\Controllers\MailboxController::class, 'poll'])->name('poll');
+    Route::post('/', [\App\Http\Controllers\MailboxController::class, 'store'])->name('store');
+    Route::put('{mailbox}', [\App\Http\Controllers\MailboxController::class, 'update'])->name('update');
+    Route::delete('{mailbox}', [\App\Http\Controllers\MailboxController::class, 'destroy'])->name('destroy');
+});
+
 // Public routes at root level (no /guest prefix)
 Route::name('guest.')->group(function () {
 
@@ -295,21 +305,10 @@ Route::middleware(['auth', \App\Http\Middleware\IsAdmin::class])
 
         // ========== NEW: EMAIL SYSTEM ==========
         Route::prefix('emails')->name('emails.')->group(function () {
-            Route::get('inbox', [AdminEmailController::class, 'inbox'])->name('inbox');
-            Route::get('sent', [AdminEmailController::class, 'sent'])->name('sent');
-            Route::get('drafts', [AdminEmailController::class, 'drafts'])->name('drafts');
-            Route::get('create', [AdminEmailController::class, 'create'])->name('create');
-            Route::post('store', [AdminEmailController::class, 'store'])->name('store');
-            Route::post('sync-now', [AdminEmailController::class, 'syncNow'])->name('sync-now');
-            Route::get('{email}/edit', [AdminEmailController::class, 'edit'])->name('edit');
-            Route::put('{email}', [AdminEmailController::class, 'update'])->name('update');
-            Route::post('{email}/send', [AdminEmailController::class, 'sendDraft'])->name('send-draft');
-            Route::get('{email}', [AdminEmailController::class, 'show'])->name('show');
-            Route::post('{email}/reply', [AdminEmailController::class, 'reply'])->name('reply');
-            Route::post('save-draft', [AdminEmailController::class, 'saveDraft'])->name('save-draft');
-            Route::delete('{email}', [AdminEmailController::class, 'destroy'])->name('destroy');
-            Route::post('{email}/toggle-star', [AdminEmailController::class, 'toggleStar'])->name('toggle-star');
-            Route::get('{email}/download/{index}', [AdminEmailController::class, 'downloadAttachment'])->name('download-attachment');
+            // Bulk email campaigns (mailbox monitoring lives under /mail)
+            Route::get('bulk', [AdminEmailController::class, 'bulkForm'])->name('bulk');
+            Route::post('bulk', [AdminEmailController::class, 'bulkSend'])->name('bulk.send');
+            Route::get('bulk/campaigns', [AdminEmailController::class, 'bulkIndex'])->name('bulk.index');
         });
 
         // ========== THREE PILLARS: SETTINGS / CSS / CONTENT ==========
@@ -670,6 +669,9 @@ Route::middleware('auth')->get('/chat/unread-count', function () {
             ->count()
     ]);
 })->name('chat.unread');
+
+// Top conversations for the navbar chat dropdown (all roles)
+Route::middleware('auth')->get('/chat/conversations', [ChatController::class, 'conversations'])->name('chat.conversations');
 
 // ============================================
 // STUDENT INTAKE FORM - Public Form

@@ -114,6 +114,21 @@ class DocumentController extends Controller
                 Notification::send($agent, new DocumentUploaded($user, $student, $document));
             }
         }
+
+        // Route activity email to portal@ + document admin
+        \App\Services\PortalNotifier::send(
+            \App\Services\PortalNotifier::DOCUMENT,
+            '📄 Document Uploaded',
+            [
+                \App\Services\PortalNotifier::line('Student', $student->full_name),
+                \App\Services\PortalNotifier::line('Document type', $documentType),
+                \App\Services\PortalNotifier::line('File name', $document->file_name),
+                \App\Services\PortalNotifier::line('Uploaded by', $user->name . ' (' . ucfirst($user->role) . ')'),
+                \App\Services\PortalNotifier::line('Uploaded at', now()->format('d M Y, g:i A')),
+            ],
+            'View Student',
+            url('/crm/students/' . $student->id)
+        );
     }
 
     public function destroy(Student $student, Document $document)

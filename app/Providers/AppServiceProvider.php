@@ -25,6 +25,13 @@ class AppServiceProvider extends ServiceProvider
     {
         Paginator::useBootstrapFive();
 
+        // Route all outgoing mail through the DB-configured SMTP server.
+        try {
+            \App\Services\MailConfigService::configure();
+        } catch (\Throwable $e) {
+            // Never let mail misconfiguration break the app.
+        }
+
         Storage::extend('local', function ($app, $config) {
             $visibility = PortableVisibilityConverter::fromArray(
                 $config['permissions'] ?? [],

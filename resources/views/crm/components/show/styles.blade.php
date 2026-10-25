@@ -482,6 +482,8 @@
         padding: 4px 6px;
         background: #f8fafc;
         border-radius: 4px;
+        white-space: pre-line;
+        word-break: break-word;
     }
 
     .task-actions {

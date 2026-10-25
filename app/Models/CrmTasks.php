@@ -233,36 +233,50 @@ class CrmTasks extends Model
         ][$this->status] ?? 'badge-secondary';
     }
 
+    /**
+     * Central metadata map for every task / activity type.
+     * Returns icon (emoji), friendly label and badge colours.
+     */
+    public static function activityMeta(?string $type): array
+    {
+        $map = [
+            'call'            => ['icon' => '📞', 'label' => 'Phone Call',      'bg' => '#eff6ff', 'color' => '#2563eb'],
+            'email'           => ['icon' => '✉️', 'label' => 'Email',           'bg' => '#eef2ff', 'color' => '#4f46e5'],
+            'whatsapp'        => ['icon' => '💬', 'label' => 'WhatsApp',        'bg' => '#ecfdf5', 'color' => '#059669'],
+            'meeting'         => ['icon' => '👥', 'label' => 'Meeting',         'bg' => '#fffbeb', 'color' => '#d97706'],
+            'follow_up'       => ['icon' => '⏰', 'label' => 'Follow Up',       'bg' => '#fdf2f8', 'color' => '#be185d'],
+            'counseling'      => ['icon' => '🎓', 'label' => 'Counseling',      'bg' => '#ecfeff', 'color' => '#0891b2'],
+            'document_review' => ['icon' => '📄', 'label' => 'Document Review', 'bg' => '#f1f5f9', 'color' => '#475569'],
+            'todo'            => ['icon' => '✅', 'label' => 'To Do',            'bg' => '#f3f4f6', 'color' => '#374151'],
+            'note'            => ['icon' => '📝', 'label' => 'Note',            'bg' => '#fefce8', 'color' => '#a16207'],
+            'stage_change'    => ['icon' => '🔄', 'label' => 'Stage Change',    'bg' => '#f5f3ff', 'color' => '#7c3aed'],
+        ];
+
+        $type = $type ?: '';
+
+        return $map[$type] ?? [
+            'icon'  => '📌',
+            'label' => $type ? ucfirst(str_replace('_', ' ', $type)) : 'Task',
+            'bg'    => '#f3f4f6',
+            'color' => '#6b7280',
+        ];
+    }
+
     public function getActivityIconAttribute(): string
     {
-        return [
-            'call'            => '📞',
-            'email'           => '✉️',
-            'meeting'         => '👥',
-            'whatsapp'        => '💬',
-            'todo'            => '✅',
-            'follow_up'       => '⏰',
-            'counseling'      => '🎓',
-            'document_review' => '📄',
-            'note'            => '📝',
-            'stage_change'    => '🔄',
-        ][$this->activity_type] ?? '📌';
+        return self::activityMeta($this->activity_type)['icon'];
     }
 
     public function getActivityTypeLabelAttribute(): string
     {
-        return [
-            'call'            => 'Phone Call',
-            'email'           => 'Email',
-            'meeting'         => 'Meeting',
-            'whatsapp'        => 'WhatsApp',
-            'todo'            => 'To Do',
-            'follow_up'       => 'Follow Up',
-            'counseling'      => 'Counseling',
-            'document_review' => 'Document Review',
-            'note'            => 'Note',
-            'stage_change'    => 'Stage Change',
-        ][$this->activity_type] ?? ucfirst(str_replace('_', ' ', $this->activity_type ?? ''));
+        return self::activityMeta($this->activity_type)['label'];
+    }
+
+    public function getActivityColorAttribute(): array
+    {
+        $meta = self::activityMeta($this->activity_type);
+
+        return ['bg' => $meta['bg'], 'color' => $meta['color']];
     }
 
     public function getIsOverdueAttribute(): bool

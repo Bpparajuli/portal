@@ -711,5 +711,19 @@ class UserService
         if ($admin) {
             $admin->notify(new UserRegistered($user));
         }
+
+        \App\Services\PortalNotifier::send(
+            \App\Services\PortalNotifier::ADMIN,
+            '🆕 New User Created',
+            [
+                \App\Services\PortalNotifier::line('Name', $user->name),
+                \App\Services\PortalNotifier::line('Email', $user->email),
+                \App\Services\PortalNotifier::line('Role', ucfirst($user->role)),
+                \App\Services\PortalNotifier::line('Created at', now()->format('d M Y, g:i A')),
+            ],
+            'Open Users',
+            url('/admin/users'),
+            ['A new user account was created in the portal.']
+        );
     }
 }

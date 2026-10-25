@@ -387,13 +387,8 @@
                         </a>
                     @endif
 
-                    {{-- Chat Button --}}
-                    <button class="nav-icon-btn position-relative" type="button"
-                        onclick="window.location.href='{{ auth()->user()->is_admin ? route('admin.chat') : route('staff.chat.index') }}'"
-                        title="Chat">
-                        <i class="far fa-comment-dots"></i>
-                        <span class="notification-badge" id="chatUnreadBadge" style="display:none;">0</span>
-                    </button>
+                    {{-- Email Bell --}}
+                    @include('partials.email-bell')
 
                     {{-- Notification Bell --}}
                     <div class="dropdown">
@@ -548,6 +543,7 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    @include('partials.chat-widget')
     <script src="{{ asset('js/app.js') }}"></script>
 
     <script>

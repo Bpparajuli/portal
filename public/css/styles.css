@@ -2654,3 +2654,60 @@ h6 {
 .preview-frame {
     width: 100%; min-height: 85vh; border: none; border-radius: 4px;
 }
+
+/* =============================================================
+   CRM Task Type Badge — shared across kanban / list / tasks
+   ============================================================= */
+.task-type-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 1px 7px;
+    border-radius: 20px;
+    font-size: 0.62rem;
+    font-weight: 600;
+    line-height: 1.6;
+    white-space: nowrap;
+    vertical-align: middle;
+    max-width: 100%;
+    background: var(--tt-bg, #f3f4f6);
+    color: var(--tt-color, #6b7280);
+}
+.task-type-badge__icon {
+    font-size: 0.68rem;
+    line-height: 1;
+}
+
+/* Kanban card — compact, subtle icon chip + muted label */
+.kanban-board .task-type-badge,
+.student-card .task-type-badge {
+    gap: 5px;
+    padding: 0;
+    font-size: 0.56rem;
+    font-weight: 600;
+    line-height: 1.4;
+    border-radius: 0;
+    background: transparent;
+    color: #6b7280;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.kanban-board .task-type-badge__icon,
+.student-card .task-type-badge__icon {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    border-radius: 5px;
+    font-size: 0.55rem;
+    background: var(--tt-bg, #f3f4f6);
+    color: var(--tt-color, #6b7280);
+}
+
+/* List view — slightly smaller pill */
+.list-view-table .task-type-badge {
+    font-size: 0.6rem;
+}

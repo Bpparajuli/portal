@@ -192,7 +192,22 @@
 
         .guest-header .navbar-toggler {
             border: none;
-            padding: 0.25rem 0.5rem;
+            padding: 0.35rem 0.6rem;
+            color: #fff;
+            background: rgba(255, 255, 255, 0.12);
+            border-radius: 8px;
+            line-height: 1;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .guest-header .navbar-toggler:hover {
+            background: rgba(255, 255, 255, 0.22);
+        }
+
+        .guest-header .navbar-toggler i {
+            font-size: 1.15rem;
             color: #fff;
         }
 
@@ -360,7 +375,7 @@
 
             <button class="navbar-toggler d-lg-none" type="button" id="guestNavToggler"
                 aria-controls="guestNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
+                <i class="fas fa-bars" id="guestNavIcon"></i>
             </button>
 
             <div class="collapse navbar-collapse d-lg-flex align-items-center" id="guestNav">
@@ -456,11 +471,16 @@
         (function() {
             var toggler = document.getElementById('guestNavToggler');
             var nav = document.getElementById('guestNav');
+            var icon = document.getElementById('guestNavIcon');
             if (!toggler || !nav) return;
             toggler.addEventListener('click', function() {
                 var isOpen = nav.classList.toggle('show');
                 toggler.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
                 nav.classList.toggle('collapsing', false);
+                if (icon) {
+                    icon.classList.toggle('fa-bars', !isOpen);
+                    icon.classList.toggle('fa-times', isOpen);
+                }
             });
         })();
     </script>

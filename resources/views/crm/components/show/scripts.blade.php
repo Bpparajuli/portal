@@ -174,8 +174,11 @@
             dueDateInput.value = tomorrow.toISOString().split('T')[0];
         }
 
-        // Set default time slot to MORNING
-        document.getElementById('next_time_slot').value = 'morning';
+        // Set default time slot / time / priority
+        var nextTimeSlotEl = document.getElementById('next_time_slot');
+        if (nextTimeSlotEl) nextTimeSlotEl.value = 'morning';
+        var nextTimeEl = document.getElementById('next_time');
+        if (nextTimeEl) nextTimeEl.value = '';
         document.getElementById('next_priority').value = 'medium';
         document.getElementById('next_assigned_to').value = '';
 

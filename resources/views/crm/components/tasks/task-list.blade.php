@@ -124,11 +124,11 @@
                                     {{-- Completion note (hero) --}}
                                     @if ($isCompleted && $task->completion_note)
                                         <div
-                                            style="font-size:.7rem;font-weight:700;color:#545455;line-height:1.3;margin-bottom:2px;">
+                                            style="font-size:.7rem;font-weight:700;color:#545455;line-height:1.3;margin-bottom:2px;white-space:pre-line;word-break:break-word;">
                                             {{ $task->completion_note }}</div>
                                     @elseif (!$isCompleted && $task->cancellation_note)
                                         <div
-                                            style="font-size:.7rem;font-weight:700;color:#991b1b;line-height:1.3;margin-bottom:2px;">
+                                            style="font-size:.7rem;font-weight:700;color:#991b1b;line-height:1.3;margin-bottom:2px;white-space:pre-line;word-break:break-word;">
                                             {{ $task->cancellation_note }}</div>
                                     @elseif ($isStageChange)
                                         <div style="font-size:.7rem;color:#c0fab3;margin-bottom:2px;">
@@ -138,7 +138,7 @@
 
                                     <div
                                         style="font-size:.7rem;font-weight:800;color:#1a0262;display:flex;align-items:center;gap:4px;flex-wrap:wrap;">
-                                        <span> {{ ucfirst(str_replace('_', ' ', $task->activity_type)) }}</span>
+                                        <x-task-type-badge :type="$task->activity_type" />
                                         <span
                                             style="display:inline-block;background:{{ $isCompleted ? '#c9f9b9' : '#fee2e2' }};color:{{ $isCompleted ? 'green' : 'red' }};font-size:.55rem;font-weight:700;padding:0 6px;border-radius:3px;">{{ $isCompleted ? 'DONE' : 'CANCELLED' }}
                                         </span>

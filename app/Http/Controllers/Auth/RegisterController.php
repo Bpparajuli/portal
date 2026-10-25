@@ -147,6 +147,23 @@ class RegisterController extends Controller
                 }
             }
 
+            // ✅ Route activity email to portal@ + admin@
+            \App\Services\PortalNotifier::send(
+                \App\Services\PortalNotifier::ADMIN,
+                '🆕 New Agent Registration',
+                [
+                    \App\Services\PortalNotifier::line('Business', $user->business_name),
+                    \App\Services\PortalNotifier::line('Owner', $user->owner_name),
+                    \App\Services\PortalNotifier::line('Name', $user->name),
+                    \App\Services\PortalNotifier::line('Email', $user->email),
+                    \App\Services\PortalNotifier::line('Contact', $user->contact),
+                    \App\Services\PortalNotifier::line('Registered at', now()->format('d M Y, g:i A')),
+                ],
+                'Open Users',
+                url('/admin/users'),
+                ['A new agent has registered on the portal.']
+            );
+
             // ✅ Auto-login
             Auth::login($user);
 
