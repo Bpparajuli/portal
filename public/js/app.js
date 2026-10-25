@@ -18,14 +18,35 @@
     };
 
     // Restore sidebar state
-    try {
-        if (localStorage.getItem('sidebarCollapsed') === '1' && window.innerWidth > 768) {
-            const sidebar = document.getElementById('appSidebar');
-            sidebar.classList.add('collapsed');
-            sidebar.style.width = '60px';
-            document.getElementById('appMain').style.marginLeft = '60px';
+    function restoreSidebarState() {
+        var sidebar = document.getElementById('appSidebar');
+        var overlay = document.getElementById('sidebarOverlay');
+        if (!sidebar) return;
+        if (window.innerWidth > 768) {
+            // On desktop never allow a stale mobile overlay / show state
+            sidebar.classList.remove('show');
+            if (overlay) overlay.classList.remove('show');
+            try {
+                if (localStorage.getItem('sidebarCollapsed') === '1') {
+                    sidebar.classList.add('collapsed');
+                    sidebar.style.width = '60px';
+                    var main = document.getElementById('appMain');
+                    if (main) main.style.marginLeft = '60px';
+                }
+            } catch (e) {}
         }
-    } catch(e) {}
+    }
+
+    try { restoreSidebarState(); } catch (e) {}
+
+    // Keep sidebar/overlay in sync and close the mobile drawer on resize
+    var _sidebarResizeTimer;
+    window.addEventListener('resize', function() {
+        clearTimeout(_sidebarResizeTimer);
+        _sidebarResizeTimer = setTimeout(function() {
+            try { restoreSidebarState(); } catch (e) {}
+        }, 150);
+    });
 
     // ========== CONFIRM DELETE ==========
     $(document).on('click', '.btn-delete-confirm', function(e) {

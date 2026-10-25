@@ -1,0 +1,271 @@
+/* =============================================================
+   MOBILE RESPONSIVE FIXES — Centralized
+   Loaded AFTER styles.css on every layout (app / guest / crm).
+   Fixes common mobile issues across all pages without editing
+   each page individually.
+   ============================================================= */
+
+/* ---------- Viewport safety: never let the page scroll sideways ---------- */
+html,
+body {
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+/* Guard against fixed/flex children escaping the viewport */
+body > *,
+.app-shell,
+.app-main,
+.app-content {
+    max-width: 100vw;
+}
+
+/* =====================================================================
+   APP LAYOUT — Sidebar, Header, Toggle (admin / agent / staff)
+   ===================================================================== */
+
+/* Make the sidebar toggle + header icon buttons robustly clickable and
+   never crushed/overlapped by other header items on small screens. */
+.app-header .header-left,
+.app-header .header-right {
+    flex-wrap: nowrap;
+    min-width: 0;
+}
+
+.toggle-sidebar,
+.btn-icon-header,
+.nav-icon-btn,
+.guest-header .navbar-brand,
+.guest-header .navbar-toggler {
+    flex-shrink: 0;
+}
+
+/* Keep the toggle above any sibling that might slide over it */
+.toggle-sidebar {
+    z-index: 2;
+    position: relative;
+    pointer-events: auto;
+    cursor: pointer;
+}
+
+/* Prevent header title from pushing the toggle / menus off screen */
+.app-header .page-title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+}
+
+/* Ensure the blur-bar header never blocks clicks that belong to it */
+.app-header {
+    pointer-events: auto;
+}
+
+/* Force-shrink the tracker bar / wide children inside cards */
+.card,
+.table-container,
+.dashboard-grid,
+.row {
+    min-width: 0;
+    max-width: 100%;
+}
+
+/* ---------- Tables / dashboards: scroll instead of breaking layout ---------- */
+.table-container,
+.table-responsive,
+.card-table-wrap,
+.table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* =====================================================================
+   CRM TOP NAVBAR
+   ===================================================================== */
+.crm-navbar {
+    flex-wrap: nowrap;
+    align-items: center;
+}
+
+.crm-navbar .nav-right {
+    min-width: 0;
+    flex-wrap: nowrap;
+}
+
+.crm-navbar .user-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 120px;
+}
+
+.crm-navbar .nav-icon-btn {
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+}
+
+/* =====================================================================
+   SMALL PHONES (<= 575px)
+   ===================================================================== */
+@media (max-width: 575.98px) {
+
+    /* Tighten content padding so cards don't feel broken */
+    .app-content {
+        padding: 0.75rem !important;
+    }
+
+    .card .card-header,
+    .card .card-body {
+        padding: 0.5rem 0.6rem !important;
+    }
+
+    /* Forms: keep inputs within the viewport */
+    input,
+    select,
+    textarea,
+    .form-control,
+    .form-select {
+        max-width: 100%;
+    }
+
+    /* Stack multi-column form rows */
+    .form-row,
+    .row.form-row > [class*="col-"] {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+
+    /* Buttons / button groups wrap gracefully */
+    .btn-group,
+    .btn-toolbar,
+    .d-flex.gap-2,
+    .filter-bar {
+        flex-wrap: wrap;
+    }
+
+    .filter-bar .d-flex,
+    .filter-bar .row,
+    .filter-bar [class*="col-"] {
+        flex: 1 1 auto;
+        min-width: 140px;
+    }
+
+    /* Guest navbar mobile toggler stays visible & clickable */
+    .guest-header .container {
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .guest-header .navbar-toggler {
+        margin-left: auto;
+        z-index: 5;
+        position: relative;
+    }
+
+    /* Header: let icon buttons breathe, avoid horizontal spill */
+    .app-header {
+        gap: 0.25rem;
+    }
+
+    .app-header .header-right {
+        gap: 0.1rem;
+    }
+
+    .btn-icon-header {
+        width: 34px;
+        height: 34px;
+    }
+
+    /* Dashboards: cards stack full-width */
+    .dashboard-grid > [class*="col-"] {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+}
+
+/* =====================================================================
+   MOBILE / TABLET (<= 768px) — always hide the sidebar off-canvas
+   ===================================================================== */
+@media (max-width: 768px) {
+
+    .app-sidebar {
+        transform: translateX(-100%);
+        width: var(--sidebar-width) !important;
+        z-index: var(--z-fixed) !important;
+    }
+
+    .app-sidebar.show {
+        transform: translateX(0);
+    }
+
+    /* Overlay covers everything below the sidebar but ABOVE the header
+       so the toggle can still be tapped to close it when open. */
+    .sidebar-overlay {
+        z-index: calc(var(--z-fixed) - 1) !important;
+        cursor: pointer;
+    }
+
+    .sidebar-overlay.show {
+        display: block !important;
+    }
+
+    .app-main {
+        margin-left: 0 !important;
+        max-width: 100vw;
+    }
+
+    /* Ensure header sits above page content but below overlay/sidebar */
+    .app-header {
+        z-index: var(--z-sticky) !important;
+    }
+
+    /* Keep the sidebar clickable but let the content area own taps */
+    .app-content {
+        padding: 1rem !important;
+    }
+
+    /* Tables scroll instead of overflowing */
+    .table-container,
+    .table-responsive {
+        display: block;
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+/* =====================================================================
+   CREDIT-CARD NARROW WIDTHS (<= 420px)
+   ===================================================================== */
+@media (max-width: 420px) {
+
+    /* Hide less-critical header title text so toggle + icons stay tappable */
+    .app-header .page-title {
+        max-width: 90px;
+        font-size: 0.8rem;
+    }
+
+    .crm-navbar .user-name {
+        display: none;
+    }
+
+    /* Hide the CRM "Portal" text button text, keep icon only */
+    .crm-navbar .nav-portal-btn {
+        font-size: 0;
+        width: 34px;
+        height: 34px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+    }
+    .crm-navbar .nav-portal-btn i {
+        font-size: 0.85rem;
+    }
+
+    .app-header {
+        padding: 0 0.5rem !important;
+    }
+}
