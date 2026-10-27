@@ -65,6 +65,15 @@
         return n.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
     }
 
+    // Show "Person Name (Business Name)" — business name in parentheses.
+    function displayName(u) {
+        var n = (u && u.name) || '';
+        var b = (u && u.business_name) || '';
+        if (!n) return b || 'User';
+        if (b && b !== n) return n + ' (' + b + ')';
+        return n;
+    }
+
     window.toggleChatSidebar = function() {
         const sb = document.getElementById('chatSidebar');
         const ov = document.getElementById('chatSidebarOverlay');
@@ -145,9 +154,9 @@
         if (!dm && (u.last_message_file || u.has_attachment)) dm = '<i class="fas fa-paperclip"></i> Attachment';
         if (!dm) dm = 'No messages yet';
         return '<div class="user-card ' + ac + '" data-uid="' + u.id + '">'
-            + '<div class="chat-avatar">' + (u.business_logo ? '<img src="/storage/' + u.business_logo + '">' : initials(u.business_name || u.name))
+            + '<div class="chat-avatar">' + (u.business_logo ? '<img src="/storage/' + u.business_logo + '">' : initials(u.name || u.business_name))
             + '<span class="status-dot ' + (u.is_online ? 'online' : 'offline') + '"></span></div>'
-            + '<div class="user-info-wrap"><div class="user-name">' + escapeHtml(u.business_name || u.name) + '</div>'
+            + '<div class="user-info-wrap"><div class="user-name">' + escapeHtml(displayName(u)) + '</div>'
             + '<div class="user-preview">' + dm + '</div></div>'
             + '<div class="user-meta"><span class="user-time">' + formatDate(u.last_message_time) + '</span>'
             + (u.unread_count > 0 ? '<span class="unread-badge">' + u.unread_count + '</span>' : '') + '</div>'
@@ -169,8 +178,8 @@
             var filteredUsers = section.users;
             if (searchQuery) {
                 filteredUsers = section.users.filter(function(u) {
-                    var name = (u.business_name || u.name || '').toLowerCase();
-                    return name.includes(searchQuery);
+                    var hay = ((u.name || '') + ' ' + (u.business_name || '')).toLowerCase();
+                    return hay.includes(searchQuery);
                 });
             }
             if (filteredUsers.length === 0 && !searchQuery) return;
@@ -228,10 +237,10 @@
         document.getElementById('noChatSelected').classList.add('d-none');
         document.getElementById('chatActive').classList.remove('d-none');
         document.getElementById('chatActive').style.display = 'flex';
-        document.getElementById('headerName').innerText = user.business_name || user.name;
+        document.getElementById('headerName').innerText = displayName(user);
         document.getElementById('headerAvatar').innerHTML = user.business_logo
-            ? '<img src="/storage/' + user.business_logo + '" alt="' + (user.business_name || '') + '">'
-            : initials(user.business_name || user.name);
+            ? '<img src="/storage/' + user.business_logo + '" alt="' + (user.name || '') + '">'
+            : initials(user.name || user.business_name);
         document.getElementById('headerStatus').innerText = user.is_online ? 'Active Now' : (user.last_seen ? 'Last seen ' + formatDate(user.last_seen) : 'Offline');
 
         if (window.innerWidth < 992) {

@@ -56,7 +56,7 @@ window.CHAT_CONFIG = {
 @if(config('broadcasting.default') === 'pusher')
 <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
 @endif
-<script src="{{ asset('js/chat.js') }}"></script>
+<script src="{{ asset('js/chat.js') }}?v={{ file_exists(public_path('js/chat.js')) ? filemtime(public_path('js/chat.js')) : time() }}"></script>
 @endpush
 
 @endsection

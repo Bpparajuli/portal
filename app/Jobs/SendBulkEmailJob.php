@@ -38,25 +38,29 @@ class SendBulkEmailJob implements ShouldQueue
 
         $emails = ! empty($this->recipients)
             ? collect($this->recipients)
-            : $this->resolveRecipients($bulk->recipient_group);
+            : (is_array($bulk->recipients) && ! empty($bulk->recipients)
+                ? collect($bulk->recipients)
+                : $this->resolveRecipients($bulk->recipient_group));
 
         $emails = $emails->filter()->unique()->values();
         $bulk->update(['recipients_count' => $emails->count()]);
 
-        if (! MailConfigService::isEnabled()) {
+        if (! MailConfigService::isSendable()) {
             $bulk->update(['status' => 'failed']);
             Log::warning('Bulk email aborted: mail is disabled or not configured.', ['bulk_email_id' => $bulk->id]);
             return;
         }
 
         MailConfigService::configure();
+        $mailerName = MailConfigService::mailerName();
 
         $sent = 0;
         $failed = 0;
 
         foreach ($emails as $email) {
             try {
-                Mail::mailer('smtp')->to($email)->send(new BulkEmailMailable($bulk));
+                $pending = $mailerName ? Mail::mailer($mailerName) : Mail::mailer();
+                $pending->to($email)->send(new BulkEmailMailable($bulk));
                 $sent++;
             } catch (\Throwable $e) {
                 $failed++;

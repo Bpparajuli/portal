@@ -74,9 +74,9 @@ class MailboxMonitor
 
         try {
             if (function_exists('imap_timeout')) {
-                @imap_timeout(IMAP_OPENTIMEOUT, 10);
-                @imap_timeout(IMAP_READTIMEOUT, 10);
-                @imap_timeout(IMAP_WRITETIMEOUT, 10);
+                @imap_timeout(IMAP_OPENTIMEOUT, 5);
+                @imap_timeout(IMAP_READTIMEOUT, 5);
+                @imap_timeout(IMAP_WRITETIMEOUT, 5);
             }
 
             $stream = @imap_open($spec, $mailbox->imap_username, $mailbox->imap_password, 0, 1);
@@ -122,21 +122,29 @@ class MailboxMonitor
     /** Total unread across the mailboxes the current user can see. */
     public static function totalUnread(): int
     {
-        return (int) Mailbox::active()
-            ->accessibleTo(\Illuminate\Support\Facades\Auth::user())
-            ->sum('last_unread_count');
+        try {
+            return (int) Mailbox::active()
+                ->accessibleTo(\Illuminate\Support\Facades\Auth::user())
+                ->sum('last_unread_count');
+        } catch (\Throwable $e) {
+            return 0;
+        }
     }
 
     /** Per-mailbox unread breakdown for the mailboxes the current user can see. */
     public static function breakdown()
     {
-        return Mailbox::active()
-            ->accessibleTo(\Illuminate\Support\Facades\Auth::user())
-            ->orderBy('label')
-            ->get([
-                'id', 'label', 'email', 'category',
-                'last_unread_count', 'last_total_count',
-                'last_checked_at', 'last_error', 'webmail_url',
-            ]);
+        try {
+            return Mailbox::active()
+                ->accessibleTo(\Illuminate\Support\Facades\Auth::user())
+                ->orderBy('label')
+                ->get([
+                    'id', 'label', 'email', 'category',
+                    'last_unread_count', 'last_total_count',
+                    'last_checked_at', 'last_error', 'webmail_url',
+                ]);
+        } catch (\Throwable $e) {
+            return collect();
+        }
     }
 }

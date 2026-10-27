@@ -98,6 +98,7 @@ Route::middleware('auth')->prefix('mail')->name('mail.')->group(function () {
     Route::get('/', [\App\Http\Controllers\MailboxController::class, 'index'])->name('index');
     Route::get('unread', [\App\Http\Controllers\MailboxController::class, 'unread'])->name('unread');
     Route::post('poll', [\App\Http\Controllers\MailboxController::class, 'poll'])->name('poll');
+    Route::post('{mailbox}/test', [\App\Http\Controllers\MailboxController::class, 'test'])->name('test');
     Route::post('/', [\App\Http\Controllers\MailboxController::class, 'store'])->name('store');
     Route::put('{mailbox}', [\App\Http\Controllers\MailboxController::class, 'update'])->name('update');
     Route::delete('{mailbox}', [\App\Http\Controllers\MailboxController::class, 'destroy'])->name('destroy');
@@ -239,6 +240,11 @@ Route::middleware(['auth', \App\Http\Middleware\IsAdmin::class])
             Route::post('bulk-force-delete', [\App\Http\Controllers\Admin\TrashController::class, 'bulkForceDelete'])->name('bulk-force-delete');
         });
 
+        // One-click email table setup (admin). Visit /admin/system/email-setup once.
+        Route::get('system/email-setup', [\App\Http\Controllers\Admin\SystemSetupController::class, 'emailSetup'])->name('system.email-setup');
+        Route::get('system/email-diagnostics', [\App\Http\Controllers\Admin\SystemSetupController::class, 'diagnostics'])->name('system.email-diagnostics');
+        Route::post('system/test-email', [\App\Http\Controllers\Admin\SystemSetupController::class, 'sendTest'])->name('system.test-email');
+
         Route::post('/users/reminder/preview', [AdminReminderController::class, 'previewEmail'])->name('reminder.preview');
         // Dynamic Data
         Route::get('get-cities/{country}', [UniversityController::class, 'getCities'])->name('get-cities');
@@ -309,6 +315,9 @@ Route::middleware(['auth', \App\Http\Middleware\IsAdmin::class])
             Route::get('bulk', [AdminEmailController::class, 'bulkForm'])->name('bulk');
             Route::post('bulk', [AdminEmailController::class, 'bulkSend'])->name('bulk.send');
             Route::get('bulk/campaigns', [AdminEmailController::class, 'bulkIndex'])->name('bulk.index');
+            Route::post('bulk/process-queue', [AdminEmailController::class, 'bulkProcessQueue'])->name('bulk.process');
+            Route::post('bulk/{bulk}/resend', [AdminEmailController::class, 'bulkResend'])->name('bulk.resend');
+            Route::delete('bulk/{bulk}', [AdminEmailController::class, 'bulkDestroy'])->name('bulk.destroy');
         });
 
         // ========== THREE PILLARS: SETTINGS / CSS / CONTENT ==========
@@ -617,6 +626,10 @@ Route::middleware(['auth', \App\Http\Middleware\IsPaidCrm::class])
         // ========== STAGE HISTORY ==========
         Route::get('/student/{student}/history', [CrmStudentStageHistoryController::class, 'forStudent'])->name('student.history');
         Route::delete('/student/{student}/history/{history}', [CrmStudentStageHistoryController::class, 'destroy'])->name('student.history.destroy');
+
+        // ========== APPLICATION STATUS ==========
+        Route::patch('/students/{student}/applications/{application}/status', [CrmStudentController::class, 'updateApplicationStatus'])->name('students.applications.status');
+        Route::get('/student/{student}/application-history', [CrmStudentStageHistoryController::class, 'applicationHistory'])->name('student.application-history');
 
         // ========== CALENDAR ROUTES ==========
         Route::get('/weekly-tasks', [CrmDashboardController::class, 'weeklyTasks'])->name('weekly.tasks');

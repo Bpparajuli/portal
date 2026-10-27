@@ -4,11 +4,15 @@ namespace App\Http\Controllers\CRM;
 
 use App\Http\Controllers\Controller;
 use App\Models\Activity;
+use App\Models\Application;
+use App\Models\ApplicationStatus;
+use App\Models\ApplicationStatusHistory;
 use App\Models\CrmTasks;
 use App\Models\Student;
 use App\Models\StudentNote;
 use App\Models\StudentStage;
 use App\Models\User;
+use App\Notifications\ApplicationStatusUpdated;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -160,7 +164,10 @@ class CrmStudentController extends Controller
             $this->authorizeStudent($student);
             $user = Auth::user();
 
-            $student->load(['currentStage', 'agent', 'documents', 'latestApplication', 'revenues.creator']);
+            $student->load([
+                'currentStage', 'agent', 'documents', 'latestApplication', 'revenues.creator',
+                'applications.status', 'applications.university', 'applications.course',
+            ]);
             $data = $this->studentService->getTaskCategories($student, $user);
             $data['student'] = $student;
             $data['notes'] = $student->notes()->where('is_log', false)->with('creator')->orderBy('is_pinned', 'desc')->orderBy('created_at', 'desc')->get();
@@ -177,12 +184,77 @@ class CrmStudentController extends Controller
             $data['remainingDue'] = max(0, $data['expectedRevenue'] - $data['collectedRevenue']);
             $data['revenuesCollection'] = $data['revenues'] instanceof \Illuminate\Pagination\LengthAwarePaginator ? $data['revenues']->getCollection() : $data['revenues'];
             $data['todayTaskNavigation'] = $this->getTodayTaskNavigation($student->id);
+            $data['applicationStatuses'] = ApplicationStatus::active()->ordered()->get();
 
             return view('crm.show', $data);
         } catch (\Exception $e) {
             Log::error('Error in CrmStudentController@show: ' . $e->getMessage());
             return back()->with('error', 'Failed to load student details: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Update an application's status from the CRM student page.
+     * Admin + admin-staff only. Records history, notifies the agent, and can
+     * optionally email the student.
+     */
+    public function updateApplicationStatus(Request $request, Student $student, Application $application)
+    {
+        $user = Auth::user();
+
+        abort_unless($user->is_admin || $user->is_admin_staff, 403, 'Only admins can update application status.');
+
+        $this->authorizeStudent($student);
+
+        abort_unless((int) $application->student_id === (int) $student->id, 404);
+
+        $validated = $request->validate([
+            'application_status_id' => 'required|exists:application_statuses,id',
+            'reason' => 'nullable|string|max:1000',
+            'notify_agent' => 'nullable|boolean',
+            'email_student' => 'nullable|boolean',
+        ]);
+
+        $oldStatusId = (int) $application->application_status_id;
+        $newStatusId = (int) $validated['application_status_id'];
+
+        $application->update(['application_status_id' => $newStatusId]);
+        $application->load(['status', 'student', 'university', 'course']);
+
+        if ($oldStatusId !== $newStatusId) {
+            ApplicationStatusHistory::create([
+                'application_id' => $application->id,
+                'from_status_id' => $oldStatusId ?: null,
+                'to_status_id' => $newStatusId,
+                'changed_by' => $user->id,
+                'reason' => $validated['reason'] ?? null,
+            ]);
+        }
+
+        // Notify the owning agent (database + mail) — on by default.
+        if ($request->boolean('notify_agent', true) && $oldStatusId !== $newStatusId && $student->agent_id) {
+            try {
+                User::notifyAgent($student->agent_id, new ApplicationStatusUpdated($application, $user));
+            } catch (\Throwable $e) {
+                Log::warning('Application status agent notify failed: ' . $e->getMessage());
+            }
+        }
+
+        // Optional: email the student directly.
+        if ($request->boolean('email_student') && $oldStatusId !== $newStatusId && ! empty($student->email)) {
+            try {
+                if (\App\Services\MailConfigService::isEnabled()) {
+                    \App\Services\MailConfigService::configure();
+                    \Illuminate\Support\Facades\Mail::mailer('smtp')
+                        ->to($student->email)
+                        ->send(new \App\Mail\ApplicationStatusStudentMail($application, $validated['reason'] ?? null));
+                }
+            } catch (\Throwable $e) {
+                Log::warning('Application status student email failed: ' . $e->getMessage());
+            }
+        }
+
+        return back()->with('success', 'Application status updated.');
     }
 
     public function store(Request $request)

@@ -27,6 +27,11 @@ class ApplicationStatusUpdated extends Notification
         return ['database', 'mail'];
     }
 
+    private function statusName(): string
+    {
+        return $this->application->status?->name ?? 'Updated';
+    }
+
     public function toMail($notifiable)
     {
         $app = $this->application;
@@ -35,30 +40,32 @@ class ApplicationStatusUpdated extends Notification
 
         $introLines = [
             "The application for student <strong>{$student->first_name} {$student->last_name}</strong> has been updated by <strong>{$updatedByName}</strong>.",
-            "New Status: <strong>{$app->application_status}</strong>"
+            'New Status: <strong>' . e($this->statusName()) . '</strong>',
         ];
 
         return (new MailMessage)
             ->subject("Application #{$app->application_number} Status Updated")
             ->view('emails.layout', [
-                'subject'    => "Application Status Updated",
+                'subject'    => 'Application Status Updated',
                 'greeting'   => "Hello {$notifiable->name},",
                 'introLines' => $introLines,
                 'actionText' => 'View Application',
                 'actionUrl'  => $this->getActivityLink($notifiable, 'application_status_updated', $app),
-                'outroLines' => ['Please review the updated status and take any necessary actions.']
+                'outroLines' => ['Please review the updated status and take any necessary actions.'],
             ]);
     }
+
     public function toArray($notifiable)
     {
         $app = $this->application;
         $student = $app->student;
+        $status = $this->statusName();
 
         $link = $this->getActivityLink($notifiable, 'application_status_updated', $app);
 
         ActivityLogger::log(
             'application_status_updated',
-            "ðŸ“„ Status updated to {$app->application_status} for {$student->first_name} {$student->last_name} by {$this->updatedBy->name}.",
+            "Status updated to {$status} for {$student->first_name} {$student->last_name} by {$this->updatedBy->name}.",
             $app->id,
             $link,
             $this->updatedBy->id
@@ -66,11 +73,11 @@ class ApplicationStatusUpdated extends Notification
 
         return [
             'type' => 'application_status_updated',
-            'message' => "ðŸ“„ Status updated to {$app->application_status} for {$student->first_name} {$student->last_name} by {$this->updatedBy->name}.",
+            'message' => "Status updated to {$status} for {$student->first_name} {$student->last_name} by {$this->updatedBy->name}.",
             'application' => [
                 'id' => $app->id,
                 'number' => $app->application_number,
-                'status' => $app->application_status,
+                'status' => $status,
             ],
             'student' => [
                 'id' => $student->id,

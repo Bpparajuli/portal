@@ -213,7 +213,7 @@
                                 <div class="flex-grow-1">
                                     <div class="fw-medium small">{{ $app->university?->name ?? 'Unknown University' }} — {{ $app->course?->title ?? 'Unknown Course' }}</div>
                                     <div class="text-muted" style="font-size:.72rem">
-                                        Status: <span class="badge bg-{{ $app->application_status_id == 1 ? 'warning' : 'success' }}" style="font-size:.6rem;">{{ $app->applicationStatus?->name ?? 'N/A' }}</span>
+                                        Status: <span class="badge" style="font-size:.6rem;background:{{ $app->status?->bg_color ?? '#6b7280' }};color:{{ $app->status?->text_color ?? '#fff' }};">{{ $app->status?->name ?? 'N/A' }}</span>
                                         &middot; Created {{ $app->created_at->format('d M Y') }}
                                     </div>
                                 </div>
@@ -229,8 +229,14 @@
                 {{-- HISTORY TAB --}}
                 <div id="tab-history" style="display:none">
                     <div class="crm-section-body">
+                        <div class="task-box-header">🔄 Stage History</div>
                         <div id="stageHistoryContent">
                             <div class="text-center text-muted py-3 small">Loading history…</div>
+                        </div>
+
+                        <div class="task-box-header" style="margin-top:14px;">📄 Application Status History</div>
+                        <div id="appStatusHistoryContent">
+                            <div class="text-center text-muted py-3 small">Loading…</div>
                         </div>
                     </div>
                 </div>

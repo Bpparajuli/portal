@@ -69,6 +69,7 @@
     }
     .back-link { color: rgba(255,255,255,0.8); text-decoration: none; font-size: 0.9rem; }
     .back-link:hover { color: #fff; }
+    .hp-field { position: absolute; left: -9999px; top: auto; width: 1px; height: 1px; overflow: hidden; }
 </style>
 @endpush
 
@@ -146,6 +147,13 @@
                                     @error('message') <div class="invalid-feedback">{{ $message }}</div> @enderror
                                 </div>
                             </div>
+
+                            {{-- Spam protection (hidden from users) --}}
+                            <div class="hp-field" aria-hidden="true">
+                                <label>Website</label>
+                                <input type="text" name="website" tabindex="-1" autocomplete="off">
+                            </div>
+
                             <div class="mt-4">
                                 <button type="submit" class="btn btn-submit">
                                     <i class="fas fa-paper-plane me-2"></i>Send Message

@@ -27,6 +27,8 @@ class MailboxController extends Controller
     {
         $this->authorizeAccess();
 
+        \App\Services\EmailSchema::ensureMailboxes();
+
         $user = Auth::user();
 
         $mailboxes = Mailbox::accessibleTo($user)->orderBy('label')->get();
@@ -60,16 +62,11 @@ class MailboxController extends Controller
     {
         $this->authorizeAccess();
 
-        // Refresh on demand (bounded) so counts update without a queue worker
-        // or cron. The lock prevents concurrent duplicate polls.
-        if (MailboxMonitor::isStale()
-            && \Illuminate\Support\Facades\Cache::add(MailboxMonitor::CACHE_REFRESH_LOCK, 1, 15)) {
-            try {
-                app(MailboxMonitor::class)->pollAll(8);
-            } catch (\Throwable $e) {
-                // Return whatever counts we already have.
-            }
-        }
+        \App\Services\EmailSchema::ensureMailboxes();
+
+        // NOTE: we intentionally do NOT poll IMAP here. Polling runs via the
+        // scheduler (mailboxes:poll) or the "Refresh now" / "Test" buttons.
+        // This keeps the bell fast and prevents connection-timeout errors.
 
         $rows = MailboxMonitor::breakdown();
 
@@ -97,6 +94,22 @@ class MailboxController extends Controller
         $monitor->pollAll();
 
         return redirect()->route('mail.index')->with('success', 'Mailboxes refreshed.');
+    }
+
+    /** Test a single mailbox IMAP connection. */
+    public function test(Mailbox $mailbox, MailboxMonitor $monitor)
+    {
+        $this->authorizeAdmin();
+
+        $result = $monitor->poll($mailbox);
+
+        if ($result['ok'] ?? false) {
+            return redirect()->route('mail.index')
+                ->with('success', "{$mailbox->label}: connection OK — {$result['unread']} unread / {$result['total']} total.");
+        }
+
+        return redirect()->route('mail.index')
+            ->with('error', "{$mailbox->label}: connection failed — " . ($result['error'] ?? 'unknown error'));
     }
 
     public function store(Request $request)

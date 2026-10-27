@@ -84,6 +84,44 @@
                     </button>
                 </div>
 
+                @php
+                    $__canUpdateAppStatus = auth()->user()->is_admin || auth()->user()->is_admin_staff;
+                    $__studentApps = $student->applications ?? collect();
+                @endphp
+                @if ($__canUpdateAppStatus && $__studentApps->count())
+                    <div class="app-status-section mt-3">
+                        <div class="mb-2" style="font-size:12px;font-weight:700;color:#1a0262;">
+                            <i class="fa-solid fa-file-lines me-1"></i> Application Status
+                        </div>
+                        @foreach ($__studentApps as $__app)
+                            <div class="d-flex align-items-center justify-content-between gap-2 mb-2 p-2"
+                                style="background:#f8fafc;border:1px solid #ece8f5;border-radius:10px;">
+                                <div style="min-width:0;">
+                                    <div class="text-truncate" style="font-size:12px;font-weight:600;color:#1f2937;">
+                                        {{ $__app->university?->name ?? 'University' }}
+                                    </div>
+                                    <div class="text-muted text-truncate" style="font-size:11px;">
+                                        {{ $__app->course?->title ?? '—' }}
+                                    </div>
+                                </div>
+                                <div class="text-end flex-shrink-0">
+                                    <span class="badge"
+                                        style="background:{{ $__app->status?->bg_color ?? '#6b7280' }};color:{{ $__app->status?->text_color ?? '#fff' }};font-size:10px;">
+                                        {{ $__app->status?->name ?? 'N/A' }}
+                                    </span>
+                                    <div class="mt-1">
+                                        <button type="button" class="btn btn-sm btn-outline-purple rounded-pill px-2 py-0"
+                                            style="font-size:10.5px;"
+                                            onclick="openAppStatusModal({{ $__app->id }}, {{ (int) ($__app->application_status_id ?? 0) }})">
+                                            <i class="fa-solid fa-arrows-rotate me-1"></i>Update
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
+
 
             </div>
 

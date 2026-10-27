@@ -45,7 +45,7 @@ class ChatController extends Controller
                     : ($user->status && $user->status->last_seen
                         ? Carbon::parse($user->status->last_seen)->diffForHumans()
                         : 'Offline');
-                $user->name = $user->name ?: $user->name;
+                $user->business_name = $user->business_name ?: $user->name;
 
                 $lastMsg = ChatMessage::where(function ($q) use ($authId, $user) {
                     $q->where('sender_id', $authId)->where('receiver_id', $user->id);
@@ -299,7 +299,7 @@ class ChatController extends Controller
 
                 return [
                     'id' => $user->id,
-                    'name' => $user->name ?: $user->name,
+                    'name' => $user->business_name ?: $user->name,
                     'role' => $user->role,
                     'avatar' => $user->business_logo,
                     'unread' => $unread,

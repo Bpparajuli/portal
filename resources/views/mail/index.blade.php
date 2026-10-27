@@ -102,6 +102,11 @@
                                     <td class="text-nowrap">
                                         <button class="btn btn-sm btn-outline-secondary rounded-pill px-2 py-0" style="font-size:11px;"
                                             onclick="editMailbox({{ $mb->id }})">Edit</button>
+                                        <form action="{{ route('mail.test', $mb) }}" method="POST" class="d-inline">
+                                            @csrf
+                                            <button class="btn btn-sm btn-outline-primary rounded-pill px-2 py-0" style="font-size:11px;"
+                                                title="Test IMAP connection">Test</button>
+                                        </form>
                                         <form action="{{ route('mail.destroy', $mb) }}" method="POST" class="d-inline"
                                             onsubmit="return confirm('Remove this mailbox?');">
                                             @csrf @method('DELETE')

@@ -40,6 +40,33 @@ class StudentStageHistoryController extends Controller
     }
 
     /**
+     * Return JSON application status history for a student.
+     * Shown in the History tab next to stage changes.
+     */
+    public function applicationHistory(Student $student)
+    {
+        $this->authorizeAccess($student);
+
+        $history = \App\Models\ApplicationStatusHistory::whereHas('application', function ($q) use ($student) {
+            $q->where('student_id', $student->id);
+        })
+            ->with(['fromStatus', 'toStatus', 'changedBy', 'application'])
+            ->latest()
+            ->get()
+            ->map(fn ($h) => [
+                'id'          => $h->id,
+                'from'        => $h->fromStatus?->name ?? 'Initial',
+                'to'          => $h->toStatus?->name ?? '—',
+                'application' => $h->application?->application_number,
+                'changed_by'  => $h->changedBy?->name ?? 'Unknown',
+                'reason'      => $h->reason,
+                'date'        => $h->created_at?->format('d M Y, g:i A'),
+            ]);
+
+        return response()->json($history);
+    }
+
+    /**
      * Delete a stage history record (admin only).
      */
     public function destroy(Student $student, StudentStageHistory $history)

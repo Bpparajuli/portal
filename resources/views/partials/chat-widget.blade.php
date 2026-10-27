@@ -53,6 +53,17 @@
             .cw-form input[type=text] { flex: 1; border: 1px solid #e5e7eb; border-radius: 20px; padding: 8px 12px; font-size: 13px; outline: none; }
             .cw-form button { border: none; background: none; color: var(--primary, #1a0262); font-size: 16px; cursor: pointer; padding: 4px; }
             .cw-empty { text-align: center; color: #9ca3af; font-size: 13px; padding: 30px 10px; }
+            .cw-list-tools { display: flex; align-items: center; gap: 6px; padding: 8px; border-bottom: 1px solid #f1f1f5; background: #fff; position: sticky; top: 0; z-index: 2; }
+            .cw-list-tools input[type=text] { flex: 1; border: 1px solid #e5e7eb; border-radius: 20px; padding: 6px 10px; font-size: 12px; outline: none; }
+            .cw-list-tools label { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; color: #6b7280; white-space: nowrap; cursor: pointer; }
+            .cw-status-dot { width: 9px; height: 9px; border-radius: 50%; background: #cbd5e1; display: inline-block; flex-shrink: 0; border: 1px solid #fff; }
+            .cw-status-dot.online { background: #22c55e; }
+            .cw-avatar { position: relative; }
+            .cw-avatar .cw-status-dot { position: absolute; bottom: 0; right: 0; }
+            .cw-bubble .cw-tick { margin-left: 4px; font-size: 10px; }
+            .cw-bubble .cw-del { display: none; margin-left: 6px; border: none; background: none; color: inherit; opacity: .7; cursor: pointer; font-size: 11px; padding: 0; }
+            .cw-bubble:hover .cw-del { display: inline; }
+            .cw-header .cw-status-dot { margin-left: 2px; }
             @media (max-width: 576px) {
                 .cw-panel { inset: 0; width: 100%; height: 100%; max-height: 100%; border-radius: 0; bottom: 0; right: 0; }
             }
@@ -68,11 +79,16 @@
                 <button id="cwBack" type="button" style="display:none;" title="Back"><i class="fas fa-arrow-left"></i></button>
                 <i id="cwHeaderIcon" class="fas fa-comments"></i>
                 <span class="cw-title" id="cwTitle">Messages</span>
+                <span class="cw-status-dot" id="cwOnlineDot" style="display:none;"></span>
                 <a id="cwFullLink" href="{{ url($__cwBase) }}" title="Open full chat page"><i class="fas fa-expand"></i></a>
                 <button id="cwMinimize" type="button" title="Minimize"><i class="fas fa-minus"></i></button>
             </div>
 
             <div class="cw-body" id="cwListView">
+                <div class="cw-list-tools">
+                    <input type="text" id="cwUserSearch" placeholder="Search people…" autocomplete="off">
+                    <label><input type="checkbox" id="cwOnlineOnly"> Online</label>
+                </div>
                 <div id="cwList"><div class="cw-empty">Loading…</div></div>
             </div>
 
@@ -94,8 +110,9 @@
                 authId: {{ (int) $__wUser->id }},
                 csrf: @json(csrf_token()),
                 conversationsUrl: @json(route('chat.conversations')),
+                usersUrl: @json(url($__cwBase . '/users')),
             };
         </script>
-        <script src="{{ asset('js/chat-widget.js') }}"></script>
+        <script src="{{ asset('js/chat-widget.js') }}?v={{ file_exists(public_path('js/chat-widget.js')) ? filemtime(public_path('js/chat-widget.js')) : time() }}"></script>
     @endunless
 @endauth

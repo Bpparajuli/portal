@@ -12,6 +12,7 @@ class BulkEmail extends Model
         'subject',
         'body',
         'recipient_group',
+        'recipients',
         'recipients_count',
         'sent_count',
         'failed_count',
@@ -22,6 +23,7 @@ class BulkEmail extends Model
 
     protected $casts = [
         'attachments' => 'array',
+        'recipients' => 'array',
     ];
 
     public function creator()

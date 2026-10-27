@@ -2,6 +2,13 @@
 @section('admin-content')
     <x-page-header title="Bulk Email Campaigns">
         <x-slot:actions>
+            <form action="{{ route('admin.emails.bulk.process') }}" method="POST" class="d-inline"
+                onsubmit="return confirm('Process any queued bulk emails now?');">
+                @csrf
+                <button type="submit" class="btn btn-sm btn-outline-secondary rounded-pill px-3" style="font-size:12px;">
+                    <i class="fas fa-play me-1"></i> Process Queue
+                </button>
+            </form>
             <a href="{{ route('admin.emails.bulk') }}" class="btn btn-sm btn-primary rounded-pill px-3" style="font-size:12px;">
                 <i class="fas fa-plus me-1"></i> New Campaign
             </a>
@@ -28,6 +35,7 @@
                             <th>Failed</th>
                             <th>Status</th>
                             <th>Queued</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -50,10 +58,28 @@
                                     <span class="badge bg-{{ $badge }}">{{ ucfirst($c->status) }}</span>
                                 </td>
                                 <td class="text-muted">{{ $c->created_at?->format('d M Y, g:i A') }}</td>
+                                <td class="text-nowrap">
+                                    <form action="{{ route('admin.emails.bulk.resend', $c) }}" method="POST" class="d-inline"
+                                        onsubmit="return confirm('Resend this campaign to its recipients?');">
+                                        @csrf
+                                        <button type="submit" class="btn btn-sm btn-outline-primary rounded-pill px-2 py-0"
+                                            style="font-size:11px;" title="Resend">
+                                            <i class="fas fa-redo me-1"></i>Resend
+                                        </button>
+                                    </form>
+                                    <form action="{{ route('admin.emails.bulk.destroy', $c) }}" method="POST" class="d-inline"
+                                        onsubmit="return confirm('Remove this campaign?');">
+                                        @csrf @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-2 py-0"
+                                            style="font-size:11px;" title="Remove">
+                                            <i class="fas fa-trash-alt me-1"></i>Remove
+                                        </button>
+                                    </form>
+                                </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="text-center text-muted py-4">No bulk email campaigns yet.</td>
+                                <td colspan="8" class="text-center text-muted py-4">No bulk email campaigns yet.</td>
                             </tr>
                         @endforelse
                     </tbody>

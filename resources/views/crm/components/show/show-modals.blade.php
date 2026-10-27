@@ -749,3 +749,50 @@
         </form>
     </div>
 </div>
+
+{{-- MODAL: UPDATE APPLICATION STATUS --}}
+@if (auth()->user()->is_admin || auth()->user()->is_admin_staff)
+    <div id="appStatusModal" class="modal-overlay" style="display:none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>🔄 Update Application Status</span>
+                <button type="button" onclick="closeModal('appStatusModal')"
+                    style="background:none; border:none; font-size:1.5rem; cursor:pointer;">&times;</button>
+            </div>
+            <form id="appStatusForm" method="POST">
+                @csrf
+                @method('PATCH')
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>New Status *</label>
+                        <select name="application_status_id" id="appStatusSelect" class="form-select" required>
+                            @foreach (($applicationStatuses ?? collect()) as $__st)
+                                <option value="{{ $__st->id }}">{{ $__st->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Reason (optional)</label>
+                        <textarea name="reason" id="appStatusReason" rows="2" class="form-control"
+                            placeholder="Note about this status change..."></textarea>
+                    </div>
+                    <div class="form-check mb-1">
+                        <input type="hidden" name="notify_agent" value="0">
+                        <input type="checkbox" name="notify_agent" id="appNotifyAgent" value="1" checked>
+                        <label for="appNotifyAgent">Notify agent (email + notification)</label>
+                    </div>
+                    <div class="form-check">
+                        <input type="hidden" name="email_student" value="0">
+                        <input type="checkbox" name="email_student" id="appEmailStudent" value="1">
+                        <label for="appEmailStudent">Also email the student</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary"
+                        onclick="closeModal('appStatusModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update Status</button>
+                </div>
+            </form>
+        </div>
+    </div>
+@endif

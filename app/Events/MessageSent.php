@@ -30,6 +30,18 @@ class MessageSent implements ShouldBroadcast
     // This allows us to access $message in Javascript directly
     public function broadcastWith()
     {
-        return ['message' => $this->message];
+        $sender = $this->message->sender;
+
+        $name = $sender?->name ?? '';
+        $business = $sender?->business_name ?? '';
+        $display = $name ?: ($business ?: 'Someone');
+        if ($name && $business && $business !== $name) {
+            $display = $name . ' (' . $business . ')';
+        }
+
+        return [
+            'message' => $this->message,
+            'sender_name' => $display,
+        ];
     }
 }

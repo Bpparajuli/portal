@@ -3,6 +3,7 @@
     let currentTaskId = null;
     let currentStudentId = {{ $student->id }};
     let historyLoaded = false;
+    let appStatusHistoryLoaded = false;
     let currentRevenueId = null;
     const isAdmin = {{ auth()->user()->is_admin ? 'true' : 'false' }};
 
@@ -18,7 +19,7 @@
         document.querySelectorAll('.crm-tab').forEach(el => el.classList.remove('active'));
         document.getElementById('tab-' + name).style.display = 'block';
         btn.classList.add('active');
-        if (name === 'history') loadHistory();
+        if (name === 'history') { loadHistory(); loadAppStatusHistory(); }
     }
 
     function loadHistory() {
@@ -57,6 +58,64 @@
                     '<div class="text-danger text-center py-3">Failed to load history.</div>';
             });
     }
+
+    // ========== APPLICATION STATUS HISTORY ==========
+    function loadAppStatusHistory() {
+        if (appStatusHistoryLoaded) return;
+        appStatusHistoryLoaded = true;
+
+        var el = document.getElementById('appStatusHistoryContent');
+        if (!el) return;
+
+        fetch('{{ route('crm.student.application-history', $student) }}')
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (!data.length) {
+                    el.innerHTML = '<div class="text-muted text-center py-3 small">No application status changes yet.</div>';
+                    return;
+                }
+                el.innerHTML = data.map(function (h) {
+                    var reason = h.reason
+                        ? '<div style="font-size:.72rem;color:#374151;margin-top:2px;">Reason: ' + escapeHtml(h.reason) + '</div>'
+                        : '';
+                    return '<div style="display:flex;gap:.75rem;padding:.75rem 0;border-bottom:1px solid #e5e9f2;align-items:flex-start">'
+                        + '<span style="font-size:1.05rem">📄</span>'
+                        + '<div style="flex:1;min-width:0">'
+                        + '<div style="font-size:.85rem;font-weight:500">' + escapeHtml(h.from) + ' → ' + escapeHtml(h.to) + '</div>'
+                        + '<div style="font-size:.72rem;color:#6b7280">App #' + escapeHtml(h.application || '—') + ' • by ' + escapeHtml(h.changed_by) + ' • ' + escapeHtml(h.date) + '</div>'
+                        + reason
+                        + '</div></div>';
+                }).join('');
+            })
+            .catch(function () {
+                el.innerHTML = '<div class="text-danger text-center py-3 small">Failed to load application history.</div>';
+            });
+    }
+    window.loadAppStatusHistory = loadAppStatusHistory;
+
+    // ========== UPDATE APPLICATION STATUS MODAL ==========
+    function openAppStatusModal(appId, currentStatusId) {
+        var form = document.getElementById('appStatusForm');
+        if (!form) return;
+
+        form.action = "{{ url('/crm/students/' . $student->id . '/applications') }}/" + appId + "/status";
+
+        var sel = document.getElementById('appStatusSelect');
+        if (sel) sel.value = currentStatusId || '';
+
+        var reason = document.getElementById('appStatusReason');
+        if (reason) reason.value = '';
+
+        var notifyAgent = document.getElementById('appNotifyAgent');
+        if (notifyAgent) notifyAgent.checked = true;
+
+        var emailStudent = document.getElementById('appEmailStudent');
+        if (emailStudent) emailStudent.checked = false;
+
+        var modal = document.getElementById('appStatusModal');
+        if (modal) modal.style.display = 'flex';
+    }
+    window.openAppStatusModal = openAppStatusModal;
 
     function deleteHistory(historyId) {
         const url = '{{ route('crm.student.history.destroy', ['student' => $student, 'history' => '__HID__']) }}'.replace('__HID__', historyId);

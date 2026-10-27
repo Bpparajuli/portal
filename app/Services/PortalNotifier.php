@@ -33,7 +33,12 @@ class PortalNotifier
     /** Resolve the recipient list for a given category. */
     public static function recipients(string $category): array
     {
-        $mailboxes = Mailbox::active()->get();
+        try {
+            $mailboxes = Mailbox::active()->get();
+        } catch (\Throwable $e) {
+            // Mailboxes table may not be migrated yet — fall back to defaults.
+            $mailboxes = collect();
+        }
 
         $byCategory = fn (string $cat) => $mailboxes
             ->where('category', $cat)
@@ -82,7 +87,7 @@ class PortalNotifier
         array $outroLines = [],
         array $extra = []
     ): void {
-        if (! MailConfigService::isEnabled()) {
+        if (! MailConfigService::isSendable()) {
             return;
         }
 

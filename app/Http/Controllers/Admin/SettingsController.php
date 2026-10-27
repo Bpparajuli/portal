@@ -43,6 +43,8 @@ class SettingsController extends Controller
                 $ensure = [
                     'mail_enabled' => ['true', 'boolean', 'Enable outgoing email via the SMTP server below'],
                     'mail_refresh_seconds' => ['60', 'number', 'How often (seconds) mailboxes are checked for new mail'],
+                    'enquiry_auto_reply' => ['false', 'boolean', 'Send an automatic acknowledgement email to people who submit the enquiry form'],
+                    'enquiry_notify_email' => ['true', 'boolean', 'Email portal/admin for each new enquiry (enquiries are always saved in the portal)'],
                 ];
                 foreach ($ensure as $key => $meta) {
                     if (!Setting::where('key', $key)->exists()) {
@@ -186,6 +188,8 @@ class SettingsController extends Controller
             ['key' => 'mail_encryption', 'value' => 'tls', 'type' => 'string', 'description' => 'Encryption (tls, ssl, null)'],
             ['key' => 'mail_from_address', 'value' => 'noreply@example.com', 'type' => 'string', 'description' => 'Default from email address'],
             ['key' => 'mail_from_name', 'value' => 'Portal', 'type' => 'string', 'description' => 'Default from name'],
+            ['key' => 'enquiry_auto_reply', 'value' => 'false', 'type' => 'boolean', 'description' => 'Send an automatic acknowledgement email to people who submit the enquiry form'],
+            ['key' => 'enquiry_notify_email', 'value' => 'true', 'type' => 'boolean', 'description' => 'Email portal/admin for each new enquiry (enquiries are always saved in the portal)'],
         ];
         foreach ($defaults as $s) {
             $this->settingService->set($s['key'], $s['value'], 'email', $s['type'], $s['description'] ?? null);
