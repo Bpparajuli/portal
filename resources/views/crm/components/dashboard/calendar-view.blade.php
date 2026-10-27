@@ -252,7 +252,7 @@
                 events: function(info, success, failure) {
                     sl();
                     var params = new URLSearchParams(window.location.search);
-                    fetch('{{ route('crm.calendar.events') }}', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf() }, body: JSON.stringify({ start: info.startStr, end: info.endStr, assignee_id: params.get('assignee_id'), activity_filter: params.get('activity_filter'), stage_id: params.get('stage_id'), search: params.get('search'), search_type: params.get('search_type') }) })
+                    fetch('{{ route('crm.calendar.events') }}', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf() }, body: JSON.stringify({ start: info.startStr, end: info.endStr, assignee_id: params.get('assignee_id'), activity_filter: params.get('activity_filter'), task_type: params.get('task_type'), stage_id: params.get('stage_id'), search: params.get('search'), search_type: params.get('search_type') }) })
                         .then(function(r) { return r.json(); })
                         .then(function(d) { hl(); success(d.events || []); setTimeout(function() { updateDayNumbers(d.events || []); applyColWidths(); }, 80); })
                         .catch(function(err) { hl(); failure(err); });

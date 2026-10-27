@@ -16,8 +16,8 @@ class TrashController extends Controller
     protected array $models = [
         'student'            => ['class' => \App\Models\Student::class,            'label' => 'Students',        'icon' => 'fa-graduation-cap',    'title' => 'full_name'],
         'application'        => ['class' => \App\Models\Application::class,        'label' => 'Applications',     'icon' => 'fa-file-alt',          'title' => 'id'],
-        'document'           => ['class' => \App\Models\Document::class,           'label' => 'Documents',        'icon' => 'fa-file',              'title' => 'name'],
-        'course'             => ['class' => \App\Models\Course::class,             'label' => 'Courses',          'icon' => 'fa-book',              'title' => 'name'],
+        'document'           => ['class' => \App\Models\Document::class,           'label' => 'Documents',        'icon' => 'fa-file',              'title' => 'document_type'],
+        'course'             => ['class' => \App\Models\Course::class,             'label' => 'Courses',          'icon' => 'fa-book',              'title' => 'title'],
         'university'         => ['class' => \App\Models\University::class,         'label' => 'Universities',     'icon' => 'fa-university',        'title' => 'name'],
         'activity'           => ['class' => \App\Models\Activity::class,           'label' => 'Activities',       'icon' => 'fa-history',           'title' => 'description'],
         'application_status' => ['class' => \App\Models\ApplicationStatus::class,  'label' => 'Application Status','icon' => 'fa-tasks',             'title' => 'status'],
@@ -35,6 +35,10 @@ class TrashController extends Controller
         'activity'     => 'student',
     ];
 
+    protected array $extraRelations = [
+        'course' => 'university',
+    ];
+
     protected array $deletedByMapping = [
         'student' => ['activity_type' => 'student_deleted', 'foreign_key' => 'notifiable_id'],
     ];
@@ -42,63 +46,88 @@ class TrashController extends Controller
     public function index()
     {
         $groups = [];
+
         foreach ($this->models as $type => $cfg) {
             $model = $cfg['class'];
-            $query = $model::onlyTrashed()->orderBy('deleted_at', 'desc');
 
-            if (isset($this->studentRelations[$type])) {
-                $query->with($this->studentRelations[$type]);
-            }
+            try {
+                $query = $model::onlyTrashed()->orderBy('deleted_at', 'desc');
 
-            $records = $query->get();
-
-            if ($records->isNotEmpty()) {
-                if (isset($this->deletedByMapping[$type])) {
-                    $map = $this->deletedByMapping[$type];
-                    $ids = $records->pluck('id')->toArray();
-                    $deletedByDebug = ['type' => $type, 'ids' => $ids, 'rows' => 0, 'nameMap' => []];
-                    $nameMap = [];
-                    try {
-                        $rows = DB::table('activities')
-                            ->where('type', $map['activity_type'])
-                            ->whereIn($map['foreign_key'], $ids)
-                            ->get();
-                        $deletedByDebug['rows'] = $rows->count();
-                        $userIds = $rows->pluck('user_id')->filter()->unique()->toArray();
-                        $users = [];
-                        if (!empty($userIds)) {
-                            $userRows = DB::table('users')->whereIn('id', $userIds)->get();
-                            foreach ($userRows as $u) {
-                                $users[$u->id] = $u->name;
-                            }
-                        }
-                        foreach ($rows as $r) {
-                            $fk = $r->{$map['foreign_key']};
-                            $nameMap[$fk] = $users[$r->user_id] ?? 'Unknown';
-                            $deletedByDebug['nameMap'][$fk] = $nameMap[$fk];
-                        }
-                    } catch (\Exception $e) {
-                        $deletedByDebug['error'] = $e->getMessage();
-                    }
-                    $groups['_debug'] = $deletedByDebug;
-                    foreach ($records as $record) {
-                        $record->setAttribute('deleted_by_name', $nameMap[$record->id] ?? '—');
-                    }
-                } else {
-                    foreach ($records as $record) {
-                        $record->setAttribute('deleted_by_name', '—');
-                    }
+                $relation = $this->studentRelations[$type] ?? $this->extraRelations[$type] ?? null;
+                if ($relation) {
+                    $query->with($relation);
                 }
 
-                $groups[$type] = [
-                    'label'   => $cfg['label'],
-                    'icon'    => $cfg['icon'],
-                    'records' => $records,
-                    'title'   => $cfg['title'],
-                    'count'   => $records->count(),
-                    'has_student' => isset($this->studentRelations[$type]),
-                ];
+                $records = $query->get();
+            } catch (\Throwable $e) {
+                // One broken model should never take down the whole page.
+                \Illuminate\Support\Facades\Log::warning('Trash group failed [' . $type . ']: ' . $e->getMessage());
+                continue;
             }
+
+            if ($records->isEmpty()) {
+                continue;
+            }
+
+            // "Deleted by" from the stored deleted_by column (new deletions).
+            $hasDeletedBy = false;
+            $deleterNames = [];
+            try {
+                $hasDeletedBy = \Illuminate\Support\Facades\Schema::hasColumn((new $model)->getTable(), 'deleted_by');
+                if ($hasDeletedBy) {
+                    $deleterIds = $records->pluck('deleted_by')->filter()->unique()->toArray();
+                    if (!empty($deleterIds)) {
+                        $deleterNames = DB::table('users')->whereIn('id', $deleterIds)->pluck('name', 'id')->toArray();
+                    }
+                }
+            } catch (\Throwable $e) {
+                $hasDeletedBy = false;
+            }
+
+            // Legacy fallback from the activity log (students).
+            $nameMap = [];
+            if (isset($this->deletedByMapping[$type])) {
+                $map = $this->deletedByMapping[$type];
+                $ids = $records->pluck('id')->toArray();
+
+                try {
+                    $rows = DB::table('activities')
+                        ->where('type', $map['activity_type'])
+                        ->whereIn($map['foreign_key'], $ids)
+                        ->get();
+
+                    $userIds = $rows->pluck('user_id')->filter()->unique()->toArray();
+                    $users = !empty($userIds)
+                        ? DB::table('users')->whereIn('id', $userIds)->pluck('name', 'id')->toArray()
+                        : [];
+
+                    foreach ($rows as $r) {
+                        $nameMap[$r->{$map['foreign_key']}] = $users[$r->user_id] ?? 'Unknown';
+                    }
+                } catch (\Throwable $e) {
+                    // Ignore lookup failures; fall back to a dash.
+                }
+            }
+
+            foreach ($records as $record) {
+                $name = null;
+                if ($hasDeletedBy && $record->deleted_by) {
+                    $name = $deleterNames[$record->deleted_by] ?? null;
+                }
+                if (!$name && isset($nameMap[$record->id])) {
+                    $name = $nameMap[$record->id];
+                }
+                $record->setAttribute('deleted_by_name', $name ?: '—');
+            }
+
+            $groups[$type] = [
+                'label'       => $cfg['label'],
+                'icon'        => $cfg['icon'],
+                'records'     => $records,
+                'title'       => $cfg['title'],
+                'count'       => $records->count(),
+                'has_student' => isset($this->studentRelations[$type]),
+            ];
         }
 
         return view('admin.trash.index', compact('groups'));

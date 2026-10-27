@@ -8,23 +8,12 @@
             </x-slot:actions>
         </x-page-header>
 
-        @if (!empty($groups['_debug']))
-            <!-- DBG: {{ json_encode($groups['_debug']) }} -->
-            <div class="alert alert-info small py-1 px-3 mb-2">
-                <strong>Debug:</strong>
-                type={{ $groups['_debug']['type'] ?? '?' }},
-                ids=[{{ implode(',', $groups['_debug']['ids'] ?? []) }}],
-                activities={{ $groups['_debug']['rows'] ?? 0 }},
-                error={{ $groups['_debug']['error'] ?? 'none' }}
-            </div>
-        @endif
-
         @forelse($groups as $type => $group)
             <div class="card border-0 shadow-sm rounded-4 mb-4">
                 <div class="card-header bg-white border-bottom py-3 d-flex align-items-center gap-2">
                     <div class="rounded-circle p-2 d-flex align-items-center justify-content-center"
                         style="width:36px;height:36px;background:#fce4ec;">
-                        <i class="fas {{ $group['icon'] }}" style="color:#c62828;"></i>
+                        <i class="fas {{ $group['icon'] ?? 'fa-trash' }}" style="color:#c62828;"></i>
                     </div>
                     <div class="flex-grow-1">
                         <h6 class="mb-0 fw-bold">{{ $group['label'] }}</h6>
@@ -79,7 +68,10 @@
                                         <td class="small text-muted">{{ $record->id }}</td>
                                         <td>
                                             <span class="fw-semibold small">
-                                                @if ($group['title'] === 'id')
+                                                @if ($type === 'student')
+                                                    <a href="{{ route('crm.students.show', $record->id) }}"
+                                                        class="text-decoration-none">{{ $record->full_name ?: '—' }}</a>
+                                                @elseif ($group['title'] === 'id')
                                                     Application #{{ $record->id }}
                                                 @elseif($group['title'] === 'message')
                                                     {{ Str::limit(strip_tags($record->message ?? ''), 60) }}
@@ -95,15 +87,28 @@
                                                     {{ $record->{$group['title']} ?? '—' }}
                                                 @endif
                                             </span>
-                                            @if ($group['title'] === 'full_name' && $record->email)
+                                            @if ($type === 'student' && $record->email)
                                                 <small class="d-block text-muted">{{ $record->email }}</small>
+                                            @elseif ($type === 'document' && $record->file_name)
+                                                <small class="d-block text-muted text-truncate" style="max-width:320px;">
+                                                    <i class="fas fa-paperclip me-1"></i>{{ $record->file_name }}
+                                                </small>
+                                            @elseif ($type === 'course' && $record->university)
+                                                <small class="d-block text-muted">
+                                                    <i class="fas fa-university me-1"></i>{{ $record->university->name }}
+                                                </small>
                                             @endif
                                         </td>
                                         @if (!empty($group['has_student']))
                                             <td class="small">
-                                                {{ $record->student?->full_name ?? '—' }}
-                                                @if ($record->student?->email)
-                                                    <br><small class="text-muted">{{ $record->student->email }}</small>
+                                                @if ($record->student)
+                                                    <a href="{{ route('crm.students.show', $record->student->id) }}"
+                                                        class="text-decoration-none">{{ $record->student->full_name }}</a>
+                                                    @if ($record->student->email)
+                                                        <br><small class="text-muted">{{ $record->student->email }}</small>
+                                                    @endif
+                                                @else
+                                                    —
                                                 @endif
                                             </td>
                                         @endif

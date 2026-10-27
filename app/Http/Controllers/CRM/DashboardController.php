@@ -87,41 +87,39 @@ class DashboardController extends Controller
             });
         }
 
-        // Activity filter - ADDED 'completed_today' filter
-        if ($request->filled('activity_filter')) {
-            $filter = $request->activity_filter;
+        // Activity + task-type filters (student must have a matching task)
+        $taskType = $request->filled('task_type') ? $request->input('task_type') : null;
+
+        if ($request->filled('activity_filter') || $taskType) {
+            $filter = $request->input('activity_filter');
 
             // Check if it's a "my_" filter (for current user only)
-            $isMyFilter = str_starts_with($filter, 'my_');
-            $baseFilter = $isMyFilter ? substr($filter, 3) : $filter; // Remove 'my_' prefix
+            $isMyFilter = $filter ? str_starts_with($filter, 'my_') : false;
+            $baseFilter = ($filter && $isMyFilter) ? substr($filter, 3) : $filter;
 
             // Handle completed today filter
             if ($baseFilter === 'completed_today') {
-                // Build query for completed tasks today
                 $taskQuery = CrmTasks::where('status', 'completed')
                     ->whereDate('completed_at', today());
 
-                // Apply user filter for "my_" prefixed filters
                 if ($isMyFilter) {
                     $taskQuery->where('assigned_to', $user->id);
                 }
+                if ($taskType) {
+                    $taskQuery->where('activity_type', $taskType);
+                }
 
-                // Get student IDs that have completed tasks today
                 $studentIdsWithTasks = $taskQuery->whereNotNull('student_id')->pluck('student_id')->unique();
-
-                // Filter students by those IDs
                 $query->whereIn('id', $studentIdsWithTasks);
             }
-            // Handle regular task filters (overdue, today, upcoming)
+            // Handle regular task filters (overdue, today, upcoming) + task type
             else {
-                $taskQuery = CrmTasks::whereIn('status', ['pending',]);
+                $taskQuery = CrmTasks::whereIn('status', ['pending']);
 
-                // Apply user filter for "my_" prefixed filters
                 if ($isMyFilter) {
                     $taskQuery->where('assigned_to', $user->id);
                 }
 
-                // Apply date filter
                 if ($baseFilter === 'overdue') {
                     $taskQuery->whereDate('scheduled_for', '<', today());
                 } elseif ($baseFilter === 'today') {
@@ -130,10 +128,11 @@ class DashboardController extends Controller
                     $taskQuery->whereDate('scheduled_for', '>', today());
                 }
 
-                // Get student IDs that have matching tasks
-                $studentIdsWithTasks = $taskQuery->whereNotNull('student_id')->pluck('student_id')->unique();
+                if ($taskType) {
+                    $taskQuery->where('activity_type', $taskType);
+                }
 
-                // Filter students by those IDs
+                $studentIdsWithTasks = $taskQuery->whereNotNull('student_id')->pluck('student_id')->unique();
                 $query->whereIn('id', $studentIdsWithTasks);
             }
         }
@@ -146,7 +145,8 @@ class DashboardController extends Controller
             $request->filled('search') ||
             $request->filled('stage_id') ||
             $request->filled('assignee_id') ||
-            $request->filled('activity_filter');
+            $request->filled('activity_filter') ||
+            $request->filled('task_type');
 
         if (!$view) {
             $view = $hasFilters ? 'list' : 'kanban';
@@ -1056,6 +1056,10 @@ class DashboardController extends Controller
                 $query->whereHas('student', function ($q) use ($request) {
                     $q->where('current_stage_id', $request->stage_id);
                 });
+            }
+
+            if ($request->filled('task_type')) {
+                $query->where('activity_type', $request->task_type);
             }
 
             if ($request->filled('search')) {

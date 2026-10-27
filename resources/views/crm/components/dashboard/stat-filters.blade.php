@@ -192,13 +192,29 @@
                     @endif
                 </select>
 
+                <select name="task_type" class="form-select form-select-sm" onchange="this.form.submit()">
+                    <option value="">All Task Types</option>
+                    @foreach ([
+                        'call' => 'Call',
+                        'email' => 'Email',
+                        'whatsapp' => 'WhatsApp',
+                        'meeting' => 'Meeting',
+                        'follow_up' => 'Follow Up',
+                        'counseling' => 'Counseling',
+                        'document_review' => 'Document Review',
+                        'todo' => 'To Do',
+                    ] as $ttVal => $ttLabel)
+                        <option value="{{ $ttVal }}" @selected(request('task_type') == $ttVal)>{{ $ttLabel }}</option>
+                    @endforeach
+                </select>
+
                 <div class="btn-group btn-group-sm">
                     <button type="button" onclick="setView('kanban')" class="btn btn-outline-secondary view-btn {{ ($view ?? 'kanban') == 'kanban' ? 'active' : '' }}">Kanban</button>
                     <button type="button" onclick="setView('list')" class="btn btn-outline-secondary view-btn {{ ($view ?? 'kanban') == 'list' ? 'active' : '' }}">List</button>
                     <button type="button" onclick="setView('calendar')" class="btn btn-outline-secondary view-btn {{ ($view ?? 'kanban') == 'calendar' ? 'active' : '' }}">Cal</button>
                 </div>
 
-                @if (request()->hasAny(['search', 'stage_id', 'assignee_id', 'activity_filter']))
+                @if (request()->hasAny(['search', 'stage_id', 'assignee_id', 'activity_filter', 'task_type']))
                     <a href="{{ route('crm.dashboard') }}" class="btn btn-outline-danger btn-sm">Clear</a>
                 @endif
             </div>

@@ -32,6 +32,45 @@ class AppServiceProvider extends ServiceProvider
             // Never let mail misconfiguration break the app.
         }
 
+        // Record who soft-deleted a record (for the Recycle Bin).
+        // Guarded so it is a no-op until the deleted_by column is migrated.
+        \Illuminate\Support\Facades\Event::listen('eloquent.deleting: *', function ($eventName, array $payload) {
+            $model = $payload[0] ?? null;
+            if (! is_object($model)) {
+                return;
+            }
+
+            if (! in_array(\Illuminate\Database\Eloquent\SoftDeletes::class, class_uses_recursive($model), true)) {
+                return;
+            }
+
+            if (method_exists($model, 'isForceDeleting') && $model->isForceDeleting()) {
+                return;
+            }
+
+            if (! \Illuminate\Support\Facades\Auth::check()) {
+                return;
+            }
+
+            try {
+                static $columnCache = [];
+                $table = $model->getTable();
+
+                if (! array_key_exists($table, $columnCache)) {
+                    $columnCache[$table] = \Illuminate\Support\Facades\Schema::hasColumn($table, 'deleted_by');
+                }
+
+                if (! $columnCache[$table]) {
+                    return;
+                }
+
+                $model->deleted_by = \Illuminate\Support\Facades\Auth::id();
+                $model->saveQuietly();
+            } catch (\Throwable $e) {
+                // Never block a delete because of tracking.
+            }
+        });
+
         Storage::extend('local', function ($app, $config) {
             $visibility = PortableVisibilityConverter::fromArray(
                 $config['permissions'] ?? [],

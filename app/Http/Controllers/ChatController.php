@@ -45,7 +45,7 @@ class ChatController extends Controller
                     : ($user->status && $user->status->last_seen
                         ? Carbon::parse($user->status->last_seen)->diffForHumans()
                         : 'Offline');
-                $user->business_name = $user->business_name ?: $user->name;
+                $user->name = $user->name ?: $user->name;
 
                 $lastMsg = ChatMessage::where(function ($q) use ($authId, $user) {
                     $q->where('sender_id', $authId)->where('receiver_id', $user->id);
@@ -299,7 +299,7 @@ class ChatController extends Controller
 
                 return [
                     'id' => $user->id,
-                    'name' => $user->business_name ?: $user->name,
+                    'name' => $user->name ?: $user->name,
                     'role' => $user->role,
                     'avatar' => $user->business_logo,
                     'unread' => $unread,
@@ -307,14 +307,14 @@ class ChatController extends Controller
                     'time' => $last?->created_at,
                 ];
             })
-            ->filter(fn ($c) => $c['unread'] > 0 || $c['time'] !== null)
-            ->sortByDesc(fn ($c) => ($c['unread'] > 0 ? 1 : 0) * 1000000000 + ($c['time'] ? $c['time']->timestamp : 0))
+            ->filter(fn($c) => $c['unread'] > 0 || $c['time'] !== null)
+            ->sortByDesc(fn($c) => ($c['unread'] > 0 ? 1 : 0) * 1000000000 + ($c['time'] ? $c['time']->timestamp : 0))
             ->take($limit)
             ->values();
 
         return response()->json([
             'total_unread' => ChatMessage::where('receiver_id', $authId)->whereNull('read_at')->count(),
-            'conversations' => $conversations->map(fn ($c) => [
+            'conversations' => $conversations->map(fn($c) => [
                 'id' => $c['id'],
                 'name' => $c['name'],
                 'role' => $c['role'],
