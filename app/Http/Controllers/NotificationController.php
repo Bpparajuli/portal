@@ -11,7 +11,7 @@ class NotificationController extends Controller
     public function index(Request $request)
     {
         $user = Auth::user();
-        $role = $user->role;
+        $role = $user->is_admin ? 'admin' : ($user->is_agent ? 'agent' : 'staff');
 
         if ($request->has('count')) {
             $recent = $user->notifications()->take(5)->get()->map(function ($n) use ($role) {
@@ -115,7 +115,7 @@ class NotificationController extends Controller
         $notification->markAsRead();
 
         $data = $notification->data;
-        $role = Auth::user()->role;
+        $role = Auth::user()->is_admin ? 'admin' : (Auth::user()->is_agent ? 'agent' : 'staff');
         $url = null;
 
         if (!empty($data['link'])) {

@@ -205,24 +205,8 @@ class ApplicationController extends Controller
             'link' => route($user->role . '.applications.show', $application->id),
         ]);
 
-        if ($user->is_agent) {
-            User::admins()->first()?->notify(new ApplicationSubmitted($application));
-        }
-
-        // Route activity email to portal@ + application admin
-        \App\Services\PortalNotifier::send(
-            \App\Services\PortalNotifier::APPLICATION,
-            '📨 Application Submitted',
-            [
-                \App\Services\PortalNotifier::line('Student', $student->full_name),
-                \App\Services\PortalNotifier::line('University', $application->university?->name ?? '—'),
-                \App\Services\PortalNotifier::line('Course', $application->course?->name ?? '—'),
-                \App\Services\PortalNotifier::line('Submitted by', $user->name . ' (' . ucfirst($user->role) . ')'),
-                \App\Services\PortalNotifier::line('Submitted at', now()->format('d M Y, g:i A')),
-            ],
-            'View Application',
-            url('/crm/students/' . $student->id)
-        );
+        // Single pipeline: in-app (admins + assigned staff) + email.
+        \App\Services\NotificationRouter::applicationAdded($application);
 
         return redirect()->route($user->role . '.applications.index')
             ->with('success', 'Application created successfully.');
@@ -301,7 +285,7 @@ class ApplicationController extends Controller
         $application->save();
 
         if ($canManageStatus && $oldStatus != $request->application_status_id) {
-            User::notifyAgent($application->student->agent_id, new ApplicationStatusUpdated($application, $user));
+            \App\Services\NotificationRouter::applicationStatusUpdated($application->fresh(['status', 'student']), $user);
         }
 
         return back()->with('success', 'Application updated successfully.');
@@ -324,7 +308,7 @@ class ApplicationController extends Controller
         ]);
 
         if ($oldStatus != $request->application_status_id) {
-            User::notifyAgent($application->student->agent_id, new ApplicationStatusUpdated($application, Auth::user()));
+            \App\Services\NotificationRouter::applicationStatusUpdated($application->fresh(['status', 'student']), Auth::user());
         }
 
         return back()->with('success', 'Status updated.');

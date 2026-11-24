@@ -32,6 +32,15 @@ class AppServiceProvider extends ServiceProvider
             // Never let mail misconfiguration break the app.
         }
 
+        // Save a copy of every outgoing email to the portal@ Sent folder (IMAP APPEND).
+        \Illuminate\Support\Facades\Event::listen(\Illuminate\Mail\Events\MessageSent::class, function ($event) {
+            try {
+                \App\Services\SentFolderArchiver::append($event->sent->toString());
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning('Sent copy failed: ' . $e->getMessage());
+            }
+        });
+
         // Record who soft-deleted a record (for the Recycle Bin).
         // Guarded so it is a no-op until the deleted_by column is migrated.
         \Illuminate\Support\Facades\Event::listen('eloquent.deleting: *', function ($eventName, array $payload) {

@@ -403,7 +403,7 @@
                                 <div class="d-flex gap-2">
                                     <a href="{{ route('crm.notifications.settings') }}" class="small text-muted"><i
                                             class="fas fa-cog"></i></a>
-                                    <a href="{{ route('crm.notifications.all') }}" class="small text-muted">View
+                                    <a href="{{ auth()->user()->is_admin ? route('admin.notifications.index') : route('staff.notifications.index') }}" class="small text-muted">View
                                         All</a>
                                 </div>
                             </div>

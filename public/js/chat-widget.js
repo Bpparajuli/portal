@@ -37,6 +37,15 @@
         return d.innerHTML;
     }
 
+    function escAttr(s) {
+        return String(s == null ? '' : s)
+            .replace(/&/g, '&amp;')
+            .replace(/"/g, '&quot;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/'/g, '&#39;');
+    }
+
     function initials(n) {
         if (!n) return '?';
         return n.trim().split(/\s+/).map(function (w) { return w[0]; }).join('').substring(0, 2).toUpperCase();
@@ -95,7 +104,13 @@
 
     // ---------- view switches ----------
     function showPanel() { panel.style.display = 'flex'; save(); }
-    function hidePanel() { panel.style.display = 'none'; stopThreadPoll(); stopTickPoll(); save(); }
+    function hidePanel() {
+        panel.style.display = 'none';
+        stopThreadPoll();
+        stopTickPoll();
+        stopListPoll();
+        save();
+    }
     function showList() {
         stopThreadPoll(); stopTickPoll();
         listView.style.display = 'block';
@@ -105,10 +120,12 @@
         onlineDot.style.display = 'none';
         save();
         loadUsers();
+        startListPoll();
     }
     function showThread() {
+        stopListPoll();
         listView.style.display = 'none';
-        threadView.style.display = 'flex';
+        threadView.style.display = 'grid';
         backBtn.style.display = '';
         titleEl.textContent = state.userName || 'Chat';
         onlineDot.style.display = state.userOnline ? '' : 'none';
@@ -120,6 +137,7 @@
         fetch(cfg.usersUrl, { headers: { 'Accept': 'application/json' } })
             .then(function (r) { return r.json(); })
             .then(function (d) {
+                if (!d || !Array.isArray(d.sections)) return;
                 var flat = [];
                 (d.sections || []).forEach(function (sec) {
                     (sec.users || []).forEach(function (u) {
@@ -161,8 +179,8 @@
             var display = displayName(u);
             var badge = (u.unread_count > 0) ? '<span class="badge bg-danger" style="font-size:10px;">' + u.unread_count + '</span>' : '';
             var sub = u.last_message || (u.is_online ? 'Active now' : 'Tap to start a chat');
-            return '<div class="cw-conv" data-id="' + u.id + '" data-name="' + esc(display) + '"'
-                + ' data-avatar="' + esc(u.business_logo || '') + '" data-online="' + (u.is_online ? '1' : '0') + '">'
+            return '<div class="cw-conv" data-id="' + u.id + '" data-name="' + escAttr(display) + '"'
+                + ' data-avatar="' + escAttr(u.business_logo || '') + '" data-online="' + (u.is_online ? '1' : '0') + '">'
                 + avatarHtml(u.business_logo, u.name || u.business_name || 'User', u.is_online)
                 + '<div class="cw-conv-main">'
                 + '<div class="cw-conv-name"><span class="text-truncate">' + esc(display) + '</span>' + badge + '</div>'
@@ -230,6 +248,10 @@
 
     function scrollBottom() { messagesEl.scrollTop = messagesEl.scrollHeight; }
 
+    function isNearBottom() {
+        return (messagesEl.scrollHeight - messagesEl.scrollTop - messagesEl.clientHeight) < 80;
+    }
+
     function loadMessages() {
         fetch('/' + base + '/messages/' + state.userId, { headers: { 'Accept': 'application/json' } })
             .then(function (r) { return r.json(); })
@@ -240,26 +262,27 @@
                 state.lastId = 0;
                 msgs.forEach(renderMessage);
                 scrollBottom();
-                loadUsers();
             })
             .catch(function () {});
     }
 
     function pollNew() {
-        if (!state.userId) return;
+        if (!state.userId || document.hidden) return;
         fetch('/' + base + '/new?user_id=' + state.userId + '&last_message_id=' + state.lastId, { headers: { 'Accept': 'application/json' } })
             .then(function (r) { return r.json(); })
             .then(function (msgs) {
                 if (!Array.isArray(msgs) || !msgs.length) return;
+                var stick = isNearBottom();
                 msgs.forEach(renderMessage);
-                scrollBottom();
+                if (stick) scrollBottom();
             })
             .catch(function () {});
     }
 
     // Refresh sent-message ticks (seen/unseen) without rebuilding the DOM.
     function refreshTicks() {
-        if (!state.userId) return;
+        if (!state.userId || document.hidden) return;
+        if (!messagesEl.querySelector('[data-tick-id]')) return;
         fetch('/' + base + '/messages/' + state.userId, { headers: { 'Accept': 'application/json' } })
             .then(function (r) { return r.json(); })
             .then(function (msgs) {
@@ -276,10 +299,26 @@
             .catch(function () {});
     }
 
-    function startThreadPoll() { stopThreadPoll(); state.poll = setInterval(pollNew, 2000); }
+    function startThreadPoll() { stopThreadPoll(); state.poll = setInterval(pollNew, 3000); }
     function stopThreadPoll() { if (state.poll) { clearInterval(state.poll); state.poll = null; } }
-    function startTickPoll() { stopTickPoll(); state.tickPoll = setInterval(refreshTicks, 10000); }
+    function startTickPoll() { stopTickPoll(); state.tickPoll = setInterval(refreshTicks, 15000); }
     function stopTickPoll() { if (state.tickPoll) { clearInterval(state.tickPoll); state.tickPoll = null; } }
+
+    function startListPoll() {
+        stopListPoll();
+        state.listPoll = setInterval(function () {
+            if (document.hidden) return;
+            loadUsers();
+        }, 30000);
+    }
+    function stopListPoll() { if (state.listPoll) { clearInterval(state.listPoll); state.listPoll = null; } }
+
+    document.addEventListener('visibilitychange', function () {
+        if (document.hidden) return;
+        if (panel.style.display === 'none' || !state.userId) return;
+        pollNew();
+        refreshTicks();
+    });
 
     // Delete own message
     messagesEl.addEventListener('click', function (e) {
@@ -358,9 +397,8 @@
 
     // ---------- init / restore ----------
     function init() {
-        // Keep the user "online" and keep the people list fresh.
+        // Preload the people list once; live refresh only runs while it is visible.
         loadUsers();
-        state.listPoll = setInterval(loadUsers, 20000);
 
         var open = '0', uid = '', uname = '', uavatar = '', uonline = '0';
         try {

@@ -69,23 +69,24 @@ class MailboxMonitor
 
         $port = (int) ($mailbox->imap_port ?: 993);
         $encryption = $mailbox->imap_encryption ?: 'ssl';
-        $spec = '{' . $mailbox->imap_host . ':' . $port . '/imap/' . $encryption . '}INBOX';
         $previousUnread = (int) $mailbox->last_unread_count;
 
         try {
-            if (function_exists('imap_timeout')) {
-                @imap_timeout(IMAP_OPENTIMEOUT, 5);
-                @imap_timeout(IMAP_READTIMEOUT, 5);
-                @imap_timeout(IMAP_WRITETIMEOUT, 5);
-            }
+            $connection = ImapConnector::open(
+                $mailbox->imap_host,
+                $port,
+                $encryption,
+                $mailbox->imap_username,
+                $mailbox->imap_password,
+                'INBOX',
+                5
+            );
 
-            $stream = @imap_open($spec, $mailbox->imap_username, $mailbox->imap_password, 0, 1);
+            $stream = $connection['stream'];
+            $spec = $connection['spec'];
 
             if (! $stream) {
-                $error = imap_last_error() ?: 'Could not connect to IMAP server';
-                imap_errors();
-                imap_alerts();
-                throw new \Exception($error);
+                throw new \Exception($connection['error'] ?: 'Could not connect to IMAP server');
             }
 
             $status = @imap_status($stream, $spec, SA_UNSEEN | SA_MESSAGES);

@@ -33,38 +33,51 @@ class ChatController extends Controller
             ['is_online' => true, 'last_seen' => now(), 'updated_at' => now()]
         );
 
-        $users = User::where('id', '!=', $authId)
+        $users = User::query()
+            ->select(['id', 'name', 'business_name', 'business_logo', 'role', 'email', 'created_at'])
+            ->where('id', '!=', $authId)
             ->whereIn('role', Auth::user()->is_agent ? ['admin', 'staff'] : ['admin', 'agent', 'staff'])
-            ->with('status')
-            ->get()
-            ->map(function ($user) use ($authId) {
-                $user->is_online = $user->status
-                    && Carbon::parse($user->status->updated_at)->diffInMinutes(now()) < 2;
-                $user->last_seen_formatted = $user->is_online
-                    ? 'Active Now'
-                    : ($user->status && $user->status->last_seen
-                        ? Carbon::parse($user->status->last_seen)->diffForHumans()
-                        : 'Offline');
-                $user->business_name = $user->business_name ?: $user->name;
+            ->with(['status' => function ($q) {
+                $q->select(['id', 'user_id', 'is_online', 'last_seen', 'updated_at']);
+            }])
+            ->get();
 
-                $lastMsg = ChatMessage::where(function ($q) use ($authId, $user) {
-                    $q->where('sender_id', $authId)->where('receiver_id', $user->id);
-                })->orWhere(function ($q) use ($authId, $user) {
-                    $q->where('sender_id', $user->id)->where('receiver_id', $authId);
-                })->orderByDesc('id')->first();
+        $lastIds = $this->latestMessageIdsByPartner($authId);
 
-                $user->last_message = $lastMsg?->message ?? '';
-                $user->last_message_file = $lastMsg?->file ?? null;
-                $user->last_message_time = $lastMsg?->created_at ?? $user->created_at;
-                $user->has_attachment = !empty($lastMsg?->file);
+        $lastMessages = $lastIds->isEmpty()
+            ? collect()
+            : ChatMessage::whereIn('id', $lastIds->values()->all())->get()->keyBy('id');
 
-                $user->unread_count = ChatMessage::where('sender_id', $user->id)
-                    ->where('receiver_id', $authId)
-                    ->whereNull('read_at')
-                    ->count();
+        // Unread message count per sender (single grouped query).
+        $unreadCounts = ChatMessage::query()
+            ->selectRaw('sender_id, COUNT(*) as aggregate')
+            ->where('receiver_id', $authId)
+            ->whereNull('read_at')
+            ->groupBy('sender_id')
+            ->pluck('aggregate', 'sender_id');
 
-                return $user;
-            });
+        $users = $users->map(function ($user) use ($lastIds, $lastMessages, $unreadCounts) {
+            $user->is_online = $user->status
+                && Carbon::parse($user->status->updated_at)->diffInMinutes(now()) < 2;
+            $user->last_seen_formatted = $user->is_online
+                ? 'Active Now'
+                : ($user->status && $user->status->last_seen
+                    ? Carbon::parse($user->status->last_seen)->diffForHumans()
+                    : 'Offline');
+            $user->business_name = $user->business_name ?: $user->name;
+
+            $lastMsgId = $lastIds->get((int) $user->id);
+            $lastMsg = $lastMsgId ? $lastMessages->get($lastMsgId) : null;
+
+            $user->last_message = $lastMsg?->message ?? '';
+            $user->last_message_file = $lastMsg?->file ?? null;
+            $user->last_message_time = $lastMsg?->created_at ?? $user->created_at;
+            $user->has_attachment = !empty($lastMsg?->file);
+
+            $user->unread_count = (int) $unreadCounts->get((int) $user->id, 0);
+
+            return $user;
+        });
 
         $sections = [];
         $roleLabels = [
@@ -100,14 +113,44 @@ class ChatController extends Controller
             return $b['unread_count'] <=> $a['unread_count'];
         });
 
-        $totalUnread = ChatMessage::where('receiver_id', $authId)
-            ->whereNull('read_at')
-            ->count();
+        $totalUnread = (int) $unreadCounts->sum();
 
         return response()->json([
             'sections' => $sections,
             'total_unread' => $totalUnread
         ]);
+    }
+
+    /**
+     * Latest message id per conversation partner. Groups by the sender/receiver
+     * pair (safe under MySQL ONLY_FULL_GROUP_BY) instead of a CASE expression.
+     */
+    private function latestMessageIdsByPartner(int $authId)
+    {
+        $authId = (int) $authId;
+
+        $rows = DB::table('chat_messages')
+            ->where(function ($q) use ($authId) {
+                $q->where('sender_id', $authId)->orWhere('receiver_id', $authId);
+            })
+            ->whereNull('deleted_at')
+            ->select('sender_id', 'receiver_id', DB::raw('MAX(id) as last_id'))
+            ->groupBy('sender_id', 'receiver_id')
+            ->get();
+
+        $lastIds = [];
+        foreach ($rows as $row) {
+            $partnerId = ((int) $row->sender_id === $authId)
+                ? (int) $row->receiver_id
+                : (int) $row->sender_id;
+            $lastId = (int) $row->last_id;
+
+            if (!isset($lastIds[$partnerId]) || $lastId > $lastIds[$partnerId]) {
+                $lastIds[$partnerId] = $lastId;
+            }
+        }
+
+        return collect($lastIds);
     }
 
     private function getMessages($userId, int $authId)
@@ -282,27 +325,36 @@ class ChatController extends Controller
         $allowedRoles = Auth::user()->is_agent ? ['admin', 'staff'] : ['admin', 'agent', 'staff'];
         $limit = min(100, max(5, (int) $request->query('limit', 50)));
 
-        $conversations = User::where('id', '!=', $authId)
+        $users = User::query()
+            ->select(['id', 'name', 'business_name', 'business_logo', 'role'])
+            ->where('id', '!=', $authId)
             ->whereIn('role', $allowedRoles)
-            ->get()
-            ->map(function ($user) use ($authId) {
-                $unread = ChatMessage::where('sender_id', $user->id)
-                    ->where('receiver_id', $authId)
-                    ->whereNull('read_at')
-                    ->count();
+            ->get();
 
-                $last = ChatMessage::where(function ($q) use ($authId, $user) {
-                    $q->where('sender_id', $authId)->where('receiver_id', $user->id);
-                })->orWhere(function ($q) use ($authId, $user) {
-                    $q->where('sender_id', $user->id)->where('receiver_id', $authId);
-                })->orderByDesc('id')->first();
+        $lastIds = $this->latestMessageIdsByPartner($authId);
+
+        $lastMessages = $lastIds->isEmpty()
+            ? collect()
+            : ChatMessage::whereIn('id', $lastIds->values()->all())->get()->keyBy('id');
+
+        $unreadCounts = ChatMessage::query()
+            ->selectRaw('sender_id, COUNT(*) as aggregate')
+            ->where('receiver_id', $authId)
+            ->whereNull('read_at')
+            ->groupBy('sender_id')
+            ->pluck('aggregate', 'sender_id');
+
+        $conversations = $users
+            ->map(function ($user) use ($lastIds, $lastMessages, $unreadCounts) {
+                $lastId = $lastIds->get((int) $user->id);
+                $last = $lastId ? $lastMessages->get($lastId) : null;
 
                 return [
                     'id' => $user->id,
                     'name' => $user->business_name ?: $user->name,
                     'role' => $user->role,
                     'avatar' => $user->business_logo,
-                    'unread' => $unread,
+                    'unread' => (int) $unreadCounts->get((int) $user->id, 0),
                     'last_message' => $last ? ($last->message ?: ($last->file ? '📎 Attachment' : '')) : '',
                     'time' => $last?->created_at,
                 ];
@@ -313,7 +365,7 @@ class ChatController extends Controller
             ->values();
 
         return response()->json([
-            'total_unread' => ChatMessage::where('receiver_id', $authId)->whereNull('read_at')->count(),
+            'total_unread' => (int) $unreadCounts->sum(),
             'conversations' => $conversations->map(fn($c) => [
                 'id' => $c['id'],
                 'name' => $c['name'],

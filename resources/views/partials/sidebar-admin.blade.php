@@ -56,8 +56,13 @@
 </a>
 
 <a href="{{ route('admin.notifications.index') }}"
-    class="nav-link {{ request()->routeIs('admin.notifications*') ? 'active' : '' }}">
+    class="nav-link {{ request()->routeIs('admin.notifications.index') ? 'active' : '' }}">
     <i class="fas fa-bell"></i> <span>Notifications</span>
+</a>
+
+<a href="{{ route('admin.notifications.routing') }}"
+    class="nav-link {{ request()->routeIs('admin.notifications.routing*') ? 'active' : '' }}">
+    <i class="fas fa-random"></i> <span>Notification Routing</span>
 </a>
 
 <a href="{{ route('admin.enquiries.index') }}"

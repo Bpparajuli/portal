@@ -291,6 +291,7 @@
     display: flex;
     flex-direction: column;
     min-width: 0;
+    min-height: 0;
     background: var(--chat-bg);
 }
 
@@ -302,6 +303,7 @@
     justify-content: space-between;
     gap: 12px;
     border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
 }
 
 .chat-header .chat-avatar {
@@ -329,7 +331,9 @@
 
 .message-box {
     flex: 1;
+    min-height: 0;
     overflow-y: auto;
+    overscroll-behavior: contain;
     padding: 16px 32px;
     display: flex;
     flex-direction: column;
@@ -432,6 +436,7 @@
 .chat-footer {
     padding: 8px 16px;
     background: var(--chat-header-bg);
+    flex-shrink: 0;
 }
 
 .chat-input-row {

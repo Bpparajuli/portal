@@ -24,7 +24,7 @@
 @section($section)
 
 @push('styles')
-<link href="{{ asset('css/chat.css') }}" rel="stylesheet">
+<link href="{{ asset('css/chat.css') }}?v={{ file_exists(public_path('css/chat.css')) ? filemtime(public_path('css/chat.css')) : time() }}" rel="stylesheet">
 @endpush
 
 <div class="chat-wrapper" id="chatWrapper">

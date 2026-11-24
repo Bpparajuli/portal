@@ -45,6 +45,8 @@ class SettingsController extends Controller
                     'mail_refresh_seconds' => ['60', 'number', 'How often (seconds) mailboxes are checked for new mail'],
                     'enquiry_auto_reply' => ['false', 'boolean', 'Send an automatic acknowledgement email to people who submit the enquiry form'],
                     'enquiry_notify_email' => ['true', 'boolean', 'Email portal/admin for each new enquiry (enquiries are always saved in the portal)'],
+                    'save_sent_copy' => ['true', 'boolean', 'Save a copy of every outgoing email to the portal@ Sent folder'],
+                    'mail_sent_folder' => ['', 'string', 'IMAP Sent folder name (blank = auto-detect, e.g. Sent or INBOX.Sent)'],
                 ];
                 foreach ($ensure as $key => $meta) {
                     if (!Setting::where('key', $key)->exists()) {
@@ -190,6 +192,8 @@ class SettingsController extends Controller
             ['key' => 'mail_from_name', 'value' => 'Portal', 'type' => 'string', 'description' => 'Default from name'],
             ['key' => 'enquiry_auto_reply', 'value' => 'false', 'type' => 'boolean', 'description' => 'Send an automatic acknowledgement email to people who submit the enquiry form'],
             ['key' => 'enquiry_notify_email', 'value' => 'true', 'type' => 'boolean', 'description' => 'Email portal/admin for each new enquiry (enquiries are always saved in the portal)'],
+            ['key' => 'save_sent_copy', 'value' => 'true', 'type' => 'boolean', 'description' => 'Save a copy of every outgoing email to the portal@ Sent folder'],
+            ['key' => 'mail_sent_folder', 'value' => '', 'type' => 'string', 'description' => 'IMAP Sent folder name (blank = auto-detect, e.g. Sent or INBOX.Sent)'],
         ];
         foreach ($defaults as $s) {
             $this->settingService->set($s['key'], $s['value'], 'email', $s['type'], $s['description'] ?? null);

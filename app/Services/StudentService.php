@@ -184,31 +184,10 @@ class StudentService
         });
 
         if ($isNew) {
-            \App\Services\PortalNotifier::send(
-                \App\Services\PortalNotifier::STUDENT,
-                '🎓 New Student Added',
-                [
-                    \App\Services\PortalNotifier::line('Student', $saved->full_name),
-                    \App\Services\PortalNotifier::line('Country', $saved->preferred_country ?? '—'),
-                    \App\Services\PortalNotifier::line('Phone', $saved->phone_number ?? '—'),
-                    \App\Services\PortalNotifier::line('Added by', optional(Auth::user())->name ?? 'System'),
-                    \App\Services\PortalNotifier::line('Added at', now()->format('d M Y, g:i A')),
-                ],
-                'View Student',
-                url('/crm/students/' . $saved->id)
-            );
+            // In-app only (admins + assigned student staff).
+            \App\Services\NotificationRouter::studentEvent('student.added', $saved, 'New Student Added');
         } else {
-            \App\Services\PortalNotifier::send(
-                \App\Services\PortalNotifier::STUDENT,
-                '✏️ Student Updated',
-                [
-                    \App\Services\PortalNotifier::line('Student', $saved->full_name),
-                    \App\Services\PortalNotifier::line('Updated by', optional(Auth::user())->name ?? 'System'),
-                    \App\Services\PortalNotifier::line('Updated at', now()->format('d M Y, g:i A')),
-                ],
-                'View Student',
-                url('/crm/students/' . $saved->id)
-            );
+            \App\Services\NotificationRouter::studentEvent('student.updated', $saved, 'Student Updated');
         }
 
         return $saved;
@@ -414,15 +393,7 @@ class StudentService
             }
         });
 
-        \App\Services\PortalNotifier::send(
-            \App\Services\PortalNotifier::STUDENT,
-            '🗑️ Student Removed',
-            [
-                \App\Services\PortalNotifier::line('Student', $student->full_name),
-                \App\Services\PortalNotifier::line('Removed by', optional(Auth::user())->name ?? 'System'),
-                \App\Services\PortalNotifier::line('Removed at', now()->format('d M Y, g:i A')),
-            ]
-        );
+        \App\Services\NotificationRouter::studentEvent('student.removed', $student, 'Student Removed');
     }
 
     // -----------------------------------------------------------------------

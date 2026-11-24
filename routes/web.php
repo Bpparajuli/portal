@@ -245,6 +245,10 @@ Route::middleware(['auth', \App\Http\Middleware\IsAdmin::class])
         Route::get('system/email-diagnostics', [\App\Http\Controllers\Admin\SystemSetupController::class, 'diagnostics'])->name('system.email-diagnostics');
         Route::post('system/test-email', [\App\Http\Controllers\Admin\SystemSetupController::class, 'sendTest'])->name('system.test-email');
 
+        // Notification routing (admin assigns categories to staff)
+        Route::get('notifications/routing', [\App\Http\Controllers\Admin\NotificationRoutingController::class, 'index'])->name('notifications.routing');
+        Route::post('notifications/routing', [\App\Http\Controllers\Admin\NotificationRoutingController::class, 'update'])->name('notifications.routing.update');
+
         Route::post('/users/reminder/preview', [AdminReminderController::class, 'previewEmail'])->name('reminder.preview');
         // Dynamic Data
         Route::get('get-cities/{country}', [UniversityController::class, 'getCities'])->name('get-cities');

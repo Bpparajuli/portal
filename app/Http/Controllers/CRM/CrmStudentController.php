@@ -231,12 +231,12 @@ class CrmStudentController extends Controller
             ]);
         }
 
-        // Notify the owning agent (database + mail) — on by default.
-        if ($request->boolean('notify_agent', true) && $oldStatusId !== $newStatusId && $student->agent_id) {
+        // Single pipeline: in-app (admins + staff + agent) + email to agent.
+        if ($request->boolean('notify_agent', true) && $oldStatusId !== $newStatusId) {
             try {
-                User::notifyAgent($student->agent_id, new ApplicationStatusUpdated($application, $user));
+                \App\Services\NotificationRouter::applicationStatusUpdated($application, $user);
             } catch (\Throwable $e) {
-                Log::warning('Application status agent notify failed: ' . $e->getMessage());
+                Log::warning('Application status notify failed: ' . $e->getMessage());
             }
         }
 

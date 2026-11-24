@@ -139,30 +139,8 @@ class RegisterController extends Controller
             // 🔥 Save again after file upload
             $user->save();
 
-            // ✅ Notify admin (find admin users instead of hardcoded id=2)
-            $admins = User::admins()->get();
-            if ($admins->count() > 0) {
-                foreach ($admins as $admin) {
-                    Notification::send($admin, new UserRegistered($user));
-                }
-            }
-
-            // ✅ Route activity email to portal@ + admin@
-            \App\Services\PortalNotifier::send(
-                \App\Services\PortalNotifier::ADMIN,
-                '🆕 New Agent Registration',
-                [
-                    \App\Services\PortalNotifier::line('Business', $user->business_name),
-                    \App\Services\PortalNotifier::line('Owner', $user->owner_name),
-                    \App\Services\PortalNotifier::line('Name', $user->name),
-                    \App\Services\PortalNotifier::line('Email', $user->email),
-                    \App\Services\PortalNotifier::line('Contact', $user->contact),
-                    \App\Services\PortalNotifier::line('Registered at', now()->format('d M Y, g:i A')),
-                ],
-                'Open Users',
-                url('/admin/users'),
-                ['A new agent has registered on the portal.']
-            );
+            // Single pipeline: in-app (admins + assigned staff) + email.
+            \App\Services\NotificationRouter::userRegistered($user);
 
             // ✅ Auto-login
             Auth::login($user);

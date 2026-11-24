@@ -115,20 +115,8 @@ class DocumentController extends Controller
             }
         }
 
-        // Route activity email to portal@ + document admin
-        \App\Services\PortalNotifier::send(
-            \App\Services\PortalNotifier::DOCUMENT,
-            '📄 Document Uploaded',
-            [
-                \App\Services\PortalNotifier::line('Student', $student->full_name),
-                \App\Services\PortalNotifier::line('Document type', $documentType),
-                \App\Services\PortalNotifier::line('File name', $document->file_name),
-                \App\Services\PortalNotifier::line('Uploaded by', $user->name . ' (' . ucfirst($user->role) . ')'),
-                \App\Services\PortalNotifier::line('Uploaded at', now()->format('d M Y, g:i A')),
-            ],
-            'View Student',
-            url('/crm/students/' . $student->id)
-        );
+        // In-app only to admins + assigned document staff (no email).
+        \App\Services\NotificationRouter::documentEvent('document.uploaded', $student, 'Document Uploaded', $documentType . ' (' . $document->file_name . ')');
     }
 
     public function destroy(Student $student, Document $document)
@@ -145,6 +133,10 @@ class DocumentController extends Controller
                 Notification::send($agent, new DocumentDeleted(Auth::user(), $student, $document));
             }
         }
+
+        // In-app only to admins + assigned document staff (no email).
+        \App\Services\NotificationRouter::documentEvent('document.deleted', $student, 'Document Deleted', $document->document_type ?? 'Document');
+
         return redirect()->route(Auth::user()->role . '.documents.index', $student->id)
             ->with('success', 'Document deleted successfully.');
     }

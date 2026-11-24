@@ -104,25 +104,11 @@ class ApplicationService
                 ]);
             }
 
-            $admins = User::whereIn('role', ['superadmin', 'admin'])->get();
-            Notification::send($admins, new ApplicationSubmitted($application));
-
             return $application;
         });
 
-        \App\Services\PortalNotifier::send(
-            \App\Services\PortalNotifier::APPLICATION,
-            '📨 Application Submitted',
-            [
-                \App\Services\PortalNotifier::line('Student', $student->full_name),
-                \App\Services\PortalNotifier::line('University', $application->university?->name ?? '—'),
-                \App\Services\PortalNotifier::line('Course', $application->course?->name ?? '—'),
-                \App\Services\PortalNotifier::line('Submitted by', optional(Auth::user())->name ?? 'System'),
-                \App\Services\PortalNotifier::line('Submitted at', now()->format('d M Y, g:i A')),
-            ],
-            'View Application',
-            url('/crm/students/' . $student->id)
-        );
+        // Single pipeline: in-app (admins + assigned staff) + email.
+        \App\Services\NotificationRouter::applicationAdded($application);
 
         return $application;
     }
@@ -165,11 +151,7 @@ class ApplicationService
                     'link' => route('admin.applications.show', $application->id),
                 ]);
 
-                if ($application->agent) {
-                    $application->agent->notify(
-                        new ApplicationStatusUpdated($application->fresh(), Auth::user())
-                    );
-                }
+                \App\Services\NotificationRouter::applicationStatusUpdated($application->fresh(['status', 'student']), Auth::user());
             }
 
             return $application->fresh();

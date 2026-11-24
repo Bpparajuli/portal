@@ -33,7 +33,7 @@
             }
             .cw-header button, .cw-header a { background: none; border: none; color: #fff; font-size: 14px; cursor: pointer; padding: 4px; }
             .cw-header .cw-title { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-            .cw-body { flex: 1; overflow-y: auto; }
+            .cw-body { flex: 1; min-height: 0; overflow-y: auto; }
             .cw-conv { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-bottom: 1px solid #f1f1f5; cursor: pointer; }
             .cw-conv:hover { background: #faf9fc; }
             .cw-avatar { width: 38px; height: 38px; border-radius: 50%; background: #ede5f8; color: #1a0262; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; flex-shrink: 0; overflow: hidden; }
@@ -41,8 +41,8 @@
             .cw-conv-main { flex: 1; min-width: 0; }
             .cw-conv-name { font-size: 13px; font-weight: 600; color: #1f2937; display: flex; align-items: center; gap: 6px; }
             .cw-conv-sub { font-size: 11px; color: #6b7280; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-            .cw-thread { display: flex; flex-direction: column; height: 100%; }
-            .cw-messages { flex: 1; overflow-y: auto; padding: 12px; background: #f7f6fb; }
+            .cw-thread { display: grid; grid-template-rows: minmax(0, 1fr) auto; flex-direction: column; flex: 1 1 auto; min-height: 0; overflow: hidden; }
+            .cw-messages { flex: 1 1 auto; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 12px; background: #f7f6fb; }
             .cw-bubble { max-width: 78%; padding: 7px 11px; border-radius: 12px; font-size: 13px; line-height: 1.35; margin-bottom: 6px; word-wrap: break-word; white-space: pre-wrap; }
             .cw-bubble.sent { background: var(--primary, #1a0262); color: #fff; margin-left: auto; border-bottom-right-radius: 3px; }
             .cw-bubble.received { background: #fff; color: #1f2937; border-bottom-left-radius: 3px; box-shadow: 0 1px 2px rgba(0,0,0,.06); }

@@ -26,17 +26,14 @@ class CrmNotificationController extends Controller
                 ]);
             }
 
-            // Get unread count for CRM notifications only
+            // Unified feed: all notifications for this user.
             $unreadCount = DatabaseNotification::where('notifiable_id', $user->id)
                 ->where('notifiable_type', get_class($user))
                 ->whereNull('read_at')
-                ->where('type', 'App\\Notifications\\CrmTaskNotification')
                 ->count();
 
-            // Get recent notifications (last 20)
             $notifications = DatabaseNotification::where('notifiable_id', $user->id)
                 ->where('notifiable_type', get_class($user))
-                ->where('type', 'App\\Notifications\\CrmTaskNotification')
                 ->orderBy('created_at', 'desc')
                 ->limit(20)
                 ->get();
@@ -157,11 +154,10 @@ class CrmNotificationController extends Controller
                 return response()->json(['success' => false, 'error' => 'User not authenticated'], 401);
             }
 
-            // Update all unread CRM notifications
+            // Update all unread notifications (unified feed)
             DatabaseNotification::where('notifiable_id', $user->id)
                 ->where('notifiable_type', get_class($user))
                 ->whereNull('read_at')
-                ->where('type', 'App\\Notifications\\CrmTaskNotification')
                 ->update(['read_at' => now()]);
 
             if ($request->wantsJson()) {
@@ -190,11 +186,10 @@ class CrmNotificationController extends Controller
                 return redirect()->route('login');
             }
 
-            // Delete only read notifications
+            // Delete only read notifications (unified feed)
             $count = DatabaseNotification::where('notifiable_id', $user->id)
                 ->where('notifiable_type', get_class($user))
                 ->whereNotNull('read_at')
-                ->where('type', 'App\\Notifications\\CrmTaskNotification')
                 ->delete();
 
             Log::info('Read notifications cleared', [
@@ -360,7 +355,10 @@ class CrmNotificationController extends Controller
             return response()->json($notifications);
         }
 
-        return view('crm.notifications.index');
+        // Unified notification center lives under the user's role area.
+        $route = $user->is_admin ? 'admin.notifications.index' : 'staff.notifications.index';
+
+        return redirect()->route($route);
     }
 
     /**

@@ -37,22 +37,9 @@ class EnquiryController extends Controller
         $subject = $enquiry->subject ?: 'New Enquiry';
         $body = $enquiry->message;
 
-        // Route to portal@ + enquiry admin (can be turned off in Settings → Email)
+        // Single pipeline: in-app (admins + assigned enquiry staff) + email.
         if (Setting::getValue('enquiry_notify_email', true)) {
-            PortalNotifier::send(
-                PortalNotifier::ENQUIRY,
-                '📩 New Enquiry: ' . $subject,
-                [
-                    PortalNotifier::line('Name', $enquiry->name),
-                    PortalNotifier::line('Email', $enquiry->email),
-                    PortalNotifier::line('Phone', $enquiry->phone ?: '—'),
-                    PortalNotifier::line('Type', ucfirst($enquiry->type ?? 'general')),
-                    PortalNotifier::line('Message', $body),
-                    PortalNotifier::line('Received at', now()->format('d M Y, g:i A')),
-                ],
-                'Open Enquiries',
-                url('/admin/enquiries')
-            );
+            \App\Services\NotificationRouter::enquiryReceived($enquiry);
         }
 
         // Send an acknowledgement to the enquirer.

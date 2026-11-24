@@ -461,7 +461,7 @@ class UserService
     {
         $user->active = 1;
         $user->save();
-        $user->notify(new UserApproved());
+        \App\Services\NotificationRouter::userApproved($user);
     }
 
     // -----------------------------------------------------------------------
@@ -703,27 +703,10 @@ class UserService
     }
 
     /**
-     * Notify the first admin about a newly registered user.
+     * Notify admins + assigned staff about a newly created user.
      */
     private function notifyAdminsOfNewUser(User $user): void
     {
-        $admin = User::admins()->first();
-        if ($admin) {
-            $admin->notify(new UserRegistered($user));
-        }
-
-        \App\Services\PortalNotifier::send(
-            \App\Services\PortalNotifier::ADMIN,
-            '🆕 New User Created',
-            [
-                \App\Services\PortalNotifier::line('Name', $user->name),
-                \App\Services\PortalNotifier::line('Email', $user->email),
-                \App\Services\PortalNotifier::line('Role', ucfirst($user->role)),
-                \App\Services\PortalNotifier::line('Created at', now()->format('d M Y, g:i A')),
-            ],
-            'Open Users',
-            url('/admin/users'),
-            ['A new user account was created in the portal.']
-        );
+        \App\Services\NotificationRouter::userRegistered($user);
     }
 }
